@@ -196,7 +196,7 @@ DECLARE_DO_FUN( do_clans				);
 DECLARE_DO_FUN( do_claninfo				); //by Trog
 DECLARE_DO_FUN( do_relations			); //by Trog
 DECLARE_DO_FUN( do_crank				); //by Trog
-DECLARE_DO_FUN( do_clear_modules		); //Qrwa maæ !!!
+DECLARE_DO_FUN( do_clear_modules		); //Qrwa maï¿½ !!!
 DECLARE_DO_FUN( do_ships				);
 DECLARE_DO_FUN( do_add_ship_title		);
 DECLARE_DO_FUN( do_clantalk				);
@@ -511,8 +511,8 @@ DECLARE_DO_FUN( do_nopol				);
 DECLARE_DO_FUN( do_forbid				);
 DECLARE_DO_FUN( do_alia					);
 DECLARE_DO_FUN( do_unalia				);
-DECLARE_DO_FUN( do_alias				);//tu nie by³o aliasów
-DECLARE_DO_FUN( do_unalias				);//ani unaliasów ;)
+DECLARE_DO_FUN( do_alias				);//tu nie byï¿½o aliasï¿½w
+DECLARE_DO_FUN( do_unalias				);//ani unaliasï¿½w ;)
 DECLARE_DO_FUN( do_wanted				);
 DECLARE_DO_FUN( do_identify				);//engineer.c
 DECLARE_DO_FUN( do_detonate				);//engineer.c
@@ -960,7 +960,7 @@ int get_bounty_xp(CHAR_DATA *, CHAR_DATA *);
 /* space.c */
 SH *	get_ship			args( ( char *name ) );
 void	load_ships			args( ( void ) );
-//added by Thanos (³aduje statki publiczne)
+//added by Thanos (ï¿½aduje statki publiczne)
 void	load_pub_ships			args( ( void ) );
 void	save_ship				args( ( SHIP_DATA *ship ) );
 void	load_space				args( ( void ) );
@@ -1513,9 +1513,9 @@ CD *	get_char_world		args( ( CHAR_DATA *ch, char *argument ) );
 CD *	get_player_world	args( ( CHAR_DATA *ch, char *argument ) );
 OD *	get_obj_type		args( ( OBJ_INDEX_DATA *pObjIndexData ) );
 OD *	get_obj_list		args( ( CHAR_DATA *ch, char *argument,
-					OBJ_DATA *list ) );
+					const std::list<OBJ_DATA*>& list ) );
 OD *	get_obj_list_rev	args( ( CHAR_DATA *ch, char *argument,
-					OBJ_DATA *list ) );
+					std::list<OBJ_DATA*>& list ) );
 OD *	get_obj_carry		args( ( CHAR_DATA *ch, char *argument ) );
 OD *	get_obj_wear		args( ( CHAR_DATA *ch, char *argument ) );
 OD *	get_obj_here		args( ( CHAR_DATA *ch, char *argument ) );

@@ -32,9 +32,7 @@ AREA_DATA *shipTmpArea;
 
 SHIP_ROOM_DATA* get_sroom_ind(SHIP_INDEX_DATA *ship, int vnum)
 {
-	SHIP_ROOM_DATA *room;
-
-	for (room = ship->first_room; room; room = room->next)
+	for (auto* room : ship->rooms)
 		if (room->vnum == vnum)
 			return room;
 
@@ -55,7 +53,7 @@ DEF_DO_FUN( shlist )
 	"[" FB_YELLOW "Builders        " FB_CYAN "]"
 	"[" FB_YELLOW "Filename        " FB_CYAN "]" EOL);
 
-	for (shrec = first_ship_index; shrec; shrec = shrec->next)
+	for (auto* shrec : ship_index_list)
 	{
 		sprintf(buf,
 		FB_CYAN "[" PLAIN "%4d" FB_CYAN "][" PLAIN "%-24s" FB_CYAN "]"
@@ -132,7 +130,7 @@ void ship_rprog_read_programs(FILE *fp, SHIP_ROOM_DATA *sRoom)
 		exit(1);
 	}
 	CREATE(mprg, MPROG_DATA, 1);
-	sRoom->mudprogs = mprg;
+	sRoom->mudprogs.push_back(mprg);
 
 	while (!done)
 	{
@@ -156,11 +154,10 @@ void ship_rprog_read_programs(FILE *fp, SHIP_ROOM_DATA *sRoom)
 			switch (letter = fread_letter(fp))
 			{
 			case '>':
-				CREATE(mprg->next, MPROG_DATA, 1);
-				mprg = mprg->next;
+				CREATE(mprg, MPROG_DATA, 1);
+				sRoom->mudprogs.push_back(mprg);
 				break;
 			case '|':
-				mprg->next = NULL;
 				fread_to_eol(fp);
 				done = true;
 				break;
@@ -219,8 +216,7 @@ void fread_ship_rooms(SHIP_INDEX_DATA *shrec, FILE *fp)
 		sRoom->tele_vnum = x5;
 		sRoom->tunnel = x6;
 		sRoom->light = x1;
-		sRoom->first_exit = NULL;
-		sRoom->last_exit = NULL;
+		sRoom->exits.clear();
 
 		for (;;)
 		{
@@ -271,8 +267,7 @@ void fread_ship_rooms(SHIP_INDEX_DATA *shrec, FILE *fp)
 						pexit->flags = locks;
 					}
 
-					LINK(pexit, sRoom->first_exit, sRoom->last_exit, next,
-							prev);
+					sRoom->exits.push_back(pexit);
 				}
 			}
 			else if (letter == 'E')
@@ -282,8 +277,7 @@ void fread_ship_rooms(SHIP_INDEX_DATA *shrec, FILE *fp)
 				CREATE(ed, EXTRA_DESCR_DATA, 1);
 				ed->keyword = fread_string(fp);
 				ed->description = fread_string(fp);
-				LINK(ed, sRoom->first_extradesc, sRoom->last_extradesc, next,
-						prev);
+				sRoom->extradesc.push_back(ed);
 			}
 			else if (letter == '>')
 			{
@@ -296,7 +290,7 @@ void fread_ship_rooms(SHIP_INDEX_DATA *shrec, FILE *fp)
 				return;
 			}
 		}
-		LINK(sRoom, shrec->first_room, shrec->last_room, next, prev);
+		shrec->rooms.push_back(sRoom);
 		shrec->roomcount++;
 	}
 	return;
@@ -367,7 +361,7 @@ void fread_ship_data(SHIP_INDEX_DATA *ship, FILE *fp)
 				dock->target = NULL;
 				dock->targetvnum = 0;
 				dock->master_slave = -1;
-				LINK(dock, ship->first_dock, ship->last_dock, next, prev);
+				ship->docks.push_back(dock);
 
 				fMatch = true;
 			}
@@ -394,7 +388,7 @@ void fread_ship_data(SHIP_INDEX_DATA *ship, FILE *fp)
 					ship->coseat = ship->cockpit;
 				if (ship->pilotseat <= 0)
 					ship->pilotseat = ship->cockpit;
-				for (module = ship->first_module; module; module = module->next)
+				for (auto* module : ship->modules)
 				{
 					module->timer = -1;
 					if (!module->spyname)
@@ -421,7 +415,7 @@ void fread_ship_data(SHIP_INDEX_DATA *ship, FILE *fp)
 				hangar->capacity = atof(fread_word(fp));
 				hangar->status = fread_number(fp);
 				hangar->type = fread_number(fp);
-				LINK(hangar, ship->first_hangar, ship->last_hangar, next, prev);
+				ship->hangars.push_back(hangar);
 
 				fMatch = true;
 			}
@@ -483,7 +477,7 @@ void fread_ship_data(SHIP_INDEX_DATA *ship, FILE *fp)
 				module->cost = fread_number(fp);
 				module->vnum = fread_number(fp);
 				module->spyname = fread_string(fp);
-				LINK(module, ship->first_module, ship->last_module, next, prev);
+				ship->modules.push_back(module);
 
 				fread_to_eol(fp);
 				fMatch = true;
@@ -544,7 +538,7 @@ void fread_ship_data(SHIP_INDEX_DATA *ship, FILE *fp)
 				turret->vnum = fread_number(fp);
 				turret->type = fread_number(fp);
 				turret->status = fread_number(fp);
-				LINK(turret, ship->first_turret, ship->last_turret, next, prev);
+				ship->turrets.push_back(turret);
 
 				fMatch = true;
 			}
@@ -683,7 +677,7 @@ void fread_ship_resets(SHIP_INDEX_DATA *shrec, FILE *fp)
 		if (!bad)
 		{
 			pReset = make_reset(letter, extra, arg1, arg2, arg3);
-			LINK(pReset, sRoom->first_reset, sRoom->last_reset, next, prev);
+			sRoom->resets.push_back(pReset);
 		}
 	}
 
@@ -729,7 +723,7 @@ void load_ship_index(char *ship_file)
 
 		if (!str_cmp(word, "$"))
 		{
-			LINK(shrec, first_ship_index, last_ship_index, next, prev);
+			ship_index_list.push_back(shrec);
 			break;
 		}
 		else if (!str_cmp(word, "SHIP"))
@@ -768,9 +762,10 @@ void load_shipdb()
 	// krainie flage np. AREA_FOR_SHIPS -- wtedy mogloby byc kilka
 	// krainek na statki i szukaloby sie miejsca na statek w kazdej po
 	// kolei) no, ale jak sie ne ma co sie lubi.. ;)
-	for (shipTmpArea = first_area; shipTmpArea; shipTmpArea = shipTmpArea->next)
-		if (!str_cmp(shipTmpArea->filename, SHIP_TMP_AREA))
-			break;
+	shipTmpArea = nullptr;
+	for (auto* a : area_list)
+		if (!str_cmp(a->filename, SHIP_TMP_AREA))
+			{ shipTmpArea = a; break; }
 
 	IF_BUG(shipTmpArea == NULL, "You need an area: " SHIP_TMP_AREA)
 		return;
@@ -873,13 +868,13 @@ void save_ship_index(SHIP_INDEX_DATA *ship)
 		fprintf(fp, "Manuever     %d\n", ship->manuever);
 		fprintf(fp, "Maxcloack    %d\n", ship->maxcloack);
 		fprintf(fp, "Maxinterdict %d\n", ship->maxinterdict);
-		for (hangar = ship->first_hangar; hangar; hangar = hangar->next)
+		for (auto* hangar : ship->hangars)
 			fprintf(fp, "Hangar       %d %.0f %d %d\n", hangar->vnum,
 					hangar->capacity, hangar->status, hangar->type);
-		for (turret = ship->first_turret; turret; turret = turret->next)
+		for (auto* turret : ship->turrets)
 			fprintf(fp, "Turret       %d %d %d\n", turret->vnum, turret->type,
 					turret->status);
-		for (dock = ship->first_dock; dock; dock = dock->next)
+		for (auto* dock : ship->docks)
 			fprintf(fp, "Dock         %d %d \n", dock->type, dock->vnum);
 		/*	for( module = ship->first_module; module ; module = module->next ) // Narazie zakomentowane bo nie skonczylem
 		 fprintf( fp, "Module       %d %d %d %d %d %d %d %d %d %s~\n",  // jeszcze tego - Alde
@@ -895,7 +890,7 @@ void save_ship_index(SHIP_INDEX_DATA *ship)
 
 		fprintf(fp, "#ROOMS\n");
 
-		for (sRoom = ship->first_room; sRoom; sRoom = sRoom->next)
+		for (auto* sRoom : ship->rooms)
 		{
 			fprintf(fp, "#%d\n", sRoom->vnum);
 			fprintf(fp, "%s~\n", sRoom->name);
@@ -904,7 +899,7 @@ void save_ship_index(SHIP_INDEX_DATA *ship)
 					sRoom->room_flags, sRoom->sector_type, sRoom->tele_delay,
 					sRoom->tele_vnum, sRoom->tunnel);
 
-			for (xit = sRoom->first_exit; xit; xit = xit->next)
+			for (auto* xit : sRoom->exits)
 			{
 				if (IS_SET(xit->flags, EX_PORTAL)) /* don't fold portals */
 					continue;
@@ -915,13 +910,13 @@ void save_ship_index(SHIP_INDEX_DATA *ship)
 						xit->key, xit->vnum, xit->distance);
 			}
 
-			for (ed = sRoom->first_extradesc; ed; ed = ed->next)
+			for (auto* ed : sRoom->extradesc)
 				fprintf(fp, "E\n%s~\n%s~\n", ed->keyword,
 						strip_cr(ed->description));
 
-			if (sRoom->mudprogs)
+			if (!sRoom->mudprogs.empty())
 			{
-				for (mprog = sRoom->mudprogs; mprog; mprog = mprog->next)
+				for (auto* mprog : sRoom->mudprogs)
 					fprintf(fp, "> %s %s~\n%s~\n",
 							mprog_type_to_name(mprog->type), mprog->arglist,
 							strip_cr(mprog->comlist));
@@ -933,9 +928,9 @@ void save_ship_index(SHIP_INDEX_DATA *ship)
 		fprintf(fp, "#End\n\n\n");
 
 		fprintf(fp, "#RESETS\n");
-		for (sRoom = ship->first_room; sRoom; sRoom = sRoom->next)
+		for (auto* sRoom : ship->rooms)
 		{
-			for (pReset = sRoom->first_reset; pReset; pReset = pReset->next)
+			for (auto* pReset : sRoom->resets)
 			{
 				switch (pReset->command)
 				/* extra arg1 arg2 arg3 */
@@ -996,7 +991,7 @@ void save_ship_index_list()
 
 	log_string("Saving ship index list.");
 
-	for (ship = first_ship_index; ship; ship = ship->next)
+	for (auto* ship : ship_index_list)
 		fprintf(fp, "%s\n", ship->filename);
 
 	fprintf(fp, "$\n");
@@ -1017,7 +1012,7 @@ DEF_DO_FUN( shsave )
 
 	if (!str_cmp(argument, "all"))
 	{
-		for (ship = first_ship_index; ship; ship = ship->next)
+		for (auto* ship : ship_index_list)
 			save_ship_index(ship);
 		send_to_char("Ok. Saving list..." NL, ch);
 		save_ship_index_list();

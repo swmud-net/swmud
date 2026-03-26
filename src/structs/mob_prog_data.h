@@ -23,7 +23,6 @@
 
 struct	mob_prog_data
 {
-	MPROG_DATA			* next;
 	int64				type;
 	bool				triggered;
 	int					resetdelay;

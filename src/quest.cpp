@@ -117,7 +117,7 @@ bool belongs_to_quest( CHAR_DATA *ch, QUEST_DATA *quest )
 		return true;
 
 	/* moby zaproszone */
-	for( qMob = quest->first_mob; qMob; qMob = qMob->next )
+	for( auto* qMob : quest->mobs )
 	{
 		if( qMob->vnum == ch->pIndexData->vnum )
 			return true;
@@ -159,9 +159,9 @@ bool done_that_quest( CHAR_DATA *ch, int id )
 		   && IS_SET( ch->act, PLR_HOLYLIGHT 	) )
 		return false;
 
-	// powtarzalne questy mimo, ¿e dodane s± do listy wykonanych,
-	// uznane s± za niewykonywane dot±d.
-	for( pQuest = first_quest_index; pQuest; pQuest = pQuest->next )
+	// powtarzalne questy mimo, ï¿½e dodane sï¿½ do listy wykonanych,
+	// uznane sï¿½ za niewykonywane dotï¿½d.
+	for( auto* pQuest : quest_index_list )
 		if( pQuest->quest_id == id )
 		{
 			if( IS_SET( pQuest->flags, QUEST_REPEATABLE ) )
@@ -178,7 +178,7 @@ bool done_that_quest( CHAR_DATA *ch, int id )
 	return false;
 }
 
-/* zaznaczamy, ¿e gracz ju¿ robi³ taki quest */
+/* zaznaczamy, ï¿½e gracz juï¿½ robiï¿½ taki quest */
 void add_to_done_quests( CHAR_DATA *ch, QUEST_DATA *quest )
 {
 	char	buf	[MSL];
@@ -202,7 +202,7 @@ void add_to_done_quests( CHAR_DATA *ch, QUEST_DATA *quest )
 	return;
 }
 
-/* ile czasu jeszcze zosta³o nam na zrobienie questa? */
+/* ile czasu jeszcze zostaï¿½o nam na zrobienie questa? */
 int calc_time( QUEST_DATA *quest )
 {
 	int	time;
@@ -215,16 +215,13 @@ int calc_time( QUEST_DATA *quest )
 }
 
 
-/* przetwarza akcjê(e) (je¶li jest zdefiniowana) PO zakoñczeniu chapteru */
+/* przetwarza akcjï¿½(e) (jeï¿½li jest zdefiniowana) PO zakoï¿½czeniu chapteru */
 bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 {
-	QUEST_ACTION_DATA *	action;
 	bool		done 	= true;
 
-    for( action = chapter ? chapter->first_action :
-		 quest->first_action;
-		 action;
-		 action = action->next )
+    for( auto* action : chapter ? chapter->actions :
+		 quest->actions )
 	{
 		if (action->done)
 		{
@@ -232,20 +229,20 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 		}
 
 		done = false; /*   <-----.                                       */
-		/* to znaczy, ¿e znale¼li¶my akcjê, teraz: czy zostanie wykonana */
+		/* to znaczy, ï¿½e znaleï¿½liï¿½my akcjï¿½, teraz: czy zostanie wykonana */
 
 		switch ( action->command )
 		{
 			default:
 				q_bug( "Process_action: unknown action type" );
 				action->done = true;
-				return 		false; /* nie zosta³a wykonana */
+				return 		false; /* nie zostaï¿½a wykonana */
 
 			case ACTION_STOPQUEST:
 				action->done = true;
 				if( !quest->finished )
 					quest_stop( quest->player, action->arg1 );
-				return 		true; /* zosta³a wykonana */
+				return 		true; /* zostaï¿½a wykonana */
 
 			case ACTION_NONE:
 				action->done = true;
@@ -261,12 +258,13 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 
 			case ACTION_TELL:
 			{
-				QUEST_MOB_DATA * 	qMob;
+				QUEST_MOB_DATA * 	qMob = nullptr;
 				bool		found = false;
 
-				for( qMob = quest->first_mob; qMob; qMob=qMob->next )
-					if( qMob->mob && !char_died( qMob->mob ) && qMob->vnum == action->arg1 )
+				for( auto* qm : quest->mobs )
+					if( qm->mob && !char_died( qm->mob ) && qm->vnum == action->arg1 )
 				{
+					qMob = qm;
 					found = true;
 					break;
 				}
@@ -289,9 +287,10 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 				bool		found = false;
 
 				action->done = true;
-				for( qMob = quest->first_mob; qMob; qMob=qMob->next )
-					if( qMob->mob->pIndexData->vnum == action->arg1 )
+				for( auto* qm : quest->mobs )
+					if( qm->mob->pIndexData->vnum == action->arg1 )
 				{
+					qMob = qm;
 					found = true;
 					break;
 				}
@@ -305,11 +304,14 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 
 					pMobIndex = qMob->mob->pIndexData;
 
-					for ( mprg = pMobIndex->mudprogs; mprg; mprg = mprg->next, prog_nr++ )
+					for ( auto* mprg : pMobIndex->mudprogs )
 					{
 						/* tylko quest_progi */
 						if( mprg->type != QUEST_PROG )
+						{
+							prog_nr++;
 							continue;
+						}
 
 						if( !str_cmp( mprg->arglist, action->arg4 ) )
 						{
@@ -322,6 +324,7 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 							current_prog_number = old_prog_nr;
 							break;
 						}
+						prog_nr++;
 					}
 				}
 				else
@@ -336,12 +339,15 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 			/* Wszystkie ewentualne bledy sa wasze nie moje ;)))   */
 			case ACTION_RUNCHPT:
 			{
-				CHAPTER_DATA * chapter;
+				CHAPTER_DATA * chapter = nullptr;
 
-				for( chapter = quest->first_chapter; chapter; chapter = chapter->next )
+				for( auto* ch : quest->chapters )
 				{
-					if( !str_cmp( action->arg4, chapter->pIndexData->name ) )
+					if( !str_cmp( action->arg4, ch->pIndexData->name ) )
+					{
+						chapter = ch;
 						break;
+					}
 				}
 
 				if( !chapter )
@@ -357,7 +363,7 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 			}
 			case ACTION_REWARD:
 			{
-				QUEST_MOB_DATA * 	qMob;
+				QUEST_MOB_DATA * 	qMob = nullptr;
 				OBJ_INDEX_DATA *	pObjIndex;
 				OBJ_DATA *		pObj;
 				bool		found 		= false;
@@ -366,9 +372,10 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 				int			mvnum 		= action->arg1;
 //		    int			immediate 	= action->arg3;
 
-				for( qMob = quest->first_mob; qMob; qMob=qMob->next )
-					if( qMob->mob->pIndexData->vnum == mvnum )
+				for( auto* qm : quest->mobs )
+					if( qm->mob->pIndexData->vnum == mvnum )
 				{
+					qMob = qm;
 					found = true;
 					break;
 				}
@@ -399,7 +406,7 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 				act( PLAIN, "$N daje ci $p$3.",
 					 quest->player, pObj, qMob->mob, TO_CHAR );
 				ch_printf( quest->player, FB_WHITE
-						"Dosta³%s¶ przedmiot Questowy!" EOL,
+						"Dostaï¿½%sï¿½ przedmiot Questowy!" EOL,
 						SEX_SUFFIX_EAE( quest->player ) );
 
 				/*  FIXME !!! */
@@ -422,7 +429,7 @@ QUEST_MOB_DATA *add_to_qmobs( CHAR_DATA *pMob, QUEST_DATA *quest, bool invited )
 	QUEST_MOB_DATA * 	qMob;
 
 	CREATE( qMob, QUEST_MOB_DATA, 1 );
-	LINK( qMob, quest->first_mob, quest->last_mob, next, prev );
+	quest->mobs.push_back( qMob );
 
 	qMob->mob 		= pMob;
 	qMob->vnum 		= pMob->pIndexData->vnum;
@@ -434,9 +441,9 @@ QUEST_MOB_DATA *add_to_qmobs( CHAR_DATA *pMob, QUEST_DATA *quest, bool invited )
 }
 
 /*
- * ³aduje moba a ³aduj±c dodaje go do listy struktur QUEST_MOB_DATA
+ * ï¿½aduje moba a ï¿½adujï¿½c dodaje go do listy struktur QUEST_MOB_DATA
  * ta struktura jest potrzebna do save'owania mobow questowych i
- * ogólnie przyspiesza wyszukiwanie mobkoff
+ * ogï¿½lnie przyspiesza wyszukiwanie mobkoff
  */
 QUEST_MOB_DATA *qmob_invoke( int pIndex, QUEST_DATA *quest )
 {
@@ -463,9 +470,9 @@ QUEST_MOB_DATA *qmob_invoke( int pIndex, QUEST_DATA *quest )
 
 
 /*
- * ³aduje obj a ³aduj±c dodaje go do listy struktur QUEST_OBJ_DATA
+ * ï¿½aduje obj a ï¿½adujï¿½c dodaje go do listy struktur QUEST_OBJ_DATA
  * ta struktura jest potrzebna do save'owania obj questowych i
- * ogólnie przyspiesza wyszukiwanie przedmiotów
+ * ogï¿½lnie przyspiesza wyszukiwanie przedmiotï¿½w
  */
 QUEST_OBJ_DATA *qobj_invoke( int pIndex, QUEST_DATA *quest, int level )
 {
@@ -487,7 +494,7 @@ QUEST_OBJ_DATA *qobj_invoke( int pIndex, QUEST_DATA *quest, int level )
 
 
 	CREATE( qObj, QUEST_OBJ_DATA, 1 );
-	LINK( qObj, quest->first_obj, quest->last_obj, next, prev );
+	quest->objs.push_back( qObj );
 
 	qObj->obj 		= pObj;
 	pObj->inquest	= quest;
@@ -500,33 +507,38 @@ QUEST_OBJ_DATA *qobj_invoke( int pIndex, QUEST_DATA *quest, int level )
 }
 
 /*
-   Funkcja inicjuje jeden rozdzia³ questa:
-   ³aduje moby, przedmioty etc.
+   Funkcja inicjuje jeden rozdziaï¿½ questa:
+   ï¿½aduje moby, przedmioty etc.
 
-   Je¶li chaptnr ==  0 : inicjowany jest nag³owek questa
-   Je¶li chaptnr == -1 : przechodzimy do nastêpnego rozdzia³u
-   Zwraca true je¶li siê uda.
+   Jeï¿½li chaptnr ==  0 : inicjowany jest nagï¿½owek questa
+   Jeï¿½li chaptnr == -1 : przechodzimy do nastï¿½pnego rozdziaï¿½u
+   Zwraca true jeï¿½li siï¿½ uda.
  */
 bool init_chapter( QUEST_DATA *quest, int chaptnr )
 {
 	CHAPTER_DATA *	pChapter = NULL;
-	QUEST_CMND_DATA * 	pComD;
 
 	if( chaptnr != -1 && chaptnr != 0 )
 	{
-		for( pChapter = quest->first_chapter; pChapter; pChapter = pChapter->next )
-			if( pChapter->nr == chaptnr )
+		for( auto* ch : quest->chapters )
+			if( ch->nr == chaptnr )
+			{
+				pChapter = ch;
 				break;
+			}
 	}
 	else if( chaptnr == -1 )
 	{
 		if( !quest->curr_chapter )
 			return false;
-		pChapter = quest->curr_chapter->next;
+		/* find the chapter after curr_chapter */
+		auto it = std::find(quest->chapters.begin(), quest->chapters.end(), quest->curr_chapter);
+		if( it != quest->chapters.end() && ++it != quest->chapters.end() )
+			pChapter = *it;
 	}
 
 	if( !pChapter && chaptnr == CHAPTER_NEXT )
-		return false; /* to znaczy, ¿e skakali¶my z ostatniego chaptera */
+		return false; /* to znaczy, ï¿½e skakaliï¿½my z ostatniego chaptera */
 
 	if( !pChapter && chaptnr != 0 )
 	{
@@ -534,9 +546,8 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 		return false;
 	}
 
-    for( pComD = ( chaptnr == 0 ? quest->first_init_cmd :
-		 pChapter->first_init_cmd );
-		 pComD; pComD = pComD->next )
+    for( auto* pComD : ( chaptnr == 0 ? quest->init_cmds :
+		 pChapter->init_cmds ) )
 	{
 		ROOM_INDEX_DATA *	pRoomIndex;
 		CHAR_DATA *		pMob;
@@ -562,7 +573,7 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 					continue;
 				}
 
-				{ /*  Losujemy 1 pokój z zakresu */
+				{ /*  Losujemy 1 pokï¿½j z zakresu */
 					int loop=0;
 
 					while( loop < 99 )
@@ -632,7 +643,7 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 
 				if( (qObj = qobj_invoke( pComD->arg1,
 					 quest,
-					 quest->last_obj->obj->level )) == NULL )
+					 quest->objs.back()->obj->level )) == NULL )
 					continue;
 
 				if (pComD->arg2 == 1)
@@ -646,7 +657,7 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 			break;
 
 			case INIT_EQUIP_MOB:
-				if ( !quest->last_mob || !quest->last_mob->mob )
+				if ( quest->mobs.empty() || !quest->mobs.back()->mob )
 				{
 					q_bug( "Init_chapter: INIT_EQUIP_MOB No last Mob: vnum %d.",
 						   pComD->arg1 );
@@ -655,7 +666,7 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 
 				if( (qObj = qobj_invoke( pComD->arg1,
 					 quest,
-					 quest->last_mob->mob->top_level )) == NULL )
+					 quest->mobs.back()->mob->top_level )) == NULL )
 					continue;
 
 				if (pComD->arg2 == 1)
@@ -664,10 +675,10 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 					qObj->obj->timer = pComD->arg2;
 
 				pComD->done = true;
-				obj_to_char( qObj->obj, quest->last_mob->mob );
+				obj_to_char( qObj->obj, quest->mobs.back()->mob );
 
 				if( pComD->arg3 != -1 )
-					equip_char( quest->last_mob->mob, qObj->obj, pComD->arg3 );
+					equip_char( quest->mobs.back()->mob, qObj->obj, pComD->arg3 );
 				break;
 
 			case INIT_PURGE:
@@ -697,7 +708,7 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 				}
 				break;
 
-				case INIT_HINT:	/* tu olewamy - quest info to za nas za³atwi */
+				case INIT_HINT:	/* tu olewamy - quest info to za nas zaï¿½atwi */
 					break;
 
 			case INIT_ECHO:
@@ -720,8 +731,8 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 				char_from_room( pMob );
 				char_to_room  ( pMob, pRoomIndex );
 				send_to_char(
-						FB_BLUE "Zaczynasz czuæ siê bardzo dziwnie i... " EOL
-						FB_BLUE "nagle jeste¶ w zupe³nie innym miejscu ni¿ przed chwil±!" EOL, pMob );
+						FB_BLUE "Zaczynasz czuï¿½ siï¿½ bardzo dziwnie i... " EOL
+						FB_BLUE "nagle jesteï¿½ w zupeï¿½nie innym miejscu niï¿½ przed chwilï¿½!" EOL, pMob );
 				do_look( pMob, (char *)"auto" );
 				break;
 			case INIT_INVITE_MOB:
@@ -754,13 +765,13 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 			   pChapter->pIndexData->name,
 			   pChapter->nr );
 
-		/* je¶li chapter nie ma eventów to znaczy ¿e wszystko zrobione nie? */
-		if(!pChapter->first_event )
+		/* jeï¿½li chapter nie ma eventï¿½w to znaczy ï¿½e wszystko zrobione nie? */
+		if(pChapter->events.empty() )
 			pChapter->completed = true;
 
 
-	/* Initujemy chaptery a¿ do pierwszego napotkanego criticala
-		Potem bêdziemy czekaæ */
+	/* Initujemy chaptery aï¿½ do pierwszego napotkanego criticala
+		Potem bï¿½dziemy czekaï¿½ */
 		if( pChapter->pIndexData->type != CHAPTER_CRITICAL
 				  &&  pChapter->pIndexData->type != CHAPTER_VERY_CRITICAL )
 			init_chapter( quest, CHAPTER_NEXT );
@@ -769,20 +780,17 @@ bool init_chapter( QUEST_DATA *quest, int chaptnr )
 }
 
 /* najbardzie lamerski styl wyszukiwania questora:
-    NIE PRÓBUJCIE TEGO W DOMU!!! ;)  */
+    NIE PRï¿½BUJCIE TEGO W DOMU!!! ;)  */
 CHAR_DATA *get_questor( QUEST_DATA *quest )
 {
-	CHAR_DATA *		questor;
-
 	if( quest->player && quest->player->in_room )
-		for( questor = quest->player->in_room->first_person;
-				   questor; questor = questor->next_in_room )
+		for( auto* questor : quest->player->in_room->people )
 			if( IS_NPC( questor )
 						 && quest->pIndexData->questor == questor->pIndexData->vnum )
 				return questor;
 
 	/* No a jak nie ma obok gracza.. */
-	for( questor = first_char; questor; questor = questor->next )
+	for( auto* questor : char_list )
 		if( IS_NPC( questor )
 				  && quest->pIndexData->questor == questor->pIndexData->vnum )
 			return questor;
@@ -792,10 +800,10 @@ CHAR_DATA *get_questor( QUEST_DATA *quest )
 
 /*
  * zgadnij co ta f-cja robi ;)
- * Je¶li fromfile == true to znaczy ze quest jest ReStartowany czyli
+ * Jeï¿½li fromfile == true to znaczy ze quest jest ReStartowany czyli
  * gracz wchodzi do gry z zapisanym wczesniej questem
- * Nic wtedy nie jest inicjowane a i moby i objs siê nie ³aduj±
- * (bo s± ³adowane z 'load_quest_data')
+ * Nic wtedy nie jest inicjowane a i moby i objs siï¿½ nie ï¿½adujï¿½
+ * (bo sï¿½ ï¿½adowane z 'load_quest_data')
  */
 QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 {
@@ -810,9 +818,14 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 
 	int			i = 1;
 
-	for( pQuest = first_quest_index; pQuest; pQuest = pQuest->next )
-		if( pQuest->quest_id == quest_id )
+	QUEST_INDEX_DATA *pQuest_found = nullptr;
+	for( auto* pq : quest_index_list )
+		if( pq->quest_id == quest_id )
+		{
+			pQuest_found = pq;
 			break;
+		}
+	pQuest = pQuest_found;
 
 	if( !pQuest )
 	{
@@ -827,7 +840,7 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 	{
 		CHAR_DATA      *	questor;
 
-		/* Wciskamy questora na listê questmobów questa*/
+		/* Wciskamy questora na listï¿½ questmobï¿½w questa*/
 		if( !(questor=get_questor( quest ) ) )
 		{
 			q_bug( "Propably dead questor: %s QUEST: %s",
@@ -837,7 +850,7 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 			add_to_qmobs( questor, quest, true );
 
 		/* Trog: alokujemy komendy */
-		FOREACH( cmd, pQuest->first_init_cmd )
+		for( auto* cmd : pQuest->init_cmds )
 		{
 			CREATE( pCmnd, QUEST_CMND_DATA, 1 );
 			pCmnd->arg1 = cmd->arg1;
@@ -846,13 +859,12 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 			STRDUP( pCmnd->arg4, cmd->arg4 );
 			pCmnd->command = cmd->command;
 			pCmnd->done = false;
-			LINK( pCmnd, quest->first_init_cmd, quest->last_init_cmd, next, prev );
+			quest->init_cmds.push_back( pCmnd );
 		}
 
 
 		/* a teraz specyficzny init (invite_mob) */
-		for( pCmnd = quest->first_init_cmd;
-				   pCmnd; pCmnd = pCmnd->next )
+		for( auto* pCmnd : quest->init_cmds )
 		{
 			if ( pCmnd->command == INIT_INVITE_MOB )
 			{
@@ -869,7 +881,7 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 				else
 				{
 					pMob = NULL;
-					for( mob = first_char; mob; mob = mob->next )
+					for( auto* mob : char_list )
 						if ( IS_NPC(mob) && pIndex == mob->pIndexData->vnum )
 					{
 						pMob = mob;
@@ -889,7 +901,7 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 		}
 
 		/* Trog: allokujemy akcje */
-		FOREACH( action, pQuest->first_action )
+		for( auto* action : pQuest->actions )
 		{
 			QUEST_ACTION_DATA *pAction;
 			CREATE( pAction, QUEST_ACTION_DATA, 1 );
@@ -899,14 +911,14 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 			STRDUP( pAction->arg4, action->arg4 );
 			pAction->command = action->command;
 			pAction->done = false;
-			LINK( pAction, quest->first_action, quest->last_action, next, prev );
+			quest->actions.push_back( pAction );
 		}
 	}
 
 	if( !fromfile )
 		init_chapter( quest, 0 );
 
-	for( ChaptIndex = pQuest->first_chapter; ChaptIndex; ChaptIndex = ChaptIndex->next, i++ )
+	for( auto* ChaptIndex : pQuest->chapters )
 	{
 		int		x = 1;
 
@@ -914,10 +926,10 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 		pChapter->pIndexData	= ChaptIndex;
 		pChapter->completed 	= false;
 		pChapter->nr		= i;
-		LINK( pChapter, quest->first_chapter, quest->last_chapter, next, prev );
+		quest->chapters.push_back( pChapter );
 
 		/* Trog: alokujemy komendy */
-		FOREACH( cmd, ChaptIndex->first_init_cmd )
+		for( auto* cmd : ChaptIndex->init_cmds )
 		{
 			CREATE( pCmnd, QUEST_CMND_DATA, 1 );
 			pCmnd->arg1 = cmd->arg1;
@@ -926,11 +938,11 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 			STRDUP( pCmnd->arg4, cmd->arg4 );
 			pCmnd->command = cmd->command;
 			pCmnd->done = false;
-			LINK( pCmnd, pChapter->first_init_cmd, pChapter->last_init_cmd, next, prev );
+			pChapter->init_cmds.push_back( pCmnd );
 		}
 
 		/* Trog: allokujemy akcje */
-		FOREACH( action, ChaptIndex->first_action )
+		for( auto* action : ChaptIndex->actions )
 		{
 			QUEST_ACTION_DATA *pAction;
 			CREATE( pAction, QUEST_ACTION_DATA, 1 );
@@ -940,24 +952,26 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 			STRDUP( pAction->arg4, action->arg4 );
 			pAction->command = action->command;
 			pAction->done = false;
-			LINK( pAction, pChapter->first_action, pChapter->last_action, next, prev );
+			pChapter->actions.push_back( pAction );
 		}
 
 		/* allokujemy eventy */
-		for( pCmnd = ChaptIndex->first_event; pCmnd; pCmnd = pCmnd->next, x++ )
+		for( auto* pCmnd : ChaptIndex->events )
 		{
 			CREATE( pEvent, EVENT_DATA, 1 );
 			pEvent->done 	= false;
 			pEvent->cmd 	= pCmnd;
-			pEvent->nr		= x;
-			LINK( pEvent, pChapter->first_event, pChapter->last_event, next, prev );
+			pEvent->nr		= x++;
+			pChapter->events.push_back( pEvent );
 		}
+
+		i++;
 	}
 
 	if( !fromfile )
 		init_chapter( quest, 1 );
 
-	LINK( quest, first_quest, last_quest, next, prev );
+	quest_list.push_back( quest );
 
 	q_log( "Player: %s %starting Quest: %s (%d)",
 		   ch->name, fromfile ? "Res" : "S",
@@ -975,100 +989,72 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 }
 
 /*
- * sprz±ta po que¶cie.
- * uruchamia siê zawsze gdy gracz
- * wychodzi z gry i/lub na koñcu questu
+ * sprzï¿½ta po queï¿½cie.
+ * uruchamia siï¿½ zawsze gdy gracz
+ * wychodzi z gry i/lub na koï¿½cu questu
  */
 void quest_cleanup( CHAR_DATA *ch, bool end )
 {
 	QUEST_DATA *	quest = ch->inquest;
-	QUEST_MOB_DATA *	qMob, 		 *	qMob_next;
-	QUEST_OBJ_DATA *	qObj, 		 *	qObj_next;
-	QUEST_ACTION_DATA *	pAction, 	 *	pAction_next;
-	EVENT_DATA *	pEvent, 	 *	pEvent_next;
-	CHAPTER_DATA *	pChapter, 	 *	pChapter_next;
-	QUEST_CMND_DATA 	*pCmnd, *pCmnd_next;
 
 	if( !quest )
 		return;
 
-	for( qMob = quest->first_mob; qMob; qMob = qMob_next )
 	{
-		qMob_next = qMob->next;
-
-		if( !qMob->invited ) /* moby wci±gniête do questu oszczêdzamy */
-			extract_char( qMob->mob, true );
-		else
+		auto snapshot = quest->mobs;
+		for( auto* qMob : snapshot )
 		{
-			UNLINK( qMob, quest->first_mob, quest->last_mob, next, prev );
-			DISPOSE( qMob );
+			if( !qMob->invited ) /* moby wciï¿½gniï¿½te do questu oszczï¿½dzamy */
+				extract_char( qMob->mob, true );
+			else
+			{
+				quest->mobs.remove( qMob );
+				DISPOSE( qMob );
+			}
 		}
 	}
 
-	for( qObj = quest->first_obj; qObj; qObj = qObj_next )
 	{
-		qObj_next = qObj->next;
-
+		auto snapshot = quest->objs;
+		for( auto* qObj : snapshot )
+		{
 //	if( IS_OBJ_STAT( qObj->obj, ITEM_QUEST ) )
-		extract_obj( qObj->obj );
+			extract_obj( qObj->obj );
+		}
 	}
 
 	/* Trog */
-	for( pCmnd = quest->first_init_cmd; pCmnd; pCmnd = pCmnd_next )
-	{
-		pCmnd_next = pCmnd->next;
-
-		UNLINK( pCmnd, quest->first_init_cmd, quest->last_init_cmd, next, prev );
+	for( auto* pCmnd : quest->init_cmds )
 		free_qcmd( pCmnd );
-	}
-    pCmnd = NULL;
+	quest->init_cmds.clear();
 
 	/* Trog */
-	for( pAction = quest->first_action; pAction; pAction = pAction_next )
-	{
-		pAction_next = pAction->next;
-
-		UNLINK( pAction, quest->first_action, quest->last_action, next, prev );
+	for( auto* pAction : quest->actions )
 		free_qaction( pAction );
-	}
-    pAction = NULL;
+	quest->actions.clear();
 
-	for( pChapter = quest->first_chapter; pChapter; pChapter = pChapter_next )
+	for( auto* pChapter : quest->chapters )
 	{
-		pChapter_next = pChapter->next;
-
 		/* Trog */
-		for( pCmnd = pChapter->first_init_cmd; pCmnd; pCmnd = pCmnd_next )
-		{
-			pCmnd_next = pCmnd->next;
-
-			UNLINK( pCmnd, pChapter->first_init_cmd, pChapter->last_init_cmd, next, prev );
+		for( auto* pCmnd : pChapter->init_cmds )
 			free_qcmd( pCmnd );
-		}
+		pChapter->init_cmds.clear();
 
 		/* Trog */
-		for( pAction = pChapter->first_action; pAction; pAction = pAction_next )
-		{
-			pAction_next = pAction->next;
-
-			UNLINK( pAction, pChapter->first_action, pChapter->last_action, next, prev );
+		for( auto* pAction : pChapter->actions )
 			free_qaction( pAction );
-		}
+		pChapter->actions.clear();
 
-		for( pEvent = pChapter->first_event; pEvent; pEvent = pEvent_next )
-		{
-			pEvent_next = pEvent->next;
-
-			UNLINK( pEvent, pChapter->first_event, pChapter->last_event, next, prev );
+		for( auto* pEvent : pChapter->events )
 			DISPOSE( pEvent );
-		}
+		pChapter->events.clear();
 
-		UNLINK( pChapter, quest->first_chapter, quest->last_chapter, next, prev );
 		DISPOSE( pChapter );
 	}
+	quest->chapters.clear();
 
 	ch->inquest	= NULL;
-	UNLINK( quest, first_quest, last_quest, next, prev );
+	quest_list.remove( quest );
 	DISPOSE( quest );
 	top_quest--;
 
@@ -1076,8 +1062,8 @@ void quest_cleanup( CHAR_DATA *ch, bool end )
 }
 
 /*
- * uruchamia siê tylko, je¶li gracz skoñczy quest
- * (albo kto¶ mu go wy³±czy)
+ * uruchamia siï¿½ tylko, jeï¿½li gracz skoï¿½czy quest
+ * (albo ktoï¿½ mu go wyï¿½ï¿½czy)
  */
 void quest_stop( CHAR_DATA * owner, int type )
 {
@@ -1086,13 +1072,10 @@ void quest_stop( CHAR_DATA * owner, int type )
 	if( !quest )
 		return;
 
-    /* je¶li to by³o normalne zakoñczenie dodajemy jeszcze jeden
-	* rozdzia³ -- powrót po nagrodê */
+    /* jeï¿½li to byï¿½o normalne zakoï¿½czenie dodajemy jeszcze jeden
+	* rozdziaï¿½ -- powrï¿½t po nagrodï¿½ */
 	if( type == STOP_OK )
 	{
-
-		CHAPTER_DATA *	chapter;
-		EVENT_DATA *	event;
 
 		quest->finished 	= true;
 		//	quest_cleanup( owner, false );
@@ -1101,18 +1084,16 @@ void quest_stop( CHAR_DATA * owner, int type )
 			   owner->name,
 			   quest->pIndexData->quest_id,
 			   quest->pIndexData->name );
-		send_to_char( "Doskona³a robota. Wracaj do zleceniodawcy po nagrodê!" NL,
+		send_to_char( "Doskonaï¿½a robota. Wracaj do zleceniodawcy po nagrodï¿½!" NL,
 					  owner );
 
-		/* Sprawd¼my, czy gracz powstrzyma³ siê od wykonania bardzo
-		niekrytycznych eventów, je¶li tak - nagród¼my go */
-		for( chapter = owner->inquest->first_chapter;
-				   chapter;
-				   chapter = chapter->next )
+		/* Sprawdï¿½my, czy gracz powstrzymaï¿½ siï¿½ od wykonania bardzo
+		niekrytycznych eventï¿½w, jeï¿½li tak - nagrï¿½dï¿½my go */
+		for( auto* chapter : owner->inquest->chapters )
 		{
 			if( chapter->pIndexData->type == CHAPTER_VERY_UNCRITICAL
 						 &&  !chapter->completed )
-				for( event = chapter->first_event; event; event = event->next )
+				for( auto* event : chapter->events )
 					owner->inquest->curr_qp += event->cmd->arg3;
 		}
 
@@ -1135,8 +1116,8 @@ void quest_stop( CHAR_DATA * owner, int type )
 			   quest->pIndexData->name );
 
 		send_to_char( FB_WHITE
-				"W³a¶nie min±³ czas na wykonanie twojego zadania!" EOL
-				"Ciekawe jak ty siê z tego wyt³umaczysz swojemu zleceniodawcy..." NL,
+				"Wï¿½aï¿½nie minï¿½ï¿½ czas na wykonanie twojego zadania!" EOL
+				"Ciekawe jak ty siï¿½ z tego wytï¿½umaczysz swojemu zleceniodawcy..." NL,
 		owner );
 		save_char_obj( owner );
 		/* moze juz jestesmy u questora? */
@@ -1144,7 +1125,7 @@ void quest_stop( CHAR_DATA * owner, int type )
 		return;
 	}
 
-	/* Rezygnacja: tak samo jak spó¼nienie, ale bez komunikatu */
+	/* Rezygnacja: tak samo jak spï¿½nienie, ale bez komunikatu */
 	if( type == STOP_RESIGN )
 	{
 		quest->finished = true;
@@ -1156,8 +1137,8 @@ void quest_stop( CHAR_DATA * owner, int type )
 			   quest->pIndexData->name );
 
 		send_to_char( FB_WHITE
-				"Rozk³adasz bezradnie rêce i ze ³zami w oczach rezygnujesz." EOL
-				"Ciekawe co na to twój zleceniodawca..." NL,
+				"Rozkï¿½adasz bezradnie rï¿½ce i ze ï¿½zami w oczach rezygnujesz." EOL
+				"Ciekawe co na to twï¿½j zleceniodawca..." NL,
 		owner );
 		save_char_obj( owner );
 		/* moze juz jestesmy u questora? */
@@ -1175,7 +1156,7 @@ void quest_stop( CHAR_DATA * owner, int type )
 		quest_cleanup( owner, true );
 
 		ch_printf( owner,NL FB_RED
-				"Spapra³%s¶ wszystko. Nici z twojego zadania." EOL NL,
+				"Spapraï¿½%sï¿½ wszystko. Nici z twojego zadania." EOL NL,
 				SEX_SUFFIX_EAE( owner ) );
 
 		{
@@ -1186,7 +1167,7 @@ void quest_stop( CHAR_DATA * owner, int type )
 		}
 
 		ch_printf( owner, FG_BLUE
-				"Tracisz " FB_BLUE "%d" FG_BLUE " punktów do¶wiadczenia za niewykonanie zadania!" EOL,
+				"Tracisz " FB_BLUE "%d" FG_BLUE " punktï¿½w doï¿½wiadczenia za niewykonanie zadania!" EOL,
 				quest->pIndexData->penalty );
 		owner->experience[owner->main_ability] -= quest->pIndexData->penalty;
 		if( owner->experience[owner->main_ability] < 0 )
@@ -1197,7 +1178,7 @@ void quest_stop( CHAR_DATA * owner, int type )
 		return;
 	}
 
-	/* definitywnie koñczymy zabawê w questa */
+	/* definitywnie koï¿½czymy zabawï¿½ w questa */
 	if( type == STOP_VERY_OK )
 	{
 		MOB_INDEX_DATA *	questor;
@@ -1218,30 +1199,30 @@ void quest_stop( CHAR_DATA * owner, int type )
 	//if( calc_time( quest ) >= 0 )
 		if( !quest->failed )
 		{
-			ch_tell( Quest_Master, owner, "Widzê, ¿e zadanie zosta³o ukoñczone." );
-			ch_tell( Quest_Master, owner, "¦wietnie, wielkie dziêki." 		  );
-			ch_tell( Quest_Master, owner, "Wspó³praca z tob± to przyjemno¶æ." 	  );
+			ch_tell( Quest_Master, owner, "Widzï¿½, ï¿½e zadanie zostaï¿½o ukoï¿½czone." );
+			ch_tell( Quest_Master, owner, "ï¿½wietnie, wielkie dziï¿½ki." 		  );
+			ch_tell( Quest_Master, owner, "Wspï¿½praca z tobï¿½ to przyjemnoï¿½ï¿½." 	  );
 
 
 			if( owner->inquest->curr_qp )
 			{
 				ch_printf( owner, EOL FG_GREEN
-						"W nagrodê za ukoñczenie zadania dostajesz " FB_GREEN "%d" FG_GREEN " qp." EOL,
+						"W nagrodï¿½ za ukoï¿½czenie zadania dostajesz " FB_GREEN "%d" FG_GREEN " qp." EOL,
 						owner->inquest->curr_qp );
 
 				owner->pcdata->quest_points    += owner->inquest->curr_qp;
 			}
 			fevent_trigger( owner, FE_FINISH_QUEST, owner->inquest->pIndexData );
 		}
-		else /* auæ */
+		else /* auï¿½ */
 		{
 			ch_tell( Quest_Master, owner, "No tak..." );
-			ch_tell( Quest_Master, owner, "Nie uda³o ci siê..."   );
+			ch_tell( Quest_Master, owner, "Nie udaï¿½o ci siï¿½..."   );
 			ch_tell( Quest_Master, owner, "..."   );
-			ch_tell( Quest_Master, owner, "NIE POKAZUJ MI SIÊ WIÊCEJ NA OCZY !!!"   );
+			ch_tell( Quest_Master, owner, "NIE POKAZUJ MI SIï¿½ WIï¿½CEJ NA OCZY !!!"   );
 
 			ch_printf( owner,EOL FG_BLUE
-					"Tracisz " FB_BLUE "%d" FG_BLUE " punktów do¶wiadczenia za niewykonanie zadania!" EOL,
+					"Tracisz " FB_BLUE "%d" FG_BLUE " punktï¿½w doï¿½wiadczenia za niewykonanie zadania!" EOL,
 					quest->pIndexData->penalty );
 			owner->experience[owner->main_ability] -= quest->pIndexData->penalty;
 			if( owner->experience[owner->main_ability] < 0 )
@@ -1265,10 +1246,10 @@ void quest_stop( CHAR_DATA * owner, int type )
 		return;
 	}
 
-	/* a tu koñczymy zabawê jeszcze definitywniej */
+	/* a tu koï¿½czymy zabawï¿½ jeszcze definitywniej */
 	if( type == STOP_WHO_DID_IT )
 	{
-		send_to_char( "Twój Quest zosta³ zatrzymany!" NL, owner );
+		send_to_char( "Twï¿½j Quest zostaï¿½ zatrzymany!" NL, owner );
 		quest_cleanup( owner, true );
 
 		{
@@ -1293,7 +1274,7 @@ DEF_DO_FUN( quest )
 
 	if( IS_NPC( ch ) )
 	{
-		send_to_char( "Eee tam questy... Po³a¼ sobie lepiej bez celu." NL, ch );
+		send_to_char( "Eee tam questy... Poï¿½aï¿½ sobie lepiej bez celu." NL, ch );
 		return;
 	}
 
@@ -1305,16 +1286,16 @@ DEF_DO_FUN( quest )
 		CHAPTER_DATA *		chapt;
 		bool			found;
 
-		if (!first_quest || !ch->inquest )
+		if (quest_list.empty() || !ch->inquest )
 		{
-			send_to_char ("Nie wykonujesz ¿adnego zadania w tej chwili." NL, ch);
+			send_to_char ("Nie wykonujesz ï¿½adnego zadania w tej chwili." NL, ch);
 			return;
 		}
 
 		quest = ch->inquest;
 
 		pager_printf(ch,
-					 "Bierzesz udzia³ w que¶cie: " FB_WHITE "%s" PLAIN ", dla graczy na poziomie: "
+					 "Bierzesz udziaï¿½ w queï¿½cie: " FB_WHITE "%s" PLAIN ", dla graczy na poziomie: "
 							 FB_WHITE "%d" PLAIN " do " FB_WHITE "%d" PLAIN "." EOL EOL
 							 "%s" EOL,
 					 quest->pIndexData->name,
@@ -1327,25 +1308,25 @@ DEF_DO_FUN( quest )
 			if( quest->failed )
 			{
 				pager_printf( ch,
-							  "Wzkazówka:" NL
-									  "Nie uda³o ci siê wykonaæ zadania. Wracaj do zleceniodawcy. Ale bêd± ciêgi." NL );
+							  "Wzkazï¿½wka:" NL
+									  "Nie udaï¿½o ci siï¿½ wykonaï¿½ zadania. Wracaj do zleceniodawcy. Ale bï¿½dï¿½ ciï¿½gi." NL );
 			}
 			else
 			{
 				pager_printf( ch,
-							  "Wzkazówka:" NL
-									  "Wracaj po nagrodê. Zadanie ukoñczone." NL );
+							  "Wzkazï¿½wka:" NL
+									  "Wracaj po nagrodï¿½. Zadanie ukoï¿½czone." NL );
 			}
 			return;
 		}
 
-		pager_printf( ch, "Wzkazówka:" NL );
+		pager_printf( ch, "Wzkazï¿½wka:" NL );
 
 		chapt = quest->curr_chapter;
 
 		if( !chapt )
 		{
-			pager_printf( ch, "Zdecydowanie musisz co¶ wykombinowaæ..." NL );
+			pager_printf( ch, "Zdecydowanie musisz coï¿½ wykombinowaï¿½..." NL );
 			q_bug( "No curr_chapter found in %s's quest (%d:%s)",
 				   ch->name,
 				   ch->inquest->pIndexData->quest_id,
@@ -1354,24 +1335,28 @@ DEF_DO_FUN( quest )
 		}
 
 		found = false;
-		for( pCmnd = chapt->pIndexData->last_init_cmd; pCmnd; pCmnd = pCmnd->prev )
 		{
-			if( pCmnd->command == INIT_HINT && *pCmnd->arg4 )
+			QUEST_CMND_DATA *pCmnd_found = nullptr;
+			for( auto it = chapt->pIndexData->init_cmds.rbegin(); it != chapt->pIndexData->init_cmds.rend(); ++it )
 			{
-				found = true;
-				break;
+				if( (*it)->command == INIT_HINT && *(*it)->arg4 )
+				{
+					pCmnd_found = *it;
+					found = true;
+					break;
+				}
 			}
-		}
 
 		if( found )
-			pager_printf( ch, "%s" EOL, pCmnd->arg4 );
+			pager_printf( ch, "%s" EOL, pCmnd_found->arg4 );
 		else
 			pager_printf( ch, "Kombinuj, kombinuj..." NL );
+		}
 
-		/* Ostrzegamy na 15 minut przed koñcem */
+		/* Ostrzegamy na 15 minut przed koï¿½cem */
 		if( calc_time( quest ) <= 15 )
 			pager_printf( ch, NL FB_YELLOW
-					"Uwaga! Zosta³o ci ju¿ ma³o czasu na wykonanie zadania." EOL );
+					"Uwaga! Zostaï¿½o ci juï¿½ maï¿½o czasu na wykonanie zadania." EOL );
 
 		if( get_trust( ch ) > LEVEL_QUESTSEE )
 		{
@@ -1385,16 +1370,16 @@ DEF_DO_FUN( quest )
 
 	if( !str_cmp( arg, "giveup" ) )
 	{
-		if (!first_quest || !ch->inquest )
+		if (quest_list.empty() || !ch->inquest )
 		{
-			send_to_char ("Nie wykonujesz ¿adnego zadania w tej chwili." NL, ch);
+			send_to_char ("Nie wykonujesz ï¿½adnego zadania w tej chwili." NL, ch);
 			return;
 		}
 
 		if( IS_SET( ch->inquest->pIndexData->flags, QUEST_NORESIGN ) )
 		{
-			send_to_char ("Nie mo¿esz zrezygnowaæ z tego zadania." NL, ch);
-			send_to_char ("Nie poddawaj siê, walcz!" NL, ch);
+			send_to_char ("Nie moï¿½esz zrezygnowaï¿½ z tego zadania." NL, ch);
+			send_to_char ("Nie poddawaj siï¿½, walcz!" NL, ch);
 			return;
 		}
 
@@ -1409,10 +1394,10 @@ DEF_DO_FUN( quest )
 		QUEST_INDEX_DATA *	pQuest;
 
 		ch_printf( ch,
-				   "                              Spis Questów:" NL FB_WHITE
+				   "                              Spis Questï¿½w:" NL FB_WHITE
 						   " Nazwa                            Autor             Poziomy" EOL );
 
-		for( pQuest = first_quest_index; pQuest; pQuest = pQuest->next,i++ )
+		for( auto* pQuest : quest_index_list )
 		{
 
 			if( IS_SET( pQuest->flags, QUEST_HIDDEN )
@@ -1443,12 +1428,12 @@ DEF_DO_FUN( quest )
 		if( ch->inquest )
 		{
 			send_to_char(
-					"A czy ty przypadkiem nie bierzesz ju¿ udzia³u w przygodzie?" NL,
+					"A czy ty przypadkiem nie bierzesz juï¿½ udziaï¿½u w przygodzie?" NL,
 			ch );
 			return;
 		}
 
-		for( pQuest = first_quest_index; pQuest; pQuest = pQuest->next )
+		for( auto* pQuest : quest_index_list )
 		{
 			if( get_trust(ch) < LEVEL_QUESTSEE )
 				if((IS_SET( pQuest->flags, QUEST_NF_COMBAT		)
@@ -1469,19 +1454,18 @@ DEF_DO_FUN( quest )
 								&& ch->main_ability == FORCE_ABILITY 		) )
 					continue;
 
-			for( questor = ch->in_room->first_person;
-						  questor;
-						  questor = questor->next_in_room )
+			for( auto* q : ch->in_room->people )
 			{
 
-				if ( IS_NPC( questor )
-								 && pQuest->questor == questor->pIndexData->vnum )
+				if ( IS_NPC( q )
+								 && pQuest->questor == q->pIndexData->vnum )
 				{
 					if( !str_cmp(pQuest->author, ch->name) )
 					{
 						if( IS_SET( pQuest->flags, QUEST_PROTOTYPE )
 											  || !done_that_quest( ch, pQuest->quest_id ) )
 						{
+							questor = q;
 							found = true;
 							break;
 						}
@@ -1492,6 +1476,7 @@ DEF_DO_FUN( quest )
 													   || ( get_trust( ch ) >= LEVEL_QUESTSEE
 															   && IS_SET( ch->act, PLR_HOLYLIGHT ) ) ) )
 					{
+						questor = q;
 						found = true;
 						break;
 					}
@@ -1506,7 +1491,7 @@ DEF_DO_FUN( quest )
 				   ||  !pQuest  )
 		{
 			send_to_char(
-					"Nie mo¿esz znale¼æ nikogo, kto móg³by daæ ci odpowiednie zadanie." NL,
+					"Nie moï¿½esz znaleï¿½ï¿½ nikogo, kto mï¿½gï¿½by daï¿½ ci odpowiednie zadanie." NL,
 			ch );
 			return;
 		}
@@ -1517,12 +1502,12 @@ DEF_DO_FUN( quest )
 			return;
 		}
 
-		act( PLAIN, "$n szepcze co¶ $N$2 na ucho.", ch, NULL, questor, TO_ROOM );
+		act( PLAIN, "$n szepcze coï¿½ $N$2 na ucho.", ch, NULL, questor, TO_ROOM );
 
 		if( !knows_language( questor, ch->speaking, ch ) )
 		{
 			check_social( questor, "marszcz", ch->name );
-			ch_printf( ch, "Wygl±da na to, ¿e %s nie mo¿e ciê zrozumieæ." NL,
+			ch_printf( ch, "Wyglï¿½da na to, ï¿½e %s nie moï¿½e ciï¿½ zrozumieï¿½." NL,
 					   PERS( questor, ch, 0 ) );
 			return;
 		}
@@ -1531,8 +1516,8 @@ DEF_DO_FUN( quest )
 				  && get_trust( ch ) < LEVEL_IMMORTAL )
 		{
 			ch_tell( questor, ch,
-					 "Jeszcze nie mam dla ciebie zadania. Ale mo¿e ju¿ wkrótce..." );
-			do_emote( questor, (char *)"bezradnie za³amuje rêce" );
+					 "Jeszcze nie mam dla ciebie zadania. Ale moï¿½e juï¿½ wkrï¿½tce..." );
+			do_emote( questor, (char *)"bezradnie zaï¿½amuje rï¿½ce" );
 			return;
 		}
 
@@ -1540,12 +1525,12 @@ DEF_DO_FUN( quest )
 				  && get_trust( ch ) < LEVEL_IMMORTAL )
 		{
 			ch_tell( questor, ch,
-					 "Nie dla ciebie takie drobnostki. Nie bêdê ci zawracaæ g³owy." );
-			do_emote( questor, (char *)"wraca do swoich zajêæ" );
+					 "Nie dla ciebie takie drobnostki. Nie bï¿½dï¿½ ci zawracaï¿½ gï¿½owy." );
+			do_emote( questor, (char *)"wraca do swoich zajï¿½ï¿½" );
 			return;
 		}
 
-		ch_tell( questor, ch,"A tak, mam tu co¶ akurat dla ciebie:" );
+		ch_tell( questor, ch,"A tak, mam tu coï¿½ akurat dla ciebie:" );
 		ch_tell( questor, ch, pQuest->name );
 
 		quest = quest_start( ch, pQuest->quest_id, false );
@@ -1553,9 +1538,9 @@ DEF_DO_FUN( quest )
 		if( !quest ) /* Oops */
 		{
 			ch_tell( questor, ch,
-					 "Albo mo¿e jednak nie, wróæ do mnie kiedy indziej." );
+					 "Albo moï¿½e jednak nie, wrï¿½ï¿½ do mnie kiedy indziej." );
 			ch_tell( questor, ch,
-					 "Ja muszê teraz napisaæ notkê. ;-)" );
+					 "Ja muszï¿½ teraz napisaï¿½ notkï¿½. ;-)" );
 			q_bug( "Questor %d (%s) couldn't start quest %d for %s",
 
 				   questor->pIndexData->vnum, questor->przypadki[0],
@@ -1568,9 +1553,9 @@ DEF_DO_FUN( quest )
 		quest->curr_qp 		= 0;
 
 		send_to_char ( NL, ch);
-		ch_tell( questor, ch, "Wróæ do mnie jak ju¿ skoñczysz." );
+		ch_tell( questor, ch, "Wrï¿½ï¿½ do mnie jak juï¿½ skoï¿½czysz." );
 
-		send_to_char ( NL "Przygoda siê zaczyna !!!" EOL,ch);
+		send_to_char ( NL "Przygoda siï¿½ zaczyna !!!" EOL,ch);
 		fevent_trigger( ch, FE_START_QUEST, pQuest );
 		save_char_obj( ch );
 		return;
@@ -1583,7 +1568,7 @@ DEF_DO_FUN( quest )
 		{
 			CHAR_DATA *	victim;
 
-			if(!first_quest)
+			if(quest_list.empty())
 			{
 				send_to_char("No quest started." NL, ch );
 				return;
@@ -1621,17 +1606,15 @@ DEF_DO_FUN( quest )
 
 		if( !str_prefix( arg, "moblist" ))
 		{
-			QUEST_MOB_DATA * 	qMob;
-
-			if (!first_quest || !ch->inquest )
+			if (quest_list.empty() || !ch->inquest )
 			{
-				send_to_char ("Nie wykonujesz ¿adnego zadania w tej chwili." NL, ch);
+				send_to_char ("Nie wykonujesz ï¿½adnego zadania w tej chwili." NL, ch);
 				return;
 			}
 
 			quest = ch->inquest;
 
-			for( qMob = quest->first_mob; qMob; qMob=qMob->next )
+			for( auto* qMob : quest->mobs )
 				ch_printf( ch,
 						   "[%5d] [" FB_CYAN "%s" PLAIN "] " FB_CYAN "[%25.25s]" PLAIN " at:" FG_CYAN "[%25.25s]" PLAIN " [%5d]" NL,
 						   qMob->mob->pIndexData->vnum,
@@ -1644,17 +1627,15 @@ DEF_DO_FUN( quest )
 
 		if( !str_prefix( arg, "objlist" ))
 		{
-			QUEST_OBJ_DATA * 	qObj;
-
-			if (!first_quest || !ch->inquest )
+			if (quest_list.empty() || !ch->inquest )
 			{
-				send_to_char ("Nie wykonujesz ¿adnego zadania w tej chwili." NL, ch);
+				send_to_char ("Nie wykonujesz ï¿½adnego zadania w tej chwili." NL, ch);
 				return;
 			}
 
 			quest = ch->inquest;
 
-			for( qObj = quest->first_obj; qObj; qObj=qObj->next )
+			for( auto* qObj : quest->objs )
 			{
 				OBJ_DATA *	obj = qObj->obj;
 				ch_printf( ch,
@@ -1688,14 +1669,10 @@ DEF_DO_FUN( quest )
 /* updatuje wszystkie questy */
 void quest_update( )
 {
-	QUEST_DATA *	quest;
-	QUEST_DATA *	quest_next;
-
-	for( quest = first_quest; quest; quest = quest_next )
+	auto snapshot = quest_list;
+	for( auto* quest : snapshot )
 	{
 		CHAPTER_DATA *	chapter = quest->curr_chapter;
-
-		quest_next = quest->next;
 
 		if( calc_time( quest ) < 0 )
 		{
@@ -1706,7 +1683,7 @@ void quest_update( )
 			}
 		}
 
-		/* Na wypadek, gdy pan Builder zapomni questa zakoñczyæ */
+		/* Na wypadek, gdy pan Builder zapomni questa zakoï¿½czyï¿½ */
 		if( chapter && chapter->completed )
 		{
 //	    process_action( quest, chapter );
@@ -1727,18 +1704,15 @@ void quest_update( )
 
 void interpret_trigger( CHAR_DATA *ch, CHAPTER_DATA *chapter, int cmd, OBJ_DATA *obj, CHAR_DATA *victim )
 {
-	CHAR_DATA *		fch;
-	QUEST_CMND_DATA *   pCmnd;
-	EVENT_DATA *	pEvent;
 	bool 		found = false;
 	bool		Done;
 
 	if( !chapter )
 		return;
 
-	for( pEvent = chapter->first_event; pEvent; pEvent = pEvent->next )
+	for( auto* pEvent : chapter->events )
 	{
-		pCmnd 	= pEvent->cmd;
+		QUEST_CMND_DATA *pCmnd 	= pEvent->cmd;
 		if( pCmnd->command == cmd && !pEvent->done )
 		{
 			switch( cmd )
@@ -1797,7 +1771,7 @@ void interpret_trigger( CHAR_DATA *ch, CHAPTER_DATA *chapter, int cmd, OBJ_DATA 
 					break;
 
 				case EVENT_VISIT_MOB:
-					for ( fch = ch->in_room->first_person; fch; fch = fch->next_in_room )
+					for ( auto* fch : ch->in_room->people )
 					{
 						if( !IS_NPC( fch ) )
 							continue;
@@ -1821,18 +1795,14 @@ void interpret_trigger( CHAR_DATA *ch, CHAPTER_DATA *chapter, int cmd, OBJ_DATA 
 					break;
 
 				case EVENT_BRING_OBJ:
-					for ( fch = ch->in_room->first_person; fch; fch = fch->next_in_room )
+					for ( auto* fch : ch->in_room->people )
 					{
 						if (!IS_NPC( fch ) )
 							continue;
 
 						if( pCmnd->arg2 == fch->pIndexData->vnum )
 						{
-							OBJ_DATA	*obj;
-
-							for( obj = ch->first_carrying;
-													  obj;
-													  obj = obj->next_content )
+							for( auto* obj : ch->carrying )
 							{
 								if( pCmnd->arg1 == obj->pIndexData->vnum )
 								{
@@ -1882,8 +1852,8 @@ void interpret_trigger( CHAR_DATA *ch, CHAPTER_DATA *chapter, int cmd, OBJ_DATA 
 			if( found )
 			{
 				q_log( "%s: Completed Event", ch->name );
-		/* bardzo niekrytyczne chaptery nagradzaj± qpointami za
-				NIE WYKONANIE eventów */
+		/* bardzo niekrytyczne chaptery nagradzajï¿½ qpointami za
+				NIE WYKONANIE eventï¿½w */
 				if( chapter->pIndexData->type != CHAPTER_VERY_UNCRITICAL )
 					ch->inquest->curr_qp += pCmnd->arg3;
 				break;
@@ -1892,7 +1862,7 @@ void interpret_trigger( CHAR_DATA *ch, CHAPTER_DATA *chapter, int cmd, OBJ_DATA 
 
 	}
 
-	/* je¶li chapter jest zwyk³y krytyczny - wystarczy spe³niæ jeden event */
+	/* jeï¿½li chapter jest zwykï¿½y krytyczny - wystarczy speï¿½niï¿½ jeden event */
 	if( chapter->pIndexData->type == CHAPTER_CRITICAL
 		   ||  chapter->pIndexData->type == CHAPTER_VERY_UNCRITICAL )
 	{
@@ -1903,12 +1873,12 @@ void interpret_trigger( CHAR_DATA *ch, CHAPTER_DATA *chapter, int cmd, OBJ_DATA 
 		}
 	}
 	else
-		/* teraz sprawdzamy czy wszystkie eventy z chaptera ju¿ wykonane */
+		/* teraz sprawdzamy czy wszystkie eventy z chaptera juï¿½ wykonane */
 		if( chapter->pIndexData->type == CHAPTER_VERY_CRITICAL
 				  ||  chapter->pIndexData->type == CHAPTER_UNCRITICAL )
 	{
 		Done = true;
-		for( pEvent = chapter->first_event; pEvent; pEvent = pEvent->next )
+		for( auto* pEvent : chapter->events )
 			if( !pEvent->done )
 				Done = false;
 
@@ -1931,7 +1901,7 @@ void quest_trigger( CHAR_DATA *ch, int cmd, OBJ_DATA *obj, CHAR_DATA *victim )
 	QUEST_DATA *	quest;
 
 
-	if( !ch->inquest || !first_quest || IS_NPC( ch )
+	if( !ch->inquest || quest_list.empty() || IS_NPC( ch )
 			|| ( victim && !IS_NPC( victim ) ) )
 		return;
 
@@ -1943,7 +1913,7 @@ void quest_trigger( CHAR_DATA *ch, int cmd, OBJ_DATA *obj, CHAR_DATA *victim )
 	{
 		CHAR_DATA *	fch;
 
-		for ( fch = ch->in_room->first_person; fch; fch = fch->next_in_room )
+		for ( auto* fch : ch->in_room->people )
 		{
 			if( !IS_NPC( fch ) )
 				continue;
@@ -1958,7 +1928,7 @@ void quest_trigger( CHAR_DATA *ch, int cmd, OBJ_DATA *obj, CHAR_DATA *victim )
 		return;
 	}
 
-    /* sprawdzamy, czy trigger nie odnosi siê
+    /* sprawdzamy, czy trigger nie odnosi siï¿½
 	do aktualnego (krytycznego) chapteru */
 	chapter 	= ch->inquest->curr_chapter;
 	interpret_trigger( ch, chapter, cmd, obj, victim );
@@ -1970,15 +1940,17 @@ void quest_trigger( CHAR_DATA *ch, int cmd, OBJ_DATA *obj, CHAR_DATA *victim )
 		process_action( ch->inquest, chapter );
 	}
 	else
-    /* sprawdzamy jeszcze czy nie by³ to który¶
-		z poprzednich niekrytycznych chapterów */
+    /* sprawdzamy jeszcze czy nie byï¿½ to ktï¿½ryï¿½
+		z poprzednich niekrytycznych chapterï¿½w */
 		if( ch->inquest
-				  &&  ch->inquest->curr_chapter && ch->inquest->curr_chapter->prev )
+				  &&  ch->inquest->curr_chapter )
 	{
-		for( chapter = ch->inquest->curr_chapter->prev;
-				   chapter;
-				   chapter = chapter->prev )
+		auto it = std::find(ch->inquest->chapters.begin(), ch->inquest->chapters.end(), ch->inquest->curr_chapter);
+		if( it != ch->inquest->chapters.begin() )
+		for( auto rit = std::make_reverse_iterator(it); rit != ch->inquest->chapters.rend(); ++rit )
 		{
+			CHAPTER_DATA *chapter = *rit;
+
 			if( chapter->pIndexData->type == CHAPTER_CRITICAL
 						 ||  chapter->pIndexData->type == CHAPTER_VERY_CRITICAL
 						 ||  chapter->completed )
@@ -1990,18 +1962,17 @@ void quest_trigger( CHAR_DATA *ch, int cmd, OBJ_DATA *obj, CHAR_DATA *victim )
 			{
 				q_log( "%s Chapter Completed",
 					   bit_name( quest_chapter_types, chapter->pIndexData->type ) );
-				/* akcja (je¶li jest) */
+				/* akcja (jeï¿½li jest) */
 //    		process_action( ch->inquest, chapter );
 			}
-
 		}
 	}
 
 	if( ch->inquest &&
 		   (!ch->inquest->curr_chapter || ch->inquest->curr_chapter->completed) )
-	/* Teraz musimy sprawdziæ, czy przypadkiem nie skoñczli¶my
-		__t±_czynno¶ci±__ jakiego¶ zab³±kanego
-		chaptera i szybciutko zainicjowaæ drugi */
+	/* Teraz musimy sprawdziï¿½, czy przypadkiem nie skoï¿½czliï¿½my
+		__tï¿½_czynnoï¿½ciï¿½__ jakiegoï¿½ zabï¿½ï¿½kanego
+		chaptera i szybciutko zainicjowaï¿½ drugi */
 		if( !init_chapter( ch->inquest, CHAPTER_NEXT ) )
 	{
 		if( !quest->finished )
@@ -2011,16 +1982,16 @@ void quest_trigger( CHAR_DATA *ch, int cmd, OBJ_DATA *obj, CHAR_DATA *victim )
 }
 
 
-/* zwraca wska¼nik na chapter o numerze nr */
+/* zwraca wskaï¿½nik na chapter o numerze nr */
 CHAPTER_DATA *get_chapter( QUEST_DATA *quest, int nr )
 {
 	CHAPTER_DATA *	chapter = NULL;
 
-	for( chapter = quest->first_chapter; chapter; chapter = chapter->next )
-		if( chapter->nr == nr )
-			break;
+	for( auto* ch : quest->chapters )
+		if( ch->nr == nr )
+			return ch;
 
-	return chapter;
+	return NULL;
 }
 
 /* i na event w danym chapterze */
@@ -2028,11 +1999,11 @@ EVENT_DATA *get_event( CHAPTER_DATA *chapter, int nr )
 {
 	EVENT_DATA * 	event = NULL;
 
-	for( event = chapter->first_event; event; event = event->next )
-		if( event->nr == nr )
-			break;
+	for( auto* ev : chapter->events )
+		if( ev->nr == nr )
+			return ev;
 
-	return event;
+	return NULL;
 }
 
 /* zapisuje moba questowego do pliq */
@@ -2071,7 +2042,7 @@ void fwrite_quest_mob( CHAR_DATA *ch, QUEST_MOB_DATA *qMob, FILE *fp )
 			 mob->move, mob->max_move );
 	fprintf( fp, " Credits   %d\n", mob->gold );
 
-	for ( paf = mob->first_affect; paf; paf = paf->next )
+	for ( auto* paf : mob->affects )
 	{
 		if ( paf->type >= 0 && (skill=get_skilltype(paf->type)) == NULL )
 			continue;
@@ -2086,8 +2057,8 @@ void fwrite_quest_mob( CHAR_DATA *ch, QUEST_MOB_DATA *qMob, FILE *fp )
 					 paf->location,  paf->bitvector    		);
 	}
 
-	if ( mob->first_carrying )
-		fwrite_obj( mob, mob->last_carrying, fp, 0, OS_CARRY );
+	if ( !mob->carrying.empty() )
+		fwrite_obj( mob, mob->carrying.back(), fp, 0, OS_CARRY );
 
 	fprintf( fp, "End\n\n" );
 
@@ -2095,7 +2066,7 @@ void fwrite_quest_mob( CHAR_DATA *ch, QUEST_MOB_DATA *qMob, FILE *fp )
 	return;
 }
 
-/* zapisuje wszystkie quest_przedmioty le¿±ce na ziemi (oraz ich zawarto¶ci)
+/* zapisuje wszystkie quest_przedmioty leï¿½ï¿½ce na ziemi (oraz ich zawartoï¿½ci)
    te w inventory (moba jaki i gracza) zapisuja sie w locie u nich.
  */
 void fwrite_quest_obj( CHAR_DATA *ch, QUEST_OBJ_DATA *qObj, FILE * fp )
@@ -2138,7 +2109,7 @@ void fwrite_quest_obj( CHAR_DATA *ch, QUEST_OBJ_DATA *qObj, FILE * fp )
 				 obj->value[0], obj->value[1], obj->value[2],
 				 obj->value[3], obj->value[4], obj->value[5]     	);
 
-	for ( req=obj->first_requirement; req; req = req->next )
+	for ( auto* req : obj->requirements )
 	{
 		char _buf		[MSL];
 
@@ -2154,8 +2125,8 @@ void fwrite_quest_obj( CHAR_DATA *ch, QUEST_OBJ_DATA *qObj, FILE * fp )
 				 ( req->location == REQ_SKILL && IS_VALID_SN(req->type) ) ?
 						 skill_table[req->type]->name : " " );
 	}
-	if( obj->last_content )
-		fwrite_obj( ch, obj->last_content, fp, 0, OS_CARRY );
+	if( !obj->contents.empty() )
+		fwrite_obj( ch, obj->contents.back(), fp, 0, OS_CARRY );
 
 	fprintf( fp, "End\n\n" );
 }
@@ -2191,13 +2162,13 @@ void save_quest_data( CHAR_DATA *ch )
 	{
 		EVENT_DATA *	pEvent;
 
-		for( chptr = quest->first_chapter; chptr; chptr = chptr->next )
+		for( auto* chptr : quest->chapters )
 		{
 			if( !chptr->completed )
 			{
 				fprintf( fp, " ChapToDo       %d     ", chptr->nr );
 
-				for( pEvent = chptr->first_event; pEvent; pEvent = pEvent->next )
+				for( auto* pEvent : chptr->events )
 					if( !pEvent->done )
 						fprintf( fp, " %d", pEvent->nr );
 
@@ -2217,13 +2188,16 @@ void save_quest_data( CHAR_DATA *ch )
 					 (int)(current_time - quest->logon)/60 );
 	fprintf( fp, "End\n\n" );
 
-	for( qMob = ch->inquest->last_mob; qMob; qMob = qMob->prev )
-		fwrite_quest_mob( ch, qMob, fp );
+	for( auto rit = ch->inquest->mobs.rbegin(); rit != ch->inquest->mobs.rend(); ++rit )
+		fwrite_quest_mob( ch, *rit, fp );
 
-	for( qObj = ch->inquest->last_obj; qObj; qObj = qObj->prev )
+	for( auto rit = ch->inquest->objs.rbegin(); rit != ch->inquest->objs.rend(); ++rit )
+	{
+		auto* qObj = *rit;
 		if( qObj->obj && qObj->obj->in_room )
-			/* czyli przedmiot nie zosta³ jeszcze zapisany */
+			/* czyli przedmiot nie zostaï¿½ jeszcze zapisany */
 			fwrite_quest_obj( ch, qObj, fp );
+	}
 
 	fprintf( fp, "#END\n\n" );
 	fclose( fp );
@@ -2307,7 +2281,7 @@ void fread_quest_data_mob( CHAR_DATA *ch, FILE *fp )
 					paf->modifier	= fread_number( fp );
 					paf->location	= fread_number( fp );
 					paf->bitvector	= fread_number( fp );
-					LINK(paf, mob->first_affect, mob->last_affect, next, prev );
+					mob->affects.push_back(paf);
 					fMatch = true;
 					break;
 				}
@@ -2409,18 +2383,17 @@ void fread_quest_data_obj( CHAR_DATA *ch, FILE *fp )
 			case '#':
 				if ( !str_cmp( word, "#OBJECT" ) )
 				{
-					OBJ_DATA *	tobj;
-					OBJ_DATA *	tobj_next;
-
 					set_supermob( obj );
 					fread_obj ( supermob, fp, OS_CARRY );
-					for ( tobj = supermob->first_carrying; tobj; tobj = tobj_next )
 					{
-						tobj_next = tobj->next_content;
-						obj_from_char( tobj );
-						obj_to_obj( tobj, obj );
+						auto snapshot = supermob->carrying;
+						for ( auto* tobj : snapshot )
+						{
+							obj_from_char( tobj );
+							obj_to_obj( tobj, obj );
+						}
 					}
-					release_supermob(); /* panu ju¿ podziêkujemy :P */
+					release_supermob(); /* panu juï¿½ podziï¿½kujemy :P */
 					fMatch = true;
 					break;
 				}
@@ -2475,8 +2448,7 @@ void fread_quest_data_obj( CHAR_DATA *ch, FILE *fp )
 						pReq->location = loc;
 						pReq->type	   = type;
 						pReq->modifier = mod;
-						LINK( pReq, obj->first_requirement,
-							  obj->last_requirement, next, prev );
+						obj->requirements.push_back( pReq );
 					}
 					fMatch = true;
 					break;
@@ -2532,7 +2504,7 @@ void fread_quest_data_obj( CHAR_DATA *ch, FILE *fp )
 }
 
 
-/* zczytujemy z pliq -- nag³ówek */
+/* zczytujemy z pliq -- nagï¿½ï¿½wek */
 void fread_quest_data_header( CHAR_DATA *ch, FILE *fp )
 {
 	QUEST_DATA * 	quest;
@@ -2560,10 +2532,10 @@ void fread_quest_data_header( CHAR_DATA *ch, FILE *fp )
 					int	nr;
 
 					nr = fread_number( fp );
-					if( nr == -1 ) /* je¶li -1 to quest ju¿ w³a¶ciwie zakoñczony */
+					if( nr == -1 ) /* jeï¿½li -1 to quest juï¿½ wï¿½aï¿½ciwie zakoï¿½czony */
 					{
 						quest->finished = true;
-						quest->curr_chapter = quest->last_chapter;
+						quest->curr_chapter = quest->chapters.back();
 					}
 					else
 						quest->curr_chapter = get_chapter( quest, nr );
@@ -2593,8 +2565,8 @@ void fread_quest_data_header( CHAR_DATA *ch, FILE *fp )
 						return;
 					}
 
-					for( event = chapter->first_event; event; event = event->next )
-						event->done = true;
+					for( auto* ev : chapter->events )
+						ev->done = true;
 
 					for( ; ; )
 					{
@@ -2644,7 +2616,7 @@ void fread_quest_data_header( CHAR_DATA *ch, FILE *fp )
 
 /*
  * Funkcja przywraca graczowi questa
- * (je¶li istnieje plik ~/player/quests/<name>)
+ * (jeï¿½li istnieje plik ~/player/quests/<name>)
  */
 void load_quest_data( CHAR_DATA *ch )
 {

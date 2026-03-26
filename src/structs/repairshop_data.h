@@ -23,8 +23,6 @@
 
 struct	repairshop_data
 {
-	REPAIR_DATA			* next;			/* Next shop in list		*/
-	REPAIR_DATA			* prev;			/* Previous shop in list	*/
 	int					keeper;			/* Vnum of shop keeper mob	*/
 	int					fix_type [MAX_FIX];	/* Item types shop will fix	*/
 	int					profit_fix;		/* Cost multiplier for fixing	*/

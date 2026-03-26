@@ -20,13 +20,11 @@
 #define BOARD_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	board_data
 {
-	BOARD_DATA			* next;			/* Next board in list		   */
-	BOARD_DATA			* prev;			/* Previous board in list	   */
-	NOTE_DATA			* first_note;		/* First note on board		   */
-	NOTE_DATA			* last_note;		/* Last note on board		   */
+	std::list<NOTE_DATA*> notes;
 	char				* note_file;		/* Filename to save notes to	   */
 	char				* read_group;		/* Can restrict a board to a	   */
 	char				* post_group;		/* council, clan, guild etc	   */

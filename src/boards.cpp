@@ -23,25 +23,25 @@
 ****************************************************************************/
 
 /*
- * Ok. Notki s± totalnie do kitu.
+ * Ok. Notki sï¿½ totalnie do kitu.
  *
- * Wcze¶niej notki identyfikowa³y siê z terminalem do którego zosta³y wys³ane i
- * tylko w nim mo¿na by³o je przeczytaæ. My niceo 'uglobalnili¶my' tê
- * niedogodno¶æ i wys³anie notki w jednym terminalu automatycznie pozwala na
- * odczytanie ich w innych. Niestety jednak sporo syfu w kodzie zosta³o.
+ * Wczeï¿½niej notki identyfikowaï¿½y siï¿½ z terminalem do ktï¿½rego zostaï¿½y wysï¿½ane i
+ * tylko w nim moï¿½na byï¿½o je przeczytaï¿½. My niceo 'uglobalniliï¿½my' tï¿½
+ * niedogodnoï¿½ï¿½ i wysï¿½anie notki w jednym terminalu automatycznie pozwala na
+ * odczytanie ich w innych. Niestety jednak sporo syfu w kodzie zostaï¿½o.
  *
- * Druga sprawa to ten niby dysk, na którym gracz pisze notke. To jest totalnie
- * do niczego. Gracz powinien mieæ w pc_data wska¼nik na notkê, a przy wysy³aniu
- * notka ta powinna byæ wypiêta z pc_data i wpiêta do globalnej listy.
+ * Druga sprawa to ten niby dysk, na ktï¿½rym gracz pisze notke. To jest totalnie
+ * do niczego. Gracz powinien mieï¿½ w pc_data wskaï¿½nik na notkï¿½, a przy wysyï¿½aniu
+ * notka ta powinna byï¿½ wypiï¿½ta z pc_data i wpiï¿½ta do globalnej listy.
  *
  * Dlatego 2 wielkie TODO:
- * - wywaliæ beznadziejn± obs³ugê terminali (zostawiæ tylko typ: terminal), ale
- *   dalej wymagaæ obecno¶ci terminala w lokacji gdzie czytamy/wysy³amy notkê.
- * - wywaliæ ten denerwuj±cy dysk i przenie¶æ ca³o¶æ do pc_data
+ * - wywaliï¿½ beznadziejnï¿½ obsï¿½ugï¿½ terminali (zostawiï¿½ tylko typ: terminal), ale
+ *   dalej wymagaï¿½ obecnoï¿½ci terminala w lokacji gdzie czytamy/wysyï¿½amy notkï¿½.
+ * - wywaliï¿½ ten denerwujï¿½cy dysk i przenieï¿½ï¿½ caï¿½oï¿½ï¿½ do pc_data
  *
  * Thanos
  *
- * Na chuj wywalac dysk, skoro on jest zajebi¶cie wygodny? (mo¿na mieæ kilka kopii
+ * Na chuj wywalac dysk, skoro on jest zajebiï¿½cie wygodny? (moï¿½na mieï¿½ kilka kopii
  * roboczych notek)
  *
  * Trog
@@ -59,8 +59,7 @@
 #define VOTE_OPEN 	1
 #define VOTE_CLOSED 	2
 
-BOARD_DATA *		first_board;
-BOARD_DATA *		last_board;
+std::list<BOARD_DATA *> board_list;
 
 bool	is_note_to	args( ( CHAR_DATA *ch, NOTE_DATA *pnote ) );
 bool	is_note_sender args( ( CHAR_DATA *ch, NOTE_DATA *pnote ) );
@@ -83,7 +82,7 @@ void note_count( CHAR_DATA *ch )
 	if( !ch->pcdata || NOT_AUTHED( ch ) )
 		return;
 
-	for ( board = first_board; board; board = board->next )
+	for ( auto* board : board_list )
 		if ( board->board_obj == 10414 )
 			break;
 
@@ -92,7 +91,7 @@ void note_count( CHAR_DATA *ch )
 
 	notes = 0;
 
-	for ( pnote = board->first_note; pnote; pnote = pnote->next )
+	for ( auto* pnote : board->notes )
 		if( is_note_to( ch, pnote )
 		&& !is_note_sender( ch, pnote )
 		&& pnote->stamp > ch->pcdata->last_note )
@@ -102,13 +101,13 @@ void note_count( CHAR_DATA *ch )
 	{
 		if( notes == 1 )
 			ch_printf( ch, NL FB_WHITE
-					"                             * Masz now± notkê! *" EOL );
+					"                             * Masz nowï¿½ notkï¿½! *" EOL );
 		else
 			ch_printf( ch, NL FB_WHITE
 					"                           * Masz %d now%s not%s! *" EOL,
 					notes,
-					NUMBER_SUFF( notes, "±", "e", "ych" ),
-					NUMBER_SUFF( notes, "kê", "ki", "ek" ) );
+					NUMBER_SUFF( notes, "ï¿½", "e", "ych" ),
+					NUMBER_SUFF( notes, "kï¿½", "ki", "ek" ) );
 	}
 	return;
 }
@@ -147,7 +146,7 @@ void write_boards_txt( )
 		return;
 	}
 
-	for ( tboard = first_board; tboard; tboard = tboard->next )
+	for ( auto* tboard : board_list )
 	{
 		fprintf( fpout, "Filename          %s~\n", tboard->note_file	    );
 		fprintf( fpout, "Vnum              %d\n",  tboard->board_obj	    );
@@ -168,13 +167,13 @@ void write_boards_txt( )
 }
 
 //added by Thanos (ta funkcja 'podmienia' terminal
-//tak, aby zapisane wiadomo¶ci 'lecia³y' tylko do jednego pliku
+//tak, aby zapisane wiadomoï¿½ci 'leciaï¿½y' tylko do jednego pliku
 // ../boards/student.board
 BOARD_DATA *change_board_to_default()
 {
 	BOARD_DATA  *board;
 
-	for ( board = first_board; board; board = board->next )
+	for ( auto* board : board_list )
     /* !UWAGA! 10414 to vnum terminala w mudszkole!
 		Nie ma terminala - nie ma notek!!!  */
 		if ( board->board_obj == 10414 )
@@ -187,7 +186,7 @@ BOARD_DATA *get_board( OBJ_DATA *obj )
 {
 	BOARD_DATA *board;
 
-	for ( board = first_board; board; board = board->next )
+	for ( auto* board : board_list )
 		if ( board->board_obj == obj->pIndexData->vnum )
 			return board;
 	return NULL;
@@ -198,13 +197,13 @@ BOARD_DATA *find_board( CHAR_DATA *ch )
 	OBJ_DATA *obj;
 	BOARD_DATA  *board;
 
-	for ( obj = ch->in_room->first_content; obj; obj = obj->next_content )
+	for ( auto* obj : ch->in_room->contents )
 	{
 		if ( (board = get_board(obj)) != NULL )
 		{
 	    //added by Thanos (ta funkcja 'podmienia' wszystkie terminale
 	    //na jeden domyslny
-	    //tak, aby zapisane wiadomo¶ci 'lecia³y' tylko do jednego pliku
+	    //tak, aby zapisane wiadomoï¿½ci 'leciaï¿½y' tylko do jednego pliku
 			board = change_board_to_default();
 			return board;
 		}
@@ -221,7 +220,7 @@ BOARD_DATA *find_board( CHAR_DATA *ch )
     note to 30 -<gracz_o_levelu_powyzej_30>
     note to clans (wszystkie klany)
     note to clan:1 -- notka do klanu o id =1
-    note to builders -- notka do olcmanów
+    note to builders -- notka do olcmanï¿½w
   oraz pozostale
 */
 bool is_note_to( CHAR_DATA *ch, NOTE_DATA *pnote )
@@ -255,7 +254,7 @@ bool is_note_to( CHAR_DATA *ch, NOTE_DATA *pnote )
 		return true;
 
 
-    //notki do adminów
+    //notki do adminï¿½w
 	if( (is_name( "admins", pnote->to_list ) ||
 			is_name( "admin",  pnote->to_list ) ) && IS_ADMIN( ch->name ) )
 		return true;
@@ -268,19 +267,19 @@ bool is_note_to( CHAR_DATA *ch, NOTE_DATA *pnote )
 	if( is_name( "council", pnote->to_list ) && IS_COUNCIL( ch->name ) )
 		return true;
 
-    //notki do olcmanów
+    //notki do olcmanï¿½w
 	if( is_name( "builders", pnote->to_list )
 		   && (IS_OLCMAN( ch )||get_trust(ch)>102||IS_ADMIN(ch->name) ) )
 		return true;
 
-    //notki do klanowiczów
+    //notki do klanowiczï¿½w
 	if( ch->pcdata && ch->pcdata->clan )
 	{
 		if( is_name( "clans", pnote->to_list )
 				  || is_name( "clan:all", pnote->to_list ) )
 			return true;
 
-		FOREACH( clan, first_clan )
+		for( auto* clan : clan_list )
 				if( (member = get_member( clan, ch->name ))
 								 &&   member->status > CLAN_WAITING )
 		{
@@ -307,7 +306,7 @@ bool is_note_to( CHAR_DATA *ch, NOTE_DATA *pnote )
 }
 
 /*
- * Tak, je¶li ch jest autorem notki
+ * Tak, jeï¿½li ch jest autorem notki
  */
 bool is_note_sender( CHAR_DATA *ch, NOTE_DATA *pnote )
 {
@@ -334,8 +333,6 @@ void note_attach( CHAR_DATA *ch )
 
 	CREATE( pnote, NOTE_DATA, 1 );
 
-	pnote->next		= NULL;
-	pnote->prev		= NULL;
 	STRDUP( pnote->sender , 	ch->name );
 	STRDUP( pnote->real_sender, "" );
 	STRDUP( pnote->date, 		"" );
@@ -354,8 +351,8 @@ void write_board( BOARD_DATA *board )
 	char 		filename	[256];
 
     /*
-	* Je¶li przekroczymy ilo¶æ notek w terminalu - usuñmy 1
-	* zapisuj±c j± w old_notes.txt
+	* Jeï¿½li przekroczymy iloï¿½ï¿½ notek w terminalu - usuï¿½my 1
+	* zapisujï¿½c jï¿½ w old_notes.txt
 	*/
 	RESERVE_CLOSE;
 	if( board->num_posts >= board->max_posts )
@@ -368,7 +365,7 @@ void write_board( BOARD_DATA *board )
 			return;
 		}
 
-		pnote = board->first_note;
+		pnote = board->notes.front();
 
 		if( *pnote->real_sender )
 			fprintf( fp,	"Sender      %s~\n"
@@ -418,7 +415,7 @@ void write_board( BOARD_DATA *board )
 					pnote->text	);
 
 
-		UNLINK( pnote, board->first_note, board->last_note, next, prev );
+		board->notes.remove( pnote );
 		--board->num_posts;
 		free_note( pnote );
 		fclose( fp );
@@ -434,7 +431,7 @@ void write_board( BOARD_DATA *board )
 	}
 	else
 	{
-		for ( pnote = board->first_note; pnote; pnote = pnote->next )
+		for ( auto* pnote : board->notes )
 		{
 			if( *pnote->real_sender )
 				fprintf( fp,    "Sender      %s~\n"
@@ -501,7 +498,7 @@ void note_remove( CHAR_DATA *ch, BOARD_DATA *board, NOTE_DATA *pnote )
     /*
 	* Remove note from linked list.
 	*/
-	UNLINK( pnote, board->first_note, board->last_note, next, prev );
+	board->notes.remove( pnote );
 	--board->num_posts;
 
 	free_note( pnote );
@@ -530,13 +527,13 @@ DEF_DO_FUN( noteroom )
 	board = find_board( ch );
 	if ( !board )
 	{
-		send_to_char( "Nie ma tu biuletynu zawieraj±cego notki.\n\r", ch );
+		send_to_char( "Nie ma tu biuletynu zawierajï¿½cego notki.\n\r", ch );
 		return;
 	}
 
 	if (board->type != BOARD_NOTE)
 	{
-		send_to_char("Tych komend mo¿esz u¿ywaæ jedynie przy terminalu.\n\r", ch);
+		send_to_char("Tych komend moï¿½esz uï¿½ywaï¿½ jedynie przy terminalu.\n\r", ch);
 		return;
 	}
 	else
@@ -625,17 +622,17 @@ void show_note( CHAR_DATA *ch, NOTE_DATA *pnote, int vnum )
 	{
 		pager_printf( ch,
 					  "----------------------------------------------------------" NL
-							  "G³osy:" NL
+							  "Gï¿½osy:" NL
 							  "Za:             %s" EOL
 							  "Przeciw:        %s" EOL
-							  "Wstrzymuje siê: %s" EOL,
+							  "Wstrzymuje siï¿½: %s" EOL,
 					  pnote->yesvotes,
 					  pnote->novotes,
 					  pnote->abstentions );
 	}
 
 	ch->pcdata->last_note = UMAX( ch->pcdata->last_note, pnote->stamp );
-	act( COL_ACTION, "$n czyta wiadomo¶æ.", ch, NULL, NULL, TO_ROOM );
+	act( COL_ACTION, "$n czyta wiadomoï¿½ï¿½.", ch, NULL, NULL, TO_ROOM );
 
 	return;
 }
@@ -648,7 +645,7 @@ NOTE_DATA *get_note( CHAR_DATA *ch, BOARD_DATA *board, int anum )
 	if( !ch || !board || anum < 1 )
 		return NULL;
 
-	for ( pnote = board->first_note; pnote; pnote = pnote->next )
+	for ( auto* pnote : board->notes )
 	{
 		if( is_note_to( ch, pnote )
 		||  is_note_sender( ch, pnote ) )
@@ -702,12 +699,12 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		board = find_board( ch );
 		if ( !board )
 		{
-			send_to_char( "Nie ma tu tablicy z og³oszeniami, które chcesz przejrzeæ." NL, ch );
+			send_to_char( "Nie ma tu tablicy z ogï¿½oszeniami, ktï¿½re chcesz przejrzeï¿½." NL, ch );
 			return;
 		}
 
-		ch->pcdata->last_note = UMAX( ch->pcdata->last_note, board->last_note->stamp );
-		send_to_char( "Ok. Wszystkie notki zosta³y oznaczone jako przeczytane." NL, ch );
+		ch->pcdata->last_note = UMAX( ch->pcdata->last_note, board->notes.back()->stamp );
+		send_to_char( "Ok. Wszystkie notki zostaï¿½y oznaczone jako przeczytane." NL, ch );
 		return;
 	}
 
@@ -716,14 +713,14 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		board = find_board( ch );
 		if ( !board )
 		{
-			send_to_char( "Nie ma tu tablicy z og³oszeniami, które chcesz przejrzeæ." NL, ch );
+			send_to_char( "Nie ma tu tablicy z ogï¿½oszeniami, ktï¿½re chcesz przejrzeï¿½." NL, ch );
 			return;
 		}
 
 		if (!IS_MAIL)
 		{
 			vnum = 0;
-			for ( pnote = board->first_note; pnote; pnote = pnote->next )
+			for ( auto* pnote : board->notes )
 			{
 		 		//modified by Thanos (wstawilem ponizszy warunek if( is_note_to... )
 	         	//po to by nie bylo widac notek, ktore nie sa do nas lub od nas
@@ -745,7 +742,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 				}
 			}
 
-			act( COL_ACTION, "$n ogl±da najnowsze notki.", ch, NULL, NULL, TO_ROOM );
+			act( COL_ACTION, "$n oglï¿½da najnowsze notki.", ch, NULL, NULL, TO_ROOM );
 			return;
 		}
 		else
@@ -754,18 +751,18 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 
 			if (IS_MAIL) /* SB Mail check for Brit */
 			{
-				for ( pnote = board->first_note; pnote; pnote = pnote->next )
+				for ( auto* pnote : board->notes )
 					if (is_note_to( ch, pnote ))
 						mfound = true;
 
 				if ( !mfound )
 				{
-					ch_printf( ch, "Nie ma dla ciebie wiadomo¶ci." NL);
+					ch_printf( ch, "Nie ma dla ciebie wiadomoï¿½ci." NL);
 					return;
 				}
 			}
 
-			for ( pnote = board->first_note; pnote; pnote = pnote->next )
+			for ( auto* pnote : board->notes )
 				if (is_note_to( ch, pnote ) )
 					ch_printf( ch,
 							   "%2d%c %s: %s" NL,
@@ -778,25 +775,26 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		}
 	}
 
-	/* to co list, tylko ¿e od koñca --Thanos*/
+	/* to co list, tylko ï¿½e od koï¿½ca --Thanos*/
 	if ( !str_prefix( arg, "-list" ) )
 	{
 		board = find_board( ch );
 		if ( !board )
 		{
-			send_to_char( "Nie ma tu tablicy z og³oszeniami, które chcesz przejrzeæ.\n\r", ch );
+			send_to_char( "Nie ma tu tablicy z ogï¿½oszeniami, ktï¿½re chcesz przejrzeï¿½.\n\r", ch );
 			return;
 		}
 
-		/* najpierw musimy policzyæ ile jest notek*/
+		/* najpierw musimy policzyï¿½ ile jest notek*/
 		vnum = 0;
-		for ( pnote = board->first_note; pnote; pnote = pnote->next )
+		for ( auto* pnote : board->notes )
 			if( is_note_to( ch, pnote ) || is_note_sender( ch, pnote ) )
 				vnum++;
 
-		/* a teraz wy¶wietliæ je od ty³u */
-		for ( pnote = board->last_note; pnote; pnote = pnote->prev )
+		/* a teraz wyï¿½wietliï¿½ je od tyï¿½u */
+		for ( auto it = board->notes.rbegin(); it != board->notes.rend(); ++it )
 		{
+			auto* pnote = *it;
 			if( is_note_to( ch, pnote ) || is_note_sender( ch, pnote ) )
 			{
 				pager_printf( ch, "[" FB_BLUE "%s" FB_WHITE "%2d" PLAIN "] %-12s: %s%s" EOL,
@@ -809,7 +807,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 				vnum--;
 			}
 		}
-		act( COL_ACTION, "$n ogl±da najnowsze notki.", ch, NULL, NULL, TO_ROOM );
+		act( COL_ACTION, "$n oglï¿½da najnowsze notki.", ch, NULL, NULL, TO_ROOM );
 		return;
 	}
 
@@ -833,7 +831,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		if ( arg_passed[0] == '\0' || !str_cmp( arg_passed, "next" ) )
 		{
 			vnum    = 0;
-			for ( pnote = board->first_note; pnote; pnote = pnote->next )
+			for ( auto* pnote : board->notes )
 			{
 				if ( is_note_to( ch, pnote )
 								 && !is_note_sender( ch, pnote )
@@ -867,7 +865,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		}
 		else
 		{
-			send_to_char( "Któr± notkê chcesz przeczytaæ?" NL, ch );
+			send_to_char( "Ktï¿½rï¿½ notkï¿½ chcesz przeczytaï¿½?" NL, ch );
 			return;
 		}
 
@@ -876,13 +874,13 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 			if( (pnote = get_note( ch, board, anum)) != NULL )
 				show_note( ch, pnote, anum );
 			else
-				ch_printf( ch, "Nie ma takiej wiadomo¶ci jak %d." NL, anum);
+				ch_printf( ch, "Nie ma takiej wiadomoï¿½ci jak %d." NL, anum);
 			return;
 		}
 		else
 		{
 			vnum = 0;
-			for ( pnote = board->first_note; pnote; pnote = pnote->next )
+			for ( auto* pnote : board->notes )
 			{
 				if (is_note_to(ch, pnote) )
 				{
@@ -892,7 +890,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 						wasfound = true;
 						if ( ch->gold < 10 )
 						{
-							send_to_char("Przeczytanie wiadomo¶ci kosztuje 10 kredytek." NL, ch);
+							send_to_char("Przeczytanie wiadomoï¿½ci kosztuje 10 kredytek." NL, ch);
 							return;
 						}
 
@@ -910,7 +908,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 				}
 			}
 			if (!wasfound)
-				ch_printf( ch, "Nie ma takiej wiadomo¶ci jak %d." NL, anum);
+				ch_printf( ch, "Nie ma takiej wiadomoï¿½ci jak %d." NL, anum);
 			return;
 		}
 	}
@@ -932,7 +930,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 			anum = atoi( arg2 );
 		else
 		{
-			send_to_char( "Na której notce chcesz umie¶ciæ swój g³os?\n\r", ch );
+			send_to_char( "Na ktï¿½rej notce chcesz umieï¿½ciï¿½ swï¿½j gï¿½os?\n\r", ch );
 			return;
 		}
 
@@ -951,12 +949,12 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		{
 			if ( !is_note_sender( ch, pnote ) )
 			{
-				send_to_char( "Nie jeste¶ autorem tej notki.\n\r", ch );
+				send_to_char( "Nie jesteï¿½ autorem tej notki.\n\r", ch );
 				return;
 			}
 			pnote->voting = VOTE_OPEN;
-			act( COL_ACTION, "$n otwiera g³osowanie na temat tre¶ci notki.", ch, NULL, NULL, TO_ROOM );
-			send_to_char( "G³osowanie otwarte.\n\r", ch );
+			act( COL_ACTION, "$n otwiera gï¿½osowanie na temat treï¿½ci notki.", ch, NULL, NULL, TO_ROOM );
+			send_to_char( "Gï¿½osowanie otwarte.\n\r", ch );
 			write_board( board );
 			return;
 		}
@@ -964,12 +962,12 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		{
 			if ( !is_note_sender( ch, pnote ) )
 			{
-				send_to_char( "Nie jeste¶ autorem tej notki.\n\r", ch );
+				send_to_char( "Nie jesteï¿½ autorem tej notki.\n\r", ch );
 				return;
 			}
 			pnote->voting = VOTE_CLOSED;
-			act( COL_ACTION, "$n zamyka g³osowanie na temat tre¶ci notki.", ch, NULL, NULL, TO_ROOM );
-			send_to_char( "G³osowanie zamkniête.\n\r", ch );
+			act( COL_ACTION, "$n zamyka gï¿½osowanie na temat treï¿½ci notki.", ch, NULL, NULL, TO_ROOM );
+			send_to_char( "Gï¿½osowanie zamkniï¿½te.\n\r", ch );
 			write_board( board );
 			return;
 		}
@@ -977,7 +975,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		/* Make sure the note is open for voting before going on. */
 		if ( pnote->voting != VOTE_OPEN )
 		{
-			send_to_char( "Na temat tre¶ci tej notki nie mo¿na g³osowaæ.\n\r", ch );
+			send_to_char( "Na temat treï¿½ci tej notki nie moï¿½na gï¿½osowaï¿½.\n\r", ch );
 			return;
 		}
 
@@ -987,7 +985,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 
 		if ( is_name( ch->name, buf ) )
 		{
-			ch_printf( ch, "Ju¿ g³osowa³%s¶ na temat tre¶ci tej notki." NL,
+			ch_printf( ch, "Juï¿½ gï¿½osowaï¿½%sï¿½ na temat treï¿½ci tej notki." NL,
 					   SEX_SUFFIX_EAE( ch ) );
 			return;
 		}
@@ -998,7 +996,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		{
 			sprintf( buf, "%s %s", pnote->yesvotes, ch->name );
 			STRDUP( pnote->yesvotes, buf );
-			act( COL_ACTION, "$n oddaje swój g³os w notce.", ch, NULL, NULL, TO_ROOM );
+			act( COL_ACTION, "$n oddaje swï¿½j gï¿½os w notce.", ch, NULL, NULL, TO_ROOM );
 			send_to_char( "Ok.\n\r", ch );
 			write_board( board );
 			return;
@@ -1009,7 +1007,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		{
 			sprintf( buf, "%s %s", pnote->novotes, ch->name );
 			STRDUP( pnote->novotes, buf );
-			act( COL_ACTION, "$n oddaje swój g³os w notce.", ch, NULL, NULL, TO_ROOM );
+			act( COL_ACTION, "$n oddaje swï¿½j gï¿½os w notce.", ch, NULL, NULL, TO_ROOM );
 			send_to_char( "Ok.\n\r", ch );
 			write_board( board );
 			return;
@@ -1017,11 +1015,11 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 
 		if( !str_prefix( arg_passed, "abstain" )
 				   ||  !str_prefix( arg_passed, "wstrzymaj" )
-				   ||  !str_prefix( arg_passed, "wstrzymujê siê" ))
+				   ||  !str_prefix( arg_passed, "wstrzymujï¿½ siï¿½" ))
 		{
 			sprintf( buf, "%s %s", pnote->abstentions, ch->name );
 			STRDUP( pnote->abstentions, buf );
-			act( COL_ACTION, "$n oddaje swój g³os w notce.", ch, NULL, NULL, TO_ROOM );
+			act( COL_ACTION, "$n oddaje swï¿½j gï¿½os w notce.", ch, NULL, NULL, TO_ROOM );
 			send_to_char( "Ok.\n\r", ch );
 			write_board( board );
 			return;
@@ -1034,7 +1032,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 	{
 		if ( ch->substate == SUB_RESTRICTED )
 		{
-			send_to_char( "Nie mo¿esz pisaæ notki, bêd±c w innym edytorze.\n\r", ch );
+			send_to_char( "Nie moï¿½esz pisaï¿½ notki, bï¿½dï¿½c w innym edytorze.\n\r", ch );
 			return;
 		}
 
@@ -1046,9 +1044,9 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 				unequip_char(ch, tmpobj);
 			paper = obj_to_char(paper, ch);
 			equip_char(ch, paper, WEAR_HOLD);
-			act(PLAIN, "$n zapisuje wiadomo¶æ.",
+			act(PLAIN, "$n zapisuje wiadomoï¿½ï¿½.",
 				ch, NULL, NULL, TO_ROOM);
-			act(PLAIN, "Zapisujesz wiadomo¶æ.",
+			act(PLAIN, "Zapisujesz wiadomoï¿½ï¿½.",
 				ch, NULL, NULL, TO_CHAR);
 		}
 		paper->value[0] = 1;
@@ -1063,7 +1061,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 	{
 		if (!arg_passed || arg_passed[0] == '\0')
 		{
-			send_to_char("Jako kto chcesz wys³aæ tê wiadomo¶æ?" NL, ch);
+			send_to_char("Jako kto chcesz wysï¿½aï¿½ tï¿½ wiadomoï¿½ï¿½?" NL, ch);
 			return;
 		}
 
@@ -1087,7 +1085,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 	{
 		if (!arg_passed || arg_passed[0] == '\0')
 		{
-			send_to_char("Jaki ma byæ temat wiadomo¶ci?\n\r", ch);
+			send_to_char("Jaki ma byï¿½ temat wiadomoï¿½ci?\n\r", ch);
 			return;
 		}
 		if ( ( paper = get_eq_char(ch, WEAR_HOLD) ) == NULL
@@ -1098,14 +1096,14 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 				unequip_char(ch, tmpobj);
 			paper = obj_to_char(paper, ch);
 			equip_char(ch, paper, WEAR_HOLD);
-			act(PLAIN, "$n zapisuje temat wiadomo¶ci na dysku.",
+			act(PLAIN, "$n zapisuje temat wiadomoï¿½ci na dysku.",
 				ch, NULL, NULL, TO_ROOM);
-			act(PLAIN, "Zapisujesz temat wiadomo¶ci.",
+			act(PLAIN, "Zapisujesz temat wiadomoï¿½ci.",
 				ch, NULL, NULL, TO_CHAR);
 		}
 		if (paper->value[1] > 1 )
 		{
-			send_to_char("Nie mo¿esz modyfikowaæ tej wiadomo¶ci.\n\r", ch);
+			send_to_char("Nie moï¿½esz modyfikowaï¿½ tej wiadomoï¿½ci.\n\r", ch);
 			return;
 		}
 		else
@@ -1157,7 +1155,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 	paper->value[0] = 1;
 	ed 		= SetOExtra(paper, "_text_");
 	ed->description = string_delete_last_line( ed->description );
-	send_to_char("Ok. Ostatnia linia usuniêta z noty." NL, ch);
+	send_to_char("Ok. Ostatnia linia usuniï¿½ta z noty." NL, ch);
 	return;
 }
 */
@@ -1180,7 +1178,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 				unequip_char(ch, tmpobj);
 			paper = obj_to_char(paper, ch);
 			equip_char(ch, paper, WEAR_HOLD);
-			act(PLAIN, "$n zapisuje wiadomo¶æ na dysku.",
+			act(PLAIN, "$n zapisuje wiadomoï¿½ï¿½ na dysku.",
 				ch, NULL, NULL, TO_ROOM);
 			act(PLAIN, "Zapisujesz adresata notki na dysku.",
 				ch, NULL, NULL, TO_CHAR);
@@ -1188,7 +1186,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 
 		if (paper->value[2] > 1)
 		{
-			send_to_char("Nie mo¿esz modyfikowaæ tej wiadomo¶ci.\n\r",ch);
+			send_to_char("Nie moï¿½esz modyfikowaï¿½ tej wiadomoï¿½ci.\n\r",ch);
 			return;
 		}
 
@@ -1220,15 +1218,15 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		if ( ( paper = get_eq_char(ch, WEAR_HOLD) ) == NULL
 					 ||     paper->item_type != ITEM_PAPER )
 		{
-			send_to_char("Nie masz w rêku dysku.\n\r", ch);
+			send_to_char("Nie masz w rï¿½ku dysku.\n\r", ch);
 			return;
 		}
 
-		sender = get_extra_descr( "_sender_", paper->first_extradesc );
+		sender = get_extra_descr( "_sender_", paper->extradesc );
 
-		if ( (subject = get_extra_descr( "_subject_", paper->first_extradesc )) == NULL )
+		if ( (subject = get_extra_descr( "_subject_", paper->extradesc )) == NULL )
 			subject = "(brak tematu)";
-		if ( (to_list = get_extra_descr( "_to_", paper->first_extradesc )) == NULL )
+		if ( (to_list = get_extra_descr( "_to_", paper->extradesc )) == NULL )
 			to_list = "(nikogo)";
 		sprintf( buf,
 				 "%s: %s" EOL
@@ -1237,7 +1235,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 				 subject,
 				 to_list );
 		send_to_pager( buf, ch );
-		if ( (text = get_extra_descr( "_text_", paper->first_extradesc )) == NULL )
+		if ( (text = get_extra_descr( "_text_", paper->extradesc )) == NULL )
 			text = "Dysk jest czysty.\n\r";
 		send_to_pager( text, ch );
 		return;
@@ -1250,19 +1248,19 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		if ( ( paper = get_eq_char(ch, WEAR_HOLD) ) == NULL
 					 ||     paper->item_type != ITEM_PAPER )
 		{
-			send_to_char("Nie masz w rêku ¿adnego dysku.\n\r", ch);
+			send_to_char("Nie masz w rï¿½ku ï¿½adnego dysku.\n\r", ch);
 			return;
 		}
 
 		if ( paper->value[0] == 0 )
 		{
-			send_to_char("Twój dysk jest pusty, nie ma co wysy³aæ.\n\r", ch);
+			send_to_char("Twï¿½j dysk jest pusty, nie ma co wysyï¿½aï¿½.\n\r", ch);
 			return;
 		}
 
 		if ( paper->value[1] == 0 )
 		{
-			send_to_char("Notka nie mia³a tematu. Podstawiam 'Bez tematu'.\n\r", ch);
+			send_to_char("Notka nie miaï¿½a tematu. Podstawiam 'Bez tematu'.\n\r", ch);
 			paper->value[1] = 1;
 			ed = SetOExtra(paper, (char *)"_subject_");
 			STRDUP( ed->description, "Bez tematu" );
@@ -1270,24 +1268,24 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 
 		if (paper->value[2] == 0)
 		{
-			send_to_char("Musisz podaæ adresata notki.\n\rNote to <osoba> lub Note to all. W ogóle polecam 'help note'\n\r", ch);
+			send_to_char("Musisz podaï¿½ adresata notki.\n\rNote to <osoba> lub Note to all. W ogï¿½le polecam 'help note'\n\r", ch);
 			return;
 		}
 
 		board = find_board( ch );
 		if ( !board )
 		{
-			send_to_char( "Nie ma tu terminala, z którego mo¿na wys³aæ wiadomo¶æ.\n\r", ch );
+			send_to_char( "Nie ma tu terminala, z ktï¿½rego moï¿½na wysï¿½aï¿½ wiadomoï¿½ï¿½.\n\r", ch );
 			return;
 		}
 
 		if ( board->num_posts >= board->max_posts )
 		{
-			send_to_char( "Ten terminal jest perzepe³niony. Nie ma miejsca na wiadomo¶ci.\n\r", ch );
+			send_to_char( "Ten terminal jest perzepeï¿½niony. Nie ma miejsca na wiadomoï¿½ci.\n\r", ch );
 			return;
 		}
 
-		act( COL_ACTION, "$n ³aduje wiadomo¶æ do terminala.", ch, NULL, NULL, TO_ROOM );
+		act( COL_ACTION, "$n ï¿½aduje wiadomoï¿½ï¿½ do terminala.", ch, NULL, NULL, TO_ROOM );
 
 		strtime				= ctime( &current_time );
 		strtime[strlen(strtime)-1]	= '\0';
@@ -1296,14 +1294,14 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		//added by Thanos
 		pnote->stamp                    = current_time;
 
-		text = get_extra_descr( "_text_", paper->first_extradesc );
+		text = get_extra_descr( "_text_", paper->extradesc );
 		STRDUP( pnote->text, text ? text : "" );
-		text = get_extra_descr( "_to_", paper->first_extradesc );
+		text = get_extra_descr( "_to_", paper->extradesc );
 		STRDUP( pnote->to_list, text ? text : "all" );
-		text = get_extra_descr( "_subject_", paper->first_extradesc );
+		text = get_extra_descr( "_subject_", paper->extradesc );
 		STRDUP( pnote->subject, text ? text : "" );
 
-		text = get_extra_descr( "_sender_", paper->first_extradesc );
+		text = get_extra_descr( "_sender_", paper->extradesc );
 		if( text )
 		{
 			STRDUP( pnote->sender, text );
@@ -1320,10 +1318,10 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		STRDUP( pnote->novotes    , "" );
 		STRDUP( pnote->abstentions, "" );
 
-		LINK( pnote, board->first_note, board->last_note, next, prev );
+		board->notes.push_back( pnote );
 		board->num_posts++;
 		write_board( board );
-		send_to_char( "£adujesz wiadomo¶æ do terminala.\n\r", ch );
+		send_to_char( "ï¿½adujesz wiadomoï¿½ï¿½ do terminala.\n\r", ch );
 		extract_obj( paper );
 		return;
 	}
@@ -1337,7 +1335,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		board = find_board( ch );
 		if ( !board )
 		{
-			send_to_char( "Nie ma tu terminala do ¶ci±gania wiadomo¶ci!\n\r", ch );
+			send_to_char( "Nie ma tu terminala do ï¿½ciï¿½gania wiadomoï¿½ci!\n\r", ch );
 			return;
 		}
 
@@ -1347,7 +1345,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		{
 			if ( !IS_IMMORTAL(ch) )
 			{
-				send_to_char( "Co?  Wpisz 'help note' by dowiedzieæ siê czego¶ o notkach.\n\r", ch );
+				send_to_char( "Co?  Wpisz 'help note' by dowiedzieï¿½ siï¿½ czegoï¿½ o notkach.\n\r", ch );
 				return;
 			}
 			take = 2;
@@ -1357,7 +1355,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 
 		if ( !is_number( arg_passed ) )
 		{
-			send_to_char( "Któr± notkê usun±æ?\n\r", ch );
+			send_to_char( "Ktï¿½rï¿½ notkï¿½ usunï¿½ï¿½?\n\r", ch );
 			return;
 		}
 
@@ -1368,7 +1366,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 			if ( !is_note_sender( ch, pnote )
 			&&  !IS_ADMIN( ch->name ) && take != 2 )
 			{
-				send_to_char( "Nie jeste¶ autorem tej notki!" NL, ch );
+				send_to_char( "Nie jesteï¿½ autorem tej notki!" NL, ch );
 				return;
 			}
 
@@ -1377,9 +1375,9 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 				if ( ch->gold < 50 )
 				{
 					if ( take == 1 )
-						send_to_char("Wziêcie wiadomo¶ci kosztuje 50 kredytek.\n\r", ch);
+						send_to_char("Wziï¿½cie wiadomoï¿½ci kosztuje 50 kredytek.\n\r", ch);
 					else
-						send_to_char("Skopiowanie wiadomo¶ci kosztuje 50 kredytek.\n\r", ch);
+						send_to_char("Skopiowanie wiadomoï¿½ci kosztuje 50 kredytek.\n\r", ch);
 					return;
 				}
 
@@ -1437,7 +1435,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 						pnote->sender, pnote->to_list);
 				STRDUP( paper->przypadki[0], short_desc_buf);
 
-				sprintf(long_desc_buf, "Notka: %s do %s le¿y na ziemi.",
+				sprintf(long_desc_buf, "Notka: %s do %s leï¿½y na ziemi.",
 						pnote->sender, pnote->to_list);
 				STRDUP( paper->description, long_desc_buf);
 
@@ -1453,25 +1451,25 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 
 			if ( take == 1 )
 			{
-				act( COL_ACTION, "$n ¶ci±ga wiadomo¶æ.", ch, NULL, NULL, TO_ROOM );
+				act( COL_ACTION, "$n ï¿½ciï¿½ga wiadomoï¿½ï¿½.", ch, NULL, NULL, TO_ROOM );
 				obj_to_char(paper, ch);
 			}
 			else if ( take == 2 )
 			{
-				act( COL_ACTION, "$n kopiuje wiadomo¶æ.", ch, NULL, NULL, TO_ROOM );
+				act( COL_ACTION, "$n kopiuje wiadomoï¿½ï¿½.", ch, NULL, NULL, TO_ROOM );
 				obj_to_char(paper, ch);
 			}
 			else
-				act( COL_ACTION, "$n usuwa wiadomo¶æ.", ch, NULL, NULL, TO_ROOM );
+				act( COL_ACTION, "$n usuwa wiadomoï¿½ï¿½.", ch, NULL, NULL, TO_ROOM );
 
 			return;
 		}
 
-		send_to_char( "Nie ma takiej wiadomo¶ci.\n\r", ch );
+		send_to_char( "Nie ma takiej wiadomoï¿½ci.\n\r", ch );
 		return;
 	}
 
-	send_to_char( "Co?  Wpisz 'help note' by dowiedzieæ siê czego¶ o notkach.\n\r", ch );
+	send_to_char( "Co?  Wpisz 'help note' by dowiedzieï¿½ siï¿½ czegoï¿½ o notkach.\n\r", ch );
 	return;
 }
 
@@ -1527,10 +1525,6 @@ BOARD_DATA *read_board( const char *boardfile, FILE *fp )
 				if ( !str_cmp( word, "End" ) )
 				{
 					board->num_posts	= 0;
-					board->first_note	= NULL;
-					board->last_note	= NULL;
-					board->next	= NULL;
-					board->prev	= NULL;
 					if ( !board->read_group )
 						STRDUP( board->read_group, "" );
 					if ( !board->post_group )
@@ -1654,8 +1648,6 @@ NOTE_DATA *read_note( char *notefile, FILE *fp )
 		if ( !pnote->novotes )     STRDUP( pnote->novotes    , "" );
 		if ( !pnote->abstentions ) STRDUP( pnote->abstentions, "" );
 		if ( !pnote->real_sender ) STRDUP( pnote->real_sender, "" );
-		pnote->next		= NULL;
-		pnote->prev		= NULL;
 		return pnote;
 	}
 
@@ -1675,15 +1667,14 @@ void load_boards( void )
 	NOTE_DATA *		pnote;
 	char		notefile	[256];
 
-	first_board	= NULL;
-	last_board	= NULL;
+	board_list.clear();
 
 	if ( ( board_fp = fopen( BOARD_FILE, "r" ) ) == NULL )
 		return;
 
 	while ( (board = read_board( BOARD_FILE, board_fp )) != NULL )
 	{
-		LINK( board, first_board, last_board, next, prev );
+		board_list.push_back( board );
 		sprintf( notefile, "%s%s", BOARD_DIR, board->note_file );
 		if( !sysdata.silent )
 			log_string( notefile );
@@ -1691,7 +1682,7 @@ void load_boards( void )
 		{
 			while ( (pnote = read_note( notefile, note_fp )) != NULL )
 			{
-				LINK( pnote, board->first_note, board->last_note, next, prev );
+				board->notes.push_back( pnote );
 				board->num_posts++;
 			}
 		}
@@ -1714,7 +1705,7 @@ DEF_DO_FUN( makeboard )
 
 	CREATE( board, BOARD_DATA, 1 );
 
-	LINK( board, first_board, last_board, next, prev );
+	board_list.push_back( board );
 	STRDUP( board->note_file	 , strlower( argument ) );
 	STRDUP( board->read_group    , "" );
 	STRDUP( board->post_group    , "" );
@@ -1745,7 +1736,7 @@ DEF_DO_FUN( bset )
 
 	value = atoi( argument );
 	found = false;
-	for ( board = first_board; board; board = board->next )
+	for ( auto* board : board_list )
 		if ( !str_cmp( arg1, board->note_file ) )
 	{
 		found = true;
@@ -1933,7 +1924,7 @@ DEF_DO_FUN( bstat )
 	}
 
 	found = false;
-	for ( board = first_board; board; board = board->next )
+	for ( auto* board : board_list )
 		if ( !str_cmp( arg, board->note_file ) )
 	{
 		found = true;
@@ -1961,13 +1952,13 @@ DEF_DO_FUN( boards )
 {
 	BOARD_DATA *board;
 
-	if ( !first_board )
+	if ( board_list.empty() )
 	{
 		send_to_char( "There are no boards.\n\r", ch );
 		return;
 	}
 
-	for ( board = first_board; board; board = board->next )
+	for ( auto* board : board_list )
 		ch_printf( ch, "%-16s Vnum: %5d Read: %2d Post: %2d Rmv: %2d Max: %2d Posts: %d Type: %d\n\r",
 				   board->note_file,	 board->board_obj,
 				   board->min_read_level,	 board->min_post_level,
@@ -1981,9 +1972,9 @@ void mail_count(CHAR_DATA *ch)
 	NOTE_DATA *note;
 	int cnt = 0;
 
-	for ( board = first_board; board; board = board->next )
+	for ( auto* board : board_list )
 		if ( board->type == BOARD_MAIL )
-			for ( note = board->first_note; note; note = note->next )
+			for ( auto* note : board->notes )
 				if ( is_note_to(ch, note) )
 					++cnt;
 	if ( cnt )
@@ -2022,7 +2013,7 @@ void note( const char *name, const char *to, const char *subject, const char *te
 
 	board = change_board_to_default( );
 
-	LINK( pnote, board->first_note, board->last_note, next, prev );
+	board->notes.push_back( pnote );
 	board->num_posts++;
 	write_board( board );
 

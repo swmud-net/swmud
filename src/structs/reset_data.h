@@ -23,8 +23,6 @@
 
 struct	reset_data
 {
-	RESET_DATA			* next;
-	RESET_DATA			* prev;
 	char				command;
 	int					extra;
 	int64				arg1;

@@ -23,8 +23,6 @@
 
 struct timer_data
 {
-	TIMER			* prev;
-	TIMER			* next;
 	DO_FUN			* do_fun;
 	int				value;
 	int				type;

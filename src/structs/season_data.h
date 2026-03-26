@@ -23,8 +23,6 @@
 
 struct	season_data
 {
-	SEASON_DATA			* next;
-	SEASON_DATA			* prev;
 	char				* name;			/* nazwa pory */
 	int					mmhg;			/* srednie cisnienie */
 	int					diff_mmhg;		/* dopuszczalne odchylenie */

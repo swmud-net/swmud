@@ -23,8 +23,6 @@
 
 struct	race_data
 {
-	RACE_DATA			* next;
-	RACE_DATA			* prev;
 	char				* name;
 	char				* filename;
 	char				* przypadki[6];
@@ -46,7 +44,7 @@ struct	race_data
 	int64				resistant;
 	int64				immune;
 	LANG_DATA			*language;
-	//tablica bitów dla poszczegolnych cech wygladu
+	//tablica bitï¿½w dla poszczegolnych cech wygladu
 	long long			desc_restrictions[MAX_DESC_TYPES];
 };
 

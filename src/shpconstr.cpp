@@ -34,19 +34,17 @@ extern AREA_DATA *		shipTmpArea;
 /* zwraca wskaznik na rekord w bazie o nazwie ship_index */
 SHIP_INDEX_DATA * get_ship_index( char * ship_index )
 {
-    SHIP_INDEX_DATA *	shrec;
-
     if( is_number( ship_index ) )
     {
 	int vnum = atoi( ship_index );
 
-	for( shrec = first_ship_index; shrec; shrec = shrec->next )
+	for( auto* shrec : ship_index_list )
 	    if( shrec->vnum == vnum )
 		return shrec;
     }
     else
     {
-	for( shrec = first_ship_index; shrec; shrec = shrec->next )
+	for( auto* shrec : ship_index_list )
 	    if( nifty_is_name_prefix( ship_index, shrec->name ) )
 		return shrec;
     }
@@ -56,9 +54,7 @@ SHIP_INDEX_DATA * get_ship_index( char * ship_index )
 /* to co get_room_index, ale szuka w statku i po svnumach */
 ROOM_INDEX_DATA *get_sroom( SHIP_DATA *ship, int svnum )
 {
-    ROOM_INDEX_DATA *	room;
-
-    for( room = ship->first_location; room; room = room->next_on_ship )
+    for( auto* room : ship->locations )
     {
 	if( !room->vnum && room->svnum == svnum )
 	    return room;
@@ -72,15 +68,11 @@ ROOM_INDEX_DATA *get_sroom( SHIP_DATA *ship, int svnum )
 /* przerabia SHIP_ROOM_DATA na ROOM_INDEX_DATA (vnumy = 0) */
 void generate_ship_rooms( SHIP_DATA *ship, SHIP_INDEX_DATA *shrec )
 {
-    SHIP_ROOM_DATA *	sRoom;
     ROOM_INDEX_DATA *	pRoom;
-    RESET_DATA *	sRes;
 
-    for( sRoom = shrec->first_room; sRoom; sRoom = sRoom->next )
+    for( auto* sRoom : shrec->rooms )
     {
-	EXTRA_DESCR_DATA *sEd;
 	EXTRA_DESCR_DATA *ed;
-	MPROG_DATA     *sPrg;
 	MPROG_DATA     *pPrg;
 
 	pRoom                   = make_room( 0, sRoom->vnum );
@@ -98,42 +90,41 @@ void generate_ship_rooms( SHIP_DATA *ship, SHIP_INDEX_DATA *shrec )
 
 
     	//eds
-	for( sEd = sRoom->first_extradesc; sEd; sEd = sEd->next )
+	for( auto* sEd : sRoom->extradesc )
 	{
 	    ed = SetRExtra( pRoom, sEd->keyword );
 	    STRDUP( ed->description, sEd->description );
 	}
 
 	//progs
-	for( sPrg = sRoom->mudprogs; sPrg; sPrg = sPrg->next )
+	for( auto* sPrg : sRoom->mudprogs )
 	{
-	    CREATE( pRoom->mudprogs,MPROG_DATA,1 );
-	    pPrg		= pRoom->mudprogs;
+	    MPROG_DATA* pPrg;
+	    CREATE( pPrg, MPROG_DATA, 1 );
 	    pPrg->type		= sPrg->type;
 	    pRoom->progtypes 	= pRoom->progtypes | pPrg->type;
 	    STRDUP( pPrg->comlist, sPrg->comlist );
 	    STRDUP( pPrg->arglist, sPrg->arglist );
+	    pRoom->mudprogs.push_back( pPrg );
 	}
 
-	for( sRes = sRoom->first_reset; sRes; sRes = sRes->next )
+	for( auto* sRes : sRoom->resets )
 	{
 	    add_reset( pRoom, sRes->command, sRes->extra,
 			sRes->arg1, sRes->arg2, sRes->arg3 );
 	}
 
-        LINK( pRoom, ship->first_location, ship->last_location,
-		     next_on_ship, prev_on_ship );
+        ship->locations.push_back(pRoom);
 	pRoom->ship = ship;
     }
 
     // drzwi generujemy w oddzielnej petli -- mamy wiec pewnosc, ze
     // wszystkie potrzebne lokacje zostaly juz stworzone
-    for( sRoom = shrec->first_room; sRoom; sRoom = sRoom->next )
+    for( auto* sRoom : shrec->rooms )
     {
-	SHIP_EXIT_DATA   *sExit;
 	EXIT_DATA        *pExit;
 
-	for( sExit = sRoom->first_exit; sExit; sExit = sExit->next )
+	for( auto* sExit : sRoom->exits )
 	{
 	    pExit = make_exit( 	get_sroom( ship, sRoom->vnum ),
 				get_sroom( ship, sExit->vnum ),
@@ -255,7 +246,7 @@ SHIP_DATA *constr_ship( SHIP_INDEX_DATA *shrec )
     //robi turrety i inne smiecie :P
     prepare_ship( ship );
 
-    LINK( ship, first_ship, last_ship, next, prev );
+    ship_list.push_back(ship);
     shrec->count++;
     return ship;
 }
@@ -287,7 +278,7 @@ DEF_DO_FUN( shload )
 
     send_to_char( "Ok." NL, ch );
 
-    act( COL_IMMORT, "$n sprawia, ¿e $t nagle wpada tu z g³o¶nym hukiem!",
+    act( COL_IMMORT, "$n sprawia, ï¿½e $t nagle wpada tu z gï¿½oï¿½nym hukiem!",
 	ch, shrec->name, NULL, TO_ROOM );
     return;
 }

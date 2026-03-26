@@ -102,9 +102,8 @@ extern void update_status_bar args( ( CHAR_DATA *ch ) );
 /*
  * Global variables.
  */
-DESCRIPTOR_DATA *first_descriptor; /* First descriptor		*/
-DESCRIPTOR_DATA *last_descriptor; /* Last descriptor		*/
-DESCRIPTOR_DATA *d_next; /* Next descriptor in loop	*/
+std::list<DESCRIPTOR_DATA*> descriptor_list;
+/* d_next removed - using std::list now */
 pid_t pid;
 int num_descriptors;
 FILE *fpReserve = NULL; /* Reserved file handle		*/
@@ -155,18 +154,18 @@ bool pager_output args( ( DESCRIPTOR_DATA *d ) );
 
 /*
  * dzieki f-cji signal mozemy powiedziec 'ostatnie' slowo przed padem
- * 'Komunikacja procesów w Unixie'
+ * 'Komunikacja procesï¿½w w Unixie'
  *
- * Oto dwie mo¿liwo¶ci:
- * 	- Mud pad³ nie znaj±c ostatniej komendy
- *            * Musi zapamiêtaæ, ¿e pad³
- *            * Musi w³±czyæ lastcmd_log
- *            * Musi zrobiæ copyover
- * 	- Mud pad³ znaj±c komendê
- *	      * Musi zapamiêtaæ, ¿e pad³
- *            * Musi WY£¡CZYÆ lastcmd_log
- *            * Musi daæ siê zabiæ
- *            * Musi przestaæ reagowaæ na pady (je¶li napisa³ ju¿ notkê)
+ * Oto dwie moï¿½liwoï¿½ci:
+ * 	- Mud padï¿½ nie znajï¿½c ostatniej komendy
+ *            * Musi zapamiï¿½taï¿½, ï¿½e padï¿½
+ *            * Musi wï¿½ï¿½czyï¿½ lastcmd_log
+ *            * Musi zrobiï¿½ copyover
+ * 	- Mud padï¿½ znajï¿½c komendï¿½
+ *	      * Musi zapamiï¿½taï¿½, ï¿½e padï¿½
+ *            * Musi WYï¿½ï¿½CZYï¿½ lastcmd_log
+ *            * Musi daï¿½ siï¿½ zabiï¿½
+ *            * Musi przestaï¿½ reagowaï¿½ na pady (jeï¿½li napisaï¿½ juï¿½ notkï¿½)
  *              To pozwoli na zrzucenie core (crashlog = OFF)
  * Thanos
  */
@@ -179,12 +178,12 @@ void deal_with_crash()
 	DESCRIPTOR_DATA *d;
 	bool rsn = false;
 
-	if (sysdata.lastcmd_log) /* je¶li logowa³ komendê */
+	if (sysdata.lastcmd_log) /* jeï¿½li logowaï¿½ komendï¿½ */
 	{
 		rsn = true;
-		sprintf(bbuf, "Bardzo panów Adminów przepraszam, ¿e pad³em, ale" NL
-		"nie mia³em innego wyj¶cia :( " NL
-		"Pad³o mi siê gdy ostatni± wykonywan± komend± by³o:" NL);
+		sprintf(bbuf, "Bardzo panï¿½w Adminï¿½w przepraszam, ï¿½e padï¿½em, ale" NL
+		"nie miaï¿½em innego wyjï¿½cia :( " NL
+		"Padï¿½o mi siï¿½ gdy ostatniï¿½ wykonywanï¿½ komendï¿½ byï¿½o:" NL);
 
 		/* sprawdzamy jaka komenda byla ostatnio uzywana */
 		if ((fp = fopen( LASTCMD_FILE, "r")) != NULL)
@@ -201,31 +200,30 @@ void deal_with_crash()
 		strcat(bbuf, "Ustawiam 'cset lastcmd' na OFF." NL);
 
 		sysdata.lastcmd_log = false; /* zalogowane 	*/
-		sysdata.crashlog = false; /* zapamiêtane  */
+		sysdata.crashlog = false; /* zapamiï¿½tane  */
 	}
-	else /* je¶li nie logowa³ komendy */
+	else /* jeï¿½li nie logowaï¿½ komendy */
 	{
-		sprintf(bbuf, "Panowie. Sprawa jest taka, ¿e pad³em... :(" NL
-		"A najgorsze jest to, ¿e nie wiem na czym, bo" NL
-		"nie ustawili¶cie mi 'cset lastcmd', wiêc sami widzicie." NL
-		"Przy nastêpnym boocie sam w³±czê logowanie (obiecujê)." NL);
+		sprintf(bbuf, "Panowie. Sprawa jest taka, ï¿½e padï¿½em... :(" NL
+		"A najgorsze jest to, ï¿½e nie wiem na czym, bo" NL
+		"nie ustawiliï¿½cie mi 'cset lastcmd', wiï¿½c sami widzicie." NL
+		"Przy nastï¿½pnym boocie sam wï¿½ï¿½czï¿½ logowanie (obiecujï¿½)." NL);
 		/*
 		 * niech zacznie wreszcie logowac !!! ;)
 		 */
 		sysdata.lastcmd_log = true; /* nie zalogowane */
-		sysdata.crashlog = true; /* nie zapamiêtane*/
+		sysdata.crashlog = true; /* nie zapamiï¿½tane*/
 	}
 
 	/* i napiszmy o tym notke */
 	note("SW-MUD", "Admins Coders", "Crash", bbuf);
 
-	/* wywalmy graczy  -- razem z save, ¿eby nie narzekali */
+	/* wywalmy graczy  -- razem z save, ï¿½eby nie narzekali */
 	if (sysdata.downtype == DOWN_CRASHED)
 	{
-		for (d = first_descriptor; d; d = d_next)
+		auto desc_snap = descriptor_list;
+		for (auto* d : desc_snap)
 		{
-			d_next = d->next;
-
 			save_char_obj(CH(d));
 
 			write_to_descriptor(d->descriptor, "Przykro mi, ale pojawil sie nieoczekiwany problem." NL
@@ -268,7 +266,7 @@ void deal_with_crash()
 	}
 }
 
-/* Thanos: tutaj teraz mo¿emy wstawiæ reakcje na np. reboot servera
+/* Thanos: tutaj teraz moï¿½emy wstawiï¿½ reakcje na np. reboot servera
  itd.
  */
 void swmud_killed(int sig)
@@ -487,7 +485,7 @@ static void caught_alarm()
 	char buf[MAX_STRING_LENGTH];
 	bug("ALARM CLOCK!");
 	strcpy(buf, FB_WHITE
-	"Och nie! Wielki wróg znany tylko jako LAG powraca !!!" EOL);
+	"Och nie! Wielki wrï¿½g znany tylko jako LAG powraca !!!" EOL);
 	echo_to_all(buf, ECHOTAR_ALL);
 	if (newdesc)
 	{
@@ -540,7 +538,7 @@ void accept_new(int ctrl, int ctrl2)
 	FD_SET(ctrl2, &in_set);
 	maxdesc = UMAX(ctrl, ctrl2);
 	newdesc = 0;
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		maxdesc = UMAX(maxdesc, d->descriptor);
 		FD_SET(d->descriptor, &in_set);
@@ -553,8 +551,6 @@ void accept_new(int ctrl, int ctrl2)
 			if (IS_SET(d->auth_state, FLAG_WRAUTH))
 				FD_SET(d->auth_fd, &out_set);
 		}
-		if (d == last_descriptor)
-			break;
 	}
 
 	if (select(maxdesc + 1, &in_set, &out_set, &exc_set, &null_time) < 0 && errno != EINTR)
@@ -597,15 +593,9 @@ void process_input()
 	 * Kick out descriptors with raised exceptions
 	 * or have been idle, then check for input.
 	 */
-	for (d = first_descriptor; d; d = d_next)
+	auto desc_snap2 = descriptor_list;
+	for (auto* d : desc_snap2)
 	{
-		if (d == d->next)
-		{
-			bug("descriptor_loop: loop found & fixed");
-			d->next = NULL;
-		}
-		d_next = d->next;
-
 		d->idle++; /* make it so a descriptor can idle out */
 		if (FD_ISSET(d->descriptor, &exc_set))
 		{
@@ -624,7 +614,7 @@ void process_input()
 		|| d->idle > 28800) /* 2 hrs  */
 		&& !IS_IMMORTAL(d->character)))
 		{
-			write_to_descriptor(d->descriptor, "Có¿... Mo¿e kiedy¶ zechce ci siê graæ." NL, 0);
+			write_to_descriptor(d->descriptor, "Cï¿½... Moï¿½e kiedyï¿½ zechce ci siï¿½ graï¿½." NL, 0);
 			d->outtop = 0;
 			close_socket(d, true);
 			continue;
@@ -705,18 +695,14 @@ void process_input()
 					handle_connection(d, cmdline);
 			}
 		}
-		if (d == last_descriptor)
-			break;
 	}
 }
 
 void process_output()
 {
-	DESCRIPTOR_DATA *d;
-
-	for (d = first_descriptor; d; d = d_next)
+	auto desc_snap3 = descriptor_list;
+	for (auto* d : desc_snap3)
 	{
-		d_next = d->next;
 
 		if ((d->fcommand || d->outtop > 0) && FD_ISSET(d->descriptor, &out_set))
 		{
@@ -740,8 +726,6 @@ void process_output()
 				close_socket(d, false);
 			}
 		}
-		if (d == last_descriptor)
-			break;
 	}
 }
 
@@ -853,15 +837,7 @@ void game_loop()
 		gettimeofday(&last_time, NULL);
 		current_time = (time_t) last_time.tv_sec;
 
-		/* Trog: sprawdzanie co 5 sekund, buga z
-		 * zerwana lista juz nie ma, wiec chyba
-		 * mozna ZAKOMENTOWAC
-		 */
-		if (last_check + 5 < current_time)
-		{
-			CHECK_LINKS(first_descriptor, last_descriptor, next, prev, DESCRIPTOR_DATA);
-			last_check = current_time;
-		}
+		/* CHECK_LINKS removed - using std::list now */
 
 		SWThread::updatePool();
 
@@ -967,11 +943,11 @@ void new_descriptor(int new_desc)
 
 	STRDUP(dnew->host, buf);
 
-	for (pban = first_ban; pban; pban = pban->next)
+	for (auto* pban : ban_list)
 	{
 		if ((!str_prefix(pban->name, dnew->host) || !str_suffix(pban->name, hostname)) && pban->level >= LEVEL_SUPREME)
 		{
-			write_to_descriptor(desc, "Twój adres jest zbanowany." NL, 0);
+			write_to_descriptor(desc, "Twï¿½j adres jest zbanowany." NL, 0);
 			swsnprintf(buf, MSL, "Rejected connection from: %s due to ban: %s", *hostname ? hostname : dnew->host, pban->name);
 			log_string_plus(buf, LOG_COMM, sysdata.log_level);
 			close(desc);
@@ -987,16 +963,7 @@ void new_descriptor(int new_desc)
 	 * Init descriptor data.
 	 */
 
-	if (!last_descriptor && first_descriptor)
-	{
-		DESCRIPTOR_DATA *d;
-
-		bug("last_desc is NULL, but first_desc is not! ...fixing");
-		for (d = first_descriptor; d; d = d->next)
-			if (!d->next)
-				last_descriptor = d;
-	}
-	LINK(dnew, first_descriptor, last_descriptor, next, prev);
+	descriptor_list.push_back(dnew);
 
 	/*
 	 * Send the greeting.
@@ -1036,8 +1003,6 @@ void new_descriptor(int new_desc)
 void close_socket(DESCRIPTOR_DATA *dclose, bool force)
 {
 	CHAR_DATA *ch;
-	DESCRIPTOR_DATA *d;
-	bool DoNotUnlink = false;
 
 	/* flush outbuf */
 	if (!force && dclose->outtop > 0)
@@ -1045,10 +1010,10 @@ void close_socket(DESCRIPTOR_DATA *dclose, bool force)
 
 	/* say bye to whoever's snooping this descriptor */
 	if (dclose->snoop_by)
-		write_to_buffer(dclose->snoop_by, "Twoja ofiara wysz³a z gry." NL, 0);
+		write_to_buffer(dclose->snoop_by, "Twoja ofiara wyszï¿½a z gry." NL, 0);
 
 	/* stop snooping everyone else */
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 		if (d->snoop_by == dclose)
 			d->snoop_by = NULL;
 
@@ -1066,52 +1031,6 @@ void close_socket(DESCRIPTOR_DATA *dclose, bool force)
 	}
 
 	ch = dclose->character;
-	/* sanity check :( */
-	if (!dclose->prev && dclose != first_descriptor)
-	{
-		DESCRIPTOR_DATA *dp, *dn;
-		bug("%s desc:%p != first_desc:%p and desc->prev = NULL!", ch ? ch->name : d->host, dclose, first_descriptor);
-		dp = NULL;
-		for (d = first_descriptor; d; d = dn)
-		{
-			dn = d->next;
-			if (d == dclose)
-			{
-				bug("%s desc:%p found, prev should be:%p, fixing.", ch ? ch->name : d->host, dclose, dp);
-				dclose->prev = dp;
-				break;
-			}
-			dp = d;
-		}
-		if (!dclose->prev)
-		{
-			bug("%s desc:%p could not be found!.", ch ? ch->name : dclose->host, dclose);
-			DoNotUnlink = true;
-		}
-	}
-	if (!dclose->next && dclose != last_descriptor)
-	{
-		DESCRIPTOR_DATA *dp, *dn;
-		bug("%s desc:%p != last_desc:%p and desc->next = NULL!", ch ? ch->name : d->host, dclose,
-				last_descriptor /* ? last_descriptor : 0 */);
-		dn = NULL;
-		for (d = last_descriptor; d; d = dp)
-		{
-			dp = d->prev;
-			if (d == dclose)
-			{
-				bug("%s desc:%p found, next should be:%p, fixing.", ch ? ch->name : d->host, dclose, dn);
-				dclose->next = dn;
-				break;
-			}
-			dn = d;
-		}
-		if (!dclose->next)
-		{
-			bug("%s desc:%p could not be found!.", ch ? ch->name : dclose->host, dclose);
-			DoNotUnlink = true;
-		}
-	}
 
 	if (dclose->character)
 	{
@@ -1120,7 +1039,7 @@ void close_socket(DESCRIPTOR_DATA *dclose, bool force)
 
 		if (dclose->connected >= CON_PLAYING)
 		{
-			act( COL_ACTION, "$n straci³$o link do muda.", ch, NULL, NULL,
+			act( COL_ACTION, "$n straciï¿½$o link do muda.", ch, NULL, NULL,
 			TO_ROOM);
 			ch->desc = NULL;
 		}
@@ -1132,13 +1051,7 @@ void close_socket(DESCRIPTOR_DATA *dclose, bool force)
 		}
 	}
 
-	if (!DoNotUnlink)
-	{
-		/* make sure loop doesn't get messed up */
-		if (d_next == dclose)
-			d_next = d_next->next;
-		UNLINK(dclose, first_descriptor, last_descriptor, next, prev);
-	}
+	descriptor_list.remove(dclose);
 
 	if (dclose->descriptor == maxdesc)
 		--maxdesc;
@@ -1167,7 +1080,7 @@ bool read_from_descriptor(DESCRIPTOR_DATA *d)
 		sprintf(log_buf, "%s input overflow!", d->host);
 		log_string(log_buf);
 		write_to_descriptor(d->descriptor,
-		NL "* * * MO¯E CEG£Ê NA KLAWISZE PO£O¯YSZ ?!? * * *" NL NL, 0);
+		NL "* * * MOï¿½E CEGï¿½ï¿½ NA KLAWISZE POï¿½Oï¿½YSZ ?!? * * *" NL NL, 0);
 		return false;
 	}
 
@@ -1247,7 +1160,7 @@ void read_from_buffer(DESCRIPTOR_DATA *d)
 	int i, j, k;
 
 	const char winletter[(2 * INNE_LITERY_WIN)] =
-	{ (char) 0xB9, '±', (char) 0x9C, '¶', (char) 0x9F, '¼', (char) 0xA5, '¡', (char) 0x8C, '¦', (char) 0x8F, '¬' };
+	{ (char) 0xB9, 'ï¿½', (char) 0x9C, 'ï¿½', (char) 0x9F, 'ï¿½', (char) 0xA5, 'ï¿½', (char) 0x8C, 'ï¿½', (char) 0x8F, 'ï¿½' };
 
 	/*
 	 * Hold horses if pending command already.
@@ -1295,7 +1208,7 @@ void read_from_buffer(DESCRIPTOR_DATA *d)
 	{
 		if (k >= 254)
 		{
-			write_to_descriptor(d->descriptor, "Zbyt d³uga linia." NL, 0);
+			write_to_descriptor(d->descriptor, "Zbyt dï¿½uga linia." NL, 0);
 
 			/* skip the rest of the line */
 			/*
@@ -1350,16 +1263,16 @@ void read_from_buffer(DESCRIPTOR_DATA *d)
 				/*		sprintf( log_buf, "%s input spamming!", d->host );
 				 log_string( log_buf );
 				 */
-				//added by Thanos (w walce mo¿na siê powtarzaæ)
+				//added by Thanos (w walce moï¿½na siï¿½ powtarzaï¿½)
 				if (d->character && d->character->position != POS_FIGHTING)
 				{
 					write_to_descriptor(d->descriptor,
-					NL "* * * MO¯E CEG£Ê NA KLAWISZE PO£O¯YSZ ?!? * * *" NL NL, 0);
-					//poza walk± wyrzucamy z gry tylko nieimmosów
+					NL "* * * MOï¿½E CEGï¿½ï¿½ NA KLAWISZE POï¿½Oï¿½YSZ ?!? * * *" NL NL, 0);
+					//poza walkï¿½ wyrzucamy z gry tylko nieimmosï¿½w
 					if (d->repeat >= 40)
 					{
 						if (d->character && IS_IMMORTAL(d->character))
-							d->repeat = 39; /* to mo¿e byæ niebezpieczne */
+							d->repeat = 39; /* to moï¿½e byï¿½ niebezpieczne */
 						else
 							strcpy(d->incomm, "quit");
 					}
@@ -1388,16 +1301,15 @@ void read_from_buffer(DESCRIPTOR_DATA *d)
 	return;
 }
 
-//added by Thanos (dwie poni¿sze funkcje rysuj± mapkê, bêd±c± pseudopromptem
-//u¿ywan± przy drugim typie linii statusu. Fajnie dzia³a przy X-ach i Windzie)
-//jak kto¶ nie chce - niech nie u¿ywa ;)
+//added by Thanos (dwie poniï¿½sze funkcje rysujï¿½ mapkï¿½, bï¿½dï¿½cï¿½ pseudopromptem
+//uï¿½ywanï¿½ przy drugim typie linii statusu. Fajnie dziaï¿½a przy X-ach i Windzie)
+//jak ktoï¿½ nie chce - niech nie uï¿½ywa ;)
 char* check_exit(CHAR_DATA *ch, int dir)
 {
-	EXIT_DATA *pexit;
 	static char buf[MAX_STRING_LENGTH];
 
 	*buf = '\0';
-	for (pexit = ch->in_room->first_exit; pexit; pexit = pexit->next)
+	for (auto* pexit : ch->in_room->exits)
 	{
 		if (pexit->vdir == dir && pexit->to_room && !IS_SET(pexit->flags, EX_HIDDEN))
 		{
@@ -1742,11 +1654,11 @@ int write_to_buffer(DESCRIPTOR_DATA *d, const char *txt, int length)
 {
 	int i, j;
 	const char letter[(2 * INNE_LITERY_WIN)] =
-	{ '±', '¹', '¶', 'œ', '¼', 'Ÿ', '¡', '¥', '¦', 'Œ', '¬', '' };
+	{ 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½' };
 
 	const char noplletter[2 * INNE_LITERY_NOPL] =
-	{ '±', 'a', 'æ', 'c', 'ê', 'e', '³', 'l', 'ñ', 'n', 'ó', 'o', '¶', 's', '¼', 'z', '¿', 'z', '¡', 'A', 'Æ', 'C', 'Ê', 'E', '£', 'L', 'Ñ',
-			'N', 'Ó', 'O', '¦', 'S', '¬', 'Z', '¯', 'Z' };
+	{ 'ï¿½', 'a', 'ï¿½', 'c', 'ï¿½', 'e', 'ï¿½', 'l', 'ï¿½', 'n', 'ï¿½', 'o', 'ï¿½', 's', 'ï¿½', 'z', 'ï¿½', 'z', 'ï¿½', 'A', 'ï¿½', 'C', 'ï¿½', 'E', 'ï¿½', 'L', 'ï¿½',
+			'N', 'ï¿½', 'O', 'ï¿½', 'S', 'ï¿½', 'Z', 'ï¿½', 'Z' };
 
 //tutaj    char 	*txt1;
 	char txt1[MSL * 4];
@@ -1777,7 +1689,7 @@ int write_to_buffer(DESCRIPTOR_DATA *d, const char *txt, int length)
 	 }
 	 */
 
-	// added by Thanos (w³a¶ciwie Ratm)
+	// added by Thanos (wï¿½aï¿½ciwie Ratm)
 	txt1[0] = '\0';
 	strcat(txt1, txt);
 
@@ -1890,7 +1802,7 @@ bool check_parse_name(char *name)
 	 * Reserved words.
 	 */
 	if (is_name(name, "all auto someone immortal self god supreme demigod clans"
-			" ass fuck shit piss crap quit ktos kto¶ pipa dupa builders"
+			" ass fuck shit piss crap quit ktos ktoï¿½ pipa dupa builders"
 			" kutas immo admin koder admins koders coder coders council"
 			" ips blacksun jedi sith kurwa qrwa luke lando imperator"
 			" koordynator senator mistrz mastash master chuj huj qtas"
@@ -1960,9 +1872,7 @@ bool check_parse_name(char *name)
  */
 int check_reconnect(DESCRIPTOR_DATA *d, char *name, bool fConn)
 {
-	CHAR_DATA *ch;
-
-	for (ch = first_char; ch; ch = ch->next)
+	for (auto* ch : char_list)
 	{
 		if (!IS_NPC(ch) && (!fConn || !ch->desc) && ch->name && !str_cmp(name, ch->name))
 		{
@@ -1994,8 +1904,8 @@ int check_reconnect(DESCRIPTOR_DATA *d, char *name, bool fConn)
 				if ( IS_SET(ch->act, PLR_STATUS_BAR) && d->connected >= CON_PLAYING)
 					init_status_bar(ch);
 
-				send_to_char("Powtórne po³±czenie." NL, ch);
-				act( COL_ACTION, "$n po³±czy³$o siê na nowo.", ch, NULL, NULL,
+				send_to_char("Powtï¿½rne poï¿½ï¿½czenie." NL, ch);
+				act( COL_ACTION, "$n poï¿½ï¿½czyï¿½$o siï¿½ na nowo.", ch, NULL, NULL,
 				TO_ROOM);
 				sprintf(log_buf, "%s!%s@%s reconnected.", ch->name, d->user, d->host);
 				log_string_plus(log_buf, LOG_COMM, UMAX(sysdata.log_level, ch->top_level));
@@ -2018,9 +1928,7 @@ int check_reconnect(DESCRIPTOR_DATA *d, char *name, bool fConn)
 
 bool check_multi(DESCRIPTOR_DATA *d, char *name)
 {
-	DESCRIPTOR_DATA *dold;
-
-	for (dold = first_descriptor; dold; dold = dold->next)
+	for (auto* dold : descriptor_list)
 	{
 		if (dold != d && (dold->character || dold->original) && str_cmp(name, dold->original ? dold->original->name : dold->character->name)
 				&& !str_cmp(dold->host, d->host)
@@ -2050,7 +1958,7 @@ bool check_multi(DESCRIPTOR_DATA *d, char *name)
 			if (iloop >= 10)
 				return false;
 			write_to_buffer(d, "Przykro mi, ale granie multiplaying jest u nas zakazane..." NL
-			"Wyjd¼ najpierw z gry inn± postaci±." NL, 0);
+			"Wyjdï¿½ najpierw z gry innï¿½ postaciï¿½." NL, 0);
 			sprintf(log_buf, "%s attempting to multiplay with %s.", dold->original ? dold->original->name : dold->character->name,
 					d->character->name);
 			log_string_plus(log_buf, LOG_COMM, sysdata.log_level);
@@ -2067,11 +1975,9 @@ bool check_multi(DESCRIPTOR_DATA *d, char *name)
 int check_playing(DESCRIPTOR_DATA *d, char *name, bool kick)
 {
 	CHAR_DATA *ch;
-
-	DESCRIPTOR_DATA *dold;
 	int cstate;
 
-	for (dold = first_descriptor; dold; dold = dold->next)
+	for (auto* dold : descriptor_list)
 	{
 		if (dold != d && (dold->character || dold->original)
 				&& !str_cmp(name, dold->original ? dold->original->name : dold->character->name))
@@ -2080,7 +1986,7 @@ int check_playing(DESCRIPTOR_DATA *d, char *name, bool kick)
 			ch = dold->original ? dold->original : dold->character;
 			if (!ch->name || (cstate < CON_PLAYING))
 			{
-				write_to_buffer(d, "Powtórne po³±czenie nie powiod³o siê. Spróbuj jeszcze raz." NL, 0);
+				write_to_buffer(d, "Powtï¿½rne poï¿½ï¿½czenie nie powiodï¿½o siï¿½. Sprï¿½buj jeszcze raz." NL, 0);
 				sprintf(log_buf, "%s already connected.", ch->name);
 				log_string_plus(log_buf, LOG_COMM, sysdata.log_level);
 				return BERR;
@@ -2090,7 +1996,7 @@ int check_playing(DESCRIPTOR_DATA *d, char *name, bool kick)
 //Added by Ratm
 			if (IS_SET(d->character->act, PLR_STATUS_BAR))
 				init_status_bar(d->character);
-			write_to_buffer(dold, "¯egnaj stary nieu¿ywany linku!" NL, 0);
+			write_to_buffer(dold, "ï¿½egnaj stary nieuï¿½ywany linku!" NL, 0);
 			close_socket(dold, false);
 			/* clear descriptor pointer to get rid of bug message in log */
 			d->character->desc = NULL;
@@ -2101,8 +2007,8 @@ int check_playing(DESCRIPTOR_DATA *d, char *name, bool kick)
 			if (ch->switched)
 				do_return(ch->switched, (char*) "");
 			ch->switched = NULL;
-			send_to_char("Powtórne po³±czenie." NL, ch);
-			act( COL_ACTION, "$n po³±czy³$o siê na nowo.", ch, NULL, NULL,
+			send_to_char("Powtï¿½rne poï¿½ï¿½czenie." NL, ch);
+			act( COL_ACTION, "$n poï¿½ï¿½czyï¿½$o siï¿½ na nowo.", ch, NULL, NULL,
 			TO_ROOM);
 			sprintf(log_buf, "%s!%s@%s reconnected, kicking off old link.", ch->name, d->user, d->host);
 			log_string_plus(log_buf, LOG_COMM, UMAX(sysdata.log_level, ch->top_level));
@@ -2127,7 +2033,7 @@ void stop_idling(CHAR_DATA *ch)
 	char_from_room(ch);
 	char_to_room(ch, ch->was_in_room);
 	ch->was_in_room = NULL;
-	act( COL_ACTION, "$n powróci³$o z letargu.", ch, NULL, NULL, TO_ROOM);
+	act( COL_ACTION, "$n powrï¿½ciï¿½$o z letargu.", ch, NULL, NULL, TO_ROOM);
 	return;
 }
 
@@ -2210,11 +2116,11 @@ void write_to_pager(DESCRIPTOR_DATA *d, const char *txt, int length)
 
 	int i, j;
 	char letter[(2 * INNE_LITERY_WIN)] =
-	{ '±', '¹', '¶', 'œ', '¼', 'Ÿ', '¡', '¥', '¦', 'Œ', '¬', '' };
+	{ 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½' };
 
 	char noplletter[2 * INNE_LITERY_NOPL] =
-	{ '±', 'a', 'æ', 'c', 'ê', 'e', '³', 'l', 'ñ', 'n', 'ó', 'o', '¶', 's', '¼', 'z', '¿', 'z', '¡', 'A', 'Æ', 'C', 'Ê', 'E', '£', 'L', 'Ñ',
-			'N', 'Ó', 'O', '¦', 'S', '¬', 'Z', '¯', 'Z' };
+	{ 'ï¿½', 'a', 'ï¿½', 'c', 'ï¿½', 'e', 'ï¿½', 'l', 'ï¿½', 'n', 'ï¿½', 'o', 'ï¿½', 's', 'ï¿½', 'z', 'ï¿½', 'z', 'ï¿½', 'A', 'ï¿½', 'C', 'ï¿½', 'E', 'ï¿½', 'L', 'ï¿½',
+			'N', 'ï¿½', 'O', 'ï¿½', 'S', 'ï¿½', 'Z', 'ï¿½', 'Z' };
 
 	//  char 	*txt1;
 	char txt1[MSL * 8];
@@ -2224,7 +2130,7 @@ void write_to_pager(DESCRIPTOR_DATA *d, const char *txt, int length)
 	if (length == 0)
 		return;
 
-	// added by Thanos (w³a¶ciwie Ratm)
+	// added by Thanos (wï¿½aï¿½ciwie Ratm)
 	txt1[0] = '\0';
 	strcat(txt1, txt);
 
@@ -2385,13 +2291,13 @@ char* act_string(const char *color, const char *format, CHAR_DATA *to, CHAR_DATA
 	static const char *const in_him_her[] =
 	{ "tym", "nim", "niej" };	// G
 	static const char *const at_him_her[] =
-	{ "nie", "niego", "ni±" };	// R
+	{ "nie", "niego", "niï¿½" };	// R
 	static const char *const with_him_her[] =
-	{ "tym", "nim", "ni±" };	// W
+	{ "tym", "nim", "niï¿½" };	// W
 	static const char *const from_him_her[] =
 	{ "tego", "niego", "niej" };	// F
 	static const char *const i_see_him_her[] =
-	{ "to", "go", "j±" };	// I
+	{ "to", "go", "jï¿½" };	// I
 	static const char *const soc[] =
 	{ "o", "", "a" };	// O
 	static const char *const socy[] =
@@ -2455,12 +2361,12 @@ char* act_string(const char *color, const char *format, CHAR_DATA *to, CHAR_DATA
 					else if (str[2] == 'R')
 					{
 						str += 2;
-						i = (to && can_see(to, ch)) ? ( IS_NPC( ch ) ? ch->przypadki[0] : ch->name) : "Kto¶";
+						i = (to && can_see(to, ch)) ? ( IS_NPC( ch ) ? ch->przypadki[0] : ch->name) : "Ktoï¿½";
 					}
 					else if (str[2] == 'x')
 					{
 						str += 2;
-						i = does_knows(to, ch) ? ch->przypadki[0] : "Kto¶";
+						i = does_knows(to, ch) ? ch->przypadki[0] : "Ktoï¿½";
 					}
 				}
 				else
@@ -2479,7 +2385,7 @@ char* act_string(const char *color, const char *format, CHAR_DATA *to, CHAR_DATA
 				else if (str[2] == 'R')
 				{
 					str += 2;
-					i = (to && can_see(to, vch)) ? ( IS_NPC( vch ) ? vch->przypadki[0] : vch->name) : "Kto¶";
+					i = (to && can_see(to, vch)) ? ( IS_NPC( vch ) ? vch->przypadki[0] : vch->name) : "Ktoï¿½";
 				}
 				else
 					i = (to ? PERS(vch, to, 0) : NAME(vch, 0));
@@ -2613,11 +2519,11 @@ char* act_string(const char *color, const char *format, CHAR_DATA *to, CHAR_DATA
 					if (str[2] >= '0' && str[2] <= '5')
 					{
 						str += 2;
-						i = can_see_obj(to, obj1) ? obj1->przypadki[(*str - 48)] : "co¶";
+						i = can_see_obj(to, obj1) ? obj1->przypadki[(*str - 48)] : "coï¿½";
 					}
 				}
 				else
-					i = can_see_obj(to, obj1) ? obj1->przypadki[0] : "co¶";
+					i = can_see_obj(to, obj1) ? obj1->przypadki[0] : "coï¿½";
 				break;
 			case 'P':
 				if (str[1] == '$')
@@ -2625,11 +2531,11 @@ char* act_string(const char *color, const char *format, CHAR_DATA *to, CHAR_DATA
 					if (str[2] >= '0' && str[2] <= '5')
 					{
 						str += 2;
-						i = can_see_obj(to, obj2) ? obj2->przypadki[(*str - 48)] : "co¶";
+						i = can_see_obj(to, obj2) ? obj2->przypadki[(*str - 48)] : "coï¿½";
 					}
 				}
 				else
-					i = can_see_obj(to, obj2) ? obj2->przypadki[0] : "co¶";
+					i = can_see_obj(to, obj2) ? obj2->przypadki[0] : "coï¿½";
 				break;
 
 			case 'd':
@@ -2680,7 +2586,7 @@ void act(const char *color, const char *format, CHAR_DATA *ch, const void *arg1,
 	else if (type == TO_CHAR)
 		to = ch;
 	else
-		to = ch->in_room->first_person;
+		to = ch->in_room->people.empty() ? nullptr : ch->in_room->people.front();
 
 	/*
 	 * ACT_SECRETIVE handling
@@ -2703,7 +2609,6 @@ void act(const char *color, const char *format, CHAR_DATA *ch, const void *arg1,
 	if (type == TO_SHIP)
 	{
 		SHIP_DATA *ship;
-		ROOM_INDEX_DATA *room;
 		ROOM_INDEX_DATA *room_orig;
 
 		IF_BUG(ch->in_room == NULL, "TO_SHIP %s (%s)", ch->name, format)
@@ -2714,12 +2619,12 @@ void act(const char *color, const char *format, CHAR_DATA *ch, const void *arg1,
 			return;
 
 		/*
-		 * zasada jest prosta: odwo³ujemy sie rekurencyjnie do f-cji
+		 * zasada jest prosta: odwoï¿½ujemy sie rekurencyjnie do f-cji
 		 * act, tyle ze wywolujemy ja z TO_ROOM, na kolejne pokoje
 		 * w statq
 		 */
 		room_orig = ch->in_room;
-		for (room = ship->first_location; room; room = room->next_on_ship)
+		for (auto* room : ship->locations)
 		{
 			char_from_room(ch);
 			char_to_room(ch, room);
@@ -2732,8 +2637,6 @@ void act(const char *color, const char *format, CHAR_DATA *ch, const void *arg1,
 
 	if (MOBtrigger && type != TO_CHAR && type != TO_VICT && to)
 	{
-		OBJ_DATA *to_obj;
-
 		txt = act_string(color, format, NULL, ch, arg1, arg2);
 
 		if (to->in_room && to->in_room->progtypes && IS_SET(to->in_room->progtypes, ACT_PROG))
@@ -2741,7 +2644,7 @@ void act(const char *color, const char *format, CHAR_DATA *ch, const void *arg1,
 
 		if (to->in_room)
 		{
-			for (to_obj = to->in_room->first_content; to_obj; to_obj = to_obj->next_content)
+			for (auto* to_obj : to->in_room->contents)
 			{
 				if (to_obj && to_obj->pIndexData->progtypes && IS_SET(to_obj->pIndexData->progtypes, ACT_PROG))
 					oprog_act_trigger(txt, to_obj, ch, (OBJ_DATA*) arg1, (void*) arg2);
@@ -2751,33 +2654,48 @@ void act(const char *color, const char *format, CHAR_DATA *ch, const void *arg1,
 
 	/* Anyone feel like telling me the point of looping through the whole
 	 room when we're only sending to one char anyways..? -- Alty */
-	for (; to; to = (type == TO_CHAR || type == TO_VICT) ? NULL : to->next_in_room)
+	if (type == TO_CHAR || type == TO_VICT)
 	{
-		if ((!to->desc && ( IS_NPC(to) && !IS_SET(to->pIndexData->progtypes, ACT_PROG))) || !IS_AWAKE(to))
-			continue;
-
-		if (type == TO_CHAR && to != ch)
-			continue;
-		if (type == TO_VICT && (to != vch || to == ch))
-			continue;
-		if (type == TO_ROOM && to == ch)
-			continue;
-		if (type == TO_NOTVICT && (to == ch || to == vch))
-			continue;
-
-		txt = act_string(color, format, to, ch, arg1, arg2);
-
-		if (to->desc)
+		if (to && (to->desc || (IS_NPC(to) && IS_SET(to->pIndexData->progtypes, ACT_PROG))) && IS_AWAKE(to))
 		{
-			/* Thanos - je¶li mob wykonuje mpNoEcho -- act() nic nie robi */
-			if (!noEcho)
-				ch_printf(to, "%s%s" PLAIN, color, txt);
+			txt = act_string(color, format, to, ch, arg1, arg2);
+
+			if (to->desc)
+			{
+				if (!noEcho)
+					ch_printf(to, "%s%s" PLAIN, color, txt);
+			}
+
+			if (MOBtrigger)
+				mprog_act_trigger(txt, to, ch, (OBJ_DATA*) arg1, (void*) arg2);
 		}
-
-		if (MOBtrigger)
+	}
+	else if (to && to->in_room)
+	{
+		for (auto* to : to->in_room->people)
 		{
-			/* Note: use original string, not string with ANSI. -- Alty */
-			mprog_act_trigger(txt, to, ch, (OBJ_DATA*) arg1, (void*) arg2);
+			if ((!to->desc && ( IS_NPC(to) && !IS_SET(to->pIndexData->progtypes, ACT_PROG))) || !IS_AWAKE(to))
+				continue;
+
+			if (type == TO_ROOM && to == ch)
+				continue;
+			if (type == TO_NOTVICT && (to == ch || to == vch))
+				continue;
+
+			txt = act_string(color, format, to, ch, arg1, arg2);
+
+			if (to->desc)
+			{
+				/* Thanos - jeï¿½li mob wykonuje mpNoEcho -- act() nic nie robi */
+				if (!noEcho)
+					ch_printf(to, "%s%s" PLAIN, color, txt);
+			}
+
+			if (MOBtrigger)
+			{
+				/* Note: use original string, not string with ANSI. -- Alty */
+				mprog_act_trigger(txt, to, ch, (OBJ_DATA*) arg1, (void*) arg2);
+			}
 		}
 	}
 
@@ -2849,9 +2767,9 @@ void display_prompt(DESCRIPTOR_DATA *d)
 	if (!IS_NPC(ch) && IS_SET(ch->act, PLR_AFK))
 	{
 		if (ch->pcdata->afk_reason && ch->pcdata->afk_reason[0] != '\0')
-			ch_printf(ch, PROMPT_COL_N "[Jeste¶ AWAY (%s)]" PLAIN " ", ch->pcdata->afk_reason);
+			ch_printf(ch, PROMPT_COL_N "[Jesteï¿½ AWAY (%s)]" PLAIN " ", ch->pcdata->afk_reason);
 		else
-			ch_printf(ch, PROMPT_COL_N "[Jeste¶ AWAY]" PLAIN " ");
+			ch_printf(ch, PROMPT_COL_N "[Jesteï¿½ AWAY]" PLAIN " ");
 		return;
 	}
 
@@ -2916,7 +2834,7 @@ void display_prompt(DESCRIPTOR_DATA *d)
 				else if (IS_GOOD(ch))
 					strcpy(pbuf, "dobry");
 				else if (IS_EVIL(ch))
-					strcpy(pbuf, "z³y");
+					strcpy(pbuf, "zï¿½y");
 				else
 					strcpy(pbuf, "neutralny");
 				break;
@@ -2988,7 +2906,7 @@ void display_prompt(DESCRIPTOR_DATA *d)
 								"%P"));
 				break;
 
-				/* added by Thanos (piêtrowe prompty) */
+				/* added by Thanos (piï¿½trowe prompty) */
 			case 'n':
 				sprintf(pbuf, EOL PROMPT_COL_N);
 				break;
@@ -3018,9 +2936,8 @@ void display_prompt(DESCRIPTOR_DATA *d)
 
 			case 'w':
 			{
-				TIMER *timer;
 				int value = 0;
-				for (timer = ch->first_timer; timer; timer = timer->next)
+				for (auto* timer : ch->timers)
 					value += timer->count;
 
 				stat = ch->wait + value;    //added by Thanos
@@ -3209,10 +3126,10 @@ bool pager_output(DESCRIPTOR_DATA *d)
 	case 'c': /* cofnij */
 		lines = -1 - (pclines * 2);
 		break;
-	case 'o': /* od¶wie¿ */
+	case 'o': /* odï¿½wieï¿½ */
 		lines = -1 - pclines;
 		break;
-	default: /* wyjd¼ */
+	default: /* wyjdï¿½ */
 		d->pagetop = 0;
 		d->pagepoint = NULL;
 		flush_buffer(d, true);
@@ -3295,10 +3212,10 @@ bool pager_output(DESCRIPTOR_DATA *d)
 	 */
 
 	if (d->character->charset == CHARSET_WIN)
-		sprintf(buf, " (%3d/%-3d)  Wciœnij: (D)alej, (O)dœwie¿, (C)ofnij, (W)yjdŸ: [D] ", total / lines - now / lines + 1,
+		sprintf(buf, " (%3d/%-3d)  Wciï¿½nij: (D)alej, (O)dï¿½wieï¿½, (C)ofnij, (W)yjdï¿½: [D] ", total / lines - now / lines + 1,
 				total / lines + 1);
 	else if (d->character->charset == CHARSET_ISO)
-		sprintf(buf, " (%3d/%-3d)  Wci¶nij: (D)alej, (O)d¶wie¿, (C)ofnij, (W)yjd¼: [D] ", total / lines - now / lines + 1,
+		sprintf(buf, " (%3d/%-3d)  Wciï¿½nij: (D)alej, (O)dï¿½wieï¿½, (C)ofnij, (W)yjdï¿½: [D] ", total / lines - now / lines + 1,
 				total / lines + 1);
 	else
 		sprintf(buf, " (%3d/%-3d)  Wcisnij: (D)alej, (O)dswiez, (C)ofnij, (W)yjdz: [D] ", total / lines - now / lines + 1,

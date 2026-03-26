@@ -26,17 +26,33 @@
 
 /* Trog: zapis/odczyt krain w formacie XML */
 
-AREA_DATA			*first_uarea;
-AREA_DATA			*last_uarea;
+std::list<AREA_DATA*> uarea_list;
 
 void save_area_list()
 {
-	ILD	*first_ild = NULL;
-	ILD	*last_ild = NULL;
+	xmlDocPtr	doc;
+	xmlNodePtr	root;
+	char		buf[MAX_INPUT_LENGTH];
 
-	ILD_CREATE( AREA_DATA, area, filename, first_ild, last_ild );
-	save_list( AREA_LISTXML, first_ild );
-	ILD_FREE( first_ild );
+	swXmlInitIO();
+	doc = xmlNewDoc( BC"1.0" );
+	root = xmlNewNode( NULL, BC"list" );
+	xmlNewNs( root, BC"http://swmud.pl/ns/swmud/1.0/list", NULL );
+	xmlNewNs( root, BC"http://www.w3.org/2001/XMLSchema-instance", BC"xsi" );
+	swNewProp( root, "xsi:schemaLocation", "http://swmud.pl/ns/swmud/1.0/list list.xsd" );
+	xmlDocSetRootElement( doc, root );
+	for (auto* area : area_list)
+		swNewChildText( root, NULL, "entry", area->filename );
+
+	sprintf( buf, "Saving lists/%s...", basename( (char *)AREA_LISTXML ) );
+	log_string_plus( buf, LOG_NORMAL, LEVEL_GREATER );
+
+	RESERVE_CLOSE;
+	xmlSaveFormatFileEnc( AREA_LISTXML, doc, "ISO-8859-2", 1 );
+	RESERVE_OPEN;
+
+	swXmlCleanIO();
+	xmlFreeDoc( doc );
 }
 
 void save_area( AREA_DATA *area )
@@ -166,7 +182,7 @@ void save_area( AREA_DATA *area )
 		swNewChildText( node, NULL, "dialog", pMobIndex->dialog_name );
 		
 		node = xmlNewChild( node, NULL, BC"programs", NULL );
-		FOREACH( mprog, pMobIndex->mudprogs )
+		for (auto* mprog : pMobIndex->mudprogs)
 		{
 			child = xmlNewChild( node, NULL, BC"program", NULL );
 			swNewChildText( child, NULL, "type", mprog_type_to_name( mprog->type ) );
@@ -239,7 +255,7 @@ void save_area( AREA_DATA *area )
 		swNewChildInt( node, NULL, "gender", pObjIndex->gender );
 		swNewChildInt( node, NULL, "level", pObjIndex->level );
 		child = xmlNewChild( node, NULL, BC"extradescs", NULL );
-		FOREACH( ed, pObjIndex->first_extradesc )
+		for (auto* ed : pObjIndex->extradesc)
 		{
 			xmlNodePtr	gchild = xmlNewChild( child, NULL, BC"extradesc", NULL );
 			
@@ -247,7 +263,7 @@ void save_area( AREA_DATA *area )
 			swNewChildText( gchild, NULL, "description", ed->description );
 		}
 		child = xmlNewChild( node, NULL, BC"requirements", NULL );
-		FOREACH( req, pObjIndex->first_requirement )
+		for (auto* req : pObjIndex->requirements)
 		{
 			xmlNodePtr	gchild = xmlNewChild( child, NULL, BC"requirement", NULL );
 			
@@ -258,7 +274,7 @@ void save_area( AREA_DATA *area )
 				? skill_table[req->type]->name : " " );
 		}
 		child = xmlNewChild( node, NULL, BC"affects", NULL );
-		FOREACH( paf, pObjIndex->first_affect )
+		for (auto* paf : pObjIndex->affects)
 		{
 			xmlNodePtr	gchild = xmlNewChild( child, NULL, BC"affect", NULL );
 			
@@ -272,7 +288,7 @@ void save_area( AREA_DATA *area )
 				? skill_table[paf->modifier]->slot : paf->modifier );
 		}
 		node = xmlNewChild( node, NULL, BC"programs", NULL );
-		FOREACH( mprog, pObjIndex->mudprogs )
+		for (auto* mprog : pObjIndex->mudprogs)
 		{
 			child = xmlNewChild( node, NULL, BC"program", NULL );
 			swNewChildText( child, NULL, "type", mprog_type_to_name( mprog->type ) );
@@ -303,7 +319,7 @@ void save_area( AREA_DATA *area )
 		swNewChildInt( node, NULL, "tunnel", pRoomIndex->tunnel );
 
 		child = xmlNewChild( node, NULL, BC"exits", NULL );
-		FOREACH( xit, pRoomIndex->first_exit )
+		for (auto* xit : pRoomIndex->exits)
 		{
 			xmlNodePtr	gchild;
 
@@ -321,7 +337,7 @@ void save_area( AREA_DATA *area )
 		}
 
 		child = xmlNewChild( node, NULL, BC"extradescs", NULL );
-		FOREACH( ed, pRoomIndex->first_extradesc )
+		for (auto* ed : pRoomIndex->extradesc)
 		{
 			xmlNodePtr	gchild = xmlNewChild( child, NULL, BC"extradesc", NULL );
 			
@@ -329,7 +345,7 @@ void save_area( AREA_DATA *area )
 			swNewChildText( gchild, NULL, "description", ed->description );
 		}
 		node = xmlNewChild( node, NULL, BC"programs", NULL );
-		FOREACH( mprog, pRoomIndex->mudprogs )
+		for (auto* mprog : pRoomIndex->mudprogs)
 		{
 			child = xmlNewChild( node, NULL, BC"program", NULL );
 			swNewChildText( child, NULL, "type", mprog_type_to_name( mprog->type ) );
@@ -345,7 +361,7 @@ void save_area( AREA_DATA *area )
 		if( !(pRoomIndex = get_room_index( vnum )) )
 			continue;
 
-		FOREACH( pReset, pRoomIndex->first_reset )
+		for (auto* pReset : pRoomIndex->resets)
 		{
 			child = xmlNewChild( node, NULL, BC"reset", NULL );
 
@@ -480,25 +496,24 @@ void save_area( AREA_DATA *area )
 	swCleanupParser();
 }
 
-void swGetContentPrograms( MPROG_DATA **progs, int64 *progtypes, xmlNodePtr node )
+void swGetContentPrograms( std::list<MPROG_DATA*>& progs, int64 *progtypes, xmlNodePtr node )
 {
 	xmlNodePtr	child;
 	xmlNodePtr	gchild;
 	MPROG_DATA	*prog;
-	MPROG_DATA	*last = NULL;
 	char		*buf = NULL;
 	bool		invalid;
 
 
 	STRDUP( buf, "" );
-	*progs = NULL;
-	FOREACH( child, node->children ) /* program */
+	progs.clear();
+	for (child = node->children; child; child = child->next) /* program */
 	{
 		EONLY( child );
 
 		invalid = false;
 		prog = new_mprog();
-		FOREACH( gchild, child->children )
+		for (gchild = child->children; gchild; gchild = gchild->next)
 		{
 			EONLY( child );
 
@@ -525,27 +540,27 @@ void swGetContentPrograms( MPROG_DATA **progs, int64 *progtypes, xmlNodePtr node
 			free_mprog( prog );
 		else
 		{
-			LINK1( prog, *progs, last, next );
+			progs.push_back( prog );
 			*progtypes |= prog->type;
 		}
 	}
 	STRFREE( buf );
 }
 
-void swGetContentExtraDescs( EDD **first, EDD **last, xmlNodePtr node )
+void swGetContentExtraDescs( std::list<EDD*>& edlist, xmlNodePtr node )
 {
 	xmlNodePtr	child;
 	xmlNodePtr	gchild;
 	EDD			*ed;
 
-	
-	FOREACH( child, node->children ) /* extradesc */
+
+	for (child = node->children; child; child = child->next) /* extradesc */
 	{
 		EONLY( child );
 
 		ed = new_ed();
-		LINK( ed, *first, *last, next, prev );
-		FOREACH( gchild, child->children )
+		edlist.push_back( ed );
+		for (gchild = child->children; gchild; gchild = gchild->next)
 		{
 			EONLY( gchild );
 
@@ -562,7 +577,7 @@ MID *get_mob_tmp( int vnum, AREA_DATA *area )
 {
 	MID		*pMobIndex;
 
-	FOREACH( pMobIndex, area->area_tmp->first_mob )
+	for (auto* pMobIndex : area->area_tmp->mobs)
 		if( pMobIndex->vnum == vnum )
 			return pMobIndex;
 
@@ -573,7 +588,7 @@ OID *get_obj_tmp( int vnum, AREA_DATA *area )
 {
 	OID		*pObjIndex;
 
-	FOREACH( pObjIndex, area->area_tmp->first_obj )
+	for (auto* pObjIndex : area->area_tmp->objs)
 		if( pObjIndex->vnum == vnum )
 			return pObjIndex;
 
@@ -584,7 +599,7 @@ RID *get_room_tmp( int vnum, AREA_DATA *area )
 {
 	RID		*pRoomIndex;
 
-	FOREACH( pRoomIndex, area->area_tmp->first_room )
+	for (auto* pRoomIndex : area->area_tmp->rooms)
 		if( pRoomIndex->vnum == vnum )
 			return pRoomIndex;
 
@@ -691,13 +706,13 @@ AREA_DATA *load_area2( const char *filename )
 
 	root = xmlDocGetRootElement( doc );
 
-	FOREACH( snode, root->children )
+	for (snode = root->children; snode; snode = snode->next)
 	{
 		EONLY( snode );
 
 		if( !swXmlStrcmp( snode->name, "head" ) )
 		{
-			FOREACH( node, snode->children )
+			for (node = snode->children; node; node = node->next)
 			{
 				EONLY( node );
 
@@ -715,7 +730,7 @@ AREA_DATA *load_area2( const char *filename )
 				else
 				if( !swXmlStrcmp( node->name, "vnums" ) )
 				{
-					FOREACH( child, node->children )
+					for (child = node->children; child; child = child->next)
 					{
 						EONLY( child );
 
@@ -732,7 +747,7 @@ AREA_DATA *load_area2( const char *filename )
 				else
 				if( !swXmlStrcmp( node->name, "economy" ) )
 				{
-					FOREACH( child, node->children )
+					for (child = node->children; child; child = child->next)
 					{
 						EONLY( child );
 
@@ -746,7 +761,7 @@ AREA_DATA *load_area2( const char *filename )
 				else
 				if( !swXmlStrcmp( node->name, "reset" ) )
 				{
-					FOREACH( child, node->children )
+					for (child = node->children; child; child = child->next)
 					{
 						EONLY( child );
 
@@ -760,7 +775,7 @@ AREA_DATA *load_area2( const char *filename )
 				else
 				if( !swXmlStrcmp( node->name, "ranges" ) )
 				{
-					FOREACH( child, node->children )
+					for (child = node->children; child; child = child->next)
 					{
 						EONLY( child );
 
@@ -776,12 +791,12 @@ AREA_DATA *load_area2( const char *filename )
 		else
 		if( !swXmlStrcmp( snode->name, "mobiles" ) )
 		{
-			FOREACH( node, snode->children )
+			for (node = snode->children; node; node = node->next)
 			{
 				EONLY( node );
 
 				pMobIndex = new_mob();
-				FOREACH( child, node->children ) /* mobile */
+				for (child = node->children; child; child = child->next) /* mobile */
 				{
 					EONLY( child );
 
@@ -795,7 +810,7 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "short" ) )
 					{
-						FOREACH( gchild, child->children )
+						for (gchild = child->children; gchild; gchild = gchild->next)
 						{
 							EONLY( gchild );
 
@@ -861,7 +876,7 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "sectiona" ) )
 					{
-						FOREACH( gchild, child->children )
+						for (gchild = child->children; gchild; gchild = gchild->next)
 						{
 							EONLY( gchild );
 
@@ -890,7 +905,7 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "sections" ) )
 					{
-						FOREACH( gchild, child->children )
+						for (gchild = child->children; gchild; gchild = gchild->next)
 						{
 							EONLY( gchild );
 
@@ -913,7 +928,7 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "sectionr" ) )
 					{
-						FOREACH( gchild, child->children )
+						for (gchild = child->children; gchild; gchild = gchild->next)
 						{
 							EONLY( gchild );
 
@@ -949,7 +964,7 @@ AREA_DATA *load_area2( const char *filename )
 					if( !swXmlStrcmp( child->name, "sectionx" ) )
 					{
 
-						FOREACH( gchild, child->children )
+						for (gchild = child->children; gchild; gchild = gchild->next)
 						{
 							EONLY( gchild );
 
@@ -981,7 +996,7 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "sectiont" ) )
 					{
-						FOREACH( gchild, child->children )
+						for (gchild = child->children; gchild; gchild = gchild->next)
 						{
 							EONLY( gchild );
 
@@ -1013,7 +1028,7 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "sectionv" ) )
 					{
-						FOREACH( gchild, child->children )
+						for (gchild = child->children; gchild; gchild = gchild->next)
 						{
 							EONLY( gchild );
 
@@ -1026,20 +1041,20 @@ AREA_DATA *load_area2( const char *filename )
 						swGetContent( &pMobIndex->dialog_name, child );
 					else
 					if( !swXmlStrcmp( child->name, "programs" ) )
-						swGetContentPrograms( &pMobIndex->mudprogs, &pMobIndex->progtypes, child );
+						swGetContentPrograms( pMobIndex->mudprogs, &pMobIndex->progtypes, child );
 				}
-				LINK1( pMobIndex, area->area_tmp->first_mob, area->area_tmp->last_mob, next );
+				area->area_tmp->mobs.push_back(pMobIndex);
 			}
 		}
 		else
 		if( !swXmlStrcmp( snode->name, "objects" ) )
 		{
-			FOREACH( node, snode->children )
+			for (node = snode->children; node; node = node->next)
 			{
 				EONLY( node );
 
 				pObjIndex = new_obj_index();
-				FOREACH( child, node->children ) /* object */
+				for (child = node->children; child; child = child->next) /* object */
 				{
 					EONLY( child );
 
@@ -1051,7 +1066,7 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "short" ) )
 					{
-						FOREACH( gchild, child->children )
+						for (gchild = child->children; gchild; gchild = gchild->next)
 						{
 							EONLY( gchild );
 
@@ -1098,7 +1113,7 @@ AREA_DATA *load_area2( const char *filename )
 						char	*buf2 = NULL;
 
 						STRDUP( buf2, "" );
-						FOREACH( gchild, child->children )
+						for (gchild = child->children; gchild; gchild = gchild->next)
 						{
 							EONLY( gchild );
 
@@ -1162,22 +1177,20 @@ AREA_DATA *load_area2( const char *filename )
 						swGetContentInt( &pObjIndex->level, child );
 					else
 					if( !swXmlStrcmp( child->name, "extradescs" ) )
-						swGetContentExtraDescs( &pObjIndex->first_extradesc,
-							&pObjIndex->last_extradesc, child );
+						swGetContentExtraDescs( pObjIndex->extradesc, child );
 					else
 					if( !swXmlStrcmp( child->name, "requirements" ) )
 					{
 						char	*buf2 = NULL;
 
 						STRDUP( buf2, "" );						
-						FOREACH( gchild, child->children ) /* requirement */
+						for (gchild = child->children; gchild; gchild = gchild->next) /* requirement */
 						{
 							EONLY( gchild );
 
 							req = new_requirement();
-							LINK( req, pObjIndex->first_requirement, pObjIndex->last_requirement,
-								next, prev );
-							FOREACH( ggchild, gchild->children )
+							pObjIndex->requirements.push_back(req);
+							for (ggchild = gchild->children; ggchild; ggchild = ggchild->next)
 							{
 								EONLY( ggchild );
 
@@ -1199,14 +1212,13 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "affects" ) )
 					{
-						FOREACH( gchild, child->children ) /* affect */
+						for (gchild = child->children; gchild; gchild = gchild->next) /* affect */
 						{
 							EONLY( gchild );
 
 							paf = new_affect();
-							LINK( paf, pObjIndex->first_affect, pObjIndex->last_affect,
-								next, prev );
-							FOREACH( ggchild, gchild->children )
+							pObjIndex->affects.push_back(paf);
+							for (ggchild = gchild->children; ggchild; ggchild = ggchild->next)
 							{
 								EONLY( ggchild );
 
@@ -1220,20 +1232,20 @@ AREA_DATA *load_area2( const char *filename )
 					}
 					else
 					if( !swXmlStrcmp( child->name, "programs" ) )
-						swGetContentPrograms( &pObjIndex->mudprogs, &pObjIndex->progtypes, child );
+						swGetContentPrograms( pObjIndex->mudprogs, &pObjIndex->progtypes, child );
 				}
-				LINK1( pObjIndex, area->area_tmp->first_obj, area->area_tmp->last_obj, next );
+				area->area_tmp->objs.push_back(pObjIndex);
 			}
 		}
 		else
 		if( !swXmlStrcmp( snode->name, "rooms" ) )
 		{
-			FOREACH( node, snode->children )
+			for (node = snode->children; node; node = node->next)
 			{
 				EONLY( node );
 
 				pRoomIndex = new_room();
-				FOREACH( child, node->children ) /* room */
+				for (child = node->children; child; child = child->next) /* room */
 				{
 					EONLY( child );
 
@@ -1269,14 +1281,13 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "exits" ) )
 					{
-						FOREACH( gchild, child->children ) /* exit */
+						for (gchild = child->children; gchild; gchild = gchild->next) /* exit */
 						{
 							EONLY( gchild );
 
 							xit = new_exit();
-							LINK( xit, pRoomIndex->first_exit, pRoomIndex->last_exit,
-								next, prev );
-							FOREACH( ggchild, gchild->children )
+							pRoomIndex->exits.push_back(xit);
+							for (ggchild = gchild->children; ggchild; ggchild = ggchild->next)
 							{
 								EONLY( gchild );
 
@@ -1308,14 +1319,13 @@ AREA_DATA *load_area2( const char *filename )
 					}
 					else
 					if( !swXmlStrcmp( child->name, "extradescs" ) )
-						swGetContentExtraDescs( &pRoomIndex->first_extradesc,
-							&pRoomIndex->last_extradesc, child );
+						swGetContentExtraDescs( pRoomIndex->extradesc, child );
 					else
 					if( !swXmlStrcmp( child->name, "programs" ) )
-						swGetContentPrograms( &pRoomIndex->mudprogs, &pRoomIndex->progtypes, child );
+						swGetContentPrograms( pRoomIndex->mudprogs, &pRoomIndex->progtypes, child );
 				}
 				pRoomIndex->area = area;
-				LINK1( pRoomIndex, area->area_tmp->first_room, area->area_tmp->last_room, next );
+				area->area_tmp->rooms.push_back(pRoomIndex);
 			}
 		}
 		else
@@ -1326,12 +1336,12 @@ AREA_DATA *load_area2( const char *filename )
 			int64	lastobj = 0;
 
 			STRDUP( buf2, "" );
-			FOREACH( node, snode->children ) /* reset */
+			for (node = snode->children; node; node = node->next) /* reset */
 			{
 				EONLY( node );
 
 				pReset = new_reset();
-				FOREACH( child, node->children )
+				for (child = node->children; child; child = child->next)
 				{
 					EONLY( child );
 
@@ -1359,19 +1369,19 @@ AREA_DATA *load_area2( const char *filename )
 				if( !(pRoomIndex = validate_reset( area, pReset, &lastroom, &lastobj )) )
 					free_reset( pReset );
 				else
-					LINK( pReset, pRoomIndex->first_reset, pRoomIndex->last_reset, next, prev );
+					pRoomIndex->resets.push_back(pReset);
 			}
 			STRFREE( buf2 );
 		}
 		else
 		if( !swXmlStrcmp( snode->name, "shops" ) )
 		{
-			FOREACH( node, snode->children ) /* shop */
+			for (node = snode->children; node; node = node->next) /* shop */
 			{
 				EONLY( node );
 
 				pShop = new_shop();
-				FOREACH( child, node->children )
+				for (child = node->children; child; child = child->next)
 				{
 					EONLY( child );
 
@@ -1380,7 +1390,7 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "types" ) )
 					{
-						FOREACH( gchild, child->children ) /* type */
+						for (gchild = child->children; gchild; gchild = gchild->next) /* type */
 						{
 							EONLY( gchild );
 
@@ -1423,7 +1433,7 @@ AREA_DATA *load_area2( const char *filename )
 				}
 				else
 				{
-					LINK( pShop, area->area_tmp->first_shop, area->area_tmp->last_shop, next, prev );
+					area->area_tmp->shops.push_back(pShop);
 					pMobIndex->pShop = pShop;
 					pShop->profit_sell = URANGE( 0, pShop->profit_sell, pShop->profit_buy-5 );
 					pShop->profit_buy = URANGE( pShop->profit_sell+5, pShop->profit_buy, 1000 );
@@ -1433,12 +1443,12 @@ AREA_DATA *load_area2( const char *filename )
 		else
 		if( !swXmlStrcmp( snode->name, "repairs" ) )
 		{
-			FOREACH( node, snode->children ) /* repair */
+			for (node = snode->children; node; node = node->next) /* repair */
 			{
 				EONLY( node );
 
 				pRepair = new_repair();
-				FOREACH( child, node->children )
+				for (child = node->children; child; child = child->next)
 				{
 					EONLY( child );
 
@@ -1447,7 +1457,7 @@ AREA_DATA *load_area2( const char *filename )
 					else
 					if( !swXmlStrcmp( child->name, "types" ) )
 					{
-						FOREACH( gchild, child->children ) /* type */
+						for (gchild = child->children; gchild; gchild = gchild->next) /* type */
 						{
 							EONLY( gchild );
 
@@ -1481,7 +1491,7 @@ AREA_DATA *load_area2( const char *filename )
 				}
 				else
 				{
-					LINK( pRepair, area->area_tmp->first_repair, area->area_tmp->last_repair, next, prev );
+					area->area_tmp->repairs.push_back(pRepair);
 					pMobIndex->rShop = pRepair;
 				}
 			}
@@ -1494,11 +1504,11 @@ AREA_DATA *load_area2( const char *filename )
 
 			STRDUP( buf2, "" );
 			STRDUP( buf3, "" );
-			FOREACH( node, snode->children ) /* special */
+			for (node = snode->children; node; node = node->next) /* special */
 			{
 				EONLY( node );
 
-				FOREACH( child, node->children )
+				for (child = node->children; child; child = child->next)
 				{
 					EONLY( child );
 
@@ -1525,7 +1535,7 @@ AREA_DATA *load_area2( const char *filename )
 		}
 	}
 
-	LINK( area, first_uarea, last_uarea, next, prev );
+	uarea_list.push_back(area);
 
 	swXmlCleanIO();
 	xmlFreeDoc( doc );
@@ -1553,7 +1563,7 @@ bool install_area( AREA_DATA *area )
 		return false;
 	}
 
-	FOREACH( pArea, first_area )
+	for (auto* pArea : area_list)
 		if( IVR( pArea->lvnum, area ) || IVR( pArea->uvnum, area ) )
 		{
 			bug( "area (filename: %s) vnums <%d;%d> collide with"
@@ -1563,7 +1573,7 @@ bool install_area( AREA_DATA *area )
 			return false;
 		}
 
-	FOREACH( pMobIndex, area->area_tmp->first_mob )
+	for (auto* pMobIndex : area->area_tmp->mobs)
 	{
 		if( !IVR( pMobIndex->vnum, area ) )
 		{
@@ -1572,7 +1582,7 @@ bool install_area( AREA_DATA *area )
 		}
 	}
 
-	FOREACH( pObjIndex, area->area_tmp->first_obj )
+	for (auto* pObjIndex : area->area_tmp->objs)
 	{
 		if( !IVR( pObjIndex->vnum, area ) )
 		{
@@ -1581,7 +1591,7 @@ bool install_area( AREA_DATA *area )
 		}
 	}
 
-	FOREACH( pRoomIndex, area->area_tmp->first_room )
+	for (auto* pRoomIndex : area->area_tmp->rooms)
 	{
 		if( !IVR( pRoomIndex->vnum, area ) )
 		{
@@ -1590,7 +1600,7 @@ bool install_area( AREA_DATA *area )
 		}
 	}
 
-	FOREACH( pShop, area->area_tmp->first_shop )
+	for (auto* pShop : area->area_tmp->shops)
 	{
 		if( !IVR( pShop->keeper, area ) )
 		{
@@ -1599,7 +1609,7 @@ bool install_area( AREA_DATA *area )
 		}
 	}
 
-	FOREACH( pRepair, area->area_tmp->first_repair )
+	for (auto* pRepair : area->area_tmp->repairs)
 	{
 		if( !IVR( pRepair->keeper, area ) )
 		{
@@ -1610,69 +1620,32 @@ bool install_area( AREA_DATA *area )
 	
 	/* wszystko ok, instalujemy krainke */
 
-	UNLINK( area, first_uarea, last_uarea, next, prev );
+	uarea_list.remove(area);
 	sort_area( area, false );
-	LINK( area, first_area, last_area, next, prev );
+	area_list.push_back(area);
 
-	for( pMobIndex = area->area_tmp->first_mob; pMobIndex; pMobIndex = pMobIndex_next )
+	for (auto* pMobIndex : area->area_tmp->mobs)
 	{
-		pMobIndex_next = pMobIndex->next;
 		i = pMobIndex->vnum % MAX_KEY_HASH;
-		pMobIndex->next = mob_index_hash[i];
-		mob_index_hash[i] = pMobIndex;
+		mob_index_hash[i].push_front(pMobIndex);
 		top_mob_index++;
 	}
 
-	for( pObjIndex = area->area_tmp->first_obj; pObjIndex; pObjIndex = pObjIndex_next )
+	for (auto* pObjIndex : area->area_tmp->objs)
 	{
-		pObjIndex_next = pObjIndex->next;
 		i = pObjIndex->vnum % MAX_KEY_HASH;
-		pObjIndex->next = obj_index_hash[i];
-		obj_index_hash[i] = pObjIndex;
+		obj_index_hash[i].push_front(pObjIndex);
 		top_obj_index++;
 	}
 
-	for( pRoomIndex = area->area_tmp->first_room; pRoomIndex; pRoomIndex = pRoomIndex_next )
+	for (auto* pRoomIndex : area->area_tmp->rooms)
 	{
-		pRoomIndex_next = pRoomIndex->next;
 		i = pRoomIndex->vnum % MAX_KEY_HASH;
-		pRoomIndex->next = room_index_hash[i];
-		room_index_hash[i] = pRoomIndex;
+		room_index_hash[i].push_front(pRoomIndex);
 	}
 
-	if( first_shop )
-	{
-		if( area->area_tmp->first_shop )
-		{
-			area->area_tmp->first_shop->prev = last_shop;
-			last_shop->next = area->area_tmp->first_shop;
-		}
-		else
-			first_shop = area->area_tmp->first_shop;
-		last_shop = area->area_tmp->last_shop;
-	}
-	else
-	{
-		first_shop = area->area_tmp->first_shop;
-		last_shop = area->area_tmp->last_shop;
-	}
-
-	if( first_repair )
-	{
-		if( area->area_tmp->first_repair )
-		{
-			area->area_tmp->first_repair->prev = last_repair;
-			last_repair->next = area->area_tmp->first_repair;
-		}
-		else
-			first_repair = area->area_tmp->first_repair;
-		last_repair = area->area_tmp->last_repair;
-	}
-	else
-	{
-		first_repair = area->area_tmp->first_repair;
-		last_repair = area->area_tmp->last_repair;
-	}
+	shop_list.splice(shop_list.end(), area->area_tmp->shops);
+	repair_list.splice(repair_list.end(), area->area_tmp->repairs);
 
 	free_area_tmp( area->area_tmp );
 

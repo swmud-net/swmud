@@ -27,11 +27,9 @@
 
 extern int top_helps_file;
 
-RACE_DATA *first_race;
-RACE_DATA *last_race;
+std::list<RACE_DATA*> race_list;
 RACE_DATA *base_race;
-LANG_DATA *first_lang;
-LANG_DATA *last_lang;
+std::list<LANG_DATA*> lang_list;
 LANG_DATA *lang_base;
 
 void save_helps args( () );
@@ -703,7 +701,7 @@ AREA_DATA* get_vnum_area(int vnum)
 {
 	AREA_DATA *pArea;
 
-	for (pArea = first_area; pArea; pArea = pArea->next)
+	for (auto* pArea : area_list)
 		if (vnum >= pArea->lvnum && vnum <= pArea->uvnum)
 			return pArea;
 	return NULL;
@@ -713,7 +711,7 @@ AREA_DATA* get_area_by_id(int area_id)
 {
 	AREA_DATA *pArea;
 
-	for (pArea = first_area; pArea; pArea = pArea->next)
+	for (auto* pArea : area_list)
 		if (area_id == pArea->area_id)
 			return pArea;
 
@@ -884,7 +882,7 @@ AREA_DATA* find_area(char *name)
 	AREA_DATA *tarea;
 	bool found = false;
 
-	for (tarea = first_area; tarea; tarea = tarea->next)
+	for (auto* tarea : area_list)
 		if (!str_cmp(tarea->filename, name))
 		{
 			found = true;
@@ -892,7 +890,7 @@ AREA_DATA* find_area(char *name)
 		}
 
 	if (!found)
-		for (tarea = first_build; tarea; tarea = tarea->next)
+		for (auto* tarea : build_list)
 			if (!str_cmp(tarea->filename, name))
 			{
 				found = true;
@@ -918,7 +916,7 @@ bool medit_create(CHAR_DATA *ch, char *argument)
 
 	if (arg1[0] == '\0' || (value = atoi(arg1)) == 0)
 	{
-		send_to_char("Sk³adnia: create <vnum>" NL, ch);
+		send_to_char("Skï¿½adnia: create <vnum>" NL, ch);
 		return false;
 	}
 
@@ -1105,7 +1103,7 @@ void medit(DESCRIPTOR_DATA *d, char *argument)
 			shop->open_hour = 0;
 			shop->close_hour = 23;
 			pMob->pShop = shop;
-			LINK(shop, first_shop, last_shop, next, prev);
+			shop_list.push_back(shop);
 			send_to_char("Done." NL, ch);
 
 			return;
@@ -1212,7 +1210,7 @@ void medit(DESCRIPTOR_DATA *d, char *argument)
 				return;
 			}
 
-			UNLINK(pMob->pShop, first_shop, last_shop, next, prev);
+			shop_list.remove(pMob->pShop);
 			DISPOSE(pMob->pShop);
 			pMob->pShop = NULL;
 			send_to_char("Shop deleted." NL, ch);
@@ -1235,7 +1233,7 @@ void medit(DESCRIPTOR_DATA *d, char *argument)
 			return;
 		}
 		STRDUP(pMob->dialog_name, pData->name);
-		send_to_char("Dialog zosta³ zmieniony." NL, ch);
+		send_to_char("Dialog zostaï¿½ zmieniony." NL, ch);
 		return;
 	}
 
@@ -1272,7 +1270,7 @@ void medit(DESCRIPTOR_DATA *d, char *argument)
 			rShop->open_hour = 0;
 			rShop->close_hour = 23;
 			pMob->rShop = rShop;
-			LINK(rShop, first_repair, last_repair, next, prev);
+			repair_list.push_back(rShop);
 
 			send_to_char("Repairshop created." NL, ch);
 			return;
@@ -1375,7 +1373,7 @@ void medit(DESCRIPTOR_DATA *d, char *argument)
 		}
 		if (!str_cmp(arg1, "delete"))
 		{
-			UNLINK(pMob->rShop, first_repair, last_repair, next, prev);
+			repair_list.remove(pMob->rShop);
 			DISPOSE(pMob->rShop);
 			pMob->rShop = NULL;
 			send_to_char("Repairshop deleted." NL, ch);
@@ -1467,7 +1465,7 @@ void medit(DESCRIPTOR_DATA *d, char *argument)
 		int i;
 		if (arg2[0] == '\0' || !is_number(arg2))
 		{
-			send_to_char("Sk³adnia copy <vnum>." NL, ch);
+			send_to_char("Skï¿½adnia copy <vnum>." NL, ch);
 			return;
 		}
 		if (!(pCmob = get_mob_index(atoi(arg2))))
@@ -1852,7 +1850,7 @@ bool oedit_create(CHAR_DATA *ch, char *argument)
 
 	if (arg1[0] == '\0' || (value = atoi(arg1)) == 0)
 	{
-		send_to_char("Sk³adnia: create <vnum>" NL, ch);
+		send_to_char("Skï¿½adnia: create <vnum>" NL, ch);
 		return false;
 	}
 	if (!can_edit(ch, value))
@@ -1868,7 +1866,7 @@ bool oedit_create(CHAR_DATA *ch, char *argument)
 	}
 	if (get_obj_index(value))
 	{
-		send_to_char("Ten vnum jest ju¿ zajêty." NL, ch);
+		send_to_char("Ten vnum jest juï¿½ zajï¿½ty." NL, ch);
 		return false;
 	}
 
@@ -1943,13 +1941,13 @@ DEF_DO_FUN( oindex )
 	sprintf(buf, FG_CYAN "Extra flags: " PLAIN "[%s]" FG_CYAN "." EOL, flag_string(obj_flags_list, pObj->extra_flags));
 	send_to_char(buf, ch);
 
-	if (pObj->first_extradesc)
+	if (!pObj->extradesc.empty())
 	{
 		EXTRA_DESCR_DATA *ed;
 
 		send_to_char( FG_CYAN "Extra description keywords: " PLAIN, ch);
 
-		for (ed = pObj->first_extradesc; ed; ed = ed->next)
+		for (auto* ed : pObj->extradesc)
 		{
 			send_to_char(ed->keyword, ch);
 			send_to_char(" ", ch);
@@ -1972,7 +1970,8 @@ DEF_DO_FUN( oindex )
 	sprintf(buf, FG_CYAN "Actiondesc: " PLAIN "%s" EOL, pObj->action_desc);
 	send_to_char(buf, ch);
 
-	for (cnt = 0, paf = pObj->first_affect; paf; paf = paf->next)
+	cnt = 0;
+	for (auto* paf : pObj->affects)
 	{
 		if (cnt == 0)
 		{
@@ -1989,13 +1988,15 @@ DEF_DO_FUN( oindex )
 	show_obj_values(ch, pObj);
 
 	send_to_char( EOL, ch);
-	for (cnt = 1, req = pObj->first_requirement; req; req = req->next, cnt++)
+	cnt = 1;
+	for (auto* req : pObj->requirements)
 	{
 		if (cnt == 1)
 			send_to_char( FB_CYAN "Requirements:" EOL, ch);
 		ch_printf(ch, FG_YELLOW "  [%3d]" PLAIN "  ", cnt);
 		show_req(ch, req);
 		send_to_char( EOL, ch);
+		cnt++;
 	}
 
 	return;
@@ -2077,7 +2078,7 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 		strcpy(arg2, argument);
 		if (arg1[0] == '\0' || arg2[0] == '\0')
 		{
-			send_to_char("Sk³adnia:  addaffect <apply_type> <modyfikator>" NL, ch);
+			send_to_char("Skï¿½adnia:  addaffect <apply_type> <modyfikator>" NL, ch);
 			return;
 		}
 
@@ -2092,7 +2093,7 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if ((modifier = flag_value(aff_flags_list, arg2)) == NO_FLAG)
 			{
-				send_to_char("Taki wp³yw nie istnieje." NL, ch);
+				send_to_char("Taki wpï¿½yw nie istnieje." NL, ch);
 				return;
 			}
 		}
@@ -2100,7 +2101,7 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if ((modifier = flag_value(ris_flags_list, arg2)) == NO_FLAG)
 			{
-				send_to_char("Taki wp³yw nie istnieje." NL, ch);
+				send_to_char("Taki wpï¿½yw nie istnieje." NL, ch);
 				return;
 			}
 		}
@@ -2115,11 +2116,10 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 		pAf->type = -1;
 		pAf->duration = -1;
 		pAf->bitvector = 0;
-		pAf->next = NULL;
 
-		LINK(pAf, pObj->first_affect, pObj->last_affect, next, prev);
+		pObj->affects.push_back(pAf);
 
-		send_to_char("Wp³yw dodany." NL, ch);
+		send_to_char("Wpï¿½yw dodany." NL, ch);
 		return;
 	}
 
@@ -2131,21 +2131,23 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (arg1[0] == '\0' || !is_number(arg1))
 		{
-			send_to_char("Sk³adnia:  delaffect <nr>" NL, ch);
+			send_to_char("Skï¿½adnia:  delaffect <nr>" NL, ch);
 			return;
 		}
 		nr = atoi(arg1);
 
-		for (pAf = pObj->first_affect, i = 0; pAf; pAf = pAf->next, i++)
+		i = 0;
+		for (auto* pAf : pObj->affects)
 		{
 			if (nr == i)
 			{
-				UNLINK(pAf, pObj->first_affect, pObj->last_affect, next, prev);
+				pObj->affects.remove(pAf);
 				DISPOSE(pAf);
 				send_to_char("Removed." NL, ch);
 				--top_affect;
 				return;
 			}
+			i++;
 		}
 		send_to_char("Not found." NL, ch);
 		return;
@@ -2216,7 +2218,7 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 			rEq->modifier = atoi(arg2);
 			rEq->type = 0;
 		}
-		LINK(rEq, pObj->first_requirement, pObj->last_requirement, next, prev);
+		pObj->requirements.push_back(rEq);
 
 		send_to_char("Requirement added." NL, ch);
 		return;
@@ -2236,16 +2238,18 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 		}
 
 		nr = atoi(arg1);
-		for (cnt = 1, rEq = pObj->first_requirement; rEq; rEq = rEq->next, cnt++)
+		cnt = 1;
+		for (auto* rEq : pObj->requirements)
 		{
 			if (nr == cnt)
 			{
-				UNLINK(rEq, pObj->first_requirement, pObj->last_requirement, next, prev);
+				pObj->requirements.remove(rEq);
 				DISPOSE(rEq);
 
 				send_to_char("Requirement deleted." NL, ch);
 				return;
 			}
+			cnt++;
 		}
 		send_to_char("No such requirement." NL, ch);
 		return;
@@ -2269,21 +2273,21 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 	if ((value = flag_value(obj_flags_list, arg)) != NO_FLAG)
 	{
 		TOGGLE_BIT(pObj->extra_flags, value);
-		send_to_char("Extra flaga prze³±czona." NL, ch);
+		send_to_char("Extra flaga przeï¿½ï¿½czona." NL, ch);
 		return;
 	}
 
 	if ((value = flag_value(wear_flags_list, arg)) != NO_FLAG)
 	{
 		TOGGLE_BIT(pObj->wear_flags, value);
-		send_to_char("Wear flaga prze³±czona." NL, ch);
+		send_to_char("Wear flaga przeï¿½ï¿½czona." NL, ch);
 		return;
 	}
 
 	if ((value = flag_value(gender_types_list, arg)) != NO_FLAG)
 	{
 		pObj->gender = value;
-		send_to_char("P³eæ przedmiotu ustalona." NL, ch);
+		send_to_char("Pï¿½eï¿½ przedmiotu ustalona." NL, ch);
 		return;
 	}
 
@@ -2300,7 +2304,7 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (arg2[0] == '\0')
 		{
-			send_to_char("Sk³adnia:  short <mianownik@dope³niacz@celownik@...@miejscownik>" NL, ch);
+			send_to_char("Skï¿½adnia:  short <mianownik@dopeï¿½niacz@celownik@...@miejscownik>" NL, ch);
 			return;
 		}
 
@@ -2331,13 +2335,13 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 	{
 		if (arg2[0] == '\0')
 		{
-			send_to_char("Sk³adnia:  long <opis>" NL, ch);
+			send_to_char("Skï¿½adnia:  long <opis>" NL, ch);
 			return;
 		}
 
 		STRDUP(pObj->description, arg2);
 		pObj->description[0] = UPPER(pObj->description[0]);
-		send_to_char("D³ugi opis ustalony." NL, ch);
+		send_to_char("Dï¿½ugi opis ustalony." NL, ch);
 		return;
 	}
 
@@ -2364,9 +2368,9 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 	{
 		if (arg2[0] == '\0')
 		{
-			send_to_char("Sk³adnia:  ed add    <s³owo_kluczowe>" NL, ch);
-			send_to_char("           ed delete <s³owo_kluczowe>" NL, ch);
-			send_to_char("           ed edit   <s³owo_kluczowe>" NL, ch);
+			send_to_char("Skï¿½adnia:  ed add    <sï¿½owo_kluczowe>" NL, ch);
+			send_to_char("           ed delete <sï¿½owo_kluczowe>" NL, ch);
+			send_to_char("           ed edit   <sï¿½owo_kluczowe>" NL, ch);
 			return;
 		}
 
@@ -2377,7 +2381,7 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0')
 			{
-				send_to_char("Sk³adnia:  ed add <s³owo_kluczowe>" NL, ch);
+				send_to_char("Skï¿½adnia:  ed add <sï¿½owo_kluczowe>" NL, ch);
 				return;
 			}
 
@@ -2393,11 +2397,11 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0')
 			{
-				send_to_char("Sk³adnia:  ed edit <s³owo_kluczowe>" NL, ch);
+				send_to_char("Skï¿½adnia:  ed edit <sï¿½owo_kluczowe>" NL, ch);
 				return;
 			}
 
-			for (ed = pObj->first_extradesc; ed; ed = ed->next)
+			for (auto* ed : pObj->extradesc)
 			{
 				if (is_name(arg2, ed->keyword))
 					break;
@@ -2405,7 +2409,7 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 
 			if (!ed)
 			{
-				send_to_char("S³owo kluczowe nie odnalezione." NL, ch);
+				send_to_char("Sï¿½owo kluczowe nie odnalezione." NL, ch);
 				return;
 			}
 
@@ -2418,12 +2422,12 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0')
 			{
-				send_to_char("Syntax:  ed delete <s³owo_kluczowe>" NL, ch);
+				send_to_char("Syntax:  ed delete <sï¿½owo_kluczowe>" NL, ch);
 				return;
 			}
 
 			if (DelOExtraProto(pObj, arg2))
-				send_to_char("Opis extra dodatku usuniêty." NL, ch);
+				send_to_char("Opis extra dodatku usuniï¿½ty." NL, ch);
 			return;
 		}
 	}
@@ -2484,7 +2488,7 @@ bool redit_create(CHAR_DATA *ch, char *argument)
 
 	if (arg1[0] == '\0' || (value = atoi(arg1)) == 0)
 	{
-		send_to_char("Sk³adnia: create <vnum>" NL, ch);
+		send_to_char("Skï¿½adnia: create <vnum>" NL, ch);
 		return false;
 	}
 	if (!can_edit(ch, value))
@@ -2500,7 +2504,7 @@ bool redit_create(CHAR_DATA *ch, char *argument)
 	}
 	if (get_room_index(value))
 	{
-		send_to_char("Taki pokój ju¿ istnieje." NL, ch);
+		send_to_char("Taki pokï¿½j juï¿½ istnieje." NL, ch);
 		return false;
 	}
 
@@ -2600,7 +2604,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 	{
 		TOGGLE_BIT(pRoom->room_flags, value);
 
-		send_to_char("Flaga lokacji prze³±czona." NL, ch);
+		send_to_char("Flaga lokacji przeï¿½ï¿½czona." NL, ch);
 		return;
 	}
 	if ((value = flag_value(sector_types_list, arg1)) != NO_FLAG)
@@ -2614,9 +2618,9 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 	{
 		if (arg2[0] == '\0')
 		{
-			send_to_char("Sk³adnia:  ed add    <s³owo_kluczowe>" NL, ch);
-			send_to_char("           ed delete <s³owo_kluczowe>" NL, ch);
-			send_to_char("           ed edit   <s³owo_kluczowe>" NL, ch);
+			send_to_char("Skï¿½adnia:  ed add    <sï¿½owo_kluczowe>" NL, ch);
+			send_to_char("           ed delete <sï¿½owo_kluczowe>" NL, ch);
+			send_to_char("           ed edit   <sï¿½owo_kluczowe>" NL, ch);
 			return;
 		}
 
@@ -2627,7 +2631,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0')
 			{
-				send_to_char("Sk³adnia:  ed add <s³owo_kluczowe>" NL, ch);
+				send_to_char("Skï¿½adnia:  ed add <sï¿½owo_kluczowe>" NL, ch);
 				return;
 			}
 
@@ -2645,11 +2649,11 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0')
 			{
-				send_to_char("Sk³adnia:  ed edit <s³owo_kluczowe>" NL, ch);
+				send_to_char("Skï¿½adnia:  ed edit <sï¿½owo_kluczowe>" NL, ch);
 				return;
 			}
 
-			for (ed = pRoom->first_extradesc; ed; ed = ed->next)
+			for (auto* ed : pRoom->extradesc)
 			{
 				if (is_name(arg2, ed->keyword))
 					break;
@@ -2657,7 +2661,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 			if (!ed)
 			{
-				send_to_char("S³owo kluczowe nie odnalezione." NL, ch);
+				send_to_char("Sï¿½owo kluczowe nie odnalezione." NL, ch);
 				return;
 			}
 
@@ -2669,7 +2673,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0')
 			{
-				send_to_char("Sk³adnia:  ed delete <s³owo_kluczowe>" NL, ch);
+				send_to_char("Skï¿½adnia:  ed delete <sï¿½owo_kluczowe>" NL, ch);
 				return;
 			}
 			if (DelRExtra(pRoom, arg2))
@@ -2707,7 +2711,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 				send_to_char("No nightdesc." NL, ch);
 			return;
 		}
-		send_to_char("Sk³adnia:  nightdesc  [delete]   (edycja)" NL, ch);
+		send_to_char("Skï¿½adnia:  nightdesc  [delete]   (edycja)" NL, ch);
 		return;
 	}
 
@@ -2731,7 +2735,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (arg2[0] == '\0' || !is_number(arg2))
 		{
-			send_to_char("Sk³adnia:   copy <vnum>." NL, ch);
+			send_to_char("Skï¿½adnia:   copy <vnum>." NL, ch);
 			return;
 		}
 		if (!(pCroom = get_room_index(atoi(arg2))))
@@ -2755,8 +2759,8 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 	{
 		if (!*arg2)
 		{
-			send_to_char("Ustal opó¼nienie teleportu. (0 = brak)." NL
-			"Sk³adnia: teledelay <warto¶æ>" NL, ch);
+			send_to_char("Ustal opï¿½nienie teleportu. (0 = brak)." NL
+			"Skï¿½adnia: teledelay <wartoï¿½ï¿½>" NL, ch);
 			return;
 		}
 		pRoom->tele_delay = atoi(arg2);
@@ -2769,7 +2773,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		if (!*arg2)
 		{
 			send_to_char("Ustaw vnum docelowy teleportu." NL
-			"Sk³adnia: televnum <vnum>" NL, ch);
+			"Skï¿½adnia: televnum <vnum>" NL, ch);
 			return;
 		}
 		pRoom->tele_vnum = atoi(arg2);
@@ -2781,7 +2785,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 	{
 		if (arg2[0] == '\0' || !is_number(arg2))
 		{
-			send_to_char("Sk³adnia:  tunnel <ilo¶æ> (0=nieskoñczona)" NL, ch);
+			send_to_char("Skï¿½adnia:  tunnel <iloï¿½ï¿½> (0=nieskoï¿½czona)" NL, ch);
 			return;
 		}
 
@@ -2789,33 +2793,33 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 		pRoom->tunnel = URANGE(1, value, 1000);
 
-		send_to_char("Limit pojemno¶ci lokacji ustalony." NL, ch);
+		send_to_char("Limit pojemnoï¿½ci lokacji ustalony." NL, ch);
 		return;
 	}
 
 	/* 	Ok Teraz edycja drzwi.
 	 Niby sprawa prosta, ale:
-	 Istniej± ci bowiem 2 mo¿liwo¶ci
-	 - Drzwi istniej± mo¿na je wiêc usun±æ, b±d¼ edytowaæ
+	 Istniejï¿½ ci bowiem 2 moï¿½liwoï¿½ci
+	 - Drzwi istniejï¿½ moï¿½na je wiï¿½c usunï¿½ï¿½, bï¿½dï¿½ edytowaï¿½
 	 (delete, room, name, etc)
-	 - Drzwi nie istniej±, mo¿na je tylko stworzyæ ( dig, lub link)
-	 Ale tylko je¶li drzwi nie s± 'virtualne' - gdy s±, u¿ywamy vexit
+	 - Drzwi nie istniejï¿½, moï¿½na je tylko stworzyï¿½ ( dig, lub link)
+	 Ale tylko jeï¿½li drzwi nie sï¿½ 'virtualne' - gdy sï¿½, uï¿½ywamy vexit
 	 */
 
-	/* tworzymy wyj¶cie 'wirtualne' (gdzie¶) EX_xAUTO */
+	/* tworzymy wyjï¿½cie 'wirtualne' (gdzieï¿½) EX_xAUTO */
 	if (!str_prefix(arg1, "vexit"))
 	{
 		argument = one_argument(argument, arg2);
 
 		if (!*arg2 || !*argument)
 		{
-			send_to_char("Sk³adnia: vexit <vnum> <keyword>" NL, ch);
+			send_to_char("Skï¿½adnia: vexit <vnum> <keyword>" NL, ch);
 			return;
 		}
 
 		if (find_door(ch, argument, true))
 		{
-			send_to_char("Wyj¶cie o takiej nazwie ju¿ istnieje." NL, ch);
+			send_to_char("Wyjï¿½cie o takiej nazwie juï¿½ istnieje." NL, ch);
 			return;
 		}
 
@@ -2823,7 +2827,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (!get_room_index(value))
 		{
-			send_to_char("Nie mo¿esz po³±czyæ tego pokoju z lokacj±, która nie istnieje." NL, ch);
+			send_to_char("Nie moï¿½esz poï¿½ï¿½czyï¿½ tego pokoju z lokacjï¿½, ktï¿½ra nie istnieje." NL, ch);
 			return;
 		}
 
@@ -2832,11 +2836,11 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		STRDUP(pExit->description, (char* )"");
 		pExit->key = -1;
 		pExit->orig_flags = EX_xAUTO;
-		send_to_char("Ok! ViRtUaLnE wyj¶cie utworzone." NL, ch);
+		send_to_char("Ok! ViRtUaLnE wyjï¿½cie utworzone." NL, ch);
 		return;
 	}
 
-	/* edytujemy istniej±ce wyj¶cie (zarówno standardowe jak i virtualne) */
+	/* edytujemy istniejï¿½ce wyjï¿½cie (zarï¿½wno standardowe jak i virtualne) */
 	if (((pExit = find_door(ch, arg1, true)) != NULL) && arg2[0] != '\0')
 	{
 		argument = one_argument(argument, arg1);
@@ -2846,16 +2850,16 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (pExit->to_room)
 			{
-				for (rExit = pExit->to_room->first_exit; rExit; rExit = rExit_next)
 				{
-					rExit_next = rExit->next;
-					if (rExit && rExit->to_room && rExit->to_room->vnum == pRoom->vnum && rExit != pExit)/* to MO¯E siê zdarzyæ */
-						extract_exit(pExit->to_room, rExit);
+					auto exit_snapshot = pExit->to_room->exits;
+					for (auto* rExit : exit_snapshot)
+						if (rExit && rExit->to_room && rExit->to_room->vnum == pRoom->vnum && rExit != pExit)/* to MOï¿½E siï¿½ zdarzyï¿½ */
+							extract_exit(pExit->to_room, rExit);
 				}
 			}
 
 			extract_exit(pRoom, pExit);
-			send_to_char("Przej¶cia roz³±czone." NL, ch);
+			send_to_char("Przejï¿½cia rozï¿½ï¿½czone." NL, ch);
 			return;
 		}
 
@@ -2863,7 +2867,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0' || !is_number(arg2))
 			{
-				send_to_char("Sk³adnia:  <kierunek> room <vnum>" NL, ch);
+				send_to_char("Skï¿½adnia:  <kierunek> room <vnum>" NL, ch);
 				return;
 			}
 
@@ -2871,13 +2875,13 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 			if (!get_room_index(value))
 			{
-				send_to_char("Pokój docelowy nie istnieje." NL, ch);
+				send_to_char("Pokï¿½j docelowy nie istnieje." NL, ch);
 				return;
 			}
 			pExit->vnum = value;
 			pExit->to_room = get_room_index(value);
 
-			send_to_char("Jednokierunkowe wyj¶cie zmienione." NL, ch);
+			send_to_char("Jednokierunkowe wyjï¿½cie zmienione." NL, ch);
 			return;
 		}
 
@@ -2885,7 +2889,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (!*arg2)
 			{
-				send_to_char("Sk³adnia:  <kierunek> key <vnum>" NL
+				send_to_char("Skï¿½adnia:  <kierunek> key <vnum>" NL
 				"           <kierunek> key delete" NL, ch);
 				return;
 			}
@@ -2893,7 +2897,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 			if (!str_cmp(arg2, "delete") || (value = atoi(arg2)) == -1)
 			{
 				pExit->key = -1;
-				send_to_char("Klucz usuniêty." NL, ch);
+				send_to_char("Klucz usuniï¿½ty." NL, ch);
 				return;
 			}
 
@@ -2912,7 +2916,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0' || !is_number(arg2))
 			{
-				send_to_char("Sk³adnia:  <kierunek> distance <dystans>" NL, ch);
+				send_to_char("Skï¿½adnia:  <kierunek> distance <dystans>" NL, ch);
 				return;
 			}
 
@@ -2928,7 +2932,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			STRDUP(pExit->keyword, argument);
 
-			send_to_char("Nazwa wyj¶cia ustalona." NL, ch);
+			send_to_char("Nazwa wyjï¿½cia ustalona." NL, ch);
 			return;
 		}
 
@@ -2940,14 +2944,14 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 			if ((pToRoom = pExit->to_room) && (can_edit(ch, pToRoom->vnum)) && (rExit = get_exit(pToRoom, rev_dir[pExit->vdir])))
 				TOGGLE_BIT(rExit->orig_flags, value);
-			send_to_char("Flaga wyj¶cia prze³±czona." NL, ch);
+			send_to_char("Flaga wyjï¿½cia przeï¿½ï¿½czona." NL, ch);
 			return;
 		}
 	}
 
-	/* Oki, a teraz je¶li wyj¶cie nie istnieje
-	 - sprawdzamy, czy edytuj±cy krainê wpisa³ np. north, south itd.
-	 i chce takie stworzyæ
+	/* Oki, a teraz jeï¿½li wyjï¿½cie nie istnieje
+	 - sprawdzamy, czy edytujï¿½cy krainï¿½ wpisaï¿½ np. north, south itd.
+	 i chce takie stworzyï¿½
 	 */
 	for (door = 0; door <= MAX_DIR; door++)
 	{
@@ -2957,11 +2961,11 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (door != DIR_PORTAL && arg2[0] != '\0')
 	{
-		/* je¶li wyj¶cie istnieje - niech sie builder zainteresuje
-		 opcjami powy¿ej */
+		/* jeï¿½li wyjï¿½cie istnieje - niech sie builder zainteresuje
+		 opcjami powyï¿½ej */
 		if (get_exit(pRoom, door))
 		{
-			send_to_char("Takie wyj¶cie ju¿ istnieje." NL, ch);
+			send_to_char("Takie wyjï¿½cie juï¿½ istnieje." NL, ch);
 			return;
 		}
 
@@ -2972,7 +2976,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0' || !is_number(arg2))
 			{
-				send_to_char("Sk³adnia:  <kierunek> link <vnum>" NL, ch);
+				send_to_char("Skï¿½adnia:  <kierunek> link <vnum>" NL, ch);
 				return;
 			}
 
@@ -2980,36 +2984,36 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 			if (!can_edit(ch, value))
 			{
-				send_to_char("Nie mo¿esz edytowaæ wyj¶æ lokacji docelowej." NL, ch);
+				send_to_char("Nie moï¿½esz edytowaï¿½ wyjï¿½ï¿½ lokacji docelowej." NL, ch);
 				return;
 			}
 
 			if (!get_room_index(value))
 			{
-				send_to_char("Nie mo¿esz po³±czyæ tego pokoju z lokacj±, która nie istnieje." NL, ch);
+				send_to_char("Nie moï¿½esz poï¿½ï¿½czyï¿½ tego pokoju z lokacjï¿½, ktï¿½ra nie istnieje." NL, ch);
 				return;
 			}
 
 			if (get_exit(get_room_index(value), rev_dir[door]))
 			{
-				send_to_char("Lokacja docelowa ma ju¿ zajête wyj¶cie w tym kierunku." NL, ch);
+				send_to_char("Lokacja docelowa ma juï¿½ zajï¿½te wyjï¿½cie w tym kierunku." NL, ch);
 				return;
 			}
 
-			/*wyj¶cie w pokoju*/
+			/*wyjï¿½cie w pokoju*/
 			pExit = make_exit(pRoom, get_room_index(value), door);
 			STRDUP(pExit->keyword, (char* )"");
 			STRDUP(pExit->description, (char* )"");
 			pExit->key = -1;
 			pExit->orig_flags = 0;
-			/*wyj¶cie powrotne z lokacji docelowej*/
+			/*wyjï¿½cie powrotne z lokacji docelowej*/
 			rExit = make_exit(pExit->to_room, pRoom, rev_dir[door]);
 			STRDUP(rExit->keyword, (char* )"");
 			STRDUP(rExit->description, (char* )"");
 			rExit->key = -1;
 			rExit->orig_flags = 0;
 
-			send_to_char("Przej¶cie po³±czone." NL, ch);
+			send_to_char("Przejï¿½cie poï¿½ï¿½czone." NL, ch);
 			return;
 		}
 
@@ -3017,7 +3021,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0' || !is_number(arg2))
 			{
-				send_to_char("Sk³adnia <kierunek> dig <vnum>" NL, ch);
+				send_to_char("Skï¿½adnia <kierunek> dig <vnum>" NL, ch);
 				return;
 			}
 
@@ -3025,13 +3029,13 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 			if (!can_edit(ch, value))
 			{
-				send_to_char("Nie mo¿esz edytowaæ wyj¶æ lokacji docelowej." NL, ch);
+				send_to_char("Nie moï¿½esz edytowaï¿½ wyjï¿½ï¿½ lokacji docelowej." NL, ch);
 				return;
 			}
 
 			if (get_room_index(value))
 			{
-				send_to_char("Ten pokój ju¿ istnieje. U¿yj 'link'." NL, ch);
+				send_to_char("Ten pokï¿½j juï¿½ istnieje. Uï¿½yj 'link'." NL, ch);
 				return;
 			}
 
@@ -3047,7 +3051,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			if (arg2[0] == '\0' || !is_number(arg2))
 			{
-				send_to_char("Sk³adnia:  <kierunek> room <vnum>" NL, ch);
+				send_to_char("Skï¿½adnia:  <kierunek> room <vnum>" NL, ch);
 				return;
 			}
 
@@ -3055,7 +3059,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 
 			if (!get_room_index(value))
 			{
-				send_to_char("Pokój docelowy nie istnieje." NL, ch);
+				send_to_char("Pokï¿½j docelowy nie istnieje." NL, ch);
 				return;
 			}
 
@@ -3066,7 +3070,7 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 			pExit->orig_flags = 0;
 			pExit->flags = 0;
 
-			send_to_char("Jednokierunkowe wyj¶cie stworzone." NL, ch);
+			send_to_char("Jednokierunkowe wyjï¿½cie stworzone." NL, ch);
 			return;
 		}
 	}
@@ -3093,7 +3097,7 @@ bool aedit_create(CHAR_DATA *ch, char *argument)
 
 	STRDUP(pArea->filename, argument);
 	STRDUP(pArea->author, ch->name);
-	LINK(pArea, first_area, last_area, next, prev);
+	area_list.push_back(pArea);
 
 	ch->desc->olc_editing = (void*) pArea;
 
@@ -3147,7 +3151,7 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 	{
 		TOGGLE_BIT(pArea->flags, value);
 
-		send_to_char("Flagi prze³±czone." NL, ch);
+		send_to_char("Flagi przeï¿½ï¿½czone." NL, ch);
 		return;
 	}
 
@@ -3165,7 +3169,7 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 		if (arg2[0] != '\0' && !str_cmp(arg2, "NULL"))
 		{
 			if ((planet = pArea->planet))
-				UNLINK(pArea, planet->first_area, planet->last_area, next_on_planet, prev_on_planet);
+				planet->areas.remove(pArea);
 			pArea->planet = NULL;
 			send_to_char("Done" NL, ch);
 
@@ -3180,10 +3184,10 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 				PLANET_DATA *old_planet;
 
 				old_planet = pArea->planet;
-				UNLINK(pArea, old_planet->first_area, old_planet->last_area, next_on_planet, prev_on_planet);
+				old_planet->areas.remove(pArea);
 			}
 			pArea->planet = planet;
-			LINK(pArea, planet->first_area, planet->last_area, next_on_planet, prev_on_planet);
+			planet->areas.push_back(pArea);
 			save_planet(planet);
 			send_to_char("Planeta ustalona." NL, ch);
 		}
@@ -3207,7 +3211,7 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (arg2[0] == '\0')
 		{
-			send_to_char("Sk³adnia:  builder <imiê>" NL, ch);
+			send_to_char("Skï¿½adnia:  builder <imiï¿½>" NL, ch);
 			return;
 		}
 
@@ -3225,7 +3229,7 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 	{
 		if (!is_number(arg2) || arg2[0] == '\0')
 		{
-			send_to_char("Sk³adnia:  lvnum <dolny_vnum>" NL, ch);
+			send_to_char("Skï¿½adnia:  lvnum <dolny_vnum>" NL, ch);
 			return;
 		}
 
@@ -3233,7 +3237,7 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (get_vnum_area(value) && get_vnum_area(value) != pArea)
 		{
-			send_to_char("Przedzia³ koliduje z inn± krain±." NL, ch);
+			send_to_char("Przedziaï¿½ koliduje z innï¿½ krainï¿½." NL, ch);
 			return;
 		}
 
@@ -3247,7 +3251,7 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 	{
 		if (!is_number(arg2) || arg2[0] == '\0')
 		{
-			send_to_char("Sk³adnia:  uvnum <górny_vnum>" NL, ch);
+			send_to_char("Skï¿½adnia:  uvnum <gï¿½rny_vnum>" NL, ch);
 			return;
 		}
 
@@ -3255,13 +3259,13 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (get_vnum_area(value) && get_vnum_area(value) != pArea)
 		{
-			send_to_char("Przedzia³ koliduje z inn± krain±." NL, ch);
+			send_to_char("Przedziaï¿½ koliduje z innï¿½ krainï¿½." NL, ch);
 			return;
 		}
 
 		pArea->uvnum = value;
 
-		send_to_char("Górny vnum ustalony." NL, ch);
+		send_to_char("Gï¿½rny vnum ustalony." NL, ch);
 		return;
 	}
 
@@ -3272,7 +3276,7 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (!is_number(arg1) || arg1[0] == '\0' || !is_number(arg2) || arg2[0] == '\0')
 		{
-			send_to_char("Sk³adnia:  vnum <dolny> <górny>" NL, ch);
+			send_to_char("Skï¿½adnia:  vnum <dolny> <gï¿½rny>" NL, ch);
 			return;
 		}
 
@@ -3280,7 +3284,7 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (get_vnum_area(value) && get_vnum_area(value) != pArea)
 		{
-			send_to_char("Przedzia³ dolny koliduje z inn± krain±." NL, ch);
+			send_to_char("Przedziaï¿½ dolny koliduje z innï¿½ krainï¿½." NL, ch);
 			return;
 		}
 
@@ -3292,13 +3296,13 @@ void aedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (get_vnum_area(value) && get_vnum_area(value) != pArea)
 		{
-			send_to_char("Przedzia³ górny koliduje z inn± krain±." NL, ch);
+			send_to_char("Przedziaï¿½ gï¿½rny koliduje z innï¿½ krainï¿½." NL, ch);
 			return;
 		}
 
 		pArea->uvnum = value;
 
-		send_to_char("Górny vnum ustalony." NL, ch);
+		send_to_char("Gï¿½rny vnum ustalony." NL, ch);
 
 		return;
 	}
@@ -3324,7 +3328,7 @@ DEF_DO_FUN( aedit )
 			return;
 		}
 		//Trog: jakby cos to tutaj trzeba wpisac sprawdzanie po area_id.
-		/*Thanos: a dlaczego tutaj? Nie mo¿na w find_area() ? */
+		/*Thanos: a dlaczego tutaj? Nie moï¿½na w find_area() ? */
 	}
 	else
 	{
@@ -3348,7 +3352,7 @@ DEF_DO_FUN( aedit )
 			return;
 		}
 		else
-			for (pArea = first_area; pArea; pArea = pArea->next)
+			for (auto* pArea : area_list)
 				if (!str_cmp(pArea->filename, arg))
 				{
 					ch->desc->olc_editing = (void*) pArea;
@@ -3370,32 +3374,17 @@ DEF_DO_FUN( aedit )
 
 int mprog_count(MOB_INDEX_DATA *pMob)
 {
-	MPROG_DATA *mprg;
-	int count;
-
-	for (count = 0, mprg = pMob->mudprogs; mprg; mprg = mprg->next, count++)
-		;
-	return count;
+	return (int)pMob->mudprogs.size();
 }
 
 int oprog_count(OBJ_INDEX_DATA *pObj)
 {
-	MPROG_DATA *oprg;
-	int count;
-
-	for (count = 0, oprg = pObj->mudprogs; oprg; oprg = oprg->next, count++)
-		;
-	return count;
+	return (int)pObj->mudprogs.size();
 }
 
 int rprog_count(ROOM_INDEX_DATA *pRoom)
 {
-	MPROG_DATA *rprg;
-	int count;
-
-	for (count = 0, rprg = pRoom->mudprogs; rprg; rprg = rprg->next, count++)
-		;
-	return count;
+	return (int)pRoom->mudprogs.size();
 }
 
 bool mpedit_create(CHAR_DATA *ch, char *argument)
@@ -3536,41 +3525,26 @@ bool rpedit_create(CHAR_DATA *ch, char *argument)
 
 MPROG_DATA* edit_mprog(CHAR_DATA *ch, MOB_INDEX_DATA *pMob)
 {
-	MPROG_DATA *mprg;
-	int mprog_num;
-	int count = 0;
-
-	mprog_num = ch->pcdata->mprog_edit;
-	for (mprg = pMob->mudprogs; mprg && count < mprog_num; mprg = mprg->next)
-		count++;
-
-	return mprg;
+	int mprog_num = ch->pcdata->mprog_edit;
+	auto it = pMob->mudprogs.begin();
+	std::advance(it, std::min(mprog_num, (int)pMob->mudprogs.size()));
+	return (it != pMob->mudprogs.end()) ? *it : NULL;
 }
 
 MPROG_DATA* edit_oprog(CHAR_DATA *ch, OBJ_INDEX_DATA *pObj)
 {
-	MPROG_DATA *oprg;
-	int oprog_num;
-	int count = 0;
-
-	oprog_num = ch->pcdata->mprog_edit;
-	for (oprg = pObj->mudprogs; oprg && count < oprog_num; oprg = oprg->next)
-		count++;
-
-	return oprg;
+	int oprog_num = ch->pcdata->mprog_edit;
+	auto it = pObj->mudprogs.begin();
+	std::advance(it, std::min(oprog_num, (int)pObj->mudprogs.size()));
+	return (it != pObj->mudprogs.end()) ? *it : NULL;
 }
 
 MPROG_DATA* edit_rprog(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom)
 {
-	MPROG_DATA *rprg;
-	int rprog_num;
-	int count = 0;
-
-	rprog_num = ch->pcdata->mprog_edit;
-	for (rprg = pRoom->mudprogs; rprg && count < rprog_num; rprg = rprg->next)
-		count++;
-
-	return rprg;
+	int rprog_num = ch->pcdata->mprog_edit;
+	auto it = pRoom->mudprogs.begin();
+	std::advance(it, std::min(rprog_num, (int)pRoom->mudprogs.size()));
+	return (it != pRoom->mudprogs.end()) ? *it : NULL;
 }
 
 void show_mprog(CHAR_DATA *ch, MPROG_DATA *pMobProg)
@@ -3627,42 +3601,21 @@ void show_rprog(CHAR_DATA *ch, MPROG_DATA *pRoomProg)
 
 void delete_mprog(CHAR_DATA *ch, int pnum)
 {
-	MPROG_DATA *mprg;
-	MPROG_DATA *mprg_prev;
 	MOB_INDEX_DATA *pMob;
 	char buf[ MAX_INPUT_LENGTH];
-	int count;
 
 	pMob = (MOB_INDEX_DATA*) ch->desc->olc_editing;
 
-	if (pnum < 0)
+	if (pnum < 0 || pnum >= (int)pMob->mudprogs.size())
 		return;
 
-	if (pnum == 0)
-	{
-		mprg = pMob->mudprogs->next;
-		free_mprog(pMob->mudprogs);
-		pMob->mudprogs = mprg;
-	}
-	else
-	{
-		mprg_prev = pMob->mudprogs;
-		mprg = mprg_prev->next;
-
-		for (count = 1; mprg && count < pnum; count++)
-		{
-			mprg_prev = mprg;
-			mprg = mprg->next;
-		}
-		if (mprg)
-		{
-			mprg_prev->next = mprg->next;
-			free_mprog(mprg);
-		}
-	}
+	auto it = pMob->mudprogs.begin();
+	std::advance(it, pnum);
+	free_mprog(*it);
+	pMob->mudprogs.erase(it);
 
 	pMob->progtypes = 0;
-	for (MPROG_DATA *mprg = pMob->mudprogs; mprg; mprg = mprg->next)
+	for (auto* mprg : pMob->mudprogs)
 		pMob->progtypes |= mprg->type;
 
 	sprintf(buf, "MOBProg %d Deleted." NL, pnum + 1);
@@ -3672,39 +3625,18 @@ void delete_mprog(CHAR_DATA *ch, int pnum)
 
 void delete_oprog(CHAR_DATA *ch, int pnum)
 {
-	MPROG_DATA *oprg;
-	MPROG_DATA *oprg_prev;
 	OBJ_INDEX_DATA *pObj;
 	char buf[ MAX_INPUT_LENGTH];
-	int count;
 
 	pObj = (OBJ_INDEX_DATA*) ch->desc->olc_editing;
 
-	if (pnum < 0)
+	if (pnum < 0 || pnum >= (int)pObj->mudprogs.size())
 		return;
 
-	if (pnum == 0)
-	{
-		oprg = pObj->mudprogs->next;
-		free_mprog(pObj->mudprogs);
-		pObj->mudprogs = oprg;
-	}
-	else
-	{
-		oprg_prev = pObj->mudprogs;
-		oprg = oprg_prev->next;
-
-		for (count = 1; oprg && count < pnum; count++)
-		{
-			oprg_prev = oprg;
-			oprg = oprg->next;
-		}
-		if (oprg)
-		{
-			oprg_prev->next = oprg->next;
-			free_mprog(oprg);
-		}
-	}
+	auto it = pObj->mudprogs.begin();
+	std::advance(it, pnum);
+	free_mprog(*it);
+	pObj->mudprogs.erase(it);
 
 	sprintf(buf, "OBJProg %d Deleted." NL, pnum + 1);
 	send_to_char(buf, ch);
@@ -3713,39 +3645,18 @@ void delete_oprog(CHAR_DATA *ch, int pnum)
 
 void delete_rprog(CHAR_DATA *ch, int pnum)
 {
-	MPROG_DATA *rprg;
-	MPROG_DATA *rprg_prev;
 	ROOM_INDEX_DATA *pRoom;
 	char buf[ MAX_INPUT_LENGTH];
-	int count;
 
 	pRoom = (ROOM_INDEX_DATA*) ch->desc->olc_editing;
 
-	if (pnum < 0)
+	if (pnum < 0 || pnum >= (int)pRoom->mudprogs.size())
 		return;
 
-	if (pnum == 0)
-	{
-		rprg = pRoom->mudprogs->next;
-		free_mprog(pRoom->mudprogs);
-		pRoom->mudprogs = rprg;
-	}
-	else
-	{
-		rprg_prev = pRoom->mudprogs;
-		rprg = rprg_prev->next;
-
-		for (count = 1; rprg && count < pnum; count++)
-		{
-			rprg_prev = rprg;
-			rprg = rprg->next;
-		}
-		if (rprg)
-		{
-			rprg_prev->next = rprg->next;
-			free_mprog(rprg);
-		}
-	}
+	auto it = pRoom->mudprogs.begin();
+	std::advance(it, pnum);
+	free_mprog(*it);
+	pRoom->mudprogs.erase(it);
 
 	sprintf(buf, "ROOMProg %d Deleted." NL, pnum + 1);
 	send_to_char(buf, ch);
@@ -3781,13 +3692,13 @@ void mpedit_show(CHAR_DATA *ch, char *argument)
 			return;
 		}
 
-		for (mprg = pMob->mudprogs; mprg && prg-- > 1; mprg = mprg->next)
-			;
-		show_mprog(ch, mprg);
+		auto it = pMob->mudprogs.begin();
+		std::advance(it, prg - 1);
+		show_mprog(ch, *it);
 	}
 	else if (!str_cmp(argument, "all"))
 	{
-		for (pMobProg = pMob->mudprogs; pMobProg; pMobProg = pMobProg->next)
+		for (auto* pMobProg : pMob->mudprogs)
 			show_mprog(ch, pMobProg);
 		send_to_char("|" NL, ch);
 	}
@@ -3827,13 +3738,13 @@ void opedit_show(CHAR_DATA *ch, char *argument)
 			return;
 		}
 
-		for (oprg = pObj->mudprogs; oprg && prg-- > 1; oprg = oprg->next)
-			;
-		show_oprog(ch, oprg);
+		auto it = pObj->mudprogs.begin();
+		std::advance(it, prg - 1);
+		show_oprog(ch, *it);
 	}
 	else if (!str_cmp(argument, "all"))
 	{
-		for (pObjProg = pObj->mudprogs; pObjProg; pObjProg = pObjProg->next)
+		for (auto* pObjProg : pObj->mudprogs)
 			show_oprog(ch, pObjProg);
 		send_to_char("|" NL, ch);
 	}
@@ -3872,13 +3783,13 @@ void rpedit_show(CHAR_DATA *ch, char *argument)
 			return;
 		}
 
-		for (rprg = pRoom->mudprogs; rprg && prg-- > 1; rprg = rprg->next)
-			;
-		show_rprog(ch, rprg);
+		auto it = pRoom->mudprogs.begin();
+		std::advance(it, prg - 1);
+		show_rprog(ch, *it);
 	}
 	else if (!str_cmp(argument, "all"))
 	{
-		for (pRoomProg = pRoom->mudprogs; pRoomProg; pRoomProg = pRoomProg->next)
+		for (auto* pRoomProg : pRoom->mudprogs)
 			show_rprog(ch, pRoomProg);
 		send_to_char("|" NL, ch);
 	}
@@ -3959,14 +3870,13 @@ void mpedit(DESCRIPTOR_DATA *d, char *argument)
 		MPROG_DATA *mprg;
 		MPROG_DATA *mprg2;
 
-		if (!pMob->mudprogs)
+		if (pMob->mudprogs.empty())
 			send_to_char("Mobile doesn't have mobprogs. Use create." NL, ch);
 
-		for (mprg = mprg2 = pMob->mudprogs; mprg; mprg2 = mprg, mprg = mprg->next)
+		for (auto* mprg : pMob->mudprogs)
 			pMob->progtypes |= mprg->type;
 
-		mprg2->next = new_mprog();
-		pMob->progtypes |= mprg2->type;
+		pMob->mudprogs.push_back(new_mprog());
 		count++;
 
 		ch->pcdata->mprog_edit = count - 1;
@@ -4039,32 +3949,26 @@ void mpedit(DESCRIPTOR_DATA *d, char *argument)
 			return;
 		}
 
-		if (!cMob->mudprogs)
+		if (cMob->mudprogs.empty())
 		{
 			send_to_char("That mobile doesn't have mobprogs!" NL, ch);
 			return;
 		}
 
-		for (mprg = pMob->mudprogs; mprg; mprg = mprg_next)
-		{
-			mprg_next = mprg->next;
+		for (auto* mprg : pMob->mudprogs)
 			free_mprog(mprg);
-		}
+		pMob->mudprogs.clear();
 
-		mprg = pMob->mudprogs = new_mprog();
 		pMob->progtypes = 0;
-		for (cprg = cMob->mudprogs; cprg; cprg = cprg->next, mprg = mprg->next)
+		for (auto* cprg : cMob->mudprogs)
 		{
+			auto* mprg = new_mprog();
 			mprg->type = cprg->type;
 			pMob->progtypes |= mprg->type;
 			SET_BIT(pMob->progtypes, cprg->type);
 			STRDUP(mprg->arglist, cprg->arglist);
 			STRDUP(mprg->comlist, cprg->comlist);
-			if (cprg->next)
-				mprg->next = new_mprog();
-			else
-				mprg->next = NULL;
-
+			pMob->mudprogs.push_back(mprg);
 		}
 
 		ch->pcdata->mprog_edit = mprog_count(pMob) - 1;
@@ -4176,17 +4080,16 @@ void opedit(DESCRIPTOR_DATA *d, char *argument)
 		MPROG_DATA *oprg;
 		MPROG_DATA *oprg2;
 
-		if (!pObj->mudprogs)
+		if (pObj->mudprogs.empty())
 			send_to_char("Object doesn't have objprogs. Use create." NL, ch);
 
-		for (oprg = oprg2 = pObj->mudprogs; oprg; oprg2 = oprg, oprg = oprg->next)
-			;
-
-		CREATE(oprg2->next, MPROG_DATA, 1);
-		oprg = oprg2->next;
-		oprg->type = 0 | RAND_PROG;
-		STRDUP(oprg->arglist, "0");
-		STRDUP(oprg->comlist, "break\n");
+		{
+			auto* oprg = new_mprog();
+			oprg->type = 0 | RAND_PROG;
+			STRDUP(oprg->arglist, "0");
+			STRDUP(oprg->comlist, "break\n");
+			pObj->mudprogs.push_back(oprg);
+		}
 		count++;
 
 		ch->pcdata->mprog_edit = count - 1;
@@ -4259,30 +4162,25 @@ void opedit(DESCRIPTOR_DATA *d, char *argument)
 			return;
 		}
 
-		if (!cObj->mudprogs)
+		if (cObj->mudprogs.empty())
 		{
 			send_to_char("That object doesn't have progs!" NL, ch);
 			return;
 		}
 
-		for (oprg = pObj->mudprogs; oprg; oprg = oprg_next)
-		{
-			oprg_next = oprg->next;
+		for (auto* oprg : pObj->mudprogs)
 			free_mprog(oprg);
-		}
+		pObj->mudprogs.clear();
 
-		CREATE(pObj->mudprogs, MPROG_DATA, 1);
-		oprg = pObj->mudprogs;
-		for (cprg = cObj->mudprogs; cprg; cprg = cprg->next, oprg = oprg->next)
+		pObj->progtypes = 0;
+		for (auto* cprg : cObj->mudprogs)
 		{
+			auto* oprg = new_mprog();
 			oprg->type = cprg->type;
 			SET_BIT(pObj->progtypes, cprg->type);
 			STRDUP(oprg->arglist, cprg->arglist);
 			STRDUP(oprg->comlist, cprg->comlist);
-			if (cprg->next)
-				CREATE(oprg->next, MPROG_DATA, 1);
-			else
-				oprg->next = NULL;
+			pObj->mudprogs.push_back(oprg);
 		}
 
 		ch->pcdata->mprog_edit = oprog_count(pObj) - 1;
@@ -4393,18 +4291,17 @@ void rpedit(DESCRIPTOR_DATA *d, char *argument)
 		MPROG_DATA *rprg;
 		MPROG_DATA *rprg2;
 
-		if (!pRoom->mudprogs)
+		if (pRoom->mudprogs.empty())
 			send_to_char("Room doesn't have progs. Use create." NL, ch);
 
-		for (rprg = rprg2 = pRoom->mudprogs; rprg; rprg2 = rprg, rprg = rprg->next)
-			;
-
-		CREATE(rprg2->next, MPROG_DATA, 1);
-		rprg = rprg2->next;
-		rprg->type = RAND_PROG;
-		pRoom->progtypes = pRoom->progtypes | rprg->type;
-		STRDUP(rprg->arglist, "0");
-		STRDUP(rprg->comlist, "break\n");
+		{
+			auto* rprg = new_mprog();
+			rprg->type = RAND_PROG;
+			pRoom->progtypes = pRoom->progtypes | rprg->type;
+			STRDUP(rprg->arglist, "0");
+			STRDUP(rprg->comlist, "break\n");
+			pRoom->mudprogs.push_back(rprg);
+		}
 		count++;
 
 		ch->pcdata->mprog_edit = count - 1;
@@ -4477,30 +4374,25 @@ void rpedit(DESCRIPTOR_DATA *d, char *argument)
 			return;
 		}
 
-		if (!cRoom->mudprogs)
+		if (cRoom->mudprogs.empty())
 		{
 			send_to_char("That room doesn't have progs!" NL, ch);
 			return;
 		}
 
-		for (rprg = pRoom->mudprogs; rprg; rprg = rprg_next)
-		{
-			rprg_next = rprg->next;
+		for (auto* rprg : pRoom->mudprogs)
 			free_mprog(rprg);
-		}
+		pRoom->mudprogs.clear();
 
-		CREATE(pRoom->mudprogs, MPROG_DATA, 1);
-		rprg = pRoom->mudprogs;
-		for (cprg = cRoom->mudprogs; cprg; cprg = cprg->next, rprg = rprg->next)
+		pRoom->progtypes = 0;
+		for (auto* cprg : cRoom->mudprogs)
 		{
+			auto* rprg = new_mprog();
 			rprg->type = cprg->type;
 			SET_BIT(pRoom->progtypes, cprg->type);
 			STRDUP(rprg->arglist, cprg->arglist);
 			STRDUP(rprg->comlist, cprg->comlist);
-			if (cprg->next)
-				CREATE(rprg->next, MPROG_DATA, 1);
-			else
-				rprg->next = NULL;
+			pRoom->mudprogs.push_back(rprg);
 		}
 
 		ch->pcdata->mprog_edit = rprog_count(pRoom) - 1;
@@ -4571,8 +4463,8 @@ DEF_DO_FUN( opedit )
 		{
 			if (!pObj->mudprogs)
 			{
-				send_to_char("Przedmiot nie ma objprogów.", ch);
-				send_to_char("  U¿yj create." NL, ch);
+				send_to_char("Przedmiot nie ma objprogï¿½w.", ch);
+				send_to_char("  Uï¿½yj create." NL, ch);
 				return;
 			}
 			else
@@ -4583,7 +4475,7 @@ DEF_DO_FUN( opedit )
 		}
 		else if ((value = atoi(arg2)) > oprog_count(pObj))
 		{
-			send_to_char("Przedmiot nie ma tak duzo objprogów." NL, ch);
+			send_to_char("Przedmiot nie ma tak duzo objprogï¿½w." NL, ch);
 			return;
 		}
 
@@ -4632,17 +4524,17 @@ DEF_DO_FUN( opedit )
 					return;
 				}
 
-				oprg = pObj->mudprogs;
+				for (auto* oprg : pObj->mudprogs)
+					free_mprog(oprg);
+				pObj->mudprogs.clear();
 
-				for (cprg = cObj->mudprogs; cprg; cprg = cprg->next, oprg = oprg->next)
+				for (auto* cprg : cObj->mudprogs)
 				{
+					auto* oprg = new_mprog();
 					oprg->type = cprg->type;
 					STRDUP(oprg->arglist, cprg->arglist);
 					STRDUP(oprg->comlist, cprg->comlist);
-					if (cprg->next)
-						CREATE(oprg->next, MPROG_DATA, 1);
-					else
-						oprg->next = NULL;
+					pObj->mudprogs.push_back(oprg);
 				}
 
 				send_to_char("OBJProg copied." NL, ch);
@@ -4686,8 +4578,8 @@ DEF_DO_FUN( rpedit )
 		{
 			if (!pRoom->mudprogs)
 			{
-				send_to_char("Pokój nie ma progów.", ch);
-				send_to_char("  U¿yj create." NL, ch);
+				send_to_char("Pokï¿½j nie ma progï¿½w.", ch);
+				send_to_char("  Uï¿½yj create." NL, ch);
 				return;
 			}
 			else
@@ -4698,7 +4590,7 @@ DEF_DO_FUN( rpedit )
 		}
 		else if ((value = atoi(arg2)) > rprog_count(pRoom))
 		{
-			send_to_char("Pokój nie ma tak du¿o progów." NL, ch);
+			send_to_char("Pokï¿½j nie ma tak duï¿½o progï¿½w." NL, ch);
 			return;
 		}
 
@@ -4747,17 +4639,17 @@ DEF_DO_FUN( rpedit )
 					return;
 				}
 
-				rprg = pRoom->mudprogs;
+				for (auto* rprg : pRoom->mudprogs)
+					free_mprog(rprg);
+				pRoom->mudprogs.clear();
 
-				for (cprg = cRoom->mudprogs; cprg; cprg = cprg->next, rprg = rprg->next)
+				for (auto* cprg : cRoom->mudprogs)
 				{
+					auto* rprg = new_mprog();
 					rprg->type = cprg->type;
 					STRDUP(rprg->arglist, cprg->arglist);
 					STRDUP(rprg->comlist, cprg->comlist);
-					if (cprg->next)
-						CREATE(rprg->next, MPROG_DATA, 1);
-					else
-						rprg->next = NULL;
+					pRoom->mudprogs.push_back(rprg);
 				}
 
 				send_to_char("ROOMProg copied." NL, ch);
@@ -4868,17 +4760,17 @@ DEF_DO_FUN( mpedit )
 					return;
 				}
 
-				mprg = pMob->mudprogs;
+				for (auto* mprg : pMob->mudprogs)
+					free_mprog(mprg);
+				pMob->mudprogs.clear();
 
-				for (cprg = cMob->mudprogs; cprg; cprg = cprg->next, mprg = mprg->next)
+				for (auto* cprg : cMob->mudprogs)
 				{
+					auto* mprg = new_mprog();
 					mprg->type = cprg->type;
 					STRDUP(mprg->arglist, cprg->arglist);
 					STRDUP(mprg->comlist, cprg->comlist);
-					if (cprg->next)
-						CREATE(mprg->next, MPROG_DATA, 1);
-					else
-						mprg->next = NULL;
+					pMob->mudprogs.push_back(mprg);
 				}
 
 				send_to_char("MOBProg copied." NL, ch);
@@ -4901,7 +4793,7 @@ DEF_DO_FUN( editinfo )
 
 	if (argument[0] != '\0' && str_cmp(argument, "edit"))
 	{
-		send_to_char("Sk³adnia: editinfo [edit]" NL, ch);
+		send_to_char("Skï¿½adnia: editinfo [edit]" NL, ch);
 		return;
 	}
 
@@ -4913,11 +4805,11 @@ DEF_DO_FUN( editinfo )
 
 	if (ch->pcdata->editinfo[0] == '\0')
 	{
-		send_to_char("Twój notatnik jest pusty. Aby co¶ napisaæ wydaj komendê 'editinfo edit'." NL, ch);
+		send_to_char("Twï¿½j notatnik jest pusty. Aby coï¿½ napisaï¿½ wydaj komendï¿½ 'editinfo edit'." NL, ch);
 		return;
 	}
 
-	pager_printf(ch, "Twój notatnik zawiera:" NL NL "%s" EOL, ch->pcdata->editinfo);
+	pager_printf(ch, "Twï¿½j notatnik zawiera:" NL NL "%s" EOL, ch->pcdata->editinfo);
 	return;
 }
 
@@ -4927,7 +4819,7 @@ HELPS_FILE* find_helps_file(char *name)
 {
 	HELPS_FILE *fHelp;
 
-	for (fHelp = first_helps_file; fHelp; fHelp = fHelp->next)
+	for (auto* fHelp : helps_file_list)
 		if (!str_cmp(name, fHelp->name))
 			return fHelp;
 	return NULL;
@@ -4943,19 +4835,26 @@ HELP_DATA* find_help(const char *argument)
 	if (argument[0] == '\0')
 		return NULL;
 
-	for (fHelp = first_helps_file; !found && fHelp; fHelp = fHelp->next)
-		for (pHelp = fHelp->first_help; pHelp; pHelp = pHelp->next)
+	for (auto* fHelp : helps_file_list)
+	{
+		if (found) break;
+		for (auto* pH : fHelp->helps)
 		{
-			if (!str_prefix(argument, pHelp->keyword) || is_name(argument, pHelp->keyword))
+			if (!str_prefix(argument, pH->keyword) || is_name(argument, pH->keyword))
 			{
 				count = 1;
 				found = true;
+				pHelp = pH;
 				break;
 			}
 
-			if ((is_name_prefix(argument, pHelp->keyword)))
+			if ((is_name_prefix(argument, pH->keyword)))
+			{
+				pHelp = pH;
 				count++;
+			}
 		}
+	}
 
 	if (!pHelp || count == 0)
 		return NULL;
@@ -5008,7 +4907,7 @@ bool hedit_create_file(CHAR_DATA *ch, char *argument)
 
 	fHelp = new_helps_file();
 	STRDUP(fHelp->name, arg);
-	LINK(fHelp, first_helps_file, last_helps_file, next, prev);
+	helps_file_list.push_back(fHelp);
 	top_helps_file++;
 
 	send_to_char("Helps file created." NL, ch);
@@ -5089,18 +4988,22 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_cmp(arg1, "delete"))
 	{
-		HELP_DATA *n_help;
+		HELP_DATA *n_help = NULL;
+		auto& hlist = pHelp->file->helps;
+		auto it = std::find(hlist.begin(), hlist.end(), pHelp);
+		if (it != hlist.end())
+		{
+			if (it != hlist.begin())
+				n_help = *std::prev(it);
+			else
+			{
+				auto nxt = std::next(it);
+				if (nxt != hlist.end())
+					n_help = *nxt;
+			}
+			hlist.erase(it);
+		}
 
-		UNLINK(pHelp, pHelp->file->first_help, pHelp->file->last_help, next, prev);
-
-		n_help = pHelp->prev ? pHelp->prev : pHelp->next ? pHelp->next : NULL;
-		/*
-		 if( pHelp->prev )
-		 n_help = pHelp->prev;
-		 else
-		 if( pHelp->next )
-		 n_help = pHelp->next;
-		 */
 		send_to_char("Help page deleted." NL, ch);
 		free_help(pHelp);
 
@@ -5118,10 +5021,10 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 		HELP_DATA *pHelp_cnt;
 
 		send_to_char("Helps files: " NL, ch);
-		FOREACH( fHelp, first_helps_file )
+		for (auto* fHelp : helps_file_list)
 		{
 			int i = 0;
-			FOREACH( pHelp_cnt, fHelp->first_help )
+			for (auto* pHelp_cnt : fHelp->helps)
 				i++;
 			ch_printf(ch, "  %s (%d)" NL, fHelp->name, i);
 		}
@@ -5161,7 +5064,7 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (!str_cmp(arg4, "sure"))
 		{
-			UNLINK(fHelp, first_helps_file, last_helps_file, next, prev);
+			helps_file_list.remove(fHelp);
 			free_helps_file(fHelp);
 			send_to_char("Helps file (and all help pages included in it) deleted." NL, ch);
 			edit_done(ch, (char*) "");
@@ -5186,14 +5089,14 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 				return;
 			}
 
-			for (pHelp = fHelp->first_help; pHelp; pHelp = pHelp_next)
+			while (!fHelp->helps.empty())
 			{
-				pHelp_next = pHelp->next;
-				UNLINK(pHelp, fHelp->first_help, fHelp->last_help, next, prev);
+				auto* pHelp = fHelp->helps.front();
+				fHelp->helps.remove(pHelp);
 				add_help(fHelp_to, pHelp, false);
 			}
 
-			UNLINK(fHelp, first_helps_file, last_helps_file, next, prev);
+			helps_file_list.remove(fHelp);
 			free_helps_file(fHelp);
 			ch_printf(ch, "Helps file deleted. Help pages moved to: %s." NL, fHelp_to->name);
 			return;
@@ -5242,7 +5145,7 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 			return;
 		}
 
-		UNLINK(pHelp, pHelp->file->first_help, pHelp->file->last_help, next, prev);
+		pHelp->file->helps.remove(pHelp);
 		add_help(fHelp, pHelp, true);
 
 		ch_printf(ch, "Help page moved to: %s." NL, fHelp->name);
@@ -5361,12 +5264,15 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_cmp(arg1, "next") || !str_cmp(arg1, ">"))
 	{
-		if (!pHelp->next)
+		auto& hlist = pHelp->file->helps;
+		auto it = std::find(hlist.begin(), hlist.end(), pHelp);
+		auto nxt = (it != hlist.end()) ? std::next(it) : hlist.end();
+		if (nxt == hlist.end())
 		{
 			send_to_char("No next help." NL, ch);
 			return;
 		}
-		ch->desc->olc_editing = (void*) pHelp->next;
+		ch->desc->olc_editing = (void*) *nxt;
 		hedit(ch->desc, (char*) "show");
 		send_to_char("Editing next Help." NL, ch);
 		return;
@@ -5374,12 +5280,14 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_cmp(arg1, "prev") || !str_cmp(arg1, "<"))
 	{
-		if (!pHelp->prev)
+		auto& hlist = pHelp->file->helps;
+		auto it = std::find(hlist.begin(), hlist.end(), pHelp);
+		if (it == hlist.end() || it == hlist.begin())
 		{
 			send_to_char("No prev help." NL, ch);
 			return;
 		}
-		ch->desc->olc_editing = (void*) pHelp->prev;
+		ch->desc->olc_editing = (void*) *std::prev(it);
 		hedit(ch->desc, (char*) "show");
 		send_to_char("Editing prev Help." NL, ch);
 		return;
@@ -5387,14 +5295,17 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_cmp(arg1, "remove") || !str_cmp(arg1, "delete"))
 	{
-		if (pHelp->next)
-			ch->desc->olc_editing = (void*) pHelp->next;
-		else if (pHelp->prev)
-			ch->desc->olc_editing = (void*) pHelp->prev;
+		auto& hlist = pHelp->file->helps;
+		auto it = std::find(hlist.begin(), hlist.end(), pHelp);
+		auto nxt = (it != hlist.end()) ? std::next(it) : hlist.end();
+		if (nxt != hlist.end())
+			ch->desc->olc_editing = (void*) *nxt;
+		else if (it != hlist.end() && it != hlist.begin())
+			ch->desc->olc_editing = (void*) *std::prev(it);
 		else
 			edit_done(ch, (char*) "");
 
-		UNLINK(pHelp, pHelp->file->first_help, pHelp->file->last_help, next, prev);
+		pHelp->file->helps.remove(pHelp);
 		free_help(pHelp);
 		send_to_char("Removed." NL, ch);
 		return;
@@ -5480,7 +5391,7 @@ void save_helps_list()
 		return;
 	}
 
-	for (fHelp = first_helps_file; fHelp; fHelp = fHelp->next)
+	for (auto* fHelp : helps_file_list)
 		fprintf(fpout, "%s\n", fHelp->name);
 	fprintf(fpout, "$\n");
 
@@ -5501,7 +5412,7 @@ void save_helps()
 
 	RESERVE_CLOSE;
 
-	for (fHelp = first_helps_file; fHelp; fHelp = fHelp->next)
+	for (auto* fHelp : helps_file_list)
 	{
 		sprintf(filename, "Saving %s...", fHelp->name);
 		log_string_plus(filename, LOG_NORMAL, LEVEL_GREATER);
@@ -5517,7 +5428,7 @@ void save_helps()
 		}
 
 		fprintf(fpout, "#SWHELPS\n\n");
-		for (pHelp = fHelp->first_help; pHelp; pHelp = pHelp->next)
+		for (auto* pHelp : fHelp->helps)
 		{
 			fprintf(fpout, "%d %s~ %d\n", pHelp->level, pHelp->keyword, pHelp->type);
 			fprintf(fpout, "%s~\n", help_fix(pHelp->syntax));
@@ -5556,7 +5467,7 @@ PROJECT_DATA* get_project(char *argument)
 {
 	PROJECT_DATA *pro;
 
-	for (pro = first_project; pro; pro = pro->next)
+	for (auto* pro : project_list)
 	{
 		if (pro->effect)
 			if (atoi(argument) == pro->effect->vnum)
@@ -5581,14 +5492,14 @@ DEF_DO_FUN( prostat )
 	pager_printf(ch, FG_CYAN "Effect: " FB_WHITE "%d" PLAIN " (%s" PLAIN ")" EOL, pro->effect->vnum, pro->effect->name);
 	pager_printf(ch, FG_CYAN "Montage_type: " PLAIN "[%s]" NL, flag_string(mont_types_list, pro->montage_type));
 
-	for (i = 1, part = pro->first_part; part; part = part->next, i++)
+	i = 1;
+	for (auto* part : pro->parts)
 	{
-		COMPONENT_DATA *comp;
 		int j = 1;
 
 		pager_printf(ch, FB_WHITE "Part %2d" FG_CYAN ": Quantity: " FB_CYAN "%d" EOL, i, part->quantity);
 
-		for (comp = part->first_component; comp; comp = comp->next, j++)
+		for (auto* comp : part->components)
 		{
 			pager_printf(ch, "     " FG_YELLOW "Obj " FB_YELLOW "%2d", j);
 			if (comp->type == COMP_VNUM)
@@ -5616,7 +5527,9 @@ DEF_DO_FUN( prostat )
 			}
 			else
 				pager_printf(ch, "ERROR" EOL);
+			j++;
 		}
+		i++;
 	}
 	return;
 }
@@ -5649,7 +5562,7 @@ bool proedit_create(CHAR_DATA *ch, char *argument)
 	CREATE(pro, PROJECT_DATA, 1);
 	pro->effect = obj;
 	pro->montage_type = MONT_SCREW;
-	LINK(pro, first_project, last_project, next, prev);
+	project_list.push_back(pro);
 
 	ch->desc->olc_editing = (void*) pro;
 	ch->desc->connected = CON_PROEDITOR;
@@ -5662,9 +5575,13 @@ PART_DATA* get_part(PROJECT_DATA *pro, int nr)
 	PART_DATA *part;
 	int i;
 
-	for (i = 1, part = pro->first_part; part; part = part->next, i++)
+	i = 1;
+	for (auto* part : pro->parts)
+	{
 		if (i == nr)
 			return part;
+		i++;
+	}
 
 	return NULL;
 }
@@ -5674,9 +5591,12 @@ COMPONENT_DATA* get_component(int nr, PART_DATA *part)
 	COMPONENT_DATA *comp;
 	int i = 1;
 
-	for (comp = part->first_component; comp; comp = comp->next, i++)
+	for (auto* comp : part->components)
+	{
 		if (nr == i)
 			return comp;
+		i++;
+	}
 
 	return NULL;
 }
@@ -5714,13 +5634,18 @@ void proedit(DESCRIPTOR_DATA *d, char *argument)
 	if (!str_cmp(arg1, "delete"))
 	{
 		PROJECT_DATA *n_pro = NULL;
-
-		UNLINK(pro, first_project, last_project, next, prev);
-
-		if (pro->prev)
-			n_pro = pro->prev;
-		else if (pro->next)
-			n_pro = pro->next;
+		auto it = std::find(project_list.begin(), project_list.end(), pro);
+		if (it != project_list.end())
+		{
+			if (it != project_list.begin())
+				n_pro = *std::prev(it);
+			else {
+				auto nxt = std::next(it);
+				if (nxt != project_list.end())
+					n_pro = *nxt;
+			}
+			project_list.erase(it);
+		}
 
 		send_to_char("Ok." NL, ch);
 		free_project(pro);
@@ -5789,12 +5714,14 @@ void proedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_cmp(arg1, "next") || !str_cmp(arg1, ">"))
 	{
-		if (!pro->next)
+		auto it = std::find(project_list.begin(), project_list.end(), pro);
+		auto nxt = (it != project_list.end()) ? std::next(it) : project_list.end();
+		if (nxt == project_list.end())
 		{
 			send_to_char("No next project." NL, ch);
 			return;
 		}
-		ch->desc->olc_editing = (void*) pro->next;
+		ch->desc->olc_editing = (void*) *nxt;
 		proedit(ch->desc, (char*) "show");
 		send_to_char("Editing next Project." NL, ch);
 		return;
@@ -5809,12 +5736,13 @@ void proedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_cmp(arg1, "prev") || !str_cmp(arg1, "<"))
 	{
-		if (!pro->prev)
+		auto it = std::find(project_list.begin(), project_list.end(), pro);
+		if (it == project_list.end() || it == project_list.begin())
 		{
 			send_to_char("No prev project." NL, ch);
 			return;
 		}
-		ch->desc->olc_editing = (void*) pro->prev;
+		ch->desc->olc_editing = (void*) *std::prev(it);
 		proedit(ch->desc, (char*) "show");
 		send_to_char("Editing prev Project." NL, ch);
 		return;
@@ -5849,8 +5777,8 @@ void proedit(DESCRIPTOR_DATA *d, char *argument)
 			CREATE(comp, COMPONENT_DATA, 1);
 			comp->nr = atoi(arg3);
 			comp->type = COMP_VNUM;
-			LINK(comp, part->first_component, part->last_component, next, prev);
-			LINK(part, pro->first_part, pro->last_part, next, prev);
+			part->components.push_back(comp);
+			pro->parts.push_back(part);
 
 			send_to_char("Part added." NL, ch);
 			return;
@@ -5870,7 +5798,7 @@ void proedit(DESCRIPTOR_DATA *d, char *argument)
 
 		if (!str_cmp(arg3, "delete"))
 		{
-			UNLINK(part, pro->first_part, pro->last_part, next, prev);
+			pro->parts.remove(part);
 			free_part(part);
 			send_to_char("Part deleted." NL, ch);
 			return;
@@ -5916,7 +5844,7 @@ void proedit(DESCRIPTOR_DATA *d, char *argument)
 				CREATE(comp, COMPONENT_DATA, 1);
 				comp->nr = 0;
 				comp->type = COMP_VNUM;
-				LINK(comp, part->first_component, part->last_component, next, prev);
+				part->components.push_back(comp);
 				send_to_char("Component added." NL, ch);
 				return;
 			}
@@ -5935,7 +5863,7 @@ void proedit(DESCRIPTOR_DATA *d, char *argument)
 
 			if (!str_cmp(argument, "delete"))
 			{
-				UNLINK(comp, part->first_component, part->last_component, next, prev);
+				part->components.remove(comp);
 				DISPOSE(comp);
 				send_to_char("Component deleted." NL, ch);
 				return;
@@ -6024,7 +5952,7 @@ DEF_DO_FUN( proedit )
 		pager_printf(ch, FB_WHITE
 		"[ vnum] Name                                [Montage Type]  Parts" EOL);
 
-		for (pro = first_project; pro; pro = pro->next)
+		for (auto* pro : project_list)
 		{
 			PART_DATA *part;
 			int i;
@@ -6032,9 +5960,7 @@ DEF_DO_FUN( proedit )
 			if (!pro->effect)
 				continue;
 
-			i = 0;
-			for (part = pro->first_part; part; part = part->next)
-				i++;
+			i = (int)pro->parts.size();
 
 			pager_printf(ch, "[%5d] %-35s [%12s]    %d" NL, pro->effect->vnum, pro->effect->name,
 					flag_string(mont_types_list, pro->montage_type), i);
@@ -6064,7 +5990,7 @@ LANG_DATA* find_lang(const char *name)
 	if (!str_cmp(name, lang_base->name))
 		return lang_base;
 
-	FOREACH( lang, first_lang )
+	for (auto* lang : lang_list)
 		if (!str_cmp(name, lang->name))
 			return lang;
 
@@ -6075,7 +6001,7 @@ KNOWN_LANG* find_klang(CHAR_DATA *ch, LANG_DATA *lang)
 {
 	KNOWN_LANG *klang;
 
-	FOREACH( klang, ch->first_klang )
+	for (auto* klang : ch->klangs)
 		if (lang == klang->language)
 			return klang;
 
@@ -6094,7 +6020,7 @@ RACE_DATA* find_race(char *name)
 	if (!str_cmp(name, base_race->name))
 		return base_race;
 
-	FOREACH( race, first_race )
+	for (auto* race : race_list)
 		if (!str_cmp(name, race->name))
 			return race;
 
@@ -6119,7 +6045,7 @@ bool raedit_create(CHAR_DATA *ch, char *argument)
 
 	pRace = new_race();
 	STRDUP(pRace->name, argument);
-	LINK(pRace, first_race, last_race, next, prev);
+	race_list.push_back(pRace);
 	pRace->language = lang_base;
 	ch->desc->olc_editing = (void*) pRace;
 	send_to_char("Race created." NL, ch);
@@ -6189,7 +6115,7 @@ void raedit(DESCRIPTOR_DATA *d, char *argument)
 		pager_printf(ch,
 		FG_CYAN "[  " PLAIN "1" FG_CYAN "][" FB_YELLOW "%-18s" FG_CYAN "][" PLAIN "%-18s" FG_CYAN "][" PLAIN "%-15s" FG_CYAN "]" EOL,
 				base_race->name, base_race->przypadki[0], base_race->language->name);
-		FOREACH( pRace, first_race )
+		for (auto* pRace : race_list)
 			pager_printf(ch,
 			FG_CYAN "[" PLAIN "%3d" FG_CYAN "][" PLAIN "%-18s" FG_CYAN "][" PLAIN "%-18s" FG_CYAN "][" PLAIN "%-15s" FG_CYAN "]"
 			FG_CYAN "[" PLAIN "%-15s" FG_CYAN "]" EOL, i++, pRace->name, pRace->przypadki[0], pRace->language->name,
@@ -6492,7 +6418,7 @@ void save_races_list()
 		return;
 	}
 
-	FOREACH( pRace, first_race )
+	for (auto* pRace : race_list)
 		if (!*pRace->filename)
 			bug("save_races_list: race: %s does not have filename specified", pRace->name);
 		else
@@ -6509,7 +6435,7 @@ TURBOCAR* find_turbocar(char *name)
 {
 	TURBOCAR *turbocar;
 
-	FOREACH( turbocar, first_turbocar )
+	for (auto* turbocar : turbocar_list)
 		if (!str_cmp(name, turbocar->name))
 			return turbocar;
 
@@ -6534,7 +6460,7 @@ bool tcedit_create(CHAR_DATA *ch, char *argument)
 
 	pTurbocar = new_turbocar();
 	STRDUP(pTurbocar->name, argument);
-	LINK(pTurbocar, first_turbocar, last_turbocar, next, prev);
+	turbocar_list.push_back(pTurbocar);
 	ch->desc->olc_editing = (void*) pTurbocar;
 	send_to_char("Turbocar created." NL, ch);
 	return true;
@@ -6564,7 +6490,7 @@ void tcedit_show(CHAR_DATA *ch, char *argument)
 	pager_printf(ch, FG_CYAN "Name: " PLAIN "%s " FG_CYAN "Vnum: " PLAIN "%2d "
 	FG_CYAN " Filename: " PLAIN "%s" FG_CYAN "." EOL, pTurbocar->name, pTurbocar->vnum, pTurbocar->filename);
 
-	FOREACH( station, pTurbocar->first_station )
+	for (auto* station : pTurbocar->stations)
 	{
 		pager_printf(ch, FG_CYAN "Station: " PLAIN "%2d " FG_CYAN "Vnum: " PLAIN "%-5d "
 		FG_CYAN "Name: " PLAIN "%s" FG_CYAN "." EOL, ++i, station->vnum, station->name);
@@ -6592,7 +6518,7 @@ void tcedit(DESCRIPTOR_DATA *d, char *argument)
 
 		pager_printf(ch, FG_CYAN "[" MOD_BOLD "Nr  " FG_CYAN "][" MOD_BOLD "Name              " FG_CYAN "]["
 		MOD_BOLD "Vnum " FG_CYAN "][" MOD_BOLD "Filename       " FG_CYAN "]" EOL);
-		FOREACH( pTurbocar, first_turbocar )
+		for (auto* pTurbocar : turbocar_list)
 			pager_printf(ch,
 			FG_CYAN "[" PLAIN "%4d" FG_CYAN "][" PLAIN "%-18s" FG_CYAN "][" PLAIN "%-5d" FG_CYAN "][" PLAIN "%-15s" FG_CYAN "]" EOL, ++i,
 					pTurbocar->name, pTurbocar->vnum, strip_colors(pTurbocar->filename, 15));
@@ -6639,7 +6565,7 @@ void tcedit(DESCRIPTOR_DATA *d, char *argument)
 		else
 		{
 			station = new_station();
-			LINK(station, pTurbocar->first_station, pTurbocar->last_station, next, prev);
+			pTurbocar->stations.push_back(station);
 			station->vnum = atoi(arg2);
 			STRDUP(station->name, argument);
 			send_to_char("Station added." NL, ch);
@@ -6656,17 +6582,19 @@ void tcedit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			int vnum = atoi(argument);
 
-			FOREACH( station, pTurbocar->first_station )
+			for (auto* station : pTurbocar->stations)
 				if (station->vnum == vnum)
 				{
 					if (station == pTurbocar->current_station) /* moze sie zdarzyc, wiec... */
 					{
-						if (pTurbocar->current_station == pTurbocar->last_station)
-							pTurbocar->current_station = pTurbocar->first_station;
+						auto it = std::find(pTurbocar->stations.begin(), pTurbocar->stations.end(), station);
+						auto next_it = std::next(it);
+						if (next_it == pTurbocar->stations.end())
+							pTurbocar->current_station = pTurbocar->stations.front();
 						else
-							pTurbocar->current_station = station->next;
+							pTurbocar->current_station = *next_it;
 					}
-					UNLINK(station, pTurbocar->first_station, pTurbocar->last_station, next, prev);
+					pTurbocar->stations.remove(station);
 					free_station(station);
 					send_to_char("Station deleted." NL, ch);
 					return;
@@ -6686,22 +6614,27 @@ void tcedit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			int vnum = atoi(argument);
 
-			FOREACH( station, pTurbocar->first_station )
-				if (station->vnum == vnum)
+			{
+				auto it = pTurbocar->stations.begin();
+				for (; it != pTurbocar->stations.end(); ++it)
+					if ((*it)->vnum == vnum)
+						break;
+				if (it != pTurbocar->stations.end())
 				{
-					if (!station->prev)
+					if (it == pTurbocar->stations.begin())
 					{
 						send_to_char("This station is already on top." NL, ch);
 						return;
 					}
 
-					station_pn = station->prev;
-					UNLINK(station, pTurbocar->first_station, pTurbocar->last_station, next, prev);
-					INSERT(station, station_pn, pTurbocar->first_station, next, prev);
+					auto* station = *it;
+					auto prev_it = std::prev(it);
+					pTurbocar->stations.erase(it);
+					pTurbocar->stations.insert(prev_it, station);
 					send_to_char("Station moved up." NL, ch);
-
 					return;
 				}
+			}
 
 			ch_printf(ch, "Station (vnum: %d) not found." NL, vnum);
 		}
@@ -6717,28 +6650,28 @@ void tcedit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			int vnum = atoi(argument);
 
-			FOREACH( station, pTurbocar->first_station )
-				if (station->vnum == vnum)
+			{
+				auto it = pTurbocar->stations.begin();
+				for (; it != pTurbocar->stations.end(); ++it)
+					if ((*it)->vnum == vnum)
+						break;
+				if (it != pTurbocar->stations.end())
 				{
-					if (!station->next)
+					auto next_it = std::next(it);
+					if (next_it == pTurbocar->stations.end())
 					{
 						send_to_char("This station is already at bottom." NL, ch);
 						return;
 					}
 
-					station_pn = station->next;
-					UNLINK(station, pTurbocar->first_station, pTurbocar->last_station, next, prev);
-					if (station_pn == pTurbocar->last_station)
-						LINK(station, pTurbocar->first_station, pTurbocar->last_station, next, prev);
-					else
-					{
-						station_pn = station_pn->next;
-						INSERT(station, station_pn, pTurbocar->first_station, next, prev);
-					}
+					auto* station = *it;
+					pTurbocar->stations.erase(it);
+					pTurbocar->stations.insert(std::next(next_it), station);
 
 					send_to_char("Station moved down." NL, ch);
 					return;
 				}
+			}
 
 			ch_printf(ch, "Station (vnum: %d) not found." NL, vnum);
 		}
@@ -6755,7 +6688,7 @@ void tcedit(DESCRIPTOR_DATA *d, char *argument)
 		{
 			int vnum = atoi(arg2);
 
-			FOREACH( station, pTurbocar->first_station )
+			for (auto* station : pTurbocar->stations)
 				if (station->vnum == vnum)
 				{
 					STRDUP(station->name, argument);
@@ -6845,7 +6778,7 @@ void save_turbocar(TURBOCAR *pTurbocar)
 	fprintf(fpout, "#SWTURBOCAR\n\n");
 	fprintf(fpout, "Name        %s~\n", pTurbocar->name);
 	fprintf(fpout, "Vnum        %d\n", pTurbocar->vnum);
-	FOREACH( station, pTurbocar->first_station )
+	for (auto* station : pTurbocar->stations)
 		fprintf(fpout, "Station     %d %s~\n", station->vnum, station->name);
 	fprintf(fpout, "\nEnd\n\n");
 
@@ -6867,7 +6800,7 @@ void save_turbocars_list()
 		return;
 	}
 
-	FOREACH( pTurbocar, first_turbocar )
+	for (auto* pTurbocar : turbocar_list)
 		if (!*pTurbocar->filename)
 			bug("save_turbocars_list: turbocar: %s does not have filename specified", pTurbocar->name);
 		else

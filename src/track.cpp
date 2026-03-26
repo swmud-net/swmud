@@ -210,14 +210,14 @@ DEF_DO_FUN( track )
 
 	if (!IS_NPC(ch) && !ch->pcdata->learned[gsn_track])
 	{
-		send_to_char("Nie wiesz jak to siê robi." NL, ch);
+		send_to_char("Nie wiesz jak to siï¿½ robi." NL, ch);
 		return;
 	}
 
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
 	{
-		send_to_char("Kogo chcesz tropiæ?" NL, ch);
+		send_to_char("Kogo chcesz tropiï¿½?" NL, ch);
 		return;
 	}
 
@@ -225,7 +225,7 @@ DEF_DO_FUN( track )
 
 	if (!(vict = get_char_world(ch, arg)))
 	{
-		send_to_char("Nie widzisz tu ¶ladów nikogo takiego." NL, ch);
+		send_to_char("Nie widzisz tu ï¿½ladï¿½w nikogo takiego." NL, ch);
 		return;
 	}
 
@@ -238,22 +238,22 @@ DEF_DO_FUN( track )
 	switch (dir)
 	{
 	case BFS_ERROR:
-		send_to_char("Hmm... co¶ jest nie tak." NL, ch);
+		send_to_char("Hmm... coï¿½ jest nie tak." NL, ch);
 		break;
 	case BFS_ALREADY_THERE:
 		if (!can_see(ch, vict))
-			send_to_char("Tutaj trop siê urywa." NL, ch);
+			send_to_char("Tutaj trop siï¿½ urywa." NL, ch);
 		else
-			ch_printf(ch, "Przecie¿ jeste¶ w tym samym pomieszczeniu co %s!" NL,
+			ch_printf(ch, "Przecieï¿½ jesteï¿½ w tym samym pomieszczeniu co %s!" NL,
 					PERS(vict, ch, 0));
 		break;
 	case BFS_NO_PATH:
-		sprintf(buf, "Nie mo¿esz znale¼æ tropu st±d." NL);
+		sprintf(buf, "Nie moï¿½esz znaleï¿½ï¿½ tropu stï¿½d." NL);
 		send_to_char(buf, ch);
 		learn_from_failure(ch, gsn_track);
 		break;
 	default:
-		ch_printf(ch, "Znajdujesz trop na %s st±d..." NL, dir_where_name[dir]);
+		ch_printf(ch, "Znajdujesz trop na %s stï¿½d..." NL, dir_where_name[dir]);
 		learn_from_success(ch, gsn_track);
 		break;
 	}
@@ -273,9 +273,9 @@ void found_prey(CHAR_DATA *ch, CHAR_DATA *victim)
 	IF_BUG(victim->in_room == NULL, "")
 		return;
 
-	/* by Ratm. Sprawdzamy w jakiej pozycji znajduje siê postaæ */
+	/* by Ratm. Sprawdzamy w jakiej pozycji znajduje siï¿½ postaï¿½ */
 	if (ch->position == POS_RESTING || ch->position == POS_SITTING)
-		do_stand(ch, (char*) ""); //je¶li odpoczywa to wstaje
+		do_stand(ch, (char*) ""); //jeï¿½li odpoczywa to wstaje
 	else if (ch->position != POS_STANDING && ch->position != POS_MOUNTED)
 		return;	// gdy nie stoi lub nie jedzie to olewamy dalsze sprawdzanie
 
@@ -288,26 +288,26 @@ void found_prey(CHAR_DATA *ch, CHAR_DATA *victim)
 		switch (number_bits(2))
 		{
 		case 0:
-			swsnprintf(buf, MSL, "Nie chcij bym ciê znalaz³%s %s!", SEX_SUFFIX__AO(ch),
+			swsnprintf(buf, MSL, "Nie chcij bym ciï¿½ znalazï¿½%s %s!", SEX_SUFFIX__AO(ch),
 					victname);
 			do_say(ch, buf);
 			break;
 		case 1:
-			act( COL_ACTION, "$n wêszy po doko³a szukaj±c $N$1.", ch, NULL,
+			act( COL_ACTION, "$n wï¿½szy po dokoï¿½a szukajï¿½c $N$1.", ch, NULL,
 					victim, TO_NOTVICT);
-			act( COL_ACTION, "Wêszysz doko³a szukaj±c $N$1.", ch, NULL, victim,
+			act( COL_ACTION, "Wï¿½szysz dokoï¿½a szukajï¿½c $N$1.", ch, NULL, victim,
 					TO_CHAR);
-			act( COL_ACTION, "$n wêszy doko³a szukaj±c ciebie.", ch, NULL,
+			act( COL_ACTION, "$n wï¿½szy dokoï¿½a szukajï¿½c ciebie.", ch, NULL,
 					victim, TO_VICT);
-			sprintf(buf, "Czujê ju¿ zapach twojej krwi!!!");
+			sprintf(buf, "Czujï¿½ juï¿½ zapach twojej krwi!!!");
 			do_say(ch, buf);
 			break;
 		case 2:
-			swsnprintf(buf, MSL, "Rozszarpiê ciê na kawa³ki %s!", victname);
+			swsnprintf(buf, MSL, "Rozszarpiï¿½ ciï¿½ na kawaï¿½ki %s!", victname);
 			do_yell(ch, buf);
 			break;
 		case 3:
-			do_say(ch, (char*) "Czekaj! Niech tylko ciê znajdê...");
+			do_say(ch, (char*) "Czekaj! Niech tylko ciï¿½ znajdï¿½...");
 			break;
 		}
 		return;
@@ -320,24 +320,24 @@ void found_prey(CHAR_DATA *ch, CHAR_DATA *victim)
 		switch (number_bits(2))
 		{
 		case 0:
-			do_say(ch, (char*) "Wy³a¼ tchórzu!");
-			swsnprintf(buf, MSL, "%s to zakichany tchórz !!!", victname);
+			do_say(ch, (char*) "Wyï¿½aï¿½ tchï¿½rzu!");
+			swsnprintf(buf, MSL, "%s to zakichany tchï¿½rz !!!", victname);
 			do_yell(ch, buf);
 			break;
 		case 1:
-			swsnprintf(buf, MSL, "Za³atwmy to na zewn±trz %s", victname);
+			swsnprintf(buf, MSL, "Zaï¿½atwmy to na zewnï¿½trz %s", victname);
 			do_say(ch, buf);
 			break;
 		case 2:
-			swsnprintf(buf, MSL, "%s to wymoczek i tchórz!", victname);
+			swsnprintf(buf, MSL, "%s to wymoczek i tchï¿½rz!", victname);
 			do_yell(ch, buf);
 			break;
 		case 3:
-			act( COL_ACTION, "$n popycha $N$3 prowokuj±co.", ch, NULL, victim,
+			act( COL_ACTION, "$n popycha $N$3 prowokujï¿½co.", ch, NULL, victim,
 					TO_NOTVICT);
-			act( COL_ACTION, "Popychasz $N$3 prowokuj±co.", ch, NULL, victim,
+			act( COL_ACTION, "Popychasz $N$3 prowokujï¿½co.", ch, NULL, victim,
 					TO_CHAR);
-			act( COL_ACTION, "$n popycha ciê prowokuj±co.", ch, NULL, victim,
+			act( COL_ACTION, "$n popycha ciï¿½ prowokujï¿½co.", ch, NULL, victim,
 					TO_VICT);
 			break;
 		}
@@ -347,23 +347,23 @@ void found_prey(CHAR_DATA *ch, CHAR_DATA *victim)
 	switch (number_bits(2))
 	{
 	case 0:
-		swsnprintf(buf, MSL, "Twoja krew jest ju¿ moja %s!", victname);
+		swsnprintf(buf, MSL, "Twoja krew jest juï¿½ moja %s!", victname);
 		do_yell(ch, buf);
 		break;
 	case 1:
-		swsnprintf(buf, MSL, "Ha, wiêc znów siê spotykamy %s!", victname);
+		swsnprintf(buf, MSL, "Ha, wiï¿½c znï¿½w siï¿½ spotykamy %s!", victname);
 		do_say(ch, buf);
 		break;
 	case 2:
-		swsnprintf(buf, MSL, "Jaki chcesz mieæ nagrobek, %s?", victname);
+		swsnprintf(buf, MSL, "Jaki chcesz mieï¿½ nagrobek, %s?", victname);
 		do_say(ch, buf);
 		break;
 	case 3:
-		act( COL_ACTION, "$n wyskakuje na $N$3 dos³ownie znik±d!", ch, NULL,
+		act( COL_ACTION, "$n wyskakuje na $N$3 dosï¿½ownie znikï¿½d!", ch, NULL,
 				victim, TO_NOTVICT);
-		act( COL_ACTION, "Wyskakujesz na $N$3 zaskakuj±c $I go zupe³nie.", ch,
+		act( COL_ACTION, "Wyskakujesz na $N$3 zaskakujï¿½c $I go zupeï¿½nie.", ch,
 				NULL, victim, TO_CHAR);
-		act( COL_ACTION, "$n wyskakuje na ciebie dos³ownie znik±d!", ch, NULL,
+		act( COL_ACTION, "$n wyskakuje na ciebie dosï¿½ownie znikï¿½d!", ch, NULL,
 				victim, TO_VICT);
 	}
 	stop_hunting(ch);
@@ -382,13 +382,17 @@ void hunt_victim(CHAR_DATA *ch)
 		return;
 
 	/* make sure the char still exists */
-	for (found = false, tmp = first_char; tmp && !found; tmp = tmp->next)
+	found = false;
+	for (auto* tmp : char_list)
 		if (ch->hunting->who == tmp)
+		{
 			found = true;
+			break;
+		}
 
 	if (!found)
 	{
-		do_say(ch, (char*) "Do licha! Moja ofiara zniknê³a !!!");
+		do_say(ch, (char*) "Do licha! Moja ofiara zniknï¿½a !!!");
 		stop_hunting(ch);
 		return;
 	}
@@ -432,7 +436,7 @@ void hunt_victim(CHAR_DATA *ch)
 	}
 	if (ret < 0)
 	{
-		do_say(ch, (char*) "Do licha! Straci³em moj± ofiarê!");
+		do_say(ch, (char*) "Do licha! Straciï¿½em mojï¿½ ofiarï¿½!");
 		stop_hunting(ch);
 		return;
 	}
@@ -539,10 +543,10 @@ bool mob_snipe(CHAR_DATA *ch, CHAR_DATA *victim)
 		char_from_room(ch);
 		char_to_room(ch, victim->in_room);
 
-		sprintf(buf, "Strza³ z blastera dosiêga ciê %s.", dir_rev_name[dir]);
+		sprintf(buf, "Strzaï¿½ z blastera dosiï¿½ga ciï¿½ %s.", dir_rev_name[dir]);
 		act( COL_ACTION, buf, victim, NULL, ch, TO_CHAR);
 		act( COL_ACTION, "Strzelasz w $N$3.", ch, NULL, victim, TO_CHAR);
-		sprintf(buf, "Strza³ z blastera dosiêga $N$3 %s.", dir_rev_name[dir]);
+		sprintf(buf, "Strzaï¿½ z blastera dosiï¿½ga $N$3 %s.", dir_rev_name[dir]);
 		act( COL_ACTION, buf, ch, NULL, victim, TO_NOTVICT);
 
 		one_hit(ch, victim, TYPE_UNDEFINED);

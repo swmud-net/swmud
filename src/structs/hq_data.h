@@ -20,13 +20,11 @@
 #define HQ_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	hq_data
 {
-	HQ_DATA				* next;
-	HQ_DATA				* prev;
-	RID					* first_room;
-	RID					* last_room;
+	std::list<RID*> rooms;
 	bool				main;
 };
 

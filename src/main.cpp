@@ -54,8 +54,8 @@ int main(int argc, char **argv)
 	fCopyOver = false; /*Thanos*/
 
 	/*
-	 * Najpierw przejd¼my do mud/bin/ i tam osi±d¼my.
-	 * Dziêki temu tam znajdzie siê ewentualny 'core'.
+	 * Najpierw przejdï¿½my do mud/bin/ i tam osiï¿½dï¿½my.
+	 * Dziï¿½ki temu tam znajdzie siï¿½ ewentualny 'core'.
 	 *							-- Thanos
 	 */
 	if (chdir( BIN_DIR) < 0)
@@ -93,8 +93,6 @@ int main(int argc, char **argv)
 	log_string(log_buf);
 
 	num_descriptors = 0;
-	first_descriptor = NULL;
-	last_descriptor = NULL;
 	sysdata.NO_NAME_RESOLVING = true;
 	sysdata.WAIT_FOR_AUTH = true;
 	sysdata.test_only = false;
@@ -181,7 +179,7 @@ int main(int argc, char **argv)
 	 */
 	if (!fCopyOver && !sysdata.test_only)
 	/*
-	 Je¶li startujemy z CopyOver nie otwieramy socketu (bo ju¿ go mamy)
+	 Jeï¿½li startujemy z CopyOver nie otwieramy socketu (bo juï¿½ go mamy)
 	 Thanos.
 	 */
 	{
@@ -202,9 +200,9 @@ int main(int argc, char **argv)
 
 	/*
 	 * Thanos -- f-cja bada na czym pada mud
-	 * Jednak aktywujemy j± DOPIERO PO STARCIE MUDA (boot_db) !!!
-	 * Poniewa¿ 'deal_with_crash' bêdzie siê staraæ postawiæ muda na nowo
-	 * zmniejszamy niebezpieczeñstwo 'wstawania' w nieskoñczono¶æ.
+	 * Jednak aktywujemy jï¿½ DOPIERO PO STARCIE MUDA (boot_db) !!!
+	 * Poniewaï¿½ 'deal_with_crash' bï¿½dzie siï¿½ staraï¿½ postawiï¿½ muda na nowo
+	 * zmniejszamy niebezpieczeï¿½stwo 'wstawania' w nieskoï¿½czonoï¿½ï¿½.
 	 *
 	 * thx 2 mr John Shapley Gray
 	 */

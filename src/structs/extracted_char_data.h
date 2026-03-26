@@ -23,7 +23,6 @@
 
 struct	extracted_char_data
 {
-	EXTRACT_CHAR_DATA	* next;
 	CHAR_DATA			* ch;
 	ROOM_INDEX_DATA		* room;
 	ch_ret				retcode;

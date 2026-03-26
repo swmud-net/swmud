@@ -23,8 +23,6 @@
 
 struct crime_data
 {
-	CRIME_DATA			* next;
-	CRIME_DATA			* prev;
 	char				* planet;
 	int					level;
 	int					type;

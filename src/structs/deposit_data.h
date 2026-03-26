@@ -23,8 +23,6 @@
 
 struct deposit_data
 {
-	DEPOSIT_DATA		* next;
-	DEPOSIT_DATA		* prev;
 	char				* material_name;
 	int					daily_mining;
 };

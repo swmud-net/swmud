@@ -20,16 +20,13 @@
 #define STOCK_EXCHANGE_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
-struct stock_exchange_data	//gielda materialów
+struct stock_exchange_data	//gielda materialï¿½w
 {
-	STOCK_EXCHANGE_DATA	* next;	    /*!< wskaznik na kolejna gielda */
-	STOCK_EXCHANGE_DATA	* prev;	    /*!< wskaznik na poprzednia gielde*/
-    PLANET_DATA *		pPlanet;  /*!< planeta na której znajduje siê dana gie³da*/
-	AUCTION_DATA *		first;	  /*!< pierwsza z toczacych sie licytacji*/
-	AUCTION_DATA *		last;	  /*!< ostatnia z tocz¹cych sie licytacji*/
-	AUCTION_DATA *		first_new_offert;	/*!< pierwsza z nowych ofert*/
-	AUCTION_DATA *		last_new_offert;	/*!< ostatnia z nowych ofert*/
+    PLANET_DATA *		pPlanet;  /*!< planeta na ktï¿½rej znajduje siï¿½ dana gieï¿½da*/
+	std::list<AUCTION_DATA*> auctions;
+	std::list<AUCTION_DATA*> new_offers;
 };
 
 #endif //STOCK_EXCHANGE_DATA_H_

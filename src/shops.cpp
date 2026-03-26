@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 #include <time.h>
+#include <ranges>
 #include "mud.h"
 
 
@@ -43,18 +44,18 @@ int 	get_repaircost  args( ( CHAR_DATA *keeper, OBJ_DATA *obj ) );
  */
 CHAR_DATA *find_keeper( CHAR_DATA *ch, const char *argument )
 {
-    CHAR_DATA *keeper;
+    CHAR_DATA *keeper = nullptr;
     SHOP_DATA *pShop;
     char       buf [ MAX_STRING_LENGTH ];
 
     pShop = NULL;
-    for ( keeper = ch->in_room->first_person; keeper; keeper = keeper->next_in_room )
+    for ( auto* k : ch->in_room->people )
     {
-	if ( IS_NPC( keeper ) && ( pShop = keeper->pIndexData->pShop )
+	if ( IS_NPC( k ) && ( pShop = k->pIndexData->pShop )
 	    && ( argument[0] == '\0'
-		|| is_name( argument, keeper->name )
-		|| is_name_prefix( argument, keeper->name ) ) )
-	    	    break;
+		|| is_name( argument, k->name )
+		|| is_name_prefix( argument, k->name ) ) )
+	    	    { keeper = k; break; }
 
     }
 
@@ -62,9 +63,9 @@ CHAR_DATA *find_keeper( CHAR_DATA *ch, const char *argument )
     if ( !keeper || !pShop || ( keeper && IS_AFFECTED( keeper, AFF_CHARM ) ) )
     {
 	if( argument[0] == '\0')
-	    sprintf(buf, "Nie ma tu nikogo, kto móg³by z tob± handlowaæ." NL );
+	    sprintf(buf, "Nie ma tu nikogo, kto mï¿½gï¿½by z tobï¿½ handlowaï¿½." NL );
 	else
-	    sprintf(buf, "Nie ma tu takiego %s" PLAIN ", kto móg³by z tob± handlowaæ." NL,
+	    sprintf(buf, "Nie ma tu takiego %s" PLAIN ", kto mï¿½gï¿½by z tobï¿½ handlowaï¿½." NL,
 		argument );
 
 	send_to_char( buf, ch );
@@ -73,7 +74,7 @@ CHAR_DATA *find_keeper( CHAR_DATA *ch, const char *argument )
 
     if ( !knows_language( keeper, ch->speaking, ch ) )
     {
-	ch_printf( ch, "Wygl±da na to, ¿e %s" PLAIN " nie mo¿e ciê zrozumieæ.", keeper->przypadki[0] );
+	ch_printf( ch, "Wyglï¿½da na to, ï¿½e %s" PLAIN " nie moï¿½e ciï¿½ zrozumieï¿½.", keeper->przypadki[0] );
 	return NULL;
     }
 
@@ -83,7 +84,7 @@ CHAR_DATA *find_keeper( CHAR_DATA *ch, const char *argument )
     if ( !IS_NPC( ch ) && IS_SET( ch->act, PLR_KILLER ) )
     {
 
-	sprintf( buf, "Nie obs³ugujê morderców %s" COL_TELL " !!!",
+	sprintf( buf, "Nie obsï¿½ugujï¿½ mordercï¿½w %s" COL_TELL " !!!",
 	    ch->przypadki[0] );
 	ch_tell( keeper, ch, buf );
 
@@ -97,11 +98,11 @@ CHAR_DATA *find_keeper( CHAR_DATA *ch, const char *argument )
 /*
     if ( !IS_NPC( ch ) && IS_SET( ch->act, PLR_THIEF ) )
     {
-	sprintf( buf, "Nie obs³ugujê z³odzieji %s !!!",
+	sprintf( buf, "Nie obsï¿½ugujï¿½ zï¿½odzieji %s !!!",
 	    ch->przypadki[0] );
 	ch_tell( keeper, ch, buf );
 
-	sprintf( buf, "%s Z£ODZIEJ%s jest tutaj!",
+	sprintf( buf, "%s Zï¿½ODZIEJ%s jest tutaj!",
 	    ch->przypadki[0],
 	    ch->sex == SEX_FEMALE ? "KA" : "" );
 	do_shout( keeper, buf );
@@ -114,13 +115,13 @@ CHAR_DATA *find_keeper( CHAR_DATA *ch, const char *argument )
      */
     if ( (GET_PLANET( keeper ))->hour < pShop->open_hour )
     {
-	do_say( keeper, (char *)"Przykro mi ale jeszcze zamkniête, przyjd¼ pó¼niej." );
+	do_say( keeper, (char *)"Przykro mi ale jeszcze zamkniï¿½te, przyjdï¿½ pï¿½niej." );
 	return NULL;
     }
 
     if ( (GET_PLANET( keeper ))->hour > pShop->close_hour )
     {
-	do_say( keeper, (char *)"Przykro mi ju¿ zamkniête, przyjd¼ jutro." );
+	do_say( keeper, (char *)"Przykro mi juï¿½ zamkniï¿½te, przyjdï¿½ jutro." );
 	return NULL;
     }
 
@@ -129,7 +130,7 @@ CHAR_DATA *find_keeper( CHAR_DATA *ch, const char *argument )
      */
     if ( !can_see( keeper, ch ) )
     {
-	do_say( keeper, (char *)"Nie handlujê z kim¶, kogo nie widzê." );
+	do_say( keeper, (char *)"Nie handlujï¿½ z kimï¿½, kogo nie widzï¿½." );
 	return NULL;
     }
 
@@ -141,19 +142,17 @@ CHAR_DATA *find_keeper( CHAR_DATA *ch, const char *argument )
  */
 CHAR_DATA *find_fixer( CHAR_DATA *ch )
 {
-    CHAR_DATA *keeper;
+    CHAR_DATA *keeper = nullptr;
     REPAIR_DATA *rShop;
 
     rShop = NULL;
-    for ( keeper = ch->in_room->first_person;
-	  keeper;
-	  keeper = keeper->next_in_room )
-	if ( IS_NPC(keeper) && (rShop = keeper->pIndexData->rShop) != NULL )
-	    break;
+    for ( auto* k : ch->in_room->people )
+	if ( IS_NPC(k) && (rShop = k->pIndexData->rShop) != NULL )
+	    { keeper = k; break; }
 
     if ( !rShop )
     {
-	send_to_char( "Nie mo¿esz zrobiæ tego tutaj." NL, ch );
+	send_to_char( "Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch );
 	return NULL;
     }
 
@@ -163,20 +162,20 @@ CHAR_DATA *find_fixer( CHAR_DATA *ch )
      */
     if ( (GET_PLANET( keeper ))->hour < rShop->open_hour )
     {
-	do_say( keeper, (char *)"Jeszcze zamkniête! Przyjd¼ pó¼niej." );
+	do_say( keeper, (char *)"Jeszcze zamkniï¿½te! Przyjdï¿½ pï¿½niej." );
 	return NULL;
     }
 
     if ( (GET_PLANET( keeper ))->hour > rShop->close_hour )
     {
-	do_say( keeper, (char *)"Ju¿ zamkniête! Przyjd¼ jutro." );
+	do_say( keeper, (char *)"Juï¿½ zamkniï¿½te! Przyjdï¿½ jutro." );
 	return NULL;
     }
 
 
     if ( !knows_language( keeper, ch->speaking, ch ) )
     {
-	ch_printf( ch, "Wygl±da na to, ¿e %s" PLAIN " nie mo¿e ciê zrozumieæ.", keeper->przypadki[0] );
+	ch_printf( ch, "Wyglï¿½da na to, ï¿½e %s" PLAIN " nie moï¿½e ciï¿½ zrozumieï¿½.", keeper->przypadki[0] );
 	return NULL;
     }
 
@@ -231,7 +230,7 @@ int get_cost( CHAR_DATA *ch, CHAR_DATA *keeper, OBJ_DATA *obj, bool fBuy )
 					break;
 				}
 			}
-			for ( obj2 = keeper->first_carrying; obj2; obj2 = obj2->next_content )
+			for ( auto* obj2 : keeper->carrying )
 			{
 				if ( obj->pIndexData == obj2->pIndexData )
 				{
@@ -309,7 +308,7 @@ int get_repaircost( CHAR_DATA *keeper, OBJ_DATA *obj )
 /************************************************************************
  * Nowa wersja handlu by Thanos						*
  *									*
- * wla¶ciwie doda³em tylko drugie 'kup', 'sprzedaj' i 'targuj',		*
+ * wlaï¿½ciwie dodaï¿½em tylko drugie 'kup', 'sprzedaj' i 'targuj',		*
  * ale nie zmienia to faktu, ze jest to nowa wersja ;)			*
  ************************************************************************/
 
@@ -343,7 +342,7 @@ return true;
 }
 
 /*
- * funkcja wywo³ana komend± 'targuj'
+ * funkcja wywoï¿½ana komendï¿½ 'targuj'
  */
 DEF_DO_FUN( bargain )
 {
@@ -361,7 +360,7 @@ DEF_DO_FUN( bargain )
 
     if( IS_NPC( ch ) )
     {
-        send_to_char( "Przykro mi, ale jeste¶ mobem, nie mo¿esz handlowaæ ;)." NL, ch);
+        send_to_char( "Przykro mi, ale jesteï¿½ mobem, nie moï¿½esz handlowaï¿½ ;)." NL, ch);
 	return;
     }
 
@@ -371,8 +370,8 @@ DEF_DO_FUN( bargain )
 	return;
     }
 
-    /* czy gracz znajduje siê w tej samej lokacji co ZYWY sprzedawca? */
-    for( people = ch->in_room->first_person; people; people = people->next_in_room )
+    /* czy gracz znajduje siï¿½ w tej samej lokacji co ZYWY sprzedawca? */
+    for( auto* people : ch->in_room->people )
     {
 	if( people == ch->pcdata->trader )
 	{
@@ -385,7 +384,7 @@ DEF_DO_FUN( bargain )
 
     if( !is_there_a_keeper || !can_see( ch, ch->pcdata->trader ) )
     {
-        send_to_char( "Przykro mi, ale twój sprzedawca gdzie¶ siê zapodzia³." NL, ch);
+        send_to_char( "Przykro mi, ale twï¿½j sprzedawca gdzieï¿½ siï¿½ zapodziaï¿½." NL, ch);
 	ch->pcdata->trade_type = TRADE_NONE;
     return;
     }
@@ -394,7 +393,7 @@ DEF_DO_FUN( bargain )
     keeper = ch->pcdata->trader;
     obj = ch->pcdata->trade_item;
 
-    /* sprzedawca zyje i ma siê dobrze ;) */
+    /* sprzedawca zyje i ma siï¿½ dobrze ;) */
     switch( ch->pcdata->trade_type )
     {
 
@@ -407,9 +406,9 @@ DEF_DO_FUN( bargain )
 	    if( !check_trading( ch, BUY_AN_ITEM ) )
 		return;
 
-	    /* Gdyby towar nagle zosta³ wykupiony */
+	    /* Gdyby towar nagle zostaï¿½ wykupiony */
 	    is_offered = false;
-	    for( offer = keeper->first_carrying; offer; offer = offer->next_content )
+	    for( auto* offer : keeper->carrying )
 	    {
 		if ( offer == obj )
 		{
@@ -423,7 +422,7 @@ DEF_DO_FUN( bargain )
 	    if ( !is_offered )
 	    {
 		sprintf( buf,
-		    "Przykro mi, ale nie mamy ju¿ %s" COL_TELL ". Przyjd¼ jutro.",
+		    "Przykro mi, ale nie mamy juï¿½ %s" COL_TELL ". Przyjdï¿½ jutro.",
 				obj->przypadki[1] );
 		ch_tell( keeper, ch, buf );
 		ch->pcdata->trade_type = TRADE_NONE;
@@ -440,7 +439,7 @@ DEF_DO_FUN( bargain )
 
 	    if( ch->pcdata->trade_price < MIN_BARGAIN_PRICE )
 	    {
-		ch_tell( keeper, ch, "Daj spokój... Nie bêdê ³amaæ kredytek na pó³." );
+		ch_tell( keeper, ch, "Daj spokï¿½j... Nie bï¿½dï¿½ ï¿½amaï¿½ kredytek na pï¿½." );
 		return;
 	    }
 
@@ -450,14 +449,14 @@ DEF_DO_FUN( bargain )
 
 	    if( profit == 0 )
 	    {
-		ch_tell( keeper, ch, "Nieee, musisz siê bardziej postaraæ..." );
+		ch_tell( keeper, ch, "Nieee, musisz siï¿½ bardziej postaraï¿½..." );
 		return;
 	    }
 
 	    if( number_percent( ) < MAX_BARGAIN-ch->pcdata->bargain_max)
 	    {
 		ch->pcdata->trade_price += profit;
-	    	sprintf( buf, "Wiesz co? Rozmy¶lam siê. Chcê %d.",
+	    	sprintf( buf, "Wiesz co? Rozmyï¿½lam siï¿½. Chcï¿½ %d.",
 		    ch->pcdata->trade_price );
 		ch_tell( keeper, ch, buf );
 		return;
@@ -480,7 +479,7 @@ DEF_DO_FUN( bargain )
 	    }
 	    else
 	    {
-		sprintf( buf, "Hmm... Niech bêdzie, wezmê %d kredyt%s.",
+		sprintf( buf, "Hmm... Niech bï¿½dzie, wezmï¿½ %d kredyt%s.",
 		    ch->pcdata->trade_price - ch->pcdata->curr_bargain,
 		    NUMBER_SUFF( ch->pcdata->trade_price - ch->pcdata->curr_bargain, "ka", "ki", "ek" ) );
 		ch_tell( keeper, ch, buf );
@@ -494,7 +493,7 @@ DEF_DO_FUN( bargain )
 		return;
 
 	    is_offered = false;
-	    for( offer = ch->first_carrying; offer; offer = offer->next_content )
+	    for( auto* offer : ch->carrying )
 	    {
 		if ( offer == obj )
 		{
@@ -508,7 +507,7 @@ DEF_DO_FUN( bargain )
 	    if ( !is_offered )
 	    {
 		sprintf( buf,
-		"Przecie¿ ty nie masz %s" COL_TELL ". O co tu siê targowaæ?",
+		"Przecieï¿½ ty nie masz %s" COL_TELL ". O co tu siï¿½ targowaï¿½?",
 				obj->przypadki[1] );
 		ch_tell( keeper, ch, buf );
 		ch->pcdata->trade_type = TRADE_NONE;
@@ -517,7 +516,7 @@ DEF_DO_FUN( bargain )
 
 	    if( ch->pcdata->trade_price < MIN_BARGAIN_PRICE )
 	    {
-		ch_tell( keeper, ch, "Daj spokój... Nie bêdê ³amaæ kredytek na pó³." );
+		ch_tell( keeper, ch, "Daj spokï¿½j... Nie bï¿½dï¿½ ï¿½amaï¿½ kredytek na pï¿½." );
 		return;
 	    }
 
@@ -527,14 +526,14 @@ DEF_DO_FUN( bargain )
 
 	    if( profit == 0 )
 	    {
-		ch_tell( keeper, ch, "Nieee, musisz siê bardziej postaraæ..." );
+		ch_tell( keeper, ch, "Nieee, musisz siï¿½ bardziej postaraï¿½..." );
 		return;
 	    }
 
 	    if( number_percent( ) < MAX_BARGAIN-ch->pcdata->bargain_max)
 	    {
 		ch->pcdata->trade_price -= profit;
-	    	sprintf( buf, "Wiesz co? Rozmy¶lam siê. Dam %d.",
+	    	sprintf( buf, "Wiesz co? Rozmyï¿½lam siï¿½. Dam %d.",
 		    ch->pcdata->trade_price );
 		ch_tell( keeper, ch, buf );
 		return;
@@ -544,7 +543,7 @@ DEF_DO_FUN( bargain )
 
 	    if( ch->pcdata->curr_bargain > ch->pcdata->bargain_max )
 	    {
-	    	ch_tell( keeper, ch, "Co ??? Jeszcze dro¿ej? Nie ma mowy! Wynocha!" );
+	    	ch_tell( keeper, ch, "Co ??? Jeszcze droï¿½ej? Nie ma mowy! Wynocha!" );
 		ch->pcdata->trade_type = TRADE_NONE;
 		return;
 	    }
@@ -557,7 +556,7 @@ DEF_DO_FUN( bargain )
 	    }
 	    else
 	    {
-		sprintf( buf, "Hmm... Niech bêdzie, dam ci %d kredytek.",
+		sprintf( buf, "Hmm... Niech bï¿½dzie, dam ci %d kredytek.",
 		    ch->pcdata->trade_price + ch->pcdata->curr_bargain );
 		ch_tell( keeper, ch, buf );
 		return;
@@ -575,7 +574,7 @@ DEF_DO_FUN( bargain )
 	    pet = ch->pcdata->trade_pet;
 
 	    is_offered = false;
-	    for ( people = pRoomIndexNext->first_person; people; people = people->next_in_room )
+	    for ( auto* people : pRoomIndexNext->people )
 	    {
 		if ( people == ch->pcdata->trade_pet )
 		{
@@ -590,7 +589,7 @@ DEF_DO_FUN( bargain )
 
 	    if( !is_offered )
 	    {
-    		sprintf( buf, "Przykro mi, ale nie mamy ju¿ %s" COL_TELL ". Przyjd¼ jutro.",
+    		sprintf( buf, "Przykro mi, ale nie mamy juï¿½ %s" COL_TELL ". Przyjdï¿½ jutro.",
 		    pet->przypadki[1] );
 		ch_tell( keeper, ch, buf );
 		ch->pcdata->trade_type = TRADE_NONE;
@@ -606,7 +605,7 @@ DEF_DO_FUN( bargain )
 
 	    if( ch->pcdata->trade_price < MIN_BARGAIN_PRICE )
 	    {
-		ch_tell( keeper, ch, "Daj spokój... Nie bêdê ³amaæ kredytek na pó³." );
+		ch_tell( keeper, ch, "Daj spokï¿½j... Nie bï¿½dï¿½ ï¿½amaï¿½ kredytek na pï¿½." );
 		return;
 	    }
 
@@ -616,14 +615,14 @@ DEF_DO_FUN( bargain )
 
 	    if( profit == 0 )
 	    {
-		ch_tell( keeper, ch, "Nieee, musisz siê bardziej postaraæ..." );
+		ch_tell( keeper, ch, "Nieee, musisz siï¿½ bardziej postaraï¿½..." );
 		return;
 	    }
 
 	    if( number_percent( ) < MAX_BARGAIN-ch->pcdata->bargain_max)
 	    {
 		ch->pcdata->trade_price += profit;
-	    	sprintf( buf, "Wiesz co? Rozmy¶lam siê. Chcê %d.",
+	    	sprintf( buf, "Wiesz co? Rozmyï¿½lam siï¿½. Chcï¿½ %d.",
 		    ch->pcdata->trade_price );
 		ch_tell( keeper, ch, buf );
 		return;
@@ -646,7 +645,7 @@ DEF_DO_FUN( bargain )
 	    }
 	    else
 	    {
-		sprintf( buf, "Hmm... Niech bêdzie, wezmê %d kredyt%s.",
+		sprintf( buf, "Hmm... Niech bï¿½dzie, wezmï¿½ %d kredyt%s.",
 		    ch->pcdata->trade_price - ch->pcdata->curr_bargain,
 		    NUMBER_SUFF(
 			ch->pcdata->trade_price - ch->pcdata->curr_bargain, "ka", "ki", "ek" ) );
@@ -681,16 +680,16 @@ void buy_an_item( CHAR_DATA *ch )
 	price = ch->pcdata->trade_price;
 	keeper = ch->pcdata->trader;
 
-	/* czy sprzedawca jeszcze ¿yje */
+	/* czy sprzedawca jeszcze ï¿½yje */
 	if( !can_see( ch, keeper ) )
 	{
-    	    send_to_char( "Przykro mi, ale twój sprzedawca gdzie¶ siê zapodzia³." NL, ch );
+    	    send_to_char( "Przykro mi, ale twï¿½j sprzedawca gdzieï¿½ siï¿½ zapodziaï¿½." NL, ch );
 	    ch->pcdata->trade_type = TRADE_NONE;
 	    return;
 	}
 
-	/* Gdyby towar nagle zosta³ wykupiony */
-	for( offer = keeper->first_carrying; offer; offer = offer->next_content )
+	/* Gdyby towar nagle zostaï¿½ wykupiony */
+	for( auto* offer : keeper->carrying )
 	{
 	    if ( offer == obj )
 	    {
@@ -704,7 +703,7 @@ void buy_an_item( CHAR_DATA *ch )
 	if ( !is_offered )
 	{
 
-	    sprintf( buf, "Przykro mi, ale nie mamy ju¿ %s" COL_TELL ". Przyjd¼ jutro.",
+	    sprintf( buf, "Przykro mi, ale nie mamy juï¿½ %s" COL_TELL ". Przyjdï¿½ jutro.",
 		obj->przypadki[1] );
 	    ch_tell( keeper, ch, buf );
 	    ch->pcdata->trade_type = TRADE_NONE;
@@ -714,7 +713,7 @@ void buy_an_item( CHAR_DATA *ch )
 	/* czy gracz ma odpowiedni poziom do poziomu zakupu? */
 /*	if ( obj->level > ch->top_level )
 	{
-	    act( COL_TELL, "$n mówi Ci 'Nie mo¿esz jeszcze u¿ywaæ $p$1! Nie zawracaj mi g³owy.'",
+	    act( COL_TELL, "$n mï¿½wi Ci 'Nie moï¿½esz jeszcze uï¿½ywaï¿½ $p$1! Nie zawracaj mi gï¿½owy.'",
 		    keeper, obj, ch, TO_VICT );
 	    ch->reply = keeper;
 	    ch->pcdata->trade_type = TRADE_NONE;
@@ -724,22 +723,22 @@ void buy_an_item( CHAR_DATA *ch )
 	if ( ( count > 1 )//nie ruszam (skopiowane z oryginalnego do_buy)
 	    && !IS_SET( obj->extra_flags, ITEM_INVENTORY ) )
 	{
-	    sprintf( buf, "Niestety mam tylko jedn± sztukê %s" COL_TELL "...",
+	    sprintf( buf, "Niestety mam tylko jednï¿½ sztukï¿½ %s" COL_TELL "...",
 		obj->przypadki[1] );
 	    ch_tell( keeper, ch, buf );
 	    ch->pcdata->trade_type = TRADE_NONE;
 	    return;
 	}
 
-	/* czy gracz ma pieni±dze, by powtórzyæ zamówienie? */
+	/* czy gracz ma pieniï¿½dze, by powtï¿½rzyï¿½ zamï¿½wienie? */
 	if ( ch->gold < price )
 	{
 	    char buf [ MAX_STRING_LENGTH ];
 
 	    if ( ( ch->gold ) <= 0 )
-		sprintf( buf,"Przecie¿ ty nie masz pieniêdzy! Wyno¶ siê st±d!");
+		sprintf( buf,"Przecieï¿½ ty nie masz pieniï¿½dzy! Wynoï¿½ siï¿½ stï¿½d!");
 	    else
-		sprintf( buf, "Nie staæ ciê na to! Wróæ jak uzbierasz!" );
+		sprintf( buf, "Nie staï¿½ ciï¿½ na to! Wrï¿½ï¿½ jak uzbierasz!" );
 
 	    ch_tell( keeper, ch, buf );
 	    ch->pcdata->trade_type = TRADE_NONE;
@@ -748,11 +747,11 @@ void buy_an_item( CHAR_DATA *ch )
 
 	if( !ch->pcdata->trade_dest )
 	{
-	    /* czy pomie¶ci i ud¼wignie nastepn± partiê zakupów? */
+	    /* czy pomieï¿½ci i udï¿½wignie nastepnï¿½ partiï¿½ zakupï¿½w? */
 	    if ( ch->carry_number + ( count * get_obj_number( obj ) ) >
 		can_carry_n( ch ) )
 	    {
-		send_to_char( "Nie mo¿esz nie¶æ tylu przedmiotów." NL, ch );
+		send_to_char( "Nie moï¿½esz nieï¿½ï¿½ tylu przedmiotï¿½w." NL, ch );
 		return;
 	    }
     	}
@@ -760,15 +759,15 @@ void buy_an_item( CHAR_DATA *ch )
 	if ( ch->carry_weight + ( count * get_obj_weight( obj ) ) >
 		can_carry_w( ch ) )
 	{
-	    send_to_char( "Nie uniesiesz takiego ciê¿aru." NL, ch );
+	    send_to_char( "Nie uniesiesz takiego ciï¿½aru." NL, ch );
 	    return;
 	}
 
-	/* ud¼wignie - ale czy sprzedawca mo¿e mu sprzedaæ a¿ tyle? */
+	/* udï¿½wignie - ale czy sprzedawca moï¿½e mu sprzedaï¿½ aï¿½ tyle? */
 	if ( ( count > 1 )
 	    && !IS_SET( obj->extra_flags, ITEM_INVENTORY ) )
 	{
-	    sprintf( buf, "Niestety mam tylko jedn± sztukê %s" COL_TELL "...",
+	    sprintf( buf, "Niestety mam tylko jednï¿½ sztukï¿½ %s" COL_TELL "...",
 		obj->przypadki[1] );
 	    ch_tell( keeper, ch, buf );
 	    ch->pcdata->trade_type = TRADE_NONE;
@@ -778,13 +777,13 @@ void buy_an_item( CHAR_DATA *ch )
 	ch->pcdata->trade_price-=
 	    (ch->pcdata->trade_price * ch->pcdata->curr_bargain)/100;
 
-	/* mo¿e - kupujemy ;) */
+	/* moï¿½e - kupujemy ;) */
 	if ( count == 1 )
 	{   char buf [ MAX_STRING_LENGTH ];
 	    int price = ch->pcdata->trade_price;
 
 	    sprintf( buf, "Kupujesz od $N$1 $p$3 za %d kredyt%s.",
-		    price, NUMBER_SUFF( price, "kê", "ki", "ek" ) );
+		    price, NUMBER_SUFF( price, "kï¿½", "ki", "ek" ) );
 	    act( PLAIN, buf, ch, obj, keeper, TO_CHAR );
 	    act( COL_TELL, "$n kupuje od $N$1 $p$3.", ch, obj, keeper, TO_ROOM );
 	}
@@ -796,7 +795,7 @@ void buy_an_item( CHAR_DATA *ch )
 	    act( PLAIN, buf, ch, obj, keeper, TO_ROOM );
 	    sprintf( buf, "Kupujesz od $N$1 %d sztuk $p$1 za %d kredyt%s.",
 		    count, ch->pcdata->trade_price,
-		    NUMBER_SUFF(ch->pcdata->trade_price, "kê", "ki", "ek" ) );
+		    NUMBER_SUFF(ch->pcdata->trade_price, "kï¿½", "ki", "ek" ) );
 	    act( PLAIN, buf, ch, obj, keeper, TO_CHAR );
 	}
 
@@ -808,11 +807,11 @@ void buy_an_item( CHAR_DATA *ch )
 	{
 	    boost_economy( keeper->in_room->area, keeper->gold - maxgold );
 	    keeper->gold = maxgold;
-	    act( COL_ACTION, "$n wk³ada pieni±dze do wielkiego sejfu.",
+	    act( COL_ACTION, "$n wkï¿½ada pieniï¿½dze do wielkiego sejfu.",
 		    keeper, NULL, NULL, TO_ROOM );
 	}
 
-	/* celowo wziête w komentarz - u nas mo¿na powtarzaæ zamówienia */
+	/* celowo wziï¿½te w komentarz - u nas moï¿½na powtarzaï¿½ zamï¿½wienia */
 	    //ch->pcdata->trade_type = TRADE_NONE;
 
 	if ( IS_SET( obj->extra_flags, ITEM_INVENTORY ) )
@@ -858,7 +857,7 @@ void buy_a_pet( CHAR_DATA *ch )
     /* czy sprzedawca jeszcze zyje? */
     if( !can_see( ch, keeper ) )
     {
-        send_to_char( "Przykro mi, ale twój sprzedawca gdzie¶ siê zapodzia³" NL, ch );
+        send_to_char( "Przykro mi, ale twï¿½j sprzedawca gdzieï¿½ siï¿½ zapodziaï¿½" NL, ch );
 	ch->pcdata->trade_type = TRADE_NONE;
 	return;
     }
@@ -874,7 +873,7 @@ void buy_a_pet( CHAR_DATA *ch )
     pRoomIndexNext = get_room_index( ch->in_room->vnum + 1 );
     is_offered = false;
 
-    for ( offer = pRoomIndexNext->first_person; offer; offer = offer->next_in_room )
+    for ( auto* offer : pRoomIndexNext->people )
     {
 	if ( offer == pet )
 	{
@@ -889,20 +888,20 @@ void buy_a_pet( CHAR_DATA *ch )
 
     if( !is_offered )
     {
-        sprintf( buf, "Przykro mi, ale nie mamy ju¿ %s" COL_TELL ". Przyjd¼ jutro.",
+        sprintf( buf, "Przykro mi, ale nie mamy juï¿½ %s" COL_TELL ". Przyjdï¿½ jutro.",
 		pet->przypadki[1] );
 	ch_tell( keeper, ch, buf );
 	ch->pcdata->trade_type = TRADE_NONE;
 	return;
     }
 
-    /* czy gracz ma jeszcze pieni±dze na zwierzaka? */
+    /* czy gracz ma jeszcze pieniï¿½dze na zwierzaka? */
     if ( ch->gold < price )
     {
         if ( ( ch->gold ) <= 0 )
-		sprintf( buf,"Przecie¿ ty nie masz pieniêdzy! Wyno¶ siê st±d!");
+		sprintf( buf,"Przecieï¿½ ty nie masz pieniï¿½dzy! Wynoï¿½ siï¿½ stï¿½d!");
 	else
-		sprintf( buf, "Nie staæ ciê na to! Wróæ jak uzbierasz!" );
+		sprintf( buf, "Nie staï¿½ ciï¿½ na to! Wrï¿½ï¿½ jak uzbierasz!" );
 
 	ch_tell( keeper, ch, buf );
 	ch->pcdata->trade_type = TRADE_NONE;
@@ -918,14 +917,14 @@ void buy_a_pet( CHAR_DATA *ch )
 	SET_BIT( pet->act,         ACT_PET        );
 	SET_BIT( pet->affected_by, AFF_CHARM      );
 
-	sprintf( buf, "Na obro¿y %s" PLAIN " jest napisane: W³asno¶æ %s" PLAIN "'." NL,
+	sprintf( buf, "Na obroï¿½y %s" PLAIN " jest napisane: Wï¿½asnoï¿½ï¿½ %s" PLAIN "'." NL,
 		pet->przypadki[1], ch->przypadki[1] );
 	STRDUP( pet->description, buf );
 
 	char_to_room( pet, ch->in_room );
 	add_follower( pet, ch );
 	send_to_char( "Kupujesz sobie zwierzaka!." NL, ch );
-	act( PLAIN, "$n kupuje sobie zwierz±tko: $N$3.", ch, NULL, pet, TO_ROOM );
+	act( PLAIN, "$n kupuje sobie zwierzï¿½tko: $N$3.", ch, NULL, pet, TO_ROOM );
 
 	maxgold = 10 * pet->top_level * pet->top_level;
 
@@ -933,7 +932,7 @@ void buy_a_pet( CHAR_DATA *ch )
 	{
 	    boost_economy( keeper->in_room->area, keeper->gold - maxgold/2 );
 	    keeper->gold = maxgold/2;
-	    act( COL_ACTION, "$n wk³ada pieni±dze do wielkiego sejfu.",
+	    act( COL_ACTION, "$n wkï¿½ada pieniï¿½dze do wielkiego sejfu.",
 		    keeper, NULL, NULL, TO_ROOM );
 	}
 	/* tu celowo konczymy zakupy (tylko 1_zwierzak/level) */
@@ -1004,7 +1003,7 @@ DEF_DO_FUN( buy )
     {
 	if( keeper != ch->pcdata->trader )
 	{
-	    ch_printf( ch, "Przecie¿ nie handlujesz z %s." NL,
+	    ch_printf( ch, "Przecieï¿½ nie handlujesz z %s." NL,
 		keeper->przypadki[4] );
 	    return;
 	}
@@ -1022,7 +1021,7 @@ DEF_DO_FUN( buy )
 	}
 	else
 	{
-	    send_to_char( "Kupiæ co?" NL, ch );
+	    send_to_char( "Kupiï¿½ co?" NL, ch );
 	    ch->pcdata->trade_type = TRADE_NONE;
 	}
 	return;
@@ -1045,7 +1044,7 @@ DEF_DO_FUN( buy )
 	}
 	if ( IS_SET(obj->value[1], CONT_CLOSED) )
 	{
-	    send_to_char( "Mo¿e najpierw to otwórz!" NL, ch );
+	    send_to_char( "Moï¿½e najpierw to otwï¿½rz!" NL, ch );
 	    return;
 	}
 	if ( (IS_OBJ_STAT(obj, ITEM_COVERING)
@@ -1053,14 +1052,14 @@ DEF_DO_FUN( buy )
 	  > ((get_obj_weight( obj ) / obj->count)
 	  -   obj->weight)) )
 	{
-	    send_to_char( "To siê tam nie zmie¶ci!" NL, ch );
+	    send_to_char( "To siï¿½ tam nie zmieï¿½ci!" NL, ch );
 	    return;
 	}
 	if ( (get_obj_weight( ch->pcdata->trade_item ) / ch->pcdata->trade_count)
 	   + (get_obj_weight( obj ) / obj->count)
 	   >  obj->value[0] )
 	{
-	    send_to_char( "To siê tam nie zmie¶ci!" NL, ch );
+	    send_to_char( "To siï¿½ tam nie zmieï¿½ci!" NL, ch );
 	    return;
 	}
 	ch->pcdata->trade_dest = obj;
@@ -1090,42 +1089,42 @@ DEF_DO_FUN( buy )
 
 	if ( cost <= 0 || !can_see_obj( ch, obj ) )
 	{
-	    ch_tell( keeper, ch, "Nie sprzedajê niczego takiego. Spróbuj 'list'." );
+	    ch_tell( keeper, ch, "Nie sprzedajï¿½ niczego takiego. Sprï¿½buj 'list'." );
 	    return;
 	}
 
 	if ( item_count < 1 )
 	{
-	    ch_tell( keeper, ch, "A¿ tak ma³o ci nie sprzedam." );
+	    ch_tell( keeper, ch, "Aï¿½ tak maï¿½o ci nie sprzedam." );
 	    return;
 	}
 
 	if ( IS_SET(obj->extra_flags, ITEM_PROTOTYPE)
              && get_trust( ch ) < LEVEL_IMMORTAL )
 	{
-	    ch_tell( keeper, ch, "To jeszcze prototyp! Nie mogê tego sprzedawaæ..." );
+	    ch_tell( keeper, ch, "To jeszcze prototyp! Nie mogï¿½ tego sprzedawaï¿½..." );
 	    return;
 	}
 
 	if ( ( item_count > 1 )//tego ifa nie ruszam
 	    && !IS_SET( obj->extra_flags, ITEM_INVENTORY ) )
 	{
-	    sprintf( buf, "Niestety, mam tylko jedn± sztukê %s" COL_TELL "...",
+	    sprintf( buf, "Niestety, mam tylko jednï¿½ sztukï¿½ %s" COL_TELL "...",
 		obj->przypadki[1] );
 	    ch_tell( keeper, ch, buf );
 	    return;
 	}
 
 	if( item_count == 1 )
-	    sprintf( buf, "Hmm. Chcesz %s" COL_TELL "... To wyniesie ciê %d kredyt%s",
-		     obj->przypadki[3], cost, NUMBER_SUFF(cost, "kê", "ki", "ek" ) );
+	    sprintf( buf, "Hmm. Chcesz %s" COL_TELL "... To wyniesie ciï¿½ %d kredyt%s",
+		     obj->przypadki[3], cost, NUMBER_SUFF(cost, "kï¿½", "ki", "ek" ) );
 	else
-	    sprintf( buf, "Hmm. Chcesz %d sztuk%s %s" COL_TELL "... To wyniesie ciê %d kredyt%s",
+	    sprintf( buf, "Hmm. Chcesz %d sztuk%s %s" COL_TELL "... To wyniesie ciï¿½ %d kredyt%s",
 	    item_count,
 	    item_count == 2 || item_count == 3 || item_count == 4 ? "i" : "",
 	    obj->przypadki[1],
 	    item_count * cost,
-	    NUMBER_SUFF(item_count * cost, "kê", "ki", "ek" )  );
+	    NUMBER_SUFF(item_count * cost, "kï¿½", "ki", "ek" )  );
 	ch_tell( keeper, ch, buf );
 
 	ch->pcdata->trade_type	 = BUY_AN_ITEM;
@@ -1158,7 +1157,7 @@ DEF_DO_FUN( list )
 	    return;
 
 	found = false;
-	for ( obj = keeper->last_carrying; obj; obj = obj->prev_content )
+	for ( auto* obj : std::ranges::reverse_view(keeper->carrying) )
 	{
 	    if ( obj->wear_loc == WEAR_NONE
 	    &&   can_see_obj( ch, obj ) )
@@ -1183,9 +1182,9 @@ DEF_DO_FUN( list )
 			cost,
 			strip_colors(capitalize( obj->przypadki[0] ),28),
 			IS_SET(obj->extra_flags, ITEM_HUTT_SIZE) ? "(huttcko wielkie) " :
-		    	( IS_SET(obj->extra_flags, ITEM_LARGE_SIZE) ? "(du¿e) " :
-		    	( IS_SET(obj->extra_flags, ITEM_HUMAN_SIZE) ? "(¶rednie) " :
-		    	( IS_SET(obj->extra_flags, ITEM_SMALL_SIZE) ? "(ma³e) " : "" ) ) ) );
+		    	( IS_SET(obj->extra_flags, ITEM_LARGE_SIZE) ? "(duï¿½e) " :
+		    	( IS_SET(obj->extra_flags, ITEM_HUMAN_SIZE) ? "(ï¿½rednie) " :
+		    	( IS_SET(obj->extra_flags, ITEM_SMALL_SIZE) ? "(maï¿½e) " : "" ) ) ) );
 	       }
 	    }
 	}
@@ -1200,9 +1199,9 @@ DEF_DO_FUN( list )
 	if ( !found )
 	{
 	    if ( arg[0] == '\0' )
-		send_to_char( "Nie mo¿esz tutaj nic kupiæ." NL, ch );
+		send_to_char( "Nie moï¿½esz tutaj nic kupiï¿½." NL, ch );
 	    else
-		send_to_char( "Nie mo¿esz kupiæ tego tutaj." NL, ch );
+		send_to_char( "Nie moï¿½esz kupiï¿½ tego tutaj." NL, ch );
 	}
 	return;
 }
@@ -1227,13 +1226,13 @@ void sell_an_item( CHAR_DATA *ch )
     /* czy sprzedawca jeszcze zyje? */
     if( !can_see( ch, keeper ) )
     {
-        send_to_char( "Przykro mi, ale twój sprzedawca gdzie¶ siê zapodzia³." NL, ch );
+        send_to_char( "Przykro mi, ale twï¿½j sprzedawca gdzieï¿½ siï¿½ zapodziaï¿½." NL, ch );
 	ch->pcdata->trade_type = TRADE_NONE;
 	return;
     }
 
-    /* mo¿liwe, ¿e przedmiot zniknie graczowi podczas handlu */
-    for( offer = ch->first_carrying; offer; offer = offer->next_content )
+    /* moï¿½liwe, ï¿½e przedmiot zniknie graczowi podczas handlu */
+    for( auto* offer : ch->carrying )
     {
         if ( offer == obj )
         {
@@ -1254,12 +1253,12 @@ void sell_an_item( CHAR_DATA *ch )
     /* albo zniknie sprzedawcy sprzed oczu*/
     if ( !can_see_obj( keeper, obj ) )
     {
-	ch_tell( keeper, ch, "Nie widzê u ciebie takiego przedmiotu." );
+	ch_tell( keeper, ch, "Nie widzï¿½ u ciebie takiego przedmiotu." );
 	ch->pcdata->trade_type = TRADE_NONE;
 	return;
     }
 
-    /* je¶li w³a¶ciwo¶ci przedmiotu zmieni± siê, przerywamy handel */
+    /* jeï¿½li wï¿½aï¿½ciwoï¿½ci przedmiotu zmieniï¿½ siï¿½, przerywamy handel */
     if ( ( cost = get_cost( ch, keeper, obj, false ) ) <= 0 )
 //	|| obj->level > LEVEL_HERO ) Trog: ke?
     {
@@ -1270,7 +1269,7 @@ void sell_an_item( CHAR_DATA *ch )
 
     if ( IS_SET( obj->extra_flags, ITEM_POISONED ) )
     {
-	ch_tell( keeper, ch, "Nie kupujê zatrutych rzeczy! Wyno¶ siê st±d!" );
+	ch_tell( keeper, ch, "Nie kupujï¿½ zatrutych rzeczy! Wynoï¿½ siï¿½ stï¿½d!" );
 	ch->pcdata->trade_type = TRADE_NONE;
 	return;
     }
@@ -1279,7 +1278,7 @@ void sell_an_item( CHAR_DATA *ch )
 	keeper->gold : cost;
     cost -= (cost * ch->pcdata->curr_bargain)/100;
     separate_obj( obj );
-    /* ale, gdyby siê nie zmieni³y */
+    /* ale, gdyby siï¿½ nie zmieniï¿½y */
     act( PLAIN, "Sprzedajesz $N$2 $p$3.", ch, obj, keeper, TO_CHAR );
     act( PLAIN, "$n sprzedaje $N$2 $p$3.", ch, obj, keeper, TO_ROOM );
 
@@ -1296,7 +1295,7 @@ void sell_an_item( CHAR_DATA *ch )
 	long ch_exp;
 
         ch_exp = UMIN( obj->cost*10 , ( exp_level( ch->skill_level[SMUGGLING_ABILITY]+1) - exp_level( ch->skill_level[SMUGGLING_ABILITY])  ) / 10  );
-        ch_printf( ch, "Zdobywasz %ld punktów do¶wiadczenia przemytniczego za kontrabandê." NL , ch_exp );
+        ch_printf( ch, "Zdobywasz %ld punktï¿½w doï¿½wiadczenia przemytniczego za kontrabandï¿½." NL , ch_exp );
         gain_exp( ch, ch_exp , SMUGGLING_ABILITY );
 
 	if( obj->item_type == ITEM_SPICE || obj->item_type == ITEM_RAWSPICE )
@@ -1347,7 +1346,7 @@ DEF_DO_FUN( sell )
     {
 	if( keeper != ch->pcdata->trader )
 	{
-	    ch_printf( ch, "Przecie¿ nie handlujesz z %s." NL,
+	    ch_printf( ch, "Przecieï¿½ nie handlujesz z %s." NL,
 		keeper->przypadki[4] );
 	    return;
 	}
@@ -1355,36 +1354,36 @@ DEF_DO_FUN( sell )
 	if( ch->pcdata->trade_type == SELL_AN_ITEM )
 	    sell_an_item( ch );
 	else
-	    send_to_char( "Sprzedaæ co?" NL, ch );
+	    send_to_char( "Sprzedaï¿½ co?" NL, ch );
 	return;
     }
 
 
     if ( !( obj = get_obj_carry( ch, arg ) ) )
     {
-	ch_tell( keeper, ch, "Nie widzê u ciebie takiego przedmiotu." );
+	ch_tell( keeper, ch, "Nie widzï¿½ u ciebie takiego przedmiotu." );
 	return;
     }
 
     if ( IS_OBJ_STAT( obj, ITEM_PERSONAL ) )
     {
-	ch_printf( ch, "No co¶ ty, %s" PLAIN " chcesz sprzedawaæ? TW%s %s" PLAIN " ???" EOL,
+	ch_printf( ch, "No coï¿½ ty, %s" PLAIN " chcesz sprzedawaï¿½? TW%s %s" PLAIN " ???" EOL,
 	    capitalize( obj->przypadki[3] ),
-	    obj->gender == GENDER_MALE ? "ÓJ" :
-	    obj->gender == GENDER_FEMALE ? "OJ¡" : "OJE",
+	    obj->gender == GENDER_MALE ? "ï¿½J" :
+	    obj->gender == GENDER_FEMALE ? "OJï¿½" : "OJE",
 	    all_capitalize( obj->przypadki[3] ) );
 	return;
     }
 
     if ( !can_drop_obj( ch, obj ) )
     {
-	send_to_char( "Nie mo¿esz tego odrzuciæ." NL, ch );
+	send_to_char( "Nie moï¿½esz tego odrzuciï¿½." NL, ch );
 	return;
     }
 
     if ( obj->timer > 0 )
     {
-	sprintf( buf, "Warto¶æ %s" COL_TELL " spada zbyt szybko...",
+	sprintf( buf, "Wartoï¿½ï¿½ %s" COL_TELL " spada zbyt szybko...",
 	    obj->przypadki[1] );
 	ch_tell( keeper, ch, buf );
 	return;
@@ -1392,7 +1391,7 @@ DEF_DO_FUN( sell )
 
     if ( !can_see_obj( keeper, obj ) )
     {
-	ch_tell( keeper, ch, "Nie widzê u ciebie takiego przedmiotu." );
+	ch_tell( keeper, ch, "Nie widzï¿½ u ciebie takiego przedmiotu." );
 	return;
     }
 
@@ -1405,13 +1404,13 @@ DEF_DO_FUN( sell )
 
     if ( IS_SET( obj->extra_flags, ITEM_POISONED ) )
     {
-	ch_tell( keeper, ch, "Nie kupujê zatrutych rzeczy! Wyno¶ siê st±d!" );
+	ch_tell( keeper, ch, "Nie kupujï¿½ zatrutych rzeczy! Wynoï¿½ siï¿½ stï¿½d!" );
         return;
     }
 
 	if( keeper->gold < 1 )
 	{
-		ch_tell( keeper, ch, "Nie mam czym Ci zap³aciæ." );
+		ch_tell( keeper, ch, "Nie mam czym Ci zapï¿½aciï¿½." );
 		return;
 	}
 
@@ -1420,16 +1419,16 @@ DEF_DO_FUN( sell )
 		sprintf( buf, "%s jest wart%c" COL_TELL " %d kredyt%s.",
 		    capitalize( obj->przypadki[0] ), obj->gender == GENDER_FEMALE ? 'a' :
 			obj->gender == GENDER_MALE ? 'y' : 'e',
-	    	cost, NUMBER_SUFF( cost, "kê", "ki", "ek" ) );
+	    	cost, NUMBER_SUFF( cost, "kï¿½", "ki", "ek" ) );
 		ch_tell( keeper, ch, buf );
-		sprintf( buf, "Niestety ja mam tylko %d i tyle jestem w stanie Ci zap³aciæ. Zgadzasz siê?",
+		sprintf( buf, "Niestety ja mam tylko %d i tyle jestem w stanie Ci zapï¿½aciï¿½. Zgadzasz siï¿½?",
 			keeper->gold );
 	}
 	else
 	{
-		sprintf( buf, "Za %s" COL_TELL " dam ci %d kredyt%s. Zgadzasz siê?",
+		sprintf( buf, "Za %s" COL_TELL " dam ci %d kredyt%s. Zgadzasz siï¿½?",
 	    	obj->przypadki[3],
-		    cost, NUMBER_SUFF( cost, "kê", "ki", "ek" ) );
+		    cost, NUMBER_SUFF( cost, "kï¿½", "ki", "ek" ) );
     }
     ch_tell( keeper, ch, buf );
 
@@ -1458,7 +1457,7 @@ DEF_DO_FUN( value )
 
     if ( argument[0] == '\0' )
     {
-	send_to_char( "Co chcesz wyceniæ?" NL, ch );
+	send_to_char( "Co chcesz wyceniï¿½?" NL, ch );
 	return;
     }
 
@@ -1473,7 +1472,7 @@ DEF_DO_FUN( value )
 
     if ( !can_drop_obj( ch, obj ) )
     {
-	send_to_char( "Jako¶ nie mo¿esz siê tego pozbyæ!" NL, ch );
+	send_to_char( "Jakoï¿½ nie moï¿½esz siï¿½ tego pozbyï¿½!" NL, ch );
 	return;
     }
 
@@ -1483,8 +1482,8 @@ DEF_DO_FUN( value )
 	return;
     }
 
-    sprintf( buf, "Mogê zaoferowaæ ci %d kredyt%s za %s" COL_TELL ".",
-	cost, NUMBER_SUFF( cost, "kê", "ki", "ek" ), obj->przypadki[3] );
+    sprintf( buf, "Mogï¿½ zaoferowaï¿½ ci %d kredyt%s za %s" COL_TELL ".",
+	cost, NUMBER_SUFF( cost, "kï¿½", "ki", "ek" ), obj->przypadki[3] );
     ch_tell( keeper, ch, buf );
     return;
 }
@@ -1498,7 +1497,7 @@ void repair_one_obj( CHAR_DATA *ch, CHAR_DATA *keeper, OBJ_DATA *obj,
    char buf[MAX_STRING_LENGTH];
    int cost;
 
-/* by Ratm: a to niby czemu? personal nie personal naprawiæ mo¿na,
+/* by Ratm: a to niby czemu? personal nie personal naprawiï¿½ moï¿½na,
     a nawet trzeba, personale sa po to zeby ktos obcy ich nie zabral
     nie po to zeby nie mozna ich bylo odrzucic czy naprawic.
     if ( IS_OBJ_STAT( obj, ITEM_PERSONAL )
@@ -1507,33 +1506,33 @@ void repair_one_obj( CHAR_DATA *ch, CHAR_DATA *keeper, OBJ_DATA *obj,
 	    obj->przypadki[1] );
     else */
    if ( !can_drop_obj( ch, obj ) )
-       ch_printf( ch, "Jako¶ nie mo¿esz oddaæ %s" PLAIN "!" NL, obj->przypadki[1] );
+       ch_printf( ch, "Jakoï¿½ nie moï¿½esz oddaï¿½ %s" PLAIN "!" NL, obj->przypadki[1] );
    else
    if ( ( cost = get_repaircost( keeper, obj ) ) < 0 )
    {
        if (cost != -2)
-       act( COL_TELL, "$n mówi ci 'Przykro mi, ale nie da siê chyba nic zrobiæ z $p$4.'",
+       act( COL_TELL, "$n mï¿½wi ci 'Przykro mi, ale nie da siï¿½ chyba nic zrobiï¿½ z $p$4.'",
             keeper, obj, ch, TO_VICT );
        else
-	  act( COL_TELL, "$n mówi ci '$p wygl±da dobrze jak na mój gust!'", keeper, obj, ch, TO_VICT );
+	  act( COL_TELL, "$n mï¿½wi ci '$p wyglï¿½da dobrze jak na mï¿½j gust!'", keeper, obj, ch, TO_VICT );
    }
                /* "repair all" gets a 10% surcharge - Gorog */
 
    else if ( (cost = str_cmp("all",arg) ? cost : 11*cost/10) > ch->gold )
    {
       sprintf( buf,
-       "$N mówi ci '%s %s" COL_TELL " bêdzie ciê kosztowa³a %d kredyt%s...'",
+       "$N mï¿½wi ci '%s %s" COL_TELL " bï¿½dzie ciï¿½ kosztowaï¿½a %d kredyt%s...'",
 	fixstr, obj->przypadki[1],
-        cost, NUMBER_SUFF( cost, "kê", "ki", "ek" ) );
+        cost, NUMBER_SUFF( cost, "kï¿½", "ki", "ek" ) );
       act( COL_ACTION, buf, ch, obj, keeper, TO_CHAR );
-      ch_tell( keeper, ch, "Których chyba nie posiadasz..." );
+      ch_tell( keeper, ch, "Ktï¿½rych chyba nie posiadasz..." );
    }
    else
    {
       sprintf( buf, "$n daje $p$3 $N$2 do %s.", fixstr2 );
       act( PLAIN, buf, ch, obj, keeper, TO_ROOM );
       sprintf( buf, "$N pobiera od ciebie %d kredyt%s za %s $p$1.",
-          cost, NUMBER_SUFF( cost, "kê", "ki", "ek" ), fixstr );
+          cost, NUMBER_SUFF( cost, "kï¿½", "ki", "ek" ), fixstr );
       act( COL_ACTION, buf, ch, obj, keeper, TO_CHAR );
       ch->gold     -= cost;
       keeper->gold += cost;
@@ -1544,14 +1543,14 @@ void repair_one_obj( CHAR_DATA *ch, CHAR_DATA *keeper, OBJ_DATA *obj,
       {
           boost_economy( keeper->in_room->area, keeper->gold - maxgold/2 );
           keeper->gold = maxgold/2;
-          act( COL_ACTION, "$n wk³ada kredytki do wielkiego sejfu.", keeper,
+          act( COL_ACTION, "$n wkï¿½ada kredytki do wielkiego sejfu.", keeper,
 		NULL, NULL, TO_ROOM );
       }
 
       switch ( obj->item_type )
       {
           default:
-            ch_printf( ch, "Hmmm... Co¶ mówi ci, ¿e da³%s¶ siê nabraæ..." NL,
+            ch_printf( ch, "Hmmm... Coï¿½ mï¿½wi ci, ï¿½e daï¿½%sï¿½ siï¿½ nabraï¿½..." NL,
 		SEX_SUFFIX_EAE( ch ) );
             break;
           case ITEM_ARMOR:
@@ -1579,7 +1578,7 @@ DEF_DO_FUN( repair )
 
     if ( argument[0] == '\0' )
     {
-	send_to_char( "Naprawiæ co?" NL, ch );
+	send_to_char( "Naprawiï¿½ co?" NL, ch );
 	return;
     }
 
@@ -1595,14 +1594,14 @@ DEF_DO_FUN( repair )
 	  fixstr2 = "naprawy";
 	  break;
 	case SHOP_RECHARGE:
-	  fixstr  = "na³adowanie";
-	  fixstr2 = "na³adowania";
+	  fixstr  = "naï¿½adowanie";
+	  fixstr2 = "naï¿½adowania";
 	  break;
     }
 
     if ( !str_cmp( argument, "all" ) )
     {
-	for ( obj = ch->first_carrying; obj ; obj = obj->next_content )
+	for ( auto* obj : ch->carrying )
 	{
            if ( obj->wear_loc  == WEAR_NONE
            &&   can_see_obj( ch, obj )
@@ -1617,7 +1616,7 @@ DEF_DO_FUN( repair )
 
     if ( ( obj = get_obj_carry( ch, argument ) ) == NULL )
     {
-	ch_tell( keeper, ch, "Nie masz niczego takiego przecie¿!" );
+	ch_tell( keeper, ch, "Nie masz niczego takiego przecieï¿½!" );
 	return;
     }
 
@@ -1632,7 +1631,7 @@ void appraise_all( CHAR_DATA *ch, CHAR_DATA *keeper, const char *fixstr )
     char buf[MAX_STRING_LENGTH], *pbuf=buf;
     int cost, total=0;
 
-    for ( obj = ch->first_carrying; obj != NULL ; obj = obj->next_content )
+    for ( auto* obj : ch->carrying )
     {
         if ( obj->wear_loc  == WEAR_NONE
         &&   can_see_obj( ch, obj )
@@ -1641,24 +1640,24 @@ void appraise_all( CHAR_DATA *ch, CHAR_DATA *keeper, const char *fixstr )
         ||   obj->item_type == ITEM_DEVICE ) )
 	{
             if ( !can_drop_obj( ch, obj ) )
-            ch_printf( ch, "Nie mo¿esz pozbyæ siê %s!" NL, obj->przypadki[1] );
+            ch_printf( ch, "Nie moï¿½esz pozbyï¿½ siï¿½ %s!" NL, obj->przypadki[1] );
             else if ( ( cost = get_repaircost( keeper, obj ) ) < 0 )
             {
                if (cost != -2)
                act( COL_TELL,
-                    "$n mówi ci 'Przykro mi, ale nie mogê nic zrobiæ z $p$4.'",
+                    "$n mï¿½wi ci 'Przykro mi, ale nie mogï¿½ nic zrobiï¿½ z $p$4.'",
                     keeper, obj, ch, TO_VICT );
                else
-	       act( COL_TELL, "$n mówi ci '$p wygl±da dobrze jak na mój gust!'",
+	       act( COL_TELL, "$n mï¿½wi ci '$p wyglï¿½da dobrze jak na mï¿½j gust!'",
 	    	    keeper, obj, ch, TO_VICT );
             }
             else
             {
     	    sprintf( buf,
-    		"$N mówi ci '%s %s" FB_BLUE " bêdzie ciê kosztowa³a %d kredyt%s...'",
+    		"$N mï¿½wi ci '%s %s" FB_BLUE " bï¿½dzie ciï¿½ kosztowaï¿½a %d kredyt%s...'",
 		fixstr, obj->przypadki[1],
     		cost,
-    		NUMBER_SUFF( cost, "kê", "ki", "ek" ) );
+    		NUMBER_SUFF( cost, "kï¿½", "ki", "ek" ) );
             act( COL_TELL, buf, ch, NULL, keeper, TO_CHAR );
             total += cost;
             }
@@ -1668,11 +1667,11 @@ void appraise_all( CHAR_DATA *ch, CHAR_DATA *keeper, const char *fixstr )
     {
        send_to_char ("" NL, ch);
        sprintf( buf,
-          "$N mówi ci '£±cznie wyniesie ciê to %d kredyt%s.'",
-          total, NUMBER_SUFF( total, "kê", "ki", "ek" ) );
+          "$N mï¿½wi ci 'ï¿½ï¿½cznie wyniesie ciï¿½ to %d kredyt%s.'",
+          total, NUMBER_SUFF( total, "kï¿½", "ki", "ek" ) );
        act( COL_TELL, buf, ch, NULL, keeper, TO_CHAR );
        strcpy( pbuf,
-       "$N mówi ci 'Pamiêtaj o promocji! 10% zni¿ki je¶li reperujesz wszystko! ;-)'");
+       "$N mï¿½wi ci 'Pamiï¿½taj o promocji! 10% zniï¿½ki jeï¿½li reperujesz wszystko! ;-)'");
        act( COL_TELL, buf, ch, NULL, keeper, TO_CHAR );
     }
 }
@@ -1691,7 +1690,7 @@ DEF_DO_FUN( appraise )
 
     if ( arg[0] == '\0' )
     {
-	send_to_char( "Naprawê czego chcesz wyceniæ?" NL, ch );
+	send_to_char( "Naprawï¿½ czego chcesz wyceniï¿½?" NL, ch );
 	return;
     }
 
@@ -1705,7 +1704,7 @@ DEF_DO_FUN( appraise )
 	  fixstr  = "naprawa";
 	  break;
 	case SHOP_RECHARGE:
-	  fixstr  = "na³adowanie";
+	  fixstr  = "naï¿½adowanie";
 	  break;
     }
 
@@ -1717,7 +1716,7 @@ DEF_DO_FUN( appraise )
 
     if ( ( obj = get_obj_carry( ch, arg ) ) == NULL )
     {
-	act( COL_TELL, "$n mówi ci 'Nie masz niczego takiego.'",
+	act( COL_TELL, "$n mï¿½wi ci 'Nie masz niczego takiego.'",
 		keeper, NULL, ch, TO_VICT );
 	ch->reply = keeper;
 	return;
@@ -1725,28 +1724,28 @@ DEF_DO_FUN( appraise )
 
     if ( !can_drop_obj( ch, obj ) )
     {
-	send_to_char( "Nie mo¿esz tego odrzuciæ.\n\r", ch );
+	send_to_char( "Nie moï¿½esz tego odrzuciï¿½.\n\r", ch );
 	return;
     }
 
     if ( ( cost = get_repaircost( keeper, obj ) ) < 0 )
     {
       if (cost != -2)
-        act( COL_TELL, "$n mówi ci 'Przykro mi, ale nie da siê chyba nic zrobiæ z $p$4.'",
+        act( COL_TELL, "$n mï¿½wi ci 'Przykro mi, ale nie da siï¿½ chyba nic zrobiï¿½ z $p$4.'",
             keeper, obj, ch, TO_VICT );
       else
-	act( COL_TELL, "$n mówi ci '$p wygl±da dobrze jak na mój gust!'", keeper, obj, ch, TO_VICT );
+	act( COL_TELL, "$n mï¿½wi ci '$p wyglï¿½da dobrze jak na mï¿½j gust!'", keeper, obj, ch, TO_VICT );
       return;
     }
 
       sprintf( buf,
-       "$N mówi ci '%s %s" FB_BLUE " bêdzie ciê kosztowa³a %d kredyt%s...'",
+       "$N mï¿½wi ci '%s %s" FB_BLUE " bï¿½dzie ciï¿½ kosztowaï¿½a %d kredyt%s...'",
 	fixstr, obj->przypadki[1],
         cost,
-        NUMBER_SUFF( cost, "kê", "ki", "ek" ) );
+        NUMBER_SUFF( cost, "kï¿½", "ki", "ek" ) );
     act( COL_TELL, buf, ch, NULL, keeper, TO_CHAR );
     if ( cost > ch->gold )
-      act( COL_TELL, "$N mówi ci 'Których chyba nie posiadasz...'", ch,
+      act( COL_TELL, "$N mï¿½wi ci 'Ktï¿½rych chyba nie posiadasz...'", ch,
               NULL, keeper, TO_CHAR );
 
     return;
@@ -1755,15 +1754,13 @@ DEF_DO_FUN( appraise )
 
 DEF_DO_FUN( shops )
 {
-    SHOP_DATA *shop;
-
-    if ( !first_shop )
+    if ( shop_list.empty() )
     {
 	send_to_char( "There are no shops." NL, ch );
 	return;
     }
 
-    for ( shop = first_shop; shop; shop = shop->next )
+    for ( auto* shop : shop_list )
 	ch_printf( ch, "Keeper: %5d Buy: %3d Sell: %3d Open: %2d Close: %2d Buy: %2d %2d %2d %2d %2d" NL,
 		shop->keeper,	   shop->profit_buy, shop->profit_sell,
 		shop->open_hour,   shop->close_hour,
@@ -1775,15 +1772,13 @@ DEF_DO_FUN( shops )
 
 DEF_DO_FUN( repairshops )
 {
-    REPAIR_DATA *repair;
-
-    if ( !first_repair )
+    if ( repair_list.empty() )
     {
 	send_to_char( "There are no repair shops." NL, ch );
 	return;
     }
 
-    for ( repair = first_repair; repair; repair = repair->next )
+    for ( auto* repair : repair_list )
 	ch_printf( ch, "Keeper: %5d Profit: %3d Type: %d Open: %2d Close: %2d Fix: %2d %2d %2d" NL,
 		repair->keeper,	     repair->profit_fix, repair->shop_type,
 		repair->open_hour,   repair->close_hour,

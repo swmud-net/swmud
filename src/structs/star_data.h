@@ -23,8 +23,6 @@
 
 struct star_data
 {
-	STAR_DATA			* next;
-	STAR_DATA			* prev;
 	char				* name;
 	float				xpos;
 	float				ypos;

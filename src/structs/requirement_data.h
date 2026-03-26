@@ -23,8 +23,6 @@
 
 struct requirement_data
 {
-	REQUIREMENT_DATA	* next;
-	REQUIREMENT_DATA	* prev;
 	int					location;	/* co potrzebne? */
 	int					type;		/* jaki skill/affect */
 	int					modifier;	/* ile trzeba */

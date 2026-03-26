@@ -23,8 +23,6 @@
 
 struct	event_data
 {
-	EVENT_DATA			* next;
-	EVENT_DATA			* prev;
 	QUEST_CMND_DATA		* cmd;
 	bool				done;
 	int					nr;

@@ -23,8 +23,6 @@
 
 struct madule_data
 {
-	MODULE_DATA			* next;
-	MODULE_DATA			* prev;
 	int					type;
 	int					value;
 	int					value2;

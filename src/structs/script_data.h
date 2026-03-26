@@ -23,8 +23,6 @@
 
 struct	script_data
 {
-	SCRIPT_DATA			* next;
-	SCRIPT_DATA			* prev;
 	CHAR_DATA			* m_owner;
 	OBJ_DATA			* o_owner;
 	ROOM_INDEX_DATA		* r_owner;
@@ -36,7 +34,7 @@ struct	script_data
 	int					position;	/* pozycja aktualnie wykonywanej komendy  */
 	int					curr_line;	/* numer aktualnie wykonywanej linii */
 	int					trigger;	/* Numer skryptu (trigger przy script_prog) */
-	int					prog_nr;	/* Numer na liscie progów moba */
+	int					prog_nr;	/* Numer na liscie progï¿½w moba */
 	bool				active;
 };
 

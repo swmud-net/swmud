@@ -30,7 +30,7 @@
 #include "mud.h"
 
 extern char lastplayercmd[MAX_INPUT_LENGTH];
-extern CHAR_DATA *gch_prev;
+/* gch_prev removed - using snapshot iteration instead */
 
 /* From Skills.c */
 int ris_save(CHAR_DATA *ch, int chance, int ris);
@@ -172,35 +172,14 @@ void violence_update(void)
 	char buf[MAX_STRING_LENGTH];
 	ch_ret retcode;
 	CHAR_DATA *ch;
-	CHAR_DATA *lst_ch;
 	CHAR_DATA *victim;
-	CHAR_DATA *rch, *rch_next;
-	AFFECT_DATA *paf, *paf_next;
-	TIMER *timer, *timer_next;
 	SKILLTYPE *skill;
 
-	lst_ch = NULL;
-	for (ch = last_char; ch; lst_ch = ch, ch = gch_prev)
+	auto violence_snapshot = char_list;
+	for (auto vit = violence_snapshot.rbegin(); vit != violence_snapshot.rend(); ++vit)
 	{
+		ch = *vit;
 		set_cur_char(ch);
-
-		if (ch == first_char && ch->prev)
-		{
-			bug("ERROR: first_char->prev != NULL, fixing...", 0);
-			ch->prev = NULL;
-		}
-
-		gch_prev = ch->prev;
-
-		if (gch_prev && gch_prev->next != ch)
-		{
-			bug("FATAL: violence_update: %s->prev->next doesn't point to ch.",
-					ch->name);
-			bug("Short-cutting here", 0);
-			ch->prev = NULL;
-			gch_prev = NULL;
-			do_shout(ch, (char*) "Wielcy przemówili 'Najgorsze NADCHODZI!'");
-		}
 
 		/*
 		 * See if we got a pointer to someone who recently died...
@@ -219,18 +198,11 @@ void violence_update(void)
 		{
 			log_string("violence_update: bad ch record!  (Shortcutting.)");
 
-			sprintf(buf, "ch: %p  ch->in_room: %p  ch->prev: %p  ch->next: %p",
-					ch, ch->in_room, ch->prev, ch->next);
+			sprintf(buf, "ch: %p  ch->in_room: %p",
+					ch, ch->in_room);
 			log_string(buf);
 
 			log_string(lastplayercmd);
-			if (lst_ch)
-				sprintf(buf, "lst_ch: %p  lst_ch->prev: %p  lst_ch->next: %p",
-						lst_ch, lst_ch->prev, lst_ch->next);
-			else
-				strcpy(buf, "lst_ch: NULL");
-			log_string(buf);
-			gch_prev = NULL;
 			continue;
 		}
 
@@ -245,9 +217,9 @@ void violence_update(void)
 		/*
 		 #warning Wywalic to do comm.c! (sam to musze zrobic)  - Thanos
 		 */
-		for (timer = ch->first_timer; timer; timer = timer_next)
+		auto timer_snapshot = ch->timers;
+		for (auto* timer : timer_snapshot)
 		{
-			timer_next = timer->next;
 			if (--timer->count <= 0)
 			{
 				if (timer->type == TIMER_DO_FUN)
@@ -274,9 +246,12 @@ void violence_update(void)
 		 * We need spells that have shorter durations than an hour.
 		 * So a melee round sounds good to me... -Thoric
 		 */
-		for (paf = ch->first_affect; paf; paf = paf_next)
+		auto affect_snapshot = ch->affects;
+		for (auto afit = affect_snapshot.begin(); afit != affect_snapshot.end(); ++afit)
 		{
-			paf_next = paf->next;
+			auto* paf = *afit;
+			auto nxt = std::next(afit);
+			AFFECT_DATA *paf_next = (nxt != affect_snapshot.end()) ? *nxt : NULL;
 			if (paf->duration > 0)
 				paf->duration--;
 			else if (paf->duration == 0)
@@ -352,10 +327,9 @@ void violence_update(void)
 		/*
 		 * Fun for the whole family!
 		 */
-		for (rch = ch->in_room->first_person; rch; rch = rch_next)
+		auto room_people_snapshot = ch->in_room->people;
+		for (auto* rch : room_people_snapshot)
 		{
-			rch_next = rch->next_in_room;
-
 			if (IS_AWAKE(rch) && !rch->fighting)
 			{
 				/*
@@ -386,8 +360,7 @@ void violence_update(void)
 
 						target = NULL;
 						number = 0;
-						for (vch = ch->in_room->first_person; vch;
-								vch = vch->next)
+						for (auto* vch : ch->in_room->people)
 						{
 							if (can_see(rch, vch) && is_same_group(vch, victim)
 									&& number_range(0, number) == 0)
@@ -597,10 +570,10 @@ int obj_hitroll(OBJ_DATA *obj)
 	int tohit = 0;
 	AFFECT_DATA *paf;
 
-	for (paf = obj->pIndexData->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->pIndexData->affects)
 		if (paf->location == APPLY_HITROLL)
 			tohit += paf->modifier;
-	for (paf = obj->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->affects)
 		if (paf->location == APPLY_HITROLL)
 			tohit += paf->modifier;
 	return tohit;
@@ -642,8 +615,8 @@ bool check_weapon_state( CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA *wield, int 
     {
 	if ( wield->value[4] < 1  )
      	{
-    	    act( PLAIN, "$n mierzy w ciebie swoim blasterem, ale nic siê nie dzieje.",  ch, NULL, victim, TO_VICT    );
-            act( PLAIN, "*CLICK* ... Twój blaster potrzebuje amunicji!", ch, NULL, victim, TO_CHAR    );
+    	    act( PLAIN, "$n mierzy w ciebie swoim blasterem, ale nic siï¿½ nie dzieje.",  ch, NULL, victim, TO_VICT    );
+            act( PLAIN, "*CLICK* ... Twï¿½j blaster potrzebuje amunicji!", ch, NULL, victim, TO_CHAR    );
             if ( IS_NPC(ch) )
      	        do_remove( ch, wield->name );
      	    return false;
@@ -694,9 +667,9 @@ bool check_weapon_state( CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA *wield, int 
             if ( !fail && number_percent( ) < chance )
     	    {
 		WAIT_STATE( victim, PULSE_VIOLENCE );
-		act( FB_BLUE, "Niebieskie pier¶cienie z blastera $N$1 powalaj± ciê na ziemiê i og³uszaj±!", victim, NULL, ch, TO_CHAR );
-		act( FB_BLUE, "Niebieskie pier¶cienie z twojego blastera powalaj± $N$3 na ziemiê i og³uszaj±!", ch, NULL, victim, TO_CHAR );
-		act( FB_BLUE, "Niebieskie pier¶cienie z blastera $n$1 powalaj± $N$3 na ziemiê i og³uszaj±!!", ch, NULL, victim, TO_NOTVICT );
+		act( FB_BLUE, "Niebieskie pierï¿½cienie z blastera $N$1 powalajï¿½ ciï¿½ na ziemiï¿½ i ogï¿½uszajï¿½!", victim, NULL, ch, TO_CHAR );
+		act( FB_BLUE, "Niebieskie pierï¿½cienie z twojego blastera powalajï¿½ $N$3 na ziemiï¿½ i ogï¿½uszajï¿½!", ch, NULL, victim, TO_CHAR );
+		act( FB_BLUE, "Niebieskie pierï¿½cienie z blastera $n$1 powalajï¿½ $N$3 na ziemiï¿½ i ogï¿½uszajï¿½!!", ch, NULL, victim, TO_NOTVICT );
 		stop_fighting( victim, true );
 		if ( !IS_AFFECTED( victim, AFF_PARALYSIS ) )
 		{
@@ -719,9 +692,9 @@ bool check_weapon_state( CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA *wield, int 
     	    }
     	    else
             {
-		act( FB_BLUE, "Niebieskie pier¶cienie z blastera $N$1 uderzaj± ciê, ale z marnym skutkiem.", victim, NULL, ch, TO_CHAR );
-		act( FB_BLUE, "Niebieskie pier¶cienie z twojego blastera uderzaj± $N$3, ale z marnym skutkiem.", ch, NULL, victim, TO_CHAR );
-		act( FB_BLUE, "Niebieskie pier¶cienie z blastera $n$1 uderzaj± $N$3, ale z marnym skutkiem.", ch, NULL, victim, TO_NOTVICT );
+		act( FB_BLUE, "Niebieskie pierï¿½cienie z blastera $N$1 uderzajï¿½ ciï¿½, ale z marnym skutkiem.", victim, NULL, ch, TO_CHAR );
+		act( FB_BLUE, "Niebieskie pierï¿½cienie z twojego blastera uderzajï¿½ $N$3, ale z marnym skutkiem.", ch, NULL, victim, TO_CHAR );
+		act( FB_BLUE, "Niebieskie pierï¿½cienie z blastera $n$1 uderzajï¿½ $N$3, ale z marnym skutkiem.", ch, NULL, victim, TO_NOTVICT );
             }
      	}
         else
@@ -742,7 +715,7 @@ bool check_weapon_state( CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA *wield, int 
     {
      	if ( wield->value[4] < 1  )
      	{
-            act( FG_YELLOW, "Twoje wibro-ostrze wymaga na³adowania...", ch, NULL, victim, TO_CHAR    );
+            act( FG_YELLOW, "Twoje wibro-ostrze wymaga naï¿½adowania...", ch, NULL, victim, TO_CHAR    );
             *dam /= 3;
      	}
     }
@@ -752,7 +725,7 @@ bool check_weapon_state( CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA *wield, int 
     {
 	if ( wield->value[4] < 1  )
      	{
-            act( FG_YELLOW, "Twoja pika wymaga na³adowania...", ch, NULL, victim, TO_CHAR    );
+            act( FG_YELLOW, "Twoja pika wymaga naï¿½adowania...", ch, NULL, victim, TO_CHAR    );
             *dam /= 2;
      	}
      	else
@@ -764,8 +737,8 @@ bool check_weapon_state( CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA *wield, int 
     {
      	if ( wield->value[4] < 1  )
      	{
-            act( FG_YELLOW, "$n macha rêkojê¶ci± swojego miecza.",  ch, NULL, victim, TO_VICT    );
-            act( FG_YELLOW, "Musisz na³adowaæ swój miecz. Wygl±da na to, ¿e jego ostrze zniknê³o.", ch, NULL, victim, TO_CHAR    );
+            act( FG_YELLOW, "$n macha rï¿½kojï¿½ciï¿½ swojego miecza.",  ch, NULL, victim, TO_VICT    );
+            act( FG_YELLOW, "Musisz naï¿½adowaï¿½ swï¿½j miecz. Wyglï¿½da na to, ï¿½e jego ostrze zniknï¿½o.", ch, NULL, victim, TO_CHAR    );
      	    if ( IS_NPC(ch) )
      	        do_remove( ch, wield->name );
      	    return false;
@@ -775,8 +748,8 @@ bool check_weapon_state( CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA *wield, int 
      {
      	if ( wield->value[4] < 1  )
      	{
-            act( FG_YELLOW, "$n wymierza swoj± kuszê, klika na spu¶cie, ale nic siê nie dzieje.",  ch, NULL, victim, TO_VICT    );
-            act( FG_YELLOW, "*CLICK* ... Twoja kusza potrzebuje pocisków!", ch, NULL, victim, TO_CHAR    );
+            act( FG_YELLOW, "$n wymierza swojï¿½ kuszï¿½, klika na spuï¿½cie, ale nic siï¿½ nie dzieje.",  ch, NULL, victim, TO_VICT    );
+            act( FG_YELLOW, "*CLICK* ... Twoja kusza potrzebuje pociskï¿½w!", ch, NULL, victim, TO_CHAR    );
             if ( IS_NPC(ch) )
      	        do_remove( ch, wield->name );
             return false;
@@ -1268,9 +1241,9 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 		if (wield->value[4] < 1)
 		{
 			act( PLAIN,
-					"$n mierzy w ciebie swoim blasterem, ale nic siê nie dzieje.",
+					"$n mierzy w ciebie swoim blasterem, ale nic siï¿½ nie dzieje.",
 					ch, NULL, victim, TO_VICT);
-			act( PLAIN, "*CLICK* ... Twój blaster potrzebuje amunicji!", ch,
+			act( PLAIN, "*CLICK* ... Twï¿½j blaster potrzebuje amunicji!", ch,
 					NULL, victim, TO_CHAR);
 			if (IS_NPC(ch))
 			{
@@ -1321,13 +1294,13 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 			{
 				WAIT_STATE(victim, PULSE_VIOLENCE);
 				act( FB_BLUE,
-						"Niebieskie pier¶cienie z blastera $N$1 powalaj± ciê na ziemiê i og³uszaj±!",
+						"Niebieskie pierï¿½cienie z blastera $N$1 powalajï¿½ ciï¿½ na ziemiï¿½ i ogï¿½uszajï¿½!",
 						victim, NULL, ch, TO_CHAR);
 				act( FB_BLUE,
-						"Niebieskie pier¶cienie z twojego blastera powalaj± $N$3 na ziemiê i og³uszaj±!",
+						"Niebieskie pierï¿½cienie z twojego blastera powalajï¿½ $N$3 na ziemiï¿½ i ogï¿½uszajï¿½!",
 						ch, NULL, victim, TO_CHAR);
 				act( FB_BLUE,
-						"Niebieskie pier¶cienie z blastera $n$1 powalaj± $N$3 na ziemiê i og³uszaj±!!",
+						"Niebieskie pierï¿½cienie z blastera $n$1 powalajï¿½ $N$3 na ziemiï¿½ i ogï¿½uszajï¿½!!",
 						ch, NULL, victim, TO_NOTVICT);
 				stop_fighting(victim, true);
 				if (!IS_AFFECTED(victim, AFF_PARALYSIS))
@@ -1350,13 +1323,13 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 			else
 			{
 				act( FB_BLUE,
-						"Niebieskie pier¶cienie energii z blastera $N$1 trafiaj± ciê ale z mizernym efektem.",
+						"Niebieskie pierï¿½cienie energii z blastera $N$1 trafiajï¿½ ciï¿½ ale z mizernym efektem.",
 						victim, NULL, ch, TO_CHAR);
 				act( FB_BLUE,
-						"Niebieskie pier¶cienie energii z wtojego blastera trafiaj± $N$3, jednak nic siê nie dzieje!",
+						"Niebieskie pierï¿½cienie energii z wtojego blastera trafiajï¿½ $N$3, jednak nic siï¿½ nie dzieje!",
 						ch, NULL, victim, TO_CHAR);
 				act( FB_BLUE,
-						"Niebieskie pier¶cienie energii z blastera $N$1 trafiaj± $N$3, jednak nic siê nie dzieje!",
+						"Niebieskie pierï¿½cienie energii z blastera $N$1 trafiajï¿½ $N$3, jednak nic siï¿½ nie dzieje!",
 						ch, NULL, victim, TO_NOTVICT);
 
 			}
@@ -1378,7 +1351,7 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 	{
 		if (wield->value[4] < 1)
 		{
-			act( FG_YELLOW, "Twoje wibro-ostrze wymaga na³adowania...", ch,
+			act( FG_YELLOW, "Twoje wibro-ostrze wymaga naï¿½adowania...", ch,
 					NULL, victim, TO_CHAR);
 			dam /= 3;
 		}
@@ -1388,7 +1361,7 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 	{
 		if (wield->value[4] < 1)
 		{
-			act( FG_YELLOW, "Twoja force-pike wymaga na³adowania...", ch, NULL,
+			act( FG_YELLOW, "Twoja force-pike wymaga naï¿½adowania...", ch, NULL,
 					victim, TO_CHAR);
 			dam /= 2;
 		}
@@ -1400,10 +1373,10 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 	{
 		if (wield->value[4] < 1)
 		{
-			act( FG_YELLOW, "$n wykonuje rêk± jakie¶ dziwne wymachy.", ch, NULL,
+			act( FG_YELLOW, "$n wykonuje rï¿½kï¿½ jakieï¿½ dziwne wymachy.", ch, NULL,
 					victim, TO_VICT);
 			act( FG_YELLOW,
-					"Musisz na³adowaæ swój miecz ¶wietlny... brakuje mu ostrza.",
+					"Musisz naï¿½adowaï¿½ swï¿½j miecz ï¿½wietlny... brakuje mu ostrza.",
 					ch, NULL, victim, TO_CHAR);
 			if (IS_NPC(ch))
 			{
@@ -1418,7 +1391,7 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 		if (wield->value[4] < 1)
 		{
 			act( FG_YELLOW,
-					"$n celuje swoj± kusz± w ciebie, ale nic siê nie dzieje.",
+					"$n celuje swojï¿½ kuszï¿½ w ciebie, ale nic siï¿½ nie dzieje.",
 					ch, NULL, victim, TO_VICT);
 			act( FG_YELLOW, "*CLICK* ... Twoja kusza nie ma amunicji!", ch,
 					NULL, victim, TO_CHAR);
@@ -1432,8 +1405,8 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 			wield->value[4]--;
 	}
 
-	/* Added by Thanos - to nieznacznie przed³u¿a walkê i czyni j± bardziej
-	 emocjonuj±c± - dotyczy mobów i graczy wiêc jest sprawiedliwe        */
+	/* Added by Thanos - to nieznacznie przedï¿½uï¿½a walkï¿½ i czyni jï¿½ bardziej
+	 emocjonujï¿½cï¿½ - dotyczy mobï¿½w i graczy wiï¿½c jest sprawiedliwe        */
 //        dam/=2; /* Trog nie koniecznie :P */
 	if (dam <= 0)
 		dam = 1;
@@ -1486,22 +1459,22 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 	{
 		if ((int) victim->pcdata->learned[gsn_lightsabers] == 100)
 		{
-			act( PLAIN, "$n odbija mieczem strza³ z blastera.", victim, NULL,
+			act( PLAIN, "$n odbija mieczem strzaï¿½ z blastera.", victim, NULL,
 					ch, TO_ROOM);
-			act( PLAIN, "Odbijasz mieczem strza³ z blastera.", ch, NULL, victim,
+			act( PLAIN, "Odbijasz mieczem strzaï¿½ z blastera.", ch, NULL, victim,
 			TO_VICT);
-			act( PLAIN, "Odbity strza³ z blastera trafia ciê.", victim, NULL,
+			act( PLAIN, "Odbity strzaï¿½ z blastera trafia ciï¿½.", victim, NULL,
 					ch, TO_VICT);
-			act( PLAIN, "Odbity strza³ z blastera trafia $n$1.", ch, NULL,
+			act( PLAIN, "Odbity strzaï¿½ z blastera trafia $n$1.", ch, NULL,
 					victim, TO_ROOM);
 			if ((retcode = damage(victim, ch, dam, dt)) != rNONE)
 				return retcode;
 		}
 		else if ((int) victim->pcdata->learned[gsn_lightsabers] > 90)
 		{
-			act( PLAIN, "$n odbija mieczem strza³ z blastera.", victim, NULL,
+			act( PLAIN, "$n odbija mieczem strzaï¿½ z blastera.", victim, NULL,
 					ch, TO_ROOM);
-			act( PLAIN, "Odbijasz mieczem strza³ z blastera.", ch, NULL, victim,
+			act( PLAIN, "Odbijasz mieczem strzaï¿½ z blastera.", ch, NULL, victim,
 			TO_VICT);
 			if (!ch->fighting)
 				set_fighting(ch, victim);
@@ -1537,14 +1510,14 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 	{
 		AFFECT_DATA *aff;
 
-		for (aff = wield->pIndexData->first_affect; aff; aff = aff->next)
+		for (auto* aff : wield->pIndexData->affects)
 			if (aff->location == APPLY_WEAPONSPELL && IS_VALID_SN(aff->modifier)
 					&& skill_table[aff->modifier]->spell_fun)
 				retcode = (*skill_table[aff->modifier]->spell_fun)(
 						aff->modifier, (wield->level + 3) / 3, ch, victim);
 		if (retcode != rNONE || char_died(ch) || char_died(victim))
 			return retcode;
-		for (aff = wield->first_affect; aff; aff = aff->next)
+		for (auto* aff : wield->affects)
 			if (aff->location == APPLY_WEAPONSPELL && IS_VALID_SN(aff->modifier)
 					&& skill_table[aff->modifier]->spell_fun)
 				retcode = (*skill_table[aff->modifier]->spell_fun)(
@@ -1736,7 +1709,7 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 		if (is_safe(ch, victim))
 			return rNONE;
 
-		/* Tylko na rozpoczêciu walki: */
+		/* Tylko na rozpoczï¿½ciu walki: */
 		if (!ch->fighting || who_fighting(ch) != victim)
 		{
 			add_inform(victim, ch);
@@ -1787,7 +1760,7 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 			}
 			affect_strip(ch, gsn_forceinvis);
 			REMOVE_BIT(ch->affected_by, AFF_FORCEINVIS);
-			act( PLAIN, "$n pojawia siê jakby znik±d!", ch, NULL, NULL,
+			act( PLAIN, "$n pojawia siï¿½ jakby znikï¿½d!", ch, NULL, NULL,
 			TO_ROOM);
 		}
 
@@ -1862,8 +1835,8 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 
 	}
 
-	/* przenios³em to tutaj, ¿eby gracze mogli widzieæ
-	 gdy atakuj± sami siebie 					-- Thanos */
+	/* przeniosï¿½em to tutaj, ï¿½eby gracze mogli widzieï¿½
+	 gdy atakujï¿½ sami siebie 					-- Thanos */
 	if (dt != TYPE_UNDEFINED)
 		dam_message(ch, victim, dam, dt);
 
@@ -1950,12 +1923,12 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 		victim->hit = 1;
 		update_pos(victim);
 
-		act( FG_GREEN, "Twój pojedynek z $N$4 dobieg³ koñca. Jeste¶ zwyciêzc±.",
+		act( FG_GREEN, "Twï¿½j pojedynek z $N$4 dobiegï¿½ koï¿½ca. Jesteï¿½ zwyciï¿½zcï¿½.",
 				ch, NULL, victim, TO_CHAR);
-		act( FG_RED, "Twój pojedynek z $n$4 dobieg³ koñca. Jeste¶ przegranym.",
+		act( FG_RED, "Twï¿½j pojedynek z $n$4 dobiegï¿½ koï¿½ca. Jesteï¿½ przegranym.",
 				ch, NULL, victim, TO_VICT);
 		act( FG_YELLOW,
-				"Pojedynek $n$1 z $N$4 zosta³ zakoñczony. $n jest zwyciêzc±.",
+				"Pojedynek $n$1 z $N$4 zostaï¿½ zakoï¿½czony. $n jest zwyciï¿½zcï¿½.",
 				ch, NULL, victim, TO_NOTVICT);
 		return rNONE;
 	}
@@ -1964,11 +1937,11 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 	{
 	case POS_MORTAL:
 		act( COL_DYING,
-				"$n jest ¶miertelnie rann$y i szybko umrze, je¶li nikt nie udzieli $m pomocy.",
+				"$n jest ï¿½miertelnie rann$y i szybko umrze, jeï¿½li nikt nie udzieli $m pomocy.",
 				victim, NULL, NULL, TO_ROOM);
 		ch_printf(victim,
 				FB_RED
-				"Jeste¶ ¶miertelnie rann%s i szybko umrzesz, je¶li nikt ci nie pomo¿e." EOL,
+				"Jesteï¿½ ï¿½miertelnie rann%s i szybko umrzesz, jeï¿½li nikt ci nie pomoï¿½e." EOL,
 				SEX_SUFFIX_YAE(victim));
 		break;
 
@@ -1976,7 +1949,7 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 		act( COL_DYING, "$n jest nieprzytomn$y. Umrze bez pomocy.", victim,
 				NULL, NULL, TO_ROOM);
 		ch_printf(victim, FB_RED
-		"Jeste¶ nieprzytomn%s. Umrzesz, je¶li nikt ci nie pomo¿e." EOL,
+		"Jesteï¿½ nieprzytomn%s. Umrzesz, jeï¿½li nikt ci nie pomoï¿½e." EOL,
 				SEX_SUFFIX_YAE(victim));
 		break;
 
@@ -1984,10 +1957,10 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 		if (!IS_AFFECTED(victim, AFF_PARALYSIS))
 		{
 			act( COL_ACTION,
-					"$n jest og³uszon$y, ale prawdopodobnie z tego wyjdzie.",
+					"$n jest ogï¿½uszon$y, ale prawdopodobnie z tego wyjdzie.",
 					victim, NULL, NULL, TO_ROOM);
 			ch_printf(victim, FB_RED
-			"Jeste¶ og³uszon%s, ale chyba z tego wyjdziesz." EOL,
+			"Jesteï¿½ ogï¿½uszon%s, ale chyba z tego wyjdziesz." EOL,
 					SEX_SUFFIX_YAE(victim));
 		}
 		break;
@@ -2005,21 +1978,21 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 				act( COL_DEAD, skill->die_room, ch, NULL, victim, TO_NOTVICT);
 		}
 		if ( IS_NPC(victim) && IS_SET(victim->act, ACT_NOKILL))
-			act( PLAIN, "$n ucieka w pop³ochu cudem unikaj±c ¶mierci!", victim,
+			act( PLAIN, "$n ucieka w popï¿½ochu cudem unikajï¿½c ï¿½mierci!", victim,
 					0, 0, TO_ROOM);
 		else if ( IS_NPC(victim) && IS_SET(victim->act, ACT_DROID))
-			act( COL_DEAD, "$n EXPLODUJE na ma³e kawa³eczki!", victim, 0, 0,
+			act( COL_DEAD, "$n EXPLODUJE na maï¿½e kawaï¿½eczki!", victim, 0, 0,
 			TO_ROOM);
 		else
 			act( COL_DEAD, "$n UMIERA!!!", victim, 0, 0, TO_ROOM);
-		ch_printf(victim, NL FB_WHITE "W£A¦NIE ZGIN%s¦ !!!" EOL NL,
-		MALE( victim ) ? "¡£E" : FEMALE(victim) ? "Ê£A" : "Ê£O");
+		ch_printf(victim, NL FB_WHITE "Wï¿½Aï¿½NIE ZGIN%sï¿½ !!!" EOL NL,
+		MALE( victim ) ? "ï¿½ï¿½E" : FEMALE(victim) ? "Ê£A" : "Ê£O");
 		break;
 
 	default:
 		if (dam > victim->max_hit / 4)
 		{
-			act( COL_HURT, "Ough!!! To naprawdê BOLA£O !!!", victim, 0, 0,
+			act( COL_HURT, "Ough!!! To naprawdï¿½ BOLAï¿½O !!!", victim, 0, 0,
 			TO_CHAR);
 			if (number_bits(3) == 0)
 				worsen_mental_state(ch, 1);
@@ -2054,7 +2027,6 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 	if (victim->hit <= 0 && !IS_NPC(victim))
 	{
 		OBJ_DATA *obj;
-		OBJ_DATA *obj_next;
 		int cnt = 0;
 
 		REMOVE_BIT(victim->act, PLR_ATTACKER);
@@ -2080,10 +2052,9 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 		if ((obj = get_eq_char(victim, WEAR_LIGHT)) != NULL)
 			unequip_char(victim, obj);
 
-		for (obj = victim->first_carrying; obj; obj = obj_next)
+		auto carrying_snapshot = victim->carrying;
+		for (auto* obj : carrying_snapshot)
 		{
-			obj_next = obj->next_content;
-
 			if (obj->wear_loc == WEAR_NONE)
 			{
 				if ((obj->pIndexData->progtypes & DROP_PROG) && obj->count > 1)
@@ -2091,8 +2062,6 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 					++cnt;
 					separate_obj(obj);
 					obj_from_char(obj);
-					if (!obj_next)
-						obj_next = victim->first_carrying;
 				}
 				else
 				{
@@ -2155,7 +2124,7 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 			if (IS_SET(ch->act, PLR_AUTOGOLD))
 			{
 				init_gold = ch->gold;
-				do_get(ch, (char*) "kredytki cia³o");
+				do_get(ch, (char*) "kredytki ciaï¿½o");
 				new_gold = ch->gold;
 				gold_diff = (new_gold - init_gold);
 				if (gold_diff > 0)
@@ -2166,9 +2135,9 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 			}
 
 			if (IS_SET(ch->act, PLR_AUTOLOOT))
-				do_get(ch, (char*) "all cia³o");
+				do_get(ch, (char*) "all ciaï¿½o");
 			else
-				do_look(ch, (char*) "in cia³o");
+				do_look(ch, (char*) "in ciaï¿½o");
 		}
 
 		if (IS_SET(sysdata.save_flags, SV_KILL))
@@ -2234,14 +2203,14 @@ bool is_safe(CHAR_DATA *ch, CHAR_DATA *victim)
 
 	if (IS_SET(victim->in_room->room_flags, ROOM_SAFE))
 	{
-		send_to_char("Nie mo¿esz zrobiæ tego tutaj." EOL, ch);
+		send_to_char("Nie moï¿½esz zrobiï¿½ tego tutaj." EOL, ch);
 		return true;
 	}
 
 	if (!IS_NPC(victim) && victim->pcdata
 			&& victim->pcdata->hotel_safe_time > 0)
 	{
-		send_to_char("Jeszcze nie mo¿esz tego zrobiæ." NL, ch);
+		send_to_char("Jeszcze nie moï¿½esz tego zrobiï¿½." NL, ch);
 		return true;
 	}
 
@@ -2250,9 +2219,9 @@ bool is_safe(CHAR_DATA *ch, CHAR_DATA *victim)
 	{
 		if ( IS_NPC(victim) && victim->inquest
 		&& victim->inquest != ch->inquest
-		&& get_trust( ch ) < LEVEL_QUESTSEE) /* no tam jeden wyj±tek ;) */
+		&& get_trust( ch ) < LEVEL_QUESTSEE) /* no tam jeden wyjï¿½tek ;) */
 		{
-			send_to_char("Nie mo¿esz tego zrobiæ." EOL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½." EOL, ch);
 			return true;
 		}
 	}
@@ -2325,18 +2294,18 @@ void check_killer(CHAR_DATA *ch, CHAR_DATA *victim)
 			PLANET_DATA *planet;
 			CRIME_DATA *crime;
 
-			for (planet = first_planet; planet; planet = planet->next)
+			for (auto* planet : planet_list)
 			{
 				if (IS_VIP2(victim, planet))
 				{
 					if ((crime = find_crime(ch, planet)) != NULL)
 						ch_printf(ch,
 								FG_YELLOW
-								"Pope³niaj±c przestêpstwa na %s pogarszasz swoj± sytuacjê." EOL,
+								"Popeï¿½niajï¿½c przestï¿½pstwa na %s pogarszasz swojï¿½ sytuacjï¿½." EOL,
 								planet->name);
 					else
 						ch_printf(ch, FG_YELLOW
-						"Jeste¶ teraz poszukiwan%s na %s." EOL,
+						"Jesteï¿½ teraz poszukiwan%s na %s." EOL,
 								SEX_SUFFIX_YAE(ch), planet->name);
 
 					crime_to_char(ch, planet->name, CRIME_MURDER);
@@ -2414,7 +2383,7 @@ void update_pos(CHAR_DATA *victim)
 
 	if (victim->mount)
 	{
-		act( COL_ACTION, "$n spada bezw³adnie z $N$1.", victim, NULL,
+		act( COL_ACTION, "$n spada bezwï¿½adnie z $N$1.", victim, NULL,
 				victim->mount, TO_ROOM);
 		REMOVE_BIT(victim->mount->act, ACT_MOUNTED);
 		victim->mount = NULL;
@@ -2440,7 +2409,7 @@ void set_fighting(CHAR_DATA *ch, CHAR_DATA *victim)
 	/* Limit attackers -Thoric */
 	if (victim->num_fighting > max_fight(victim))
 	{
-		send_to_char("Jatka jest tu zbyt du¿a. Lepiej siê nie mieszaj." NL, ch);
+		send_to_char("Jatka jest tu zbyt duï¿½a. Lepiej siï¿½ nie mieszaj." NL, ch);
 		return;
 	}
 
@@ -2459,7 +2428,7 @@ void set_fighting(CHAR_DATA *ch, CHAR_DATA *victim)
 
 	if (victim->switched && IS_AFFECTED(victim->switched, AFF_POSSESS))
 	{
-		send_to_char("Kto¶ ci przerwa³!" NL, victim->switched);
+		send_to_char("Ktoï¿½ ci przerwaï¿½!" NL, victim->switched);
 		do_return(victim->switched, (char*) "");
 	}
 	return;
@@ -2518,7 +2487,7 @@ void stop_fighting(CHAR_DATA *ch, bool fBoth)
 	if (!fBoth) /* major short cut here by Thoric */
 		return;
 
-	for (fch = first_char; fch; fch = fch->next)
+	for (auto* fch : char_list)
 	{
 		if (who_fighting(fch) == ch)
 		{
@@ -2536,33 +2505,33 @@ void death_cry(CHAR_DATA *ch)
     EXIT_DATA *		pexit;
     char            *	msg;
 
-    msg   = "S³yszysz ¶miertelny krzyk $n$1.";
+    msg   = "Sï¿½yszysz ï¿½miertelny krzyk $n$1.";
 
     switch ( number_bits( 4 ) )
     {
-    default: msg  = "S³yszysz ¶miertelny krzyk $n$1.";			break;
-    case  0: msg  = "$n pada na ziemiê ... jest TRUPEM.";		break;
-    case  1: msg  = "Krew $n$1 plami twoj± zbrojê.";			break;
-    case  2: msg  = "Czujesz zapach ¶mierci wydobywaj±cy siê z cia³a $n$1.";break;
-    case  3: msg = "Flaki $n$1 rozpryskuj± siê po ca³ej pod³odze.";	break;
-    case  4: msg  = "Odciêta g³owa $n$1 upada na ziemiê.";		break;
-    case  5: msg  = "Serce $n$1 wydobywa siê z $s piersi.";		break;
-    case  6: msg  = "Rêka $n$1 odciêta od $s martwego cia³a upada na ziemiê.";
+    default: msg  = "Sï¿½yszysz ï¿½miertelny krzyk $n$1.";			break;
+    case  0: msg  = "$n pada na ziemiï¿½ ... jest TRUPEM.";		break;
+    case  1: msg  = "Krew $n$1 plami twojï¿½ zbrojï¿½.";			break;
+    case  2: msg  = "Czujesz zapach ï¿½mierci wydobywajï¿½cy siï¿½ z ciaï¿½a $n$1.";break;
+    case  3: msg = "Flaki $n$1 rozpryskujï¿½ siï¿½ po caï¿½ej podï¿½odze.";	break;
+    case  4: msg  = "Odciï¿½ta gï¿½owa $n$1 upada na ziemiï¿½.";		break;
+    case  5: msg  = "Serce $n$1 wydobywa siï¿½ z $s piersi.";		break;
+    case  6: msg  = "Rï¿½ka $n$1 odciï¿½ta od $s martwego ciaï¿½a upada na ziemiï¿½.";
 									break;
-    case  7: msg  = "Noga $n$1 odciêta od $s martwego cia³a upada na ziemiê.";
+    case  7: msg  = "Noga $n$1 odciï¿½ta od $s martwego ciaï¿½a upada na ziemiï¿½.";
 									break;
-    case  8: msg = "Roztrzaskana g³owa $n$1 toczy siê po pod³odze.";	break;
+    case  8: msg = "Roztrzaskana gï¿½owa $n$1 toczy siï¿½ po podï¿½odze.";	break;
     }
 
     act( FB_RED, msg, ch, NULL, NULL, TO_ROOM );
 
     if ( IS_NPC( ch ) )
-	msg = "S³yszysz czyj¶ ¶miertelny krzyk.";
+	msg = "Sï¿½yszysz czyjï¿½ ï¿½miertelny krzyk.";
     else
-	msg = "S³yszysz ¶miertelny krzyk jakiego¶ gracza.";
+	msg = "Sï¿½yszysz ï¿½miertelny krzyk jakiegoï¿½ gracza.";
     was_in_room = ch->in_room;
 
-    for ( pexit = was_in_room->first_exit; pexit; pexit = pexit->next )
+    for ( auto* pexit : was_in_room->exits )
     {
 
 	if ( pexit->to_room
@@ -2580,8 +2549,6 @@ void death_cry(CHAR_DATA *ch)
 
 void raw_kill(CHAR_DATA *ch, CHAR_DATA *victim, int suicide)
 {
-	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	SHIP_DATA *ship;
 	CLAN_DATA *clan;
 	char arg[MIL];
@@ -2646,9 +2613,9 @@ void raw_kill(CHAR_DATA *ch, CHAR_DATA *victim, int suicide)
 		make_corpse(victim, ch, suicide);
 	else
 	{
-		for (obj = victim->last_carrying; obj; obj = obj_next)
+		while (!victim->carrying.empty())
 		{
-			obj_next = obj->prev_content;
+			auto* obj = victim->carrying.back();
 			obj_from_char(obj);
 			extract_obj(obj);
 		}
@@ -2665,12 +2632,12 @@ void raw_kill(CHAR_DATA *ch, CHAR_DATA *victim, int suicide)
 		return;
 	}
 
-	FOREACH( clan, first_clan )
+	for (auto* clan : clan_list)
 		remove_member(clan, victim->name);
 
 	/********************** swreality changes begin here ********************/
 
-	FOREACH( ship, first_ship )
+	for (auto* ship : ship_list)
 	{
 		if (!str_cmp(ship->owner, victim->name))
 		{
@@ -2693,7 +2660,7 @@ void raw_kill(CHAR_DATA *ch, CHAR_DATA *victim, int suicide)
 		SET_BIT(victim->plr_home->room_flags, ROOM_EMPTY_HOME);
 	}
 
-	// jak kto¶ zabije gracza bez klona...
+	// jak ktoï¿½ zabije gracza bez klona...
 	if (!IS_NPC(ch) && !IS_NPC(victim) && !clone)
 	{
 		INFORM_DATA *inf;
@@ -2701,7 +2668,7 @@ void raw_kill(CHAR_DATA *ch, CHAR_DATA *victim, int suicide)
 		// ale tylko jesli walke zaczal ten drugi...
 		if ((inf = get_inform(ch->name, victim->name)) != NULL)
 		{
-			// automatyczne zg³oszenie PKilla i flaga
+			// automatyczne zgï¿½oszenie PKilla i flaga
 			inf->reported = true;
 			save_informs();
 		}
@@ -2712,11 +2679,17 @@ void raw_kill(CHAR_DATA *ch, CHAR_DATA *victim, int suicide)
 		DESCRIPTOR_DATA *d;
 
 		/* Make sure they aren't halfway logged in. */
-		for (d = first_descriptor; d; d = d->next)
+		DESCRIPTOR_DATA *found_d = NULL;
+		for (auto* d : descriptor_list)
+		{
 			if ((victim = d->character) && !IS_NPC(victim))
+			{
+				found_d = d;
 				break;
-		if (d)
-			close_socket(d, true);
+			}
+		}
+		if (found_d)
+			close_socket(found_d, true);
 	}
 	else
 	{
@@ -2752,7 +2725,7 @@ void group_gain(CHAR_DATA *ch, CHAR_DATA *victim)
 
 	members = 0;
 
-	for (gch = ch->in_room->first_person; gch; gch = gch->next_in_room)
+	for (auto* gch : ch->in_room->people)
 	{
 		if (is_same_group(gch, ch))
 			members++;
@@ -2763,10 +2736,9 @@ void group_gain(CHAR_DATA *ch, CHAR_DATA *victim)
 
 	lch = ch->leader ? ch->leader : ch;
 
-	for (gch = ch->in_room->first_person; gch; gch = gch->next_in_room)
+	for (auto* gch : ch->in_room->people)
 	{
 		OBJ_DATA *obj;
-		OBJ_DATA *obj_next;
 
 		if (!is_same_group(gch, ch))
 			continue;
@@ -2780,13 +2752,13 @@ void group_gain(CHAR_DATA *ch, CHAR_DATA *victim)
 		{
 			xp = 0;
 			sprintf(buf,
-					"Nie otrzymujesz ¿adnego do¶wiadczenia za zabicie przyjació³ swojej organizacji." NL);
+					"Nie otrzymujesz ï¿½adnego doï¿½wiadczenia za zabicie przyjaciï¿½ swojej organizacji." NL);
 			send_to_char(buf, gch);
 		}
 		else
 		{
-			sprintf(buf, "Zdobywasz %d punkt%s do¶wiadczenia w walce." NL, xp,
-					NUMBER_SUFF(xp, "", "y", "ów"));
+			sprintf(buf, "Zdobywasz %d punkt%s doï¿½wiadczenia w walce." NL, xp,
+					NUMBER_SUFF(xp, "", "y", "ï¿½w"));
 			send_to_char(buf, gch);
 		}
 
@@ -2798,15 +2770,14 @@ void group_gain(CHAR_DATA *ch, CHAR_DATA *victim)
 					URANGE(members, xp * members,
 							(exp_level( gch->skill_level[LEADERSHIP_ABILITY]+1) - exp_level(gch->skill_level[LEADERSHIP_ABILITY] )/30));
 			sprintf(buf,
-					"Zdobywasz %d punktów do¶wiadczenia przywódczego za poprowadzenie grupy do zwyciêstwa." NL,
+					"Zdobywasz %d punktï¿½w doï¿½wiadczenia przywï¿½dczego za poprowadzenie grupy do zwyciï¿½stwa." NL,
 					xp);
 			send_to_char(buf, gch);
 			gain_exp(gch, xp, LEADERSHIP_ABILITY);
 		}
 
-		for (obj = ch->first_carrying; obj; obj = obj_next)
+		for (auto* obj : ch->carrying)
 		{
-			obj_next = obj->next_content;
 			if (obj->wear_loc == WEAR_NONE)
 				continue;
 
@@ -2814,9 +2785,9 @@ void group_gain(CHAR_DATA *ch, CHAR_DATA *victim)
 					|| ( IS_OBJ_STAT(obj, ITEM_ANTI_GOOD) && IS_GOOD(ch))
 					|| ( IS_OBJ_STAT(obj, ITEM_ANTI_NEUTRAL) && IS_NEUTRAL(ch)))
 			{
-				act( COL_FORCE, "Zosta³$a¶ oparzon$y przez $p$3.", ch, obj,
+				act( COL_FORCE, "Zostaï¿½$aï¿½ oparzon$y przez $p$3.", ch, obj,
 						NULL, TO_CHAR);
-				act( COL_FORCE, "$n zosta³$o oparzon$y przez $p$3.", ch, obj,
+				act( COL_FORCE, "$n zostaï¿½$o oparzon$y przez $p$3.", ch, obj,
 						NULL, TO_ROOM);
 
 				obj_from_char(obj);
@@ -2964,11 +2935,11 @@ void dam_message(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 	}
 	else if (dampc <= 70)
 	{
-		v = "powa¿nie rani%s";
+		v = "powaï¿½nie rani%s";
 	}
 	else if (dampc <= 80)
 	{
-		v = "¶miertelnie rani%s";
+		v = "ï¿½miertelnie rani%s";
 	}
 	else
 	{
@@ -3009,7 +2980,7 @@ void dam_message(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 	{
 		swsnprintf(buf1, MSL, "$n %s $N$3%c", vp, punct);
 		swsnprintf(buf2, MSL, "%s $N$3%c", vs, punct);
-		swsnprintf(buf3, MSL, "$n %s ciê%c", vp, punct);
+		swsnprintf(buf3, MSL, "$n %s ciï¿½%c", vp, punct);
 	}
 	else       //Added by Onyx
 	if (dam == 0)
@@ -3022,41 +2993,41 @@ void dam_message(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 			sprintf(buf1, "$n chybia $N$3.");
 			sprintf(buf2, "Chybiasz $N$3.");
 #if !defined (ARMAGEDDON)
-			sprintf(buf3, "$n chybia ciê.");
+			sprintf(buf3, "$n chybia ciï¿½.");
 #endif
 			break;
 		case 2:
 			sprintf(buf1, "$n chybia $N$3.");
 			sprintf(buf2, "Co za niefart! Chybiasz $N$3.");
 #if !defined (ARMAGEDDON)
-			sprintf(buf3, "Co za niefart! $n chybia ciê.");
+			sprintf(buf3, "Co za niefart! $n chybia ciï¿½.");
 #endif
 			break;
 		case 3:
 			sprintf(buf1,
-					"$n o ma³o siê nie przewróci³$o próbuj±c trafiæ $N$3.");
-			sprintf(buf2, "O ma³o siê nie przewróci³$a¶ próbuj±c trafiæ $N$3.");
-			sprintf(buf3, "$n prawie siê przewróci³$o próbuj±c ciê trafiæ.");
+					"$n o maï¿½o siï¿½ nie przewrï¿½ciï¿½$o prï¿½bujï¿½c trafiï¿½ $N$3.");
+			sprintf(buf2, "O maï¿½o siï¿½ nie przewrï¿½ciï¿½$aï¿½ prï¿½bujï¿½c trafiï¿½ $N$3.");
+			sprintf(buf3, "$n prawie siï¿½ przewrï¿½ciï¿½$o prï¿½bujï¿½c ciï¿½ trafiï¿½.");
 			break;
 		case 4:
-			sprintf(buf1, "Cios $n$1 o ma³y w³os mija g³owê $N$1.");
-			sprintf(buf2, "Ach! O ma³y w³os chybiasz $N$3.");
-			sprintf(buf3, "Ach! Ma³o brakowa³o by $n ciê trafi³$o.");
+			sprintf(buf1, "Cios $n$1 o maï¿½y wï¿½os mija gï¿½owï¿½ $N$1.");
+			sprintf(buf2, "Ach! O maï¿½y wï¿½os chybiasz $N$3.");
+			sprintf(buf3, "Ach! Maï¿½o brakowaï¿½o by $n ciï¿½ trafiï¿½$o.");
 			break;
 		case 5:
-			sprintf(buf1, "Potê¿ny cios $n$1 chybia $N$3.");
-			sprintf(buf2, "Twój potê¿ny cios chybia $N$3.");
-			sprintf(buf3, "Uff... Mia³$a¶ szczê¶cie, ¿e $n ciê nie trafi³$o.");
+			sprintf(buf1, "Potï¿½ny cios $n$1 chybia $N$3.");
+			sprintf(buf2, "Twï¿½j potï¿½ny cios chybia $N$3.");
+			sprintf(buf3, "Uff... Miaï¿½$aï¿½ szczï¿½cie, ï¿½e $n ciï¿½ nie trafiï¿½$o.");
 			break;
 		case 6:
-			sprintf(buf1, "$n potyka siê i nie trafia $N$1.");
-			sprintf(buf2, "Potykasz siê i nie trafiasz $N$3.");
-			sprintf(buf3, "Jaka ulga... $n nie trafia ciê potykaj±c siê.");
+			sprintf(buf1, "$n potyka siï¿½ i nie trafia $N$1.");
+			sprintf(buf2, "Potykasz siï¿½ i nie trafiasz $N$3.");
+			sprintf(buf3, "Jaka ulga... $n nie trafia ciï¿½ potykajï¿½c siï¿½.");
 			break;
 		case 7:
 			sprintf(buf1, "$n nie trafia $N$3.");
-			sprintf(buf2, "Nie trafi³$a¶ $N$3.");
-			sprintf(buf3, "$n nie trafia ciê.");
+			sprintf(buf2, "Nie trafiï¿½$aï¿½ $N$3.");
+			sprintf(buf3, "$n nie trafia ciï¿½.");
 			break;
 		}
 	}       //done by Onyx
@@ -3077,7 +3048,7 @@ void dam_message(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 
 		swsnprintf(buf1, MSL, "Zatrute %s $n$1 %s $N$3%c", attack, vp, punct);
 		swsnprintf(buf2, MSL, "Twoje zatrute %s %s $N$3%c", attack, vp, punct);
-		swsnprintf(buf3, MSL, "Zatrute %s $n$1 %s ciê%c", attack, vp, punct);
+		swsnprintf(buf3, MSL, "Zatrute %s $n$1 %s ciï¿½%c", attack, vp, punct);
 	}
 	else
 	{
@@ -3160,7 +3131,7 @@ void dam_message(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 			{
 				swsnprintf(buf1, MSL, "$n %s $N$3 %s%c", vp, attack, punct);
 				swsnprintf(buf2, MSL, "%s $N$3 %s%c", vs, attack, punct);
-				swsnprintf(buf3, MSL, "$n %s ciê %s%c", vp, attack, punct);
+				swsnprintf(buf3, MSL, "$n %s ciï¿½ %s%c", vp, attack, punct);
 			}
 		}
 	}
@@ -3170,7 +3141,7 @@ void dam_message(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 		char buf4[MSL] =
 		{ 0 };
 		strncpy(buf4, buf2, MSL);
-		swsnprintf(buf2, MSL, "%s Zadajesz cios o sile %d punktów.", buf4, dam);
+		swsnprintf(buf2, MSL, "%s Zadajesz cios o sile %d punktï¿½w.", buf4, dam);
 	}
 
 	act( COL_ACTION, buf1, ch, NULL, victim, TO_NOTVICT);
@@ -3191,7 +3162,7 @@ DEF_DO_FUN( kill )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Zabiæ kogo?" NL, ch);
+		send_to_char("Zabiï¿½ kogo?" NL, ch);
 		return;
 	}
 
@@ -3203,7 +3174,7 @@ DEF_DO_FUN( kill )
 
 	if (!IS_NPC(victim))
 	{
-		send_to_char("Gracza trzeba ZAMORDOWAÆ." NL, ch);
+		send_to_char("Gracza trzeba ZAMORDOWAï¿½." NL, ch);
 		return;
 	}
 	// Przywracam to, bo to teraz wazne ze wzgledu na ewentualnego
@@ -3212,14 +3183,14 @@ DEF_DO_FUN( kill )
 	{
 		if ( IS_AFFECTED(victim, AFF_CHARM) && victim->master != NULL)
 		{
-			send_to_char("Ubezw³asnowolnionego moba trzeba ZAMORDOWAÆ." NL, ch);
+			send_to_char("Ubezwï¿½asnowolnionego moba trzeba ZAMORDOWAï¿½." NL, ch);
 			return;
 		}
 	}
 
 	if (victim == ch)
 	{
-		send_to_char("Kopiesz siê w plecy. Auæ!" NL, ch);
+		send_to_char("Kopiesz siï¿½ w plecy. Auï¿½!" NL, ch);
 		multi_hit(ch, ch, TYPE_UNDEFINED);
 		return;
 	}
@@ -3229,14 +3200,14 @@ DEF_DO_FUN( kill )
 
 	if ( IS_AFFECTED(ch, AFF_CHARM) && ch->master == victim)
 	{
-		act( PLAIN, "Przecie¿ $N to twój uwielbiany mistrz.", ch, NULL, victim,
+		act( PLAIN, "Przecieï¿½ $N to twï¿½j uwielbiany mistrz.", ch, NULL, victim,
 		TO_CHAR);
 		return;
 	}
 
 	if (ch->position == POS_FIGHTING)
 	{
-		send_to_char("Starasz siê jak mo¿esz!" NL, ch);
+		send_to_char("Starasz siï¿½ jak moï¿½esz!" NL, ch);
 		return;
 	}
 
@@ -3250,7 +3221,7 @@ DEF_DO_FUN( kill )
 
 DEF_DO_FUN( murde )
 {
-	send_to_char("Je¶li chcesz ZAMORDOWAÆ, napisz to w ca³o¶ci." NL, ch);
+	send_to_char("Jeï¿½li chcesz ZAMORDOWAï¿½, napisz to w caï¿½oï¿½ci." NL, ch);
 	return;
 }
 
@@ -3263,7 +3234,7 @@ DEF_DO_FUN( murder )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Zamordowaæ kogo?" NL, ch);
+		send_to_char("Zamordowaï¿½ kogo?" NL, ch);
 		return;
 	}
 
@@ -3275,7 +3246,7 @@ DEF_DO_FUN( murder )
 
 	if (victim == ch)
 	{
-		send_to_char("Samobójstwo?" NL, ch);
+		send_to_char("Samobï¿½jstwo?" NL, ch);
 		return;
 	}
 
@@ -3286,7 +3257,7 @@ DEF_DO_FUN( murder )
 	{
 		if (ch->master == victim)
 		{
-			act( PLAIN, "Przecie¿ $N to twój uwielbiany mistrz.", ch, NULL,
+			act( PLAIN, "Przecieï¿½ $N to twï¿½j uwielbiany mistrz.", ch, NULL,
 					victim, TO_CHAR);
 			return;
 		}
@@ -3294,13 +3265,13 @@ DEF_DO_FUN( murder )
 
 	if (ch->position == POS_FIGHTING)
 	{
-		send_to_char("Starasz siê jak mo¿esz!" NL, ch);
+		send_to_char("Starasz siï¿½ jak moï¿½esz!" NL, ch);
 		return;
 	}
 
 	if (!IS_NPC(victim) && IS_SET(ch->act, PLR_NICE))
 	{
-		send_to_char("Zbyt dobrze siê czujesz by robiæ takie rzeczy!" NL, ch);
+		send_to_char("Zbyt dobrze siï¿½ czujesz by robiï¿½ takie rzeczy!" NL, ch);
 		return;
 	}
 
@@ -3352,7 +3323,7 @@ DEF_DO_FUN( flee )
 
 	if (ch->move <= 0)
 	{
-		send_to_char("Brak ci si³ by uciec!" NL, ch);
+		send_to_char("Brak ci siï¿½ by uciec!" NL, ch);
 		return;
 	}
 
@@ -3383,25 +3354,25 @@ DEF_DO_FUN( flee )
 			continue;
 
 		ch->in_room = was_in;
-		act( COL_ACTION, "$n ucieka w pop³ochu!", ch, NULL, NULL, TO_ROOM);
+		act( COL_ACTION, "$n ucieka w popï¿½ochu!", ch, NULL, NULL, TO_ROOM);
 		ch->in_room = now_in;
-		act( COL_ACTION, "$n rozgl±da siê szukaj±c kryjówki.", ch, NULL, NULL,
+		act( COL_ACTION, "$n rozglï¿½da siï¿½ szukajï¿½c kryjï¿½wki.", ch, NULL, NULL,
 		TO_ROOM);
-		sprintf(buf, "Uciekasz w pop³ochu!" NL);
+		sprintf(buf, "Uciekasz w popï¿½ochu!" NL);
 		send_to_char(buf, ch);
 #if defined (ARMAGEDDON)
 	if( ch->main_ability == COMBAT_ABILITY )
 	los = (	exp_level( ch->skill_level[COMBAT_ABILITY] + 1)
 	    - 	exp_level( ch->skill_level[COMBAT_ABILITY]) ) * 0.01;
 	gain_exp( ch, 0 - los, COMBAT_ABILITY );
-	ch_printf( ch, "Tracisz nieco punktów do¶wiadczenia w walce." NL );
+	ch_printf( ch, "Tracisz nieco punktï¿½w doï¿½wiadczenia w walce." NL );
 #endif
 
 		stop_fighting(ch, true);
 		return;
 	}
 
-	sprintf(buf, "Starasz siê uciec, ale nic z tego!" NL);
+	sprintf(buf, "Starasz siï¿½ uciec, ale nic z tego!" NL);
 	send_to_char(buf, ch);
 	fevent_trigger(ch, FE_POSITION);
 	return;
@@ -3442,9 +3413,9 @@ bool get_cover(CHAR_DATA *ch)
 			continue;
 
 		ch->in_room = was_in;
-		act( PLAIN, "$n ucieka w pop³ochu!", ch, NULL, NULL, TO_ROOM);
+		act( PLAIN, "$n ucieka w popï¿½ochu!", ch, NULL, NULL, TO_ROOM);
 		ch->in_room = now_in;
-		act( PLAIN, "$n rozgl±da siê szukaj±c kryjówki.", ch, NULL, NULL,
+		act( PLAIN, "$n rozglï¿½da siï¿½ szukajï¿½c kryjï¿½wki.", ch, NULL, NULL,
 		TO_ROOM);
 
 		stop_fighting(ch, true);
@@ -3472,7 +3443,7 @@ DEF_DO_FUN( slay )
 	one_argument(argument, arg2);
 	if (arg[0] == '\0')
 	{
-		send_to_char("Kogo zaSLAYowaæ??" NL, ch);
+		send_to_char("Kogo zaSLAYowaï¿½??" NL, ch);
 		return;
 	}
 
@@ -3484,37 +3455,37 @@ DEF_DO_FUN( slay )
 
 	if (ch == victim)
 	{
-		send_to_char("Samobójstwo to grzech ¶miertelników." NL, ch);
+		send_to_char("Samobï¿½jstwo to grzech ï¿½miertelnikï¿½w." NL, ch);
 		return;
 	}
 
 	if (!IS_NPC(victim) && (get_trust(victim) == 103 || get_trust(ch) < 103))
 	{
-		send_to_char("Nie uda³o Ci siê." NL, ch);
+		send_to_char("Nie udaï¿½o Ci siï¿½." NL, ch);
 		return;
 	}
 
 	if (!str_cmp(arg2, "immolate"))
 	{
 		act( FG_YELLOW,
-				"Tworzysz niewyobra¿alnie du¿± kulê ognia i ciskasz ni± w $N$3!",
+				"Tworzysz niewyobraï¿½alnie duï¿½ï¿½ kulï¿½ ognia i ciskasz niï¿½ w $N$3!",
 				ch, NULL, victim, TO_CHAR);
-		act( FG_YELLOW, "$n ciska w ciebie kulê ognia!", ch, NULL, victim,
+		act( FG_YELLOW, "$n ciska w ciebie kulï¿½ ognia!", ch, NULL, victim,
 		TO_VICT);
-		act( FG_YELLOW, "$n ciska w stronê $N$3 kulê ognia i spala go ¿ywcem.",
+		act( FG_YELLOW, "$n ciska w stronï¿½ $N$3 kulï¿½ ognia i spala go ï¿½ywcem.",
 				ch, NULL, victim, TO_NOTVICT);
 	}
 
 	else if (!str_cmp(arg2, "shatter"))
 	{
 		act( FB_CYAN,
-				"Zamra¿asz wzrokiem $N$3 po czym jednym szybkim ciosem rozpierdalasz go na kawa³eczki!",
+				"Zamraï¿½asz wzrokiem $N$3 po czym jednym szybkim ciosem rozpierdalasz go na kawaï¿½eczki!",
 				ch, NULL, victim, TO_CHAR);
 		act( FB_CYAN,
-				"$n zamra¿a Ciê wzorkiem, po czym jednym szybkim ciosem rozpierdala Ciê na kawa³eczki!",
+				"$n zamraï¿½a Ciï¿½ wzorkiem, po czym jednym szybkim ciosem rozpierdala Ciï¿½ na kawaï¿½eczki!",
 				ch, NULL, victim, TO_VICT);
 		act( FB_CYAN,
-				"$n zamra¿a wzrokiem $N$3 po czym jednym szybkim ciosem rozpierdala go na kawa³eczki!!",
+				"$n zamraï¿½a wzrokiem $N$3 po czym jednym szybkim ciosem rozpierdala go na kawaï¿½eczki!!",
 				ch, NULL, victim, TO_NOTVICT);
 	}
 
@@ -3566,24 +3537,24 @@ DEF_DO_FUN( slay )
 	else if (!str_cmp(arg2, "decapit"))
 	{
 		act( FG_RED,
-				"Z przyjemno¶ci± ogl±dasz, jak rêce $N$3 odrywaj± siê od jego cia³a i ³ami± $N$2 kark jak zapa³kê.",
+				"Z przyjemnoï¿½ciï¿½ oglï¿½dasz, jak rï¿½ce $N$3 odrywajï¿½ siï¿½ od jego ciaï¿½a i ï¿½amiï¿½ $N$2 kark jak zapaï¿½kï¿½.",
 				ch, NULL, victim, TO_CHAR);
 		act( FG_RED,
-				"Twoje w³asne rêce odrywaj± siê od cia³a i ³ami± Ci kark jak zapa³kê. Silny by³e¶...",
+				"Twoje wï¿½asne rï¿½ce odrywajï¿½ siï¿½ od ciaï¿½a i ï¿½amiï¿½ Ci kark jak zapaï¿½kï¿½. Silny byï¿½eï¿½...",
 				ch, NULL, victim, TO_VICT);
 		act( FG_RED,
-				"Od cia³a $N$3 nagle odrywaj± siê rêce a nastêpnie ³ami± $N$2 kark jak zapa³kê...",
+				"Od ciaï¿½a $N$3 nagle odrywajï¿½ siï¿½ rï¿½ce a nastï¿½pnie ï¿½amiï¿½ $N$2 kark jak zapaï¿½kï¿½...",
 				ch, NULL, victim, TO_NOTVICT);
 	}
 
 	else
 	{
-		act( FB_WHITE, "Za¿ynasz $N$3 z zimn± krwi±!", ch, NULL, victim,
+		act( FB_WHITE, "Zaï¿½ynasz $N$3 z zimnï¿½ krwiï¿½!", ch, NULL, victim,
 		TO_CHAR);
-		act( FB_WHITE, "$n za¿yna ciê z zimn± krwi±!", ch, NULL, victim,
+		act( FB_WHITE, "$n zaï¿½yna ciï¿½ z zimnï¿½ krwiï¿½!", ch, NULL, victim,
 		TO_VICT);
 		act( FB_WHITE,
-				"$n b³yskawicznie dobywa swego miecza swietlnego i rozcina $N$3 na dwie czêsci!",
+				"$n bï¿½yskawicznie dobywa swego miecza swietlnego i rozcina $N$3 na dwie czï¿½sci!",
 				ch, NULL, victim, TO_NOTVICT);
 	}
 
@@ -3592,7 +3563,7 @@ DEF_DO_FUN( slay )
 	{
 		room = victim->in_room;
 		char_from_room(victim);
-		char_to_room(victim, first_cloning->cylinder);
+		char_to_room(victim, cloning_list.front()->cylinder);
 		save_clone(victim);
 		char_from_room(victim);
 		char_to_room(victim, room);

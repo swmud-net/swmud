@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <list>
+#include <ranges>
 #include "mud.h"
 #include "classes/SWInvite.h"
 
@@ -46,10 +47,10 @@ bool get_comlink(CHAR_DATA *ch)
 	if (IS_IMMORTAL(ch))
 		return true;
 
-	if (IS_ADMIN(ch->name)) /*mo¿e byæ, ¿e admin nie jest immo*/
+	if (IS_ADMIN(ch->name)) /*moï¿½e byï¿½, ï¿½e admin nie jest immo*/
 		return true;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->pIndexData->item_type == ITEM_COMLINK)
 			return true;
@@ -72,37 +73,37 @@ DEF_DO_FUN( buyhome )
 
 	if (ch->plr_home != NULL)
 	{
-		send_to_char("Przecie¿ masz ju¿ dom." NL, ch);
+		send_to_char("Przecieï¿½ masz juï¿½ dom." NL, ch);
 		return;
 	}
 
 	room = ch->in_room;
 
-	for (pArea = first_bsort; pArea; pArea = pArea->next_sort)
+	for (auto* pArea : bsort_list)
 	{
 		if (room->area == pArea)
 		{
-			send_to_char("Ta krainka nie jest jeszcze czê¶ci± tego ¶wiata." NL, ch);
+			send_to_char("Ta krainka nie jest jeszcze czï¿½ciï¿½ tego ï¿½wiata." NL, ch);
 			return;
 		}
 	}
 
 	if (!IS_SET(room->room_flags, ROOM_EMPTY_HOME))
 	{
-		send_to_char("Te pomieszczenie nie jest na sprzeda¿!" NL, ch);
+		send_to_char("Te pomieszczenie nie jest na sprzedaï¿½!" NL, ch);
 		return;
 	}
 
 	if (ch->gold < 100000)
 	{
-		send_to_char("Ten pokój kosztuje 100000 kredytek. Nie masz tyle." NL, ch);
+		send_to_char("Ten pokï¿½j kosztuje 100000 kredytek. Nie masz tyle." NL, ch);
 		return;
 	}
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Ustal nazwê pomieszczenia. Taki jednolinijkowy opisik." NL, ch);
-		send_to_char("Sk³adnia: Buyhome <nazwa_pokoju>" NL, ch);
+		send_to_char("Ustal nazwï¿½ pomieszczenia. Taki jednolinijkowy opisik." NL, ch);
+		send_to_char("Skï¿½adnia: Buyhome <nazwa_pokoju>" NL, ch);
 		return;
 	}
 
@@ -142,7 +143,7 @@ const bool is_invited(const CHAR_DATA *ch, const ROOM_INDEX_DATA *home)
 
 	//test, sprawdzajacy czy wlasciciel jest w domu
 	if (has_invitation)
-		for (CHAR_DATA *cha = home->first_person; cha; cha = cha->next_in_room)
+		for (auto* cha : home->people)
 			if (cha->plr_home == home)
 				return true;
 
@@ -167,11 +168,11 @@ void evacuate_guests(ROOM_INDEX_DATA *home)
 		return;
 	}
 
-	for (ch = home->first_person; ch; ch = ch->next_in_room)
+	for (auto* ch : home->people)
 	{
 		if (ch->plr_home == home)
 			continue;
-		send_to_char("Niestety nie mo¿esz pozostaæ w mieszkaniu pod nieobecno¶æ w³a¶ciciela." NL, ch);
+		send_to_char("Niestety nie moï¿½esz pozostaï¿½ w mieszkaniu pod nieobecnoï¿½ï¿½ wï¿½aï¿½ciciela." NL, ch);
 		evac_list.push_back(ch);
 	}
 
@@ -199,7 +200,7 @@ DEF_DO_FUN( invite )
 
 	if (!ch->plr_home)
 	{
-		send_to_char("Przecie¿ nie masz mieszkania!" NL, ch);
+		send_to_char("Przecieï¿½ nie masz mieszkania!" NL, ch);
 		return;
 	}
 
@@ -207,7 +208,7 @@ DEF_DO_FUN( invite )
 
 	if (home != ch->in_room)
 	{
-		send_to_char("Aby kogo¶ zaprosiæ do swojego mieszkania musisz siê w nim znajdowaæ." NL, ch);
+		send_to_char("Aby kogoï¿½ zaprosiï¿½ do swojego mieszkania musisz siï¿½ w nim znajdowaï¿½." NL, ch);
 		return;
 	}
 
@@ -215,7 +216,7 @@ DEF_DO_FUN( invite )
 
 	if (!*arg1)
 	{
-		send_to_char("Kogo chcesz zaprosiæ?" NL, ch);
+		send_to_char("Kogo chcesz zaprosiï¿½?" NL, ch);
 		return;
 	}
 
@@ -227,19 +228,19 @@ DEF_DO_FUN( invite )
 
 	if (victim == ch)
 	{
-		send_to_char("Jak mi³o, zapraszasz siê do swojego mieszkania." NL, ch);
+		send_to_char("Jak miï¿½o, zapraszasz siï¿½ do swojego mieszkania." NL, ch);
 		return;
 	}
 
 	if (is_invited(victim, home))
 	{
-		send_to_char("Ta osoba jest ju¿ zaproszona do Twojego mieszkania." NL, ch);
+		send_to_char("Ta osoba jest juï¿½ zaproszona do Twojego mieszkania." NL, ch);
 		return;
 	}
 
 	invite = new SWInvite(home, victim->name);
 	invites_list.push_back(invite);
-	act(COL_INVITE, "$n zaprasza Ciê do swojego mieszkania.", ch, NULL, victim,
+	act(COL_INVITE, "$n zaprasza Ciï¿½ do swojego mieszkania.", ch, NULL, victim,
 	TO_VICT);
 	act(COL_INVITE, "Zapraszasz $N$3 do swojego mieszkania.", ch, NULL, victim,
 	TO_CHAR);
@@ -259,7 +260,7 @@ DEF_DO_FUN( uninvite )
 
 	if (!ch->plr_home)
 	{
-		send_to_char("Przecie¿ nie masz mieszkania!" NL, ch);
+		send_to_char("Przecieï¿½ nie masz mieszkania!" NL, ch);
 		return;
 	}
 
@@ -268,7 +269,7 @@ DEF_DO_FUN( uninvite )
 
 	if (!*arg1)
 	{
-		send_to_char("U¿ycie: uninvite <nick> lub uninvite all" NL, ch);
+		send_to_char("Uï¿½ycie: uninvite <nick> lub uninvite all" NL, ch);
 		return;
 	}
 
@@ -279,7 +280,7 @@ DEF_DO_FUN( uninvite )
 
 	if (!strcmp(arg1, ch->name))
 	{
-		send_to_char("Chcesz siê wyprosiæ ze swojego mieszkania? Tak siê nie da." NL, ch);
+		send_to_char("Chcesz siï¿½ wyprosiï¿½ ze swojego mieszkania? Tak siï¿½ nie da." NL, ch);
 		return;
 	}
 
@@ -294,9 +295,9 @@ DEF_DO_FUN( uninvite )
 	if (tmp_list.empty())
 	{
 		if (all)
-			send_to_char("Lista osób zaproszonych do Twojego mieszkania jest ju¿ pusta!" NL, ch);
+			send_to_char("Lista osï¿½b zaproszonych do Twojego mieszkania jest juï¿½ pusta!" NL, ch);
 		else
-			send_to_char("Nikogo takiego nie ma na liscie osób zaproszonych do Twojego mieszkania." NL, ch);
+			send_to_char("Nikogo takiego nie ma na liscie osï¿½b zaproszonych do Twojego mieszkania." NL, ch);
 		return;
 	}
 
@@ -305,12 +306,12 @@ DEF_DO_FUN( uninvite )
 		tmp = tmp_list.front();
 		tmp_list.pop_front();
 		invites_list.remove(tmp);
-		sprintf(buf, "%s nie jest ju¿ mile widzinym go¶ciem w Twoim mieszkaniu." NL, tmp->name.c_str());
+		sprintf(buf, "%s nie jest juï¿½ mile widzinym goï¿½ciem w Twoim mieszkaniu." NL, tmp->name.c_str());
 		send_to_char(buf, ch);
 		strcpy(buf, tmp->name.c_str());
 		if ((guest = get_player_world(ch, buf)))
 		{
-			sprintf(buf, "Nie jeste¶ ju¿ mile widzian%c w mieszkaniu $n$1.",
+			sprintf(buf, "Nie jesteï¿½ juï¿½ mile widzian%c w mieszkaniu $n$1.",
 			FEMALE( guest ) ? 'a' : 'y');
 			act(FB_RED, buf, ch, NULL, guest, TO_VICT);
 		}
@@ -318,7 +319,7 @@ DEF_DO_FUN( uninvite )
 	}
 }
 
-/*Wy¶wietla listê zaproszonych osób - Ganis*/
+/*Wyï¿½wietla listï¿½ zaproszonych osï¿½b - Ganis*/
 DEF_DO_FUN( invites )
 {
 	char buf[MSL];
@@ -329,14 +330,14 @@ DEF_DO_FUN( invites )
 
 	if (!ch->plr_home)
 	{
-		strcat(buf, "Przecie¿ nie masz mieszkania, do którego ");
-		strcat(buf, FEMALE( ch ) ? "mog³aby¶ " : "móg³by¶ ");
-		strcat(buf, "kogokolwiek zapraszaæ." NL);
+		strcat(buf, "Przecieï¿½ nie masz mieszkania, do ktï¿½rego ");
+		strcat(buf, FEMALE( ch ) ? "mogï¿½abyï¿½ " : "mï¿½gï¿½byï¿½ ");
+		strcat(buf, "kogokolwiek zapraszaï¿½." NL);
 		send_to_char(buf, ch);
 		return;
 	}
 
-	strcat(buf, "Lista osób zaproszonych do Twojego mieszkania:" NL);
+	strcat(buf, "Lista osï¿½b zaproszonych do Twojego mieszkania:" NL);
 	for (it = invites_list.begin(); it != invites_list.end(); ++it)
 	{
 		if ((*it)->home == ch->plr_home)
@@ -353,8 +354,8 @@ bool does_knows_name(CHAR_DATA *ch, char *vict_name)
 {
 	KNOWN_CHAR_DATA *known;
 
-	if (IS_NPC(ch)) // Pixel: Wszystkie moby maj± byæ znane graczom, decyzja spowodowana
-		return true; // brakiem sensownej alternatywy, a gracze maj± problemy z interakcj±
+	if (IS_NPC(ch)) // Pixel: Wszystkie moby majï¿½ byï¿½ znane graczom, decyzja spowodowana
+		return true; // brakiem sensownej alternatywy, a gracze majï¿½ problemy z interakcjï¿½
 
 	if (IS_SET(ch->act, PLR_HOLYLIGHT))
 		return true;
@@ -363,7 +364,7 @@ bool does_knows_name(CHAR_DATA *ch, char *vict_name)
 		return true;
 	//jesli victim ma ustawiona flage to kazdy ja zna
 	//jesli obaj sa koderami - troche to toporne, ale nie bede grzabal
-	for (known = ch->first_known; known; known = known->next)
+	for (auto* known : ch->known)
 	{
 		if (!strcmp(known->name, vict_name))
 			return true;
@@ -376,8 +377,8 @@ bool does_knows(CHAR_DATA *ch, CHAR_DATA *victim)
 {
 	KNOWN_CHAR_DATA *known;
 
-	if ( IS_NPC( ch ) || IS_NPC(victim)) // Pixel: Wszystkie moby maj± byæ znane graczom, decyzja spowodowana
-		return true; // brakiem sensownej alternatywy, a gracze maj± problemy z interakcj±
+	if ( IS_NPC( ch ) || IS_NPC(victim)) // Pixel: Wszystkie moby majï¿½ byï¿½ znane graczom, decyzja spowodowana
+		return true; // brakiem sensownej alternatywy, a gracze majï¿½ problemy z interakcjï¿½
 
 	if (!strcmp(ch->name, victim->name))
 		return true;
@@ -405,7 +406,7 @@ bool does_knows(CHAR_DATA *ch, CHAR_DATA *victim)
 	if (IS_NH(ch) && IS_NEWBIE(victim))
 		return true;
 
-	for (known = ch->first_known; known; known = known->next)
+	for (auto* known : ch->known)
 	{
 		if (!strcmp(known->name, victim->name))
 			return true;
@@ -488,7 +489,7 @@ CLONING_DATA* get_cloning(ROOM_INDEX_DATA *room)
 {
 	CLONING_DATA *cloning;
 
-	for (cloning = first_cloning; cloning; cloning = cloning->next)
+	for (auto* cloning : cloning_list)
 	{
 		if (cloning->entrance == room)
 			return cloning;
@@ -501,7 +502,7 @@ CLONING_DATA* get_cloning_by_cyl(ROOM_INDEX_DATA *room)
 {
 	CLONING_DATA *cloning;
 
-	for (cloning = first_cloning; cloning; cloning = cloning->next)
+	for (auto* cloning : cloning_list)
 	{
 		if (cloning->cylinder == room)
 			return cloning;
@@ -593,7 +594,7 @@ DEF_DO_FUN( clone )
 			return;
 		}
 
-		if ( IS_NPC(victim) || NOT_AUTHED(victim) || !first_cloning)
+		if ( IS_NPC(victim) || NOT_AUTHED(victim) || cloning_list.empty())
 		{
 			send_to_char("You failed." NL, ch);
 			return;
@@ -602,7 +603,7 @@ DEF_DO_FUN( clone )
 		room = victim->in_room;
 
 		char_from_room(victim);
-		char_to_room(victim, first_cloning->cylinder);
+		char_to_room(victim, cloning_list.front()->cylinder);
 
 		/* Trog: scinamy levele klonowi (by Pixel) */
 		clone_cut(victim);
@@ -624,7 +625,7 @@ DEF_DO_FUN( clone )
 	default:
 		if (NOT_AUTHED(ch))
 		{
-			ch_printf(ch, "Dopóki nie masz autoryzacji, nie jeste¶ pe³noprawnym cz³onkiem tego ¶wiata." NL);
+			ch_printf(ch, "Dopï¿½ki nie masz autoryzacji, nie jesteï¿½ peï¿½noprawnym czï¿½onkiem tego ï¿½wiata." NL);
 			return;
 		}
 
@@ -636,7 +637,7 @@ DEF_DO_FUN( clone )
 
 		if ((cloning = get_cloning(ch->in_room)) == NULL)
 		{
-			ch_printf(ch, "Nie mo¿esz zrobiæ tego tutaj." NL);
+			ch_printf(ch, "Nie moï¿½esz zrobiï¿½ tego tutaj." NL);
 			return;
 		}
 
@@ -653,19 +654,19 @@ DEF_DO_FUN( clone )
 		{
 			ch->gold -= amt;
 
-			ch_printf(ch, "P³acisz %d kredytek za sklonowanie siê." NL, amt);
-			ch_printf(ch, "Zostajesz odprowadzon%s do ma³ego pomieszczenia." NL, SEX_SUFFIX_YAE(ch));
+			ch_printf(ch, "Pï¿½acisz %d kredytek za sklonowanie siï¿½." NL, amt);
+			ch_printf(ch, "Zostajesz odprowadzon%s do maï¿½ego pomieszczenia." NL, SEX_SUFFIX_YAE(ch));
 		}
 
 		char_from_room(ch);
 		char_to_room(ch, cloning->cylinder);
 		ch_printf(ch, NL
-		"Pobrano ci z ramienia ma³± próbkê twojego kodu genetycznego." NL);
+		"Pobrano ci z ramienia maï¿½ï¿½ prï¿½bkï¿½ twojego kodu genetycznego." NL);
 		add_timer(ch, TIMER_DO_FUN, 5, do_clone, 1);
 		return;
 
 	case SUB_TIMER_DO_ABORT:
-		ch_printf(ch, "Jeste¶ teraz klonowan%s! Lepiej poczekaj do koñca zabiegu." NL, SEX_SUFFIX_YAE(ch));
+		ch_printf(ch, "Jesteï¿½ teraz klonowan%s! Lepiej poczekaj do koï¿½ca zabiegu." NL, SEX_SUFFIX_YAE(ch));
 		ch->substate = SUB_TIMER_CANT_ABORT;
 		return;
 
@@ -678,7 +679,7 @@ DEF_DO_FUN( clone )
 	{
 		bug("HEEEEYYYY!!!! %s's cloning FAILED!", ch->name);
 		ch->gold += amt;
-		ch_printf(ch, "Nie uda³o siê ciebie sklonowaæ. Twoje pieni±dze zosta³y zwrócone." NL);
+		ch_printf(ch, "Nie udaï¿½o siï¿½ ciebie sklonowaï¿½. Twoje pieniï¿½dze zostaï¿½y zwrï¿½cone." NL);
 		return;
 	}
 
@@ -700,8 +701,8 @@ DEF_DO_FUN( clone )
 	char_to_room(ch, cloning->leaving);
 	do_look(ch, (char*) "");
 
-	ch_printf(ch, NL FB_RED "Auæ!" EOL NL);
-	ch_printf(ch, "Zosta³%s¶ pomy¶lnie sklonowan%s." NL, SEX_SUFFIX_EAE(ch), SEX_SUFFIX_YAE(ch));
+	ch_printf(ch, NL FB_RED "Auï¿½!" EOL NL);
+	ch_printf(ch, "Zostaï¿½%sï¿½ pomyï¿½lnie sklonowan%s." NL, SEX_SUFFIX_EAE(ch), SEX_SUFFIX_YAE(ch));
 
 	ch->hit--;
 }
@@ -718,13 +719,13 @@ DEF_DO_FUN( arm )
 
 	if ( IS_NPC(ch) || !ch->pcdata || ch->pcdata->learned[gsn_grenades] <= 0)
 	{
-		ch_printf(ch, "Nie masz pojêcia jak to siê robi." NL);
+		ch_printf(ch, "Nie masz pojï¿½cia jak to siï¿½ robi." NL);
 		return;
 	}
 
 	if (IS_SET(ch->in_room->room_flags, ROOM_SAFE))
 	{
-		ch_printf(ch, "Ochronne pole si³owe w tym miejscu nie pozwala ci manipulowaæ zapalnikiem." NL);
+		ch_printf(ch, "Ochronne pole siï¿½owe w tym miejscu nie pozwala ci manipulowaï¿½ zapalnikiem." NL);
 		return;
 	}
 
@@ -732,7 +733,7 @@ DEF_DO_FUN( arm )
 
 	if (!obj || obj->item_type != ITEM_GRENADE)
 	{
-		ch_printf(ch, "Nie trzymasz w rêku granatu!" NL);
+		ch_printf(ch, "Nie trzymasz w rï¿½ku granatu!" NL);
 		return;
 	}
 
@@ -745,7 +746,7 @@ DEF_DO_FUN( arm )
 
 	if (argument[0] == '\0')
 	{
-		ch_printf(ch, "Na ile minut ustawiæ zapalnik granatu?" NL);
+		ch_printf(ch, "Na ile minut ustawiï¿½ zapalnik granatu?" NL);
 		return;
 	}
 
@@ -753,7 +754,7 @@ DEF_DO_FUN( arm )
 
 	if (time == 0)
 	{
-		ch_printf(ch, "Na ile minut ustawiæ zapalnik granatu?" NL);
+		ch_printf(ch, "Na ile minut ustawiï¿½ zapalnik granatu?" NL);
 		return;
 	}
 
@@ -795,7 +796,7 @@ DEF_DO_FUN( ammo )
 
 	if (!wield || wield->item_type != ITEM_WEAPON)
 	{
-		send_to_char("Chyba nie masz ¿adnej broni w rêku." NL, ch);
+		send_to_char("Chyba nie masz ï¿½adnej broni w rï¿½ku." NL, ch);
 		return;
 	}
 
@@ -804,7 +805,7 @@ DEF_DO_FUN( ammo )
 
 		if (obj && obj->item_type != ITEM_AMMO)
 		{
-			send_to_char("Masz zbyt pe³ne rêce by prze³adowaæ blaster." NL, ch);
+			send_to_char("Masz zbyt peï¿½ne rï¿½ce by przeï¿½adowaï¿½ blaster." NL, ch);
 			return;
 		}
 
@@ -812,7 +813,7 @@ DEF_DO_FUN( ammo )
 		{
 			if (obj->value[0] > wield->value[5])
 			{
-				send_to_char("Ten magazynek jest za du¿y dla twojego blastera." NL, ch);
+				send_to_char("Ten magazynek jest za duï¿½y dla twojego blastera." NL, ch);
 				return;
 			}
 			unequip_char(ch, obj);
@@ -823,13 +824,13 @@ DEF_DO_FUN( ammo )
 		}
 		else
 		{
-			for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+			for (auto* obj : std::ranges::reverse_view(ch->carrying))
 			{
 				if (obj->item_type == ITEM_AMMO)
 				{
 					if (obj->value[0] > wield->value[5])
 					{
-						send_to_char("Ten magazynek jest za du¿y dla twojego blastera." NL, ch);
+						send_to_char("Ten magazynek jest za duï¿½y dla twojego blastera." NL, ch);
 						continue;
 					}
 					checkammo = true;
@@ -843,13 +844,13 @@ DEF_DO_FUN( ammo )
 
 		if (!checkammo)
 		{
-			send_to_char("Nie masz ¿adnej amunicji, nici z prze³adowania." NL, ch);
+			send_to_char("Nie masz ï¿½adnej amunicji, nici z przeï¿½adowania." NL, ch);
 			return;
 		}
 
-		ch_printf(ch, "*Click* Prze³adowujesz blaster." NL
-		"Masz teraz %d pocisków przy wysokiej mocy, wiêc %d na niskiej." NL, charge / 5, charge);
-		act( PLAIN, "*Click*! $n prze³adowuje $p$3.", ch, wield, NULL, TO_ROOM);
+		ch_printf(ch, "*Click* Przeï¿½adowujesz blaster." NL
+		"Masz teraz %d pociskï¿½w przy wysokiej mocy, wiï¿½c %d na niskiej." NL, charge / 5, charge);
+		act( PLAIN, "*Click*! $n przeï¿½adowuje $p$3.", ch, wield, NULL, TO_ROOM);
 
 	}
 	else if (wield->value[3] == WEAPON_BOWCASTER)
@@ -857,7 +858,7 @@ DEF_DO_FUN( ammo )
 
 		if (obj && obj->item_type != ITEM_BOLT)
 		{
-			send_to_char("Masz zbyt pe³ne rêce ¿eby to zrobiæ." NL, ch);
+			send_to_char("Masz zbyt peï¿½ne rï¿½ce ï¿½eby to zrobiï¿½." NL, ch);
 			return;
 		}
 
@@ -865,7 +866,7 @@ DEF_DO_FUN( ammo )
 		{
 			if (obj->value[0] > wield->value[5])
 			{
-				send_to_char("Ten magazynek jest za du¿y dla twojej kuszy." NL, ch);
+				send_to_char("Ten magazynek jest za duï¿½y dla twojej kuszy." NL, ch);
 				return;
 			}
 			unequip_char(ch, obj);
@@ -876,13 +877,13 @@ DEF_DO_FUN( ammo )
 		}
 		else
 		{
-			for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+			for (auto* obj : std::ranges::reverse_view(ch->carrying))
 			{
 				if (obj->item_type == ITEM_BOLT)
 				{
 					if (obj->value[0] > wield->value[5])
 					{
-						send_to_char("Ten magazynek jest za du¿y dla twojej kuszy." NL, ch);
+						send_to_char("Ten magazynek jest za duï¿½y dla twojej kuszy." NL, ch);
 						continue;
 					}
 					checkammo = true;
@@ -896,11 +897,11 @@ DEF_DO_FUN( ammo )
 
 		if (!checkammo)
 		{
-			send_to_char("&RNie masz ¿adnych be³tów którymi mo¿na za³adowaæ kuszê.\n\r&w", ch);
+			send_to_char("&RNie masz ï¿½adnych beï¿½tï¿½w ktï¿½rymi moï¿½na zaï¿½adowaï¿½ kuszï¿½.\n\r&w", ch);
 			return;
 		}
 
-		ch_printf(ch, "Wymieniasz magazynek.\n\rTwoja kusza posiada %d ³adunków energetycznych.\n\r", charge);
+		ch_printf(ch, "Wymieniasz magazynek.\n\rTwoja kusza posiada %d ï¿½adunkï¿½w energetycznych.\n\r", charge);
 		act( PLAIN, "$n wymienia magazynek w $p$5.", ch, wield, NULL, TO_ROOM);
 
 	}
@@ -909,7 +910,7 @@ DEF_DO_FUN( ammo )
 
 		if (obj && obj->item_type != ITEM_BATTERY)
 		{
-			send_to_char("&RMasz pe³ne rêce, nie dasz rady wymieniæ baterii.\n\r&w", ch);
+			send_to_char("&RMasz peï¿½ne rï¿½ce, nie dasz rady wymieniï¿½ baterii.\n\r&w", ch);
 			return;
 		}
 
@@ -923,7 +924,7 @@ DEF_DO_FUN( ammo )
 		}
 		else
 		{
-			for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+			for (auto* obj : std::ranges::reverse_view(ch->carrying))
 			{
 				if (obj->item_type == ITEM_BATTERY)
 				{
@@ -944,28 +945,28 @@ DEF_DO_FUN( ammo )
 
 		if (wield->value[3] == WEAPON_LIGHTSABER)
 		{
-			ch_printf(ch, "Wymieniasz bateriê.\n\rTwój miecz ¶wietlny ma teraz %d/%d jednostek.\n\r", charge, charge);
-			act( PLAIN, "$n wymienia bateriê w $p$5.", ch, wield, NULL,
+			ch_printf(ch, "Wymieniasz bateriï¿½.\n\rTwï¿½j miecz ï¿½wietlny ma teraz %d/%d jednostek.\n\r", charge, charge);
+			act( PLAIN, "$n wymienia bateriï¿½ w $p$5.", ch, wield, NULL,
 			TO_ROOM);
-			act( PLAIN, "$p rozb³yska jasnym blaskiem.", ch, wield, NULL,
+			act( PLAIN, "$p rozbï¿½yska jasnym blaskiem.", ch, wield, NULL,
 			TO_ROOM);
 		}
 		else if (wield->value[3] == WEAPON_VIBRO_BLADE)
 		{
-			ch_printf(ch, "Wymieniasz bateriê.\n\rTwoje vibro-ostrze jest ma teraz %d/%d jednostek.\n\r", charge, charge);
-			act( PLAIN, "$n wymienia bateriê w $p$5.", ch, wield, NULL,
+			ch_printf(ch, "Wymieniasz bateriï¿½.\n\rTwoje vibro-ostrze jest ma teraz %d/%d jednostek.\n\r", charge, charge);
+			act( PLAIN, "$n wymienia bateriï¿½ w $p$5.", ch, wield, NULL,
 			TO_ROOM);
 		}
 		else if (wield->value[3] == WEAPON_FORCE_PIKE)
 		{
-			ch_printf(ch, "Wymieniasz bateriê.\n\rTwoja force-pike ma teraz %d/%d jednostek.\n\r", charge, charge);
-			act( PLAIN, "$n wymienia bateriê w $p$5.", ch, wield, NULL,
+			ch_printf(ch, "Wymieniasz bateriï¿½.\n\rTwoja force-pike ma teraz %d/%d jednostek.\n\r", charge, charge);
+			act( PLAIN, "$n wymienia bateriï¿½ w $p$5.", ch, wield, NULL,
 			TO_ROOM);
 		}
 		else
 		{
-			ch_printf(ch, "Czujesz siê bardzo g³upio.\n\r");
-			act( PLAIN, "$n próbuje wepchn±æ bateriê w $p$3.", ch, wield, NULL,
+			ch_printf(ch, "Czujesz siï¿½ bardzo gï¿½upio.\n\r");
+			act( PLAIN, "$n prï¿½buje wepchnï¿½ï¿½ bateriï¿½ w $p$3.", ch, wield, NULL,
 			TO_ROOM);
 		}
 	}
@@ -988,13 +989,13 @@ DEF_DO_FUN( setblaster )
 
 	if (!wield && !wield2)
 	{
-		send_to_char("Nie dzier¿ysz ¿adnego blastera." NL, ch);
+		send_to_char("Nie dzierï¿½ysz ï¿½adnego blastera." NL, ch);
 		return;
 	}
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Sk³adnia: setblaster <full|high|normal|half|low|stun>" NL, ch);
+		send_to_char("Skï¿½adnia: setblaster <full|high|normal|half|low|stun>" NL, ch);
 		return;
 	}
 
@@ -1009,12 +1010,12 @@ DEF_DO_FUN( setblaster )
 		if (wield)
 		{
 			wield->blaster_setting = BLASTER_FULL;
-			send_to_char("Blaster ustawiony na PE£N¡ moc." NL, ch);
+			send_to_char("Blaster ustawiony na PEï¿½Nï¿½ moc." NL, ch);
 		}
 		if (wield2)
 		{
 			wield2->blaster_setting = BLASTER_FULL;
-			send_to_char("Twój drugi blaster ustawiony zosta³ na PE£N¡ moc." NL, ch);
+			send_to_char("Twï¿½j drugi blaster ustawiony zostaï¿½ na PEï¿½Nï¿½ moc." NL, ch);
 		}
 		return;
 	}
@@ -1023,12 +1024,12 @@ DEF_DO_FUN( setblaster )
 		if (wield)
 		{
 			wield->blaster_setting = BLASTER_HIGH;
-			send_to_char("Blaster ustawiony na WYSOK¡ moc." NL, ch);
+			send_to_char("Blaster ustawiony na WYSOKï¿½ moc." NL, ch);
 		}
 		if (wield2)
 		{
 			wield2->blaster_setting = BLASTER_HIGH;
-			send_to_char("Twój drugi blaster ustawiony zosta³ na WYSOK¡ moc." NL, ch);
+			send_to_char("Twï¿½j drugi blaster ustawiony zostaï¿½ na WYSOKï¿½ moc." NL, ch);
 		}
 		return;
 	}
@@ -1037,12 +1038,12 @@ DEF_DO_FUN( setblaster )
 		if (wield)
 		{
 			wield->blaster_setting = BLASTER_NORMAL;
-			send_to_char("Blaster ustawiony na NORMALN¡ moc." NL, ch);
+			send_to_char("Blaster ustawiony na NORMALNï¿½ moc." NL, ch);
 		}
 		if (wield2)
 		{
 			wield2->blaster_setting = BLASTER_NORMAL;
-			send_to_char("Twój drugi blaster ustawiony zosta³ na NORMALN¡ moc." NL, ch);
+			send_to_char("Twï¿½j drugi blaster ustawiony zostaï¿½ na NORMALNï¿½ moc." NL, ch);
 		}
 		return;
 	}
@@ -1051,12 +1052,12 @@ DEF_DO_FUN( setblaster )
 		if (wield)
 		{
 			wield->blaster_setting = BLASTER_HALF;
-			send_to_char("Blaster ustawiony na PO£OWÊ mocy." NL, ch);
+			send_to_char("Blaster ustawiony na POï¿½OWï¿½ mocy." NL, ch);
 		}
 		if (wield2)
 		{
 			wield2->blaster_setting = BLASTER_HALF;
-			send_to_char("Twój drugi blaster ustawiony zosta³ na PO£OWÊ mocy." NL, ch);
+			send_to_char("Twï¿½j drugi blaster ustawiony zostaï¿½ na POï¿½OWï¿½ mocy." NL, ch);
 		}
 		return;
 	}
@@ -1065,12 +1066,12 @@ DEF_DO_FUN( setblaster )
 		if (wield)
 		{
 			wield->blaster_setting = BLASTER_LOW;
-			send_to_char("Blaster ustawiony na NISK¡ moc." NL, ch);
+			send_to_char("Blaster ustawiony na NISKï¿½ moc." NL, ch);
 		}
 		if (wield2)
 		{
 			wield2->blaster_setting = BLASTER_LOW;
-			send_to_char("Twój drugi blaster ustawiony zosta³ na NISK¡ moc." NL, ch);
+			send_to_char("Twï¿½j drugi blaster ustawiony zostaï¿½ na NISKï¿½ moc." NL, ch);
 		}
 		return;
 	}
@@ -1079,12 +1080,12 @@ DEF_DO_FUN( setblaster )
 		if (wield)
 		{
 			wield->blaster_setting = BLASTER_STUN;
-			send_to_char("Blaster ustwiony na OG£USZANIE." NL, ch);
+			send_to_char("Blaster ustwiony na OGï¿½USZANIE." NL, ch);
 		}
 		if (wield2)
 		{
 			wield2->blaster_setting = BLASTER_STUN;
-			send_to_char("Twój drugi blaster zosta³ ustawiony na OG£USZANIE." NL, ch);
+			send_to_char("Twï¿½j drugi blaster zostaï¿½ ustawiony na OGï¿½USZANIE." NL, ch);
 		}
 		return;
 	}
@@ -1110,7 +1111,7 @@ DEF_DO_FUN( use )
 
 	if (argd[0] == '\0')
 	{
-		send_to_char("U¿yæ czego?" NL, ch);
+		send_to_char("Uï¿½yï¿½ czego?" NL, ch);
 		return;
 	}
 
@@ -1128,15 +1129,15 @@ DEF_DO_FUN( use )
 
 	if (device->item_type != ITEM_DEVICE)
 	{
-		send_to_char("Nie masz pojêcia co z tym zrobiæ." NL, ch);
+		send_to_char("Nie masz pojï¿½cia co z tym zrobiï¿½." NL, ch);
 		return;
 	}
 
 	if (device->value[2] <= 0)
 	{
-		ch_printf(ch, "%s %s" PLAIN " nie ma%s ju¿ ³adunków.",
+		ch_printf(ch, "%s %s" PLAIN " nie ma%s juï¿½ ï¿½adunkï¿½w.",
 				device->gender == GENDER_NEUTRAL ? "To" : device->gender == GENDER_MALE ? "Ten" :
-				device->gender == GENDER_FEMALE ? "Ta" : "Te", device->przypadki[0], device->gender == GENDER_PLURAL ? "j±" : "");
+				device->gender == GENDER_FEMALE ? "Ta" : "Te", device->przypadki[0], device->gender == GENDER_PLURAL ? "jï¿½" : "");
 		return;
 	}
 
@@ -1149,7 +1150,7 @@ DEF_DO_FUN( use )
 		}
 		else
 		{
-			send_to_char("U¿yæ na kim, lub na czym?" NL, ch);
+			send_to_char("Uï¿½yï¿½ na kim, lub na czym?" NL, ch);
 			return;
 		}
 	}
@@ -1175,16 +1176,16 @@ DEF_DO_FUN( use )
 		{
 			if (!oprog_use_trigger(ch, device, victim, NULL, NULL))
 			{
-				act( PLAIN, "$n" PLAIN " u¿ywa $p$1" PLAIN " na $N$4" PLAIN ".", ch, device, victim, TO_ROOM);
-				act( PLAIN, "U¿ywasz $p$1" PLAIN " na $N$4" PLAIN ".", ch, device, victim, TO_CHAR);
+				act( PLAIN, "$n" PLAIN " uï¿½ywa $p$1" PLAIN " na $N$4" PLAIN ".", ch, device, victim, TO_ROOM);
+				act( PLAIN, "Uï¿½ywasz $p$1" PLAIN " na $N$4" PLAIN ".", ch, device, victim, TO_CHAR);
 			}
 		}
 		else
 		{
 			if (!oprog_use_trigger(ch, device, NULL, obj, NULL))
 			{
-				act( PLAIN, "$n" PLAIN " u¿ywa $p$1" PLAIN " na $P$4" PLAIN ".", ch, device, obj, TO_ROOM);
-				act( PLAIN, "U¿ywasz $p$1" PLAIN " na $P$4" PLAIN ".", ch, device, obj, TO_CHAR);
+				act( PLAIN, "$n" PLAIN " uï¿½ywa $p$1" PLAIN " na $P$4" PLAIN ".", ch, device, obj, TO_ROOM);
+				act( PLAIN, "Uï¿½ywasz $p$1" PLAIN " na $P$4" PLAIN ".", ch, device, obj, TO_CHAR);
 			}
 		}
 
@@ -1209,7 +1210,7 @@ DEF_DO_FUN( takedrug )
 
 	if (argument[0] == '\0' || !str_cmp(argument, ""))
 	{
-		send_to_char("Wzi±æ co?" NL, ch);
+		send_to_char("Wziï¿½ï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -1218,14 +1219,14 @@ DEF_DO_FUN( takedrug )
 
 	if (obj->item_type == ITEM_DEVICE)
 	{
-		send_to_char("Spróbuj najpierw wzi±æ to do rêki." NL, ch);
+		send_to_char("Sprï¿½buj najpierw wziï¿½ï¿½ to do rï¿½ki." NL, ch);
 		return;
 	}
 
 	if (obj->item_type != ITEM_SPICE)
 	{
-		act( COL_ACTION, "$n patrzy na $p$3 drapi±c siê w g³owê.", ch, obj, NULL, TO_ROOM);
-		act( COL_ACTION, "Nie bardzo wiesz co zrobiæ z $p$4.", ch, obj, NULL,
+		act( COL_ACTION, "$n patrzy na $p$3 drapiï¿½c siï¿½ w gï¿½owï¿½.", ch, obj, NULL, TO_ROOM);
+		act( COL_ACTION, "Nie bardzo wiesz co zrobiï¿½ z $p$4.", ch, obj, NULL,
 		TO_CHAR);
 		return;
 	}
@@ -1233,14 +1234,14 @@ DEF_DO_FUN( takedrug )
 	separate_obj(obj);
 	if (obj->in_obj)
 	{
-		act( PLAIN, "Wyci±gasz $p$3 z $P$1.", ch, obj, obj->in_obj, TO_CHAR);
-		act( PLAIN, "$n wyci±ga $p$3 z $P$1.", ch, obj, obj->in_obj, TO_ROOM);
+		act( PLAIN, "Wyciï¿½gasz $p$3 z $P$1.", ch, obj, obj->in_obj, TO_CHAR);
+		act( PLAIN, "$n wyciï¿½ga $p$3 z $P$1.", ch, obj, obj->in_obj, TO_ROOM);
 	}
 
 	if (ch->fighting && number_percent() > (get_curr_dex(ch) * 2 + 48))
 	{
-		act( COL_FORCE, "$n niechc±co upuszcza $p$3 niszcz±c to.", ch, obj, NULL, TO_ROOM);
-		act( COL_FORCE, "Uups... $p wypada ci z r±k i psuje siê!", ch, obj, NULL, TO_CHAR);
+		act( COL_FORCE, "$n niechcï¿½co upuszcza $p$3 niszczï¿½c to.", ch, obj, NULL, TO_ROOM);
+		act( COL_FORCE, "Uups... $p wypada ci z rï¿½k i psuje siï¿½!", ch, obj, NULL, TO_CHAR);
 	}
 	else
 	{
@@ -1265,9 +1266,9 @@ DEF_DO_FUN( takedrug )
 		ch->pcdata->drug_level[drug] = UMIN(ch->pcdata->drug_level[drug] + obj->value[1], 255);
 		if (ch->pcdata->drug_level[drug] >= 255 || ch->pcdata->drug_level[drug] > (ch->pcdata->addiction[drug] + 100))
 		{
-			act( COL_POISON, "$n krzywi siê i pluje na ziemiê.", ch, NULL, NULL,
+			act( COL_POISON, "$n krzywi siï¿½ i pluje na ziemiï¿½.", ch, NULL, NULL,
 			TO_ROOM);
-			sprintf(buf, "Czujesz siê bardzo ¼le. Chyba wziê³%s¶ za du¿o.", SEX_SUFFIX_EAE(ch));
+			sprintf(buf, "Czujesz siï¿½ bardzo ï¿½le. Chyba wziï¿½%sï¿½ za duï¿½o.", SEX_SUFFIX_EAE(ch));
 			act( COL_POISON, buf, ch, NULL, NULL, TO_CHAR);
 			ch->mental_state = URANGE(20, ch->mental_state + 5, 100);
 			af.type = gsn_poison;
@@ -1360,9 +1361,9 @@ void jedi_bonus(CHAR_DATA *ch)
 	if (number_range(1, 100) == 1)
 	{
 		ch->max_mana++;
-		send_to_char(FG_GREEN "Coraz lepiej pos³ugujesz siê Moc±." EOL, ch);
+		send_to_char(FG_GREEN "Coraz lepiej posï¿½ugujesz siï¿½ Mocï¿½." EOL, ch);
 		send_to_char(
-		FG_GREEN "Czujesz, ¿e twoja wiedza o Mocy zwiêksza siê." EOL, ch);
+		FG_GREEN "Czujesz, ï¿½e twoja wiedza o Mocy zwiï¿½ksza siï¿½." EOL, ch);
 	}
 }
 
@@ -1375,7 +1376,7 @@ void sith_penalty(CHAR_DATA *ch)
 			ch->max_hit--;
 		ch->hit--;
 		send_to_char(
-		FG_RED "Twoje cia³o s³abnie wraz ze wzrostem si³y Ciemnej Strony Mocy." EOL, ch);
+		FG_RED "Twoje ciaï¿½o sï¿½abnie wraz ze wzrostem siï¿½y Ciemnej Strony Mocy." EOL, ch);
 	}
 }
 
@@ -1402,7 +1403,7 @@ DEF_DO_FUN( fill )
 
 	if (arg1[0] == '\0')
 	{
-		send_to_char("Nape³niæ co?" NL, ch);
+		send_to_char("Napeï¿½niï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -1421,8 +1422,8 @@ DEF_DO_FUN( fill )
 	switch (dest_item)
 	{
 	default:
-		act( COL_ACTION, "$n próbuje nape³niæ $p$3... (Nie pytaj jak)", ch, obj, NULL, TO_ROOM);
-		send_to_char("Nie mo¿esz tego nape³niæ!" NL, ch);
+		act( COL_ACTION, "$n prï¿½buje napeï¿½niï¿½ $p$3... (Nie pytaj jak)", ch, obj, NULL, TO_ROOM);
+		send_to_char("Nie moï¿½esz tego napeï¿½niï¿½!" NL, ch);
 		return;
 		/* place all fillable item types here */
 	case ITEM_DRINK_CON:
@@ -1449,18 +1450,18 @@ DEF_DO_FUN( fill )
 		if (IS_SET(obj->value[1], CONT_CLOSED))
 		{
 			if (obj->gender == GENDER_MALE)
-				act( PLAIN, "$p jest zamkniêty.", ch, obj, NULL, TO_CHAR);
+				act( PLAIN, "$p jest zamkniï¿½ty.", ch, obj, NULL, TO_CHAR);
 			else if (obj->gender == GENDER_FEMALE)
-				act( PLAIN, "$p jest zamkniêta.", ch, obj, NULL, TO_CHAR);
+				act( PLAIN, "$p jest zamkniï¿½ta.", ch, obj, NULL, TO_CHAR);
 			else if (obj->gender == GENDER_NEUTRAL)
-				act( PLAIN, "$p jest zamkniête.", ch, obj, NULL, TO_CHAR);
+				act( PLAIN, "$p jest zamkniï¿½te.", ch, obj, NULL, TO_CHAR);
 			else
-				act( PLAIN, "$p s± zamkniête.", ch, obj, NULL, TO_CHAR);
+				act( PLAIN, "$p sï¿½ zamkniï¿½te.", ch, obj, NULL, TO_CHAR);
 			return;
 		}
 		if (get_obj_weight(obj) / obj->count >= obj->value[0])
 		{
-			send_to_char("Bardziej ju¿ tego nie nape³nisz." NL, ch);
+			send_to_char("Bardziej juï¿½ tego nie napeï¿½nisz." NL, ch);
 			return;
 		}
 	}
@@ -1469,15 +1470,15 @@ DEF_DO_FUN( fill )
 		diff = obj->value[0] - obj->value[1];
 		if (diff < 1 || obj->value[1] >= obj->value[0])
 		{
-			send_to_char("Bardziej ju¿ tego nie nape³nisz." NL, ch);
+			send_to_char("Bardziej juï¿½ tego nie napeï¿½nisz." NL, ch);
 			return;
 		}
 	}
 
 	if (dest_item == ITEM_PIPE && IS_SET(obj->value[3], PIPE_FULLOFASH))
 	{
-		ch_printf(ch, "W %s pe³no jest popio³u. Najpierw %s oczy¶æ." NL, obj->przypadki[5],
-				obj->gender == GENDER_MALE ? "go" : obj->gender == GENDER_FEMALE ? "j±" : "je");
+		ch_printf(ch, "W %s peï¿½no jest popioï¿½u. Najpierw %s oczyï¿½ï¿½." NL, obj->przypadki[5],
+				obj->gender == GENDER_MALE ? "go" : obj->gender == GENDER_FEMALE ? "jï¿½" : "je");
 		return;
 	}
 
@@ -1504,7 +1505,7 @@ DEF_DO_FUN( fill )
 			if (source->item_type != src_item1 && source->item_type != src_item2 && source->item_type != src_item3
 					&& source->item_type != src_item4)
 			{
-				act( PLAIN, "Nie mo¿esz nape³niæ $p$1 $P$4!", ch, obj, source,
+				act( PLAIN, "Nie moï¿½esz napeï¿½niï¿½ $p$1 $P$4!", ch, obj, source,
 				TO_CHAR);
 				return;
 			}
@@ -1523,20 +1524,19 @@ DEF_DO_FUN( fill )
 
 	if (!source && dest_item == ITEM_PIPE)
 	{
-		send_to_char("Czym chcesz to nape³niæ?" NL, ch);
+		send_to_char("Czym chcesz to napeï¿½niï¿½?" NL, ch);
 		return;
 	}
 
 	if (!source)
 	{
 		bool found = false;
-		OBJ_DATA *src_next;
 
 		found = false;
 		separate_obj(obj);
-		for (source = ch->in_room->first_content; source; source = src_next)
+		auto contents_snap = ch->in_room->contents;
+		for (auto* source : contents_snap)
 		{
-			src_next = source->next_content;
 
 			if (dest_item == ITEM_CONTAINER)
 			{
@@ -1570,23 +1570,23 @@ DEF_DO_FUN( fill )
 			switch (src_item1)
 			{
 			default:
-				send_to_char("Nie ma tu nic pasuj±cego." NL, ch);
+				send_to_char("Nie ma tu nic pasujï¿½cego." NL, ch);
 				return;
 			case ITEM_FOUNTAIN:
 				send_to_char("Nie ma tu ani fontanny, ani basenu." NL, ch);
 				return;
 			case ITEM_HERB_CON:
-				send_to_char("Nie widzisz tu ¿adnych zió³." NL, ch);
+				send_to_char("Nie widzisz tu ï¿½adnych ziï¿½." NL, ch);
 				return;
 			case ITEM_HERB:
-				send_to_char("Nie ma tu ¿adnych zió³ do palenia." NL, ch);
+				send_to_char("Nie ma tu ï¿½adnych ziï¿½ do palenia." NL, ch);
 				return;
 			}
 		}
 		if (dest_item == ITEM_CONTAINER)
 		{
-			act( COL_ACTION, "Nape³niasz $p$3.", ch, obj, NULL, TO_CHAR);
-			act( COL_ACTION, "$n nape³nia $p$3.", ch, obj, NULL, TO_ROOM);
+			act( COL_ACTION, "Napeï¿½niasz $p$3.", ch, obj, NULL, TO_CHAR);
+			act( COL_ACTION, "$n napeï¿½nia $p$3.", ch, obj, NULL, TO_ROOM);
 			return;
 		}
 	}
@@ -1601,7 +1601,7 @@ DEF_DO_FUN( fill )
 
 		if (source == obj)
 		{
-			send_to_char("Nie mo¿esz nape³niæ przedmiotu nim samym!" NL, ch);
+			send_to_char("Nie moï¿½esz napeï¿½niï¿½ przedmiotu nim samym!" NL, ch);
 			return;
 		}
 
@@ -1613,7 +1613,7 @@ DEF_DO_FUN( fill )
 
 			if (str_cmp(source->owner_name, ch->name))
 			{
-				send_to_char("Nie mo¿esz tego zrobiæ, to nie twój przedmiot!" NL, ch);
+				send_to_char("Nie moï¿½esz tego zrobiï¿½, to nie twï¿½j przedmiot!" NL, ch);
 				return;
 			}
 		}
@@ -1628,22 +1628,22 @@ DEF_DO_FUN( fill )
 					|| ch->carry_weight + get_obj_weight(source) > can_carry_w(ch)
 					|| (get_obj_weight(source) + get_obj_weight(obj) / obj->count) > obj->value[0])
 			{
-				send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+				send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 				return;
 			}
 			separate_obj(obj);
-			act( COL_ACTION, "Bierzesz do rêki $P$3 i wk³adasz do $p$3.", ch, obj, source, TO_CHAR);
-			act( COL_ACTION, "$n bierze do rêki $P$3 i wk³ada do $p$3.", ch, obj, source, TO_ROOM);
+			act( COL_ACTION, "Bierzesz do rï¿½ki $P$3 i wkï¿½adasz do $p$3.", ch, obj, source, TO_CHAR);
+			act( COL_ACTION, "$n bierze do rï¿½ki $P$3 i wkï¿½ada do $p$3.", ch, obj, source, TO_ROOM);
 			obj_from_room(source);
 			obj_to_obj(source, obj);
 			break;
 		case ITEM_MONEY:
-			send_to_char("Nie mo¿esz tego zrobiæ... jeszcze nie." NL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½... jeszcze nie." NL, ch);
 			break;
 		case ITEM_CORPSE_PC:
 			if (IS_NPC(ch))
 			{
-				send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+				send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 				return;
 			}
 
@@ -1658,7 +1658,7 @@ DEF_DO_FUN( fill )
 				bool fGroup;
 
 				fGroup = false;
-				for (gch = first_char; gch; gch = gch->next)
+				for (auto* gch : char_list)
 				{
 					if (!IS_NPC(gch) && is_same_group(ch, gch) && !str_cmp(name, gch->name))
 					{
@@ -1668,7 +1668,7 @@ DEF_DO_FUN( fill )
 				}
 				if (!fGroup)
 				{
-					send_to_char("To nie twoje cia³o!" NL, ch);
+					send_to_char("To nie twoje ciaï¿½o!" NL, ch);
 					return;
 				}
 			}
@@ -1677,20 +1677,20 @@ DEF_DO_FUN( fill )
 			if (source->item_type == ITEM_CONTAINER /* don't remove */
 			&& IS_SET(source->value[1], CONT_CLOSED))
 			{
-				act( PLAIN, "$p jest zamkniêty.", ch, source, NULL, TO_CHAR);
+				act( PLAIN, "$p jest zamkniï¿½ty.", ch, source, NULL, TO_CHAR);
 				return;
 			}
 		case ITEM_DROID_CORPSE:
 		case ITEM_CORPSE_NPC:
-			if ((otmp = source->first_content) == NULL)
+			if (source->contents.empty())
 			{
 				send_to_char("To jest puste." NL, ch);
 				return;
 			}
 			separate_obj(obj);
-			for (; otmp; otmp = otmp_next)
+			auto src_contents_snap = source->contents;
+			for (auto* otmp : src_contents_snap)
 			{
-				otmp_next = otmp->next_content;
 
 				if (!CAN_WEAR(otmp, ITEM_TAKE) || (IS_OBJ_STAT(otmp, ITEM_PROTOTYPE) && !can_take_proto(ch))
 						|| ch->carry_number + otmp->count > can_carry_n(ch) || ch->carry_weight + get_obj_weight(otmp) > can_carry_w(ch)
@@ -1702,11 +1702,11 @@ DEF_DO_FUN( fill )
 			}
 			if (found)
 			{
-				act( COL_ACTION, "Wypa³niasz $p$3 zawarto¶ci± $P$1.", ch, obj, source, TO_CHAR);
-				act( COL_ACTION, "$n wype³nia $p$3 zawarto¶ci± $P$1.", ch, obj, source, TO_ROOM);
+				act( COL_ACTION, "Wypaï¿½niasz $p$3 zawartoï¿½ciï¿½ $P$1.", ch, obj, source, TO_CHAR);
+				act( COL_ACTION, "$n wypeï¿½nia $p$3 zawartoï¿½ciï¿½ $P$1.", ch, obj, source, TO_ROOM);
 			}
 			else
-				send_to_char("Nie ma tu nic pasuj±cego." NL, ch);
+				send_to_char("Nie ma tu nic pasujï¿½cego." NL, ch);
 			break;
 		}
 		return;
@@ -1714,7 +1714,7 @@ DEF_DO_FUN( fill )
 
 	if (source->value[1] < 1)
 	{
-		send_to_char("Nic ju¿ nie zosta³o!" NL, ch);
+		send_to_char("Nic juï¿½ nie zostaï¿½o!" NL, ch);
 		return;
 	}
 	if (source->count > 1 && source->item_type != ITEM_FOUNTAIN)
@@ -1725,12 +1725,12 @@ DEF_DO_FUN( fill )
 	{
 	default:
 		bug("do_fill: got bad item type: %d", source->item_type);
-		send_to_char("Co¶ posz³o nie tak..." NL, ch);
+		send_to_char("Coï¿½ poszï¿½o nie tak..." NL, ch);
 		return;
 	case ITEM_FOUNTAIN:
 		if (obj->value[1] != 0 && obj->value[2] != 0)
 		{
-			send_to_char("W tym jest ju¿ inna ciecz." NL, ch);
+			send_to_char("W tym jest juï¿½ inna ciecz." NL, ch);
 			return;
 		}
 		obj->value[2] = 0;
@@ -1741,30 +1741,30 @@ DEF_DO_FUN( fill )
 		if (source->value[3])
 			obj->value[3] = source->value[3];
 
-		act( COL_ACTION, "Nape³niasz $p$3 wod± z $P$3.", ch, obj, source,
+		act( COL_ACTION, "Napeï¿½niasz $p$3 wodï¿½ z $P$3.", ch, obj, source,
 		TO_CHAR);
-		act( COL_ACTION, "$n nape³nia $p$3 wod± z $P$3.", ch, obj, source,
+		act( COL_ACTION, "$n napeï¿½nia $p$3 wodï¿½ z $P$3.", ch, obj, source,
 		TO_ROOM);
 		return;
 	case ITEM_HERB:
 		if (obj->value[1] != 0 && obj->value[2] != source->value[2])
 		{
-			send_to_char("W tym s± ju¿ inne zio³a!" NL, ch);
+			send_to_char("W tym sï¿½ juï¿½ inne zioï¿½a!" NL, ch);
 			return;
 		}
 		obj->value[2] = source->value[2];
 		if (source->value[1] < diff)
 			diff = source->value[1];
 		obj->value[1] += diff;
-		act( COL_ACTION, "Nape³niasz $p$3 $P$4.", ch, obj, source, TO_CHAR);
-		act( COL_ACTION, "$n nape³nia $p$3 $P$4.", ch, obj, source, TO_ROOM);
+		act( COL_ACTION, "Napeï¿½niasz $p$3 $P$4.", ch, obj, source, TO_CHAR);
+		act( COL_ACTION, "$n napeï¿½nia $p$3 $P$4.", ch, obj, source, TO_ROOM);
 		if ((source->value[1] -= diff) < 1)
 			extract_obj(source);
 		return;
 	case ITEM_HERB_CON:
 		if (obj->value[1] != 0 && obj->value[2] != source->value[2])
 		{
-			send_to_char("W tym s± ju¿ inne zio³a." NL, ch);
+			send_to_char("W tym sï¿½ juï¿½ inne zioï¿½a." NL, ch);
 			return;
 		}
 		obj->value[2] = source->value[2];
@@ -1772,15 +1772,15 @@ DEF_DO_FUN( fill )
 			diff = source->value[1];
 		obj->value[1] += diff;
 		source->value[1] -= diff;
-		act( COL_ACTION, "Nape³niasz $p$3 zio³ami z $P$1.", ch, obj, source,
+		act( COL_ACTION, "Napeï¿½niasz $p$3 zioï¿½ami z $P$1.", ch, obj, source,
 		TO_CHAR);
-		act( COL_ACTION, "$n nape³nia $p$3 zio³ami z $P$1.", ch, obj, source,
+		act( COL_ACTION, "$n napeï¿½nia $p$3 zioï¿½ami z $P$1.", ch, obj, source,
 		TO_ROOM);
 		return;
 	case ITEM_DRINK_CON:
 		if (obj->value[1] != 0 && obj->value[2] != source->value[2])
 		{
-			send_to_char("W tym jest ju¿ inna ciecz." NL, ch);
+			send_to_char("W tym jest juï¿½ inna ciecz." NL, ch);
 			return;
 		}
 		obj->value[2] = source->value[2];
@@ -1794,9 +1794,9 @@ DEF_DO_FUN( fill )
 		if (source->value[3])
 			obj->value[3] = source->value[3];
 
-		act( COL_ACTION, "Nape³niasz $p$3 zawarto¶ci± $P$1.", ch, obj, source,
+		act( COL_ACTION, "Napeï¿½niasz $p$3 zawartoï¿½ciï¿½ $P$1.", ch, obj, source,
 		TO_CHAR);
-		act( COL_ACTION, "$n nape³nia $p$3 zawarto¶ci± $P$1.", ch, obj, source,
+		act( COL_ACTION, "$n napeï¿½nia $p$3 zawartoï¿½ciï¿½ $P$1.", ch, obj, source,
 		TO_ROOM);
 		return;
 	}
@@ -1816,13 +1816,13 @@ DEF_DO_FUN( drink )
 
 	if (arg[0] == '\0')
 	{
-		for (obj = ch->in_room->first_content; obj; obj = obj->next_content)
+		for (auto* obj : ch->in_room->contents)
 			if ((obj->item_type == ITEM_FOUNTAIN))
 				break;
 
 		if (!obj)
 		{
-			send_to_char("Napiæ siê czego?" NL, ch);
+			send_to_char("Napiï¿½ siï¿½ czego?" NL, ch);
 			return;
 		}
 	}
@@ -1853,13 +1853,13 @@ DEF_DO_FUN( drink )
 	default:
 		if (obj->carried_by == ch)
 		{
-			act( COL_ACTION, "$n przyk³ada sobie $p$3 do ust i stara siê napiæ...", ch, obj, NULL, TO_ROOM);
-			act( COL_ACTION, "Przyk³adasz sobie $p$3 do ust i starasz siê napiæ...", ch, obj, NULL, TO_CHAR);
+			act( COL_ACTION, "$n przykï¿½ada sobie $p$3 do ust i stara siï¿½ napiï¿½...", ch, obj, NULL, TO_ROOM);
+			act( COL_ACTION, "Przykï¿½adasz sobie $p$3 do ust i starasz siï¿½ napiï¿½...", ch, obj, NULL, TO_CHAR);
 		}
 		else
 		{
-			act( COL_ACTION, "$n pada na ziemiê i stara siê napiæ z $p$1... (Czy $e siê dobrze czuje?)", ch, obj, NULL, TO_ROOM);
-			act( COL_ACTION, "Padasz na ziemiê i starasz siê napiæ z $p$1...", ch, obj, NULL, TO_CHAR);
+			act( COL_ACTION, "$n pada na ziemiï¿½ i stara siï¿½ napiï¿½ z $p$1... (Czy $e siï¿½ dobrze czuje?)", ch, obj, NULL, TO_ROOM);
+			act( COL_ACTION, "Padasz na ziemiï¿½ i starasz siï¿½ napiï¿½ z $p$1...", ch, obj, NULL, TO_CHAR);
 		}
 		break;
 
@@ -1873,8 +1873,8 @@ DEF_DO_FUN( drink )
 	case ITEM_FOUNTAIN:
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
-			act( COL_ACTION, "$n pije wodê z $p$1.", ch, obj, NULL, TO_ROOM);
-			send_to_char("Bierzesz wielkiego orze¼wiaj±cego ³yka." NL, ch);
+			act( COL_ACTION, "$n pije wodï¿½ z $p$1.", ch, obj, NULL, TO_ROOM);
+			send_to_char("Bierzesz wielkiego orzeï¿½wiajï¿½cego ï¿½yka." NL, ch);
 		}
 
 		if (!IS_NPC(ch))
@@ -1885,8 +1885,8 @@ DEF_DO_FUN( drink )
 			/* The drink was poisoned! */
 			AFFECT_DATA af;
 
-			act( COL_POISON, "$n krzywi siê i pluje.", ch, NULL, NULL, TO_ROOM);
-			act( COL_POISON, "Krzywisz siê i plujesz.", ch, NULL, NULL,
+			act( COL_POISON, "$n krzywi siï¿½ i pluje.", ch, NULL, NULL, TO_ROOM);
+			act( COL_POISON, "Krzywisz siï¿½ i plujesz.", ch, NULL, NULL,
 			TO_CHAR);
 			ch->mental_state = URANGE(20, ch->mental_state + 5, 100);
 			af.type = gsn_poison;
@@ -1902,7 +1902,7 @@ DEF_DO_FUN( drink )
 	case ITEM_DRINK_CON:
 		if (obj->value[1] <= 0)
 		{
-			send_to_char("To jest ju¿ puste." NL, ch);
+			send_to_char("To jest juï¿½ puste." NL, ch);
 			return;
 		}
 
@@ -1929,24 +1929,24 @@ DEF_DO_FUN( drink )
 		if (!IS_NPC(ch))
 		{
 			if (ch->pcdata->condition[COND_DRUNK] > 24)
-				send_to_char("Czujesz, ¿e kolana lekko ci siê uginaj± i nie bardzo wiesz co siê dzieje." NL, ch);
+				send_to_char("Czujesz, ï¿½e kolana lekko ci siï¿½ uginajï¿½ i nie bardzo wiesz co siï¿½ dzieje." NL, ch);
 			else if (ch->pcdata->condition[COND_DRUNK] > 18)
-				ch_printf(ch, "Jeste¶ nachlan%s jak bela." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Jesteï¿½ nachlan%s jak bela." NL, SEX_SUFFIX_YAE(ch));
 			else if (ch->pcdata->condition[COND_DRUNK] > 12)
-				ch_printf(ch, "Jeste¶ pijan%s." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Jesteï¿½ pijan%s." NL, SEX_SUFFIX_YAE(ch));
 			else if (ch->pcdata->condition[COND_DRUNK] > 8)
-				send_to_char("Trochê krêci ci siê w g³owie." NL, ch);
+				send_to_char("Trochï¿½ krï¿½ci ci siï¿½ w gï¿½owie." NL, ch);
 			else if (ch->pcdata->condition[COND_DRUNK] > 5)
-				send_to_char("Czujesz jak lekko szumi ci w g³owie." NL, ch);
+				send_to_char("Czujesz jak lekko szumi ci w gï¿½owie." NL, ch);
 
 			if (ch->pcdata->condition[COND_THIRST] >= COND_MAX)
-				ch_printf(ch, "Jeste¶ pe³n%s. Wiêcej nie zmie¶cisz." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Jesteï¿½ peï¿½n%s. Wiï¿½cej nie zmieï¿½cisz." NL, SEX_SUFFIX_YAE(ch));
 			else if (ch->pcdata->condition[COND_FULL] > COND_MAX / 2)
-				ch_printf(ch, "Jeste¶ pe³n%s." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Jesteï¿½ peï¿½n%s." NL, SEX_SUFFIX_YAE(ch));
 			else if (ch->pcdata->condition[COND_THIRST] > COND_MAX / 4)
-				send_to_char("Nie chce ci siê ju¿ piæ." NL, ch);
+				send_to_char("Nie chce ci siï¿½ juï¿½ piï¿½." NL, ch);
 			else if (ch->pcdata->condition[COND_THIRST] > 0)
-				ch_printf(ch, "Ju¿ nie jeste¶ spragnion%s." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Juï¿½ nie jesteï¿½ spragnion%s." NL, SEX_SUFFIX_YAE(ch));
 		}
 
 		if (obj->value[3] >= 1)
@@ -1954,8 +1954,8 @@ DEF_DO_FUN( drink )
 			/* The drink was poisoned! */
 			AFFECT_DATA af;
 
-			act( COL_POISON, "$n krzywi siê i pluje.", ch, NULL, NULL, TO_ROOM);
-			act( COL_POISON, "Krzywisz siê i plujesz.", ch, NULL, NULL,
+			act( COL_POISON, "$n krzywi siï¿½ i pluje.", ch, NULL, NULL, TO_ROOM);
+			act( COL_POISON, "Krzywisz siï¿½ i plujesz.", ch, NULL, NULL,
 			TO_CHAR);
 			ch->mental_state = URANGE(20, ch->mental_state + 5, 100);
 			af.type = gsn_poison;
@@ -1981,7 +1981,7 @@ DEF_DO_FUN( eat )
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Zje¶æ co?" NL, ch);
+		send_to_char("Zjeï¿½ï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -1996,7 +1996,7 @@ DEF_DO_FUN( eat )
 	{
 		if (obj->item_type != ITEM_FOOD && obj->item_type != ITEM_PILL)
 		{
-			act( COL_ACTION, "$n patrzy ze smakiem na $p$3... (musi byæ bardzo g³odn$y)", ch, obj, NULL, TO_ROOM);
+			act( COL_ACTION, "$n patrzy ze smakiem na $p$3... (musi byï¿½ bardzo gï¿½odn$y)", ch, obj, NULL, TO_ROOM);
 			act( COL_ACTION, "Patrzysz ze smakiem na $p$3...", ch, obj, NULL,
 			TO_CHAR);
 			return;
@@ -2004,7 +2004,7 @@ DEF_DO_FUN( eat )
 
 		if (!IS_NPC(ch) && ch->pcdata->condition[COND_FULL] >= COND_MAX)
 		{
-			send_to_char("Twój brzuch nie zmie¶ci ju¿ nic wiêcej." NL, ch);
+			send_to_char("Twï¿½j brzuch nie zmieï¿½ci juï¿½ nic wiï¿½cej." NL, ch);
 			return;
 		}
 	}
@@ -2020,8 +2020,8 @@ DEF_DO_FUN( eat )
 
 	if (obj->in_obj)
 	{
-		act( PLAIN, "Wyci±gasz $p$3 z $P$1.", ch, obj, obj->in_obj, TO_CHAR);
-		act( PLAIN, "$n wyci±ga $p$3 z $P$1.", ch, obj, obj->in_obj, TO_ROOM);
+		act( PLAIN, "Wyciï¿½gasz $p$3 z $P$1.", ch, obj, obj->in_obj, TO_CHAR);
+		act( PLAIN, "$n wyciï¿½ga $p$3 z $P$1.", ch, obj, obj->in_obj, TO_ROOM);
 	}
 	if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 	{
@@ -2050,9 +2050,9 @@ DEF_DO_FUN( eat )
 			gain_condition(ch, COND_FULL, (obj->value[0] * foodcond) / 10);
 
 			if (condition <= 1 && ch->pcdata->condition[COND_FULL] > 1)
-				ch_printf(ch, "Ju¿ nie jeste¶ g³odn%s." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Juï¿½ nie jesteï¿½ gï¿½odn%s." NL, SEX_SUFFIX_YAE(ch));
 			else if (ch->pcdata->condition[COND_FULL] > COND_MAX)
-				ch_printf(ch, "Jeste¶ pe³n%s." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Jesteï¿½ peï¿½n%s." NL, SEX_SUFFIX_YAE(ch));
 		}
 
 		if (obj->value[3] != 0 || (foodcond < 4 && number_range(0, foodcond + 1) == 0))
@@ -2062,17 +2062,17 @@ DEF_DO_FUN( eat )
 
 			if (obj->value[3] != 0)
 			{
-				act( COL_POISON, "$n d³awi siê i pluje.", ch, NULL, NULL,
+				act( COL_POISON, "$n dï¿½awi siï¿½ i pluje.", ch, NULL, NULL,
 				TO_ROOM);
-				act( COL_POISON, "D³awisz siê i plujesz.", ch, NULL, NULL,
+				act( COL_POISON, "Dï¿½awisz siï¿½ i plujesz.", ch, NULL, NULL,
 				TO_CHAR);
 				ch->mental_state = URANGE(20, ch->mental_state + 5, 100);
 			}
 			else
 			{
-				act( COL_POISON, "$n krztusi siê $p$4.", ch, obj, NULL,
+				act( COL_POISON, "$n krztusi siï¿½ $p$4.", ch, obj, NULL,
 				TO_ROOM);
-				act( COL_POISON, "Krztusisz siê $p$4.", ch, obj, NULL, TO_CHAR);
+				act( COL_POISON, "Krztusisz siï¿½ $p$4.", ch, obj, NULL, TO_CHAR);
 				ch->mental_state = URANGE(15, ch->mental_state + 5, 100);
 			}
 
@@ -2094,9 +2094,9 @@ DEF_DO_FUN( eat )
 			condition = ch->pcdata->condition[COND_FULL];
 			gain_condition(ch, COND_FULL, obj->value[4]);
 			if (condition <= 1 && ch->pcdata->condition[COND_FULL] > 1)
-				ch_printf(ch, "Ju¿ nie jeste¶ g³odn%s." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Juï¿½ nie jesteï¿½ gï¿½odn%s." NL, SEX_SUFFIX_YAE(ch));
 			else if (ch->pcdata->condition[COND_FULL] > COND_MAX)
-				ch_printf(ch, "Jeste¶ pe³n%s." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Jesteï¿½ peï¿½n%s." NL, SEX_SUFFIX_YAE(ch));
 		}
 		retcode = obj_cast_spell(obj->value[1], obj->value[0], ch, ch, NULL);
 		if (retcode == rNONE)
@@ -2119,7 +2119,7 @@ DEF_DO_FUN( quaff )
 
 	if (argument[0] == '\0' || !str_cmp(argument, ""))
 	{
-		send_to_char("Po³kn±æ co?" NL, ch);
+		send_to_char("Poï¿½knï¿½ï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -2132,8 +2132,8 @@ DEF_DO_FUN( quaff )
 			do_drink(ch, obj->name);
 		else
 		{
-			act( COL_ACTION, "$n przyk³ada sobie $p$3 do ust i stara siê piæ...", ch, obj, NULL, TO_ROOM);
-			act( COL_ACTION, "Przyk³adasz sobie $p$3 do ust i starasz siê piæ...", ch, obj, NULL, TO_CHAR);
+			act( COL_ACTION, "$n przykï¿½ada sobie $p$3 do ust i stara siï¿½ piï¿½...", ch, obj, NULL, TO_ROOM);
+			act( COL_ACTION, "Przykï¿½adasz sobie $p$3 do ust i starasz siï¿½ piï¿½...", ch, obj, NULL, TO_CHAR);
 		}
 		return;
 	}
@@ -2143,7 +2143,7 @@ DEF_DO_FUN( quaff )
 	 */
 	if (!IS_NPC(ch) && (ch->pcdata->condition[COND_FULL] >= 11 * COND_MAX / 10 || ch->pcdata->condition[COND_THIRST] >= 11 * COND_MAX / 10))
 	{
-		send_to_char("Twój brzuch nie zmie¶ci ju¿ nic wiêcej." NL, ch);
+		send_to_char("Twï¿½j brzuch nie zmieï¿½ci juï¿½ nic wiï¿½cej." NL, ch);
 		return;
 	}
 
@@ -2154,8 +2154,8 @@ DEF_DO_FUN( quaff )
 
 	if (obj->in_obj)
 	{
-		act( PLAIN, "Wyci±gasz $p$3 z $P$1.", ch, obj, obj->in_obj, TO_CHAR);
-		act( PLAIN, "$n wyci±ga $p$3 z $P$1.", ch, obj, obj->in_obj, TO_ROOM);
+		act( PLAIN, "Wyciï¿½gasz $p$3 z $P$1.", ch, obj, obj->in_obj, TO_CHAR);
+		act( PLAIN, "$n wyciï¿½ga $p$3 z $P$1.", ch, obj, obj->in_obj, TO_ROOM);
 	}
 
 	/*
@@ -2163,15 +2163,15 @@ DEF_DO_FUN( quaff )
 	 */
 	if (ch->fighting && number_percent() > (get_curr_dex(ch) * 2 + 48))
 	{
-		act( COL_FORCE, "$n niechc±c$y upuszcza $p$3 rozbijaj±c to na kawa³eczki.", ch, obj, NULL, TO_ROOM);
-		act( COL_FORCE, "Uups... $p wypada ci z r±k i rozbija siê na kawa³eczki!", ch, obj, NULL, TO_CHAR);
+		act( COL_FORCE, "$n niechcï¿½c$y upuszcza $p$3 rozbijajï¿½c to na kawaï¿½eczki.", ch, obj, NULL, TO_ROOM);
+		act( COL_FORCE, "Uups... $p wypada ci z rï¿½k i rozbija siï¿½ na kawaï¿½eczki!", ch, obj, NULL, TO_CHAR);
 	}
 	else
 	{
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
-			act( COL_ACTION, "$n po³yka $p$3.", ch, obj, NULL, TO_ROOM);
-			act( COL_ACTION, "Po³ykasz $p$3.", ch, obj, NULL, TO_CHAR);
+			act( COL_ACTION, "$n poï¿½yka $p$3.", ch, obj, NULL, TO_ROOM);
+			act( COL_ACTION, "Poï¿½ykasz $p$3.", ch, obj, NULL, TO_CHAR);
 		}
 
 		WAIT_STATE(ch, PULSE_PER_SECOND/4);
@@ -2213,7 +2213,7 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 	switch (obj->item_type)
 	{
 	default:
-		sprintf(buf, "Nie mo¿esz tego %s!" NL, pull ? "wcisn±æ" : "wycisn±æ");
+		sprintf(buf, "Nie moï¿½esz tego %s!" NL, pull ? "wcisnï¿½ï¿½" : "wycisnï¿½ï¿½");
 		send_to_char(buf, ch);
 		return;
 		break;
@@ -2222,14 +2222,14 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 	case ITEM_PULLCHAIN:
 		if ((!pull && isup) || (pull && !isup))
 		{
-			sprintf(buf, "To jest ju¿ %s." NL, isup ? "w³±czone" : "wy³±czone");
+			sprintf(buf, "To jest juï¿½ %s." NL, isup ? "wï¿½ï¿½czone" : "wyï¿½ï¿½czone");
 			send_to_char(buf, ch);
 			return;
 		}
 	case ITEM_BUTTON:
 		if ((!pull && isup) || (pull & !isup))
 		{
-			sprintf(buf, "To jest ju¿ %s." NL, isup ? "wci¶niête" : "wyci¶niête");
+			sprintf(buf, "To jest juï¿½ %s." NL, isup ? "wciï¿½niï¿½te" : "wyciï¿½niï¿½te");
 			send_to_char(buf, ch);
 			return;
 		}
@@ -2304,10 +2304,10 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 			maxd = 5;
 
 		randomize_exits(room, maxd);
-		for (rch = room->first_person; rch; rch = rch->next_in_room)
+		for (auto* rch : room->people)
 		{
-			send_to_char("S³yszysz g³o¶ne dudnienie." NL, rch);
-			send_to_char("Co¶ siê chyba zmieni³o..." NL, rch);
+			send_to_char("Sï¿½yszysz gï¿½oï¿½ne dudnienie." NL, rch);
+			send_to_char("Coï¿½ siï¿½ chyba zmieniï¿½o..." NL, rch);
 		}
 	}
 	if (IS_SET(obj->value[0], TRIG_DOOR))
@@ -2323,12 +2323,12 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 		if (IS_SET(obj->value[0], TRIG_D_NORTH))
 		{
 			edir = DIR_NORTH;
-			txt = "na pó³nocy";
+			txt = "na pï¿½nocy";
 		}
 		else if (IS_SET(obj->value[0], TRIG_D_SOUTH))
 		{
 			edir = DIR_SOUTH;
-			txt = "na po³udniu";
+			txt = "na poï¿½udniu";
 		}
 		else if (IS_SET(obj->value[0], TRIG_D_EAST))
 		{
@@ -2343,12 +2343,12 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 		else if (IS_SET(obj->value[0], TRIG_D_UP))
 		{
 			edir = DIR_UP;
-			txt = "nad tob±";
+			txt = "nad tobï¿½";
 		}
 		else if (IS_SET(obj->value[0], TRIG_D_DOWN))
 		{
 			edir = DIR_DOWN;
-			txt = "pod tob±";
+			txt = "pod tobï¿½";
 		}
 		else
 		{
@@ -2375,17 +2375,17 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 			pexit->key = -1;
 			pexit->flags = 0;
 			top_exit++;
-			act( PLAIN, "Przej¶cie siê otwiera!", ch, NULL, NULL, TO_CHAR);
-			act( PLAIN, "Przej¶cie siê otwiera!", ch, NULL, NULL, TO_ROOM);
+			act( PLAIN, "Przejï¿½cie siï¿½ otwiera!", ch, NULL, NULL, TO_CHAR);
+			act( PLAIN, "Przejï¿½cie siï¿½ otwiera!", ch, NULL, NULL, TO_ROOM);
 			return;
 		}
 		if ( IS_SET(obj->value[0],
 				TRIG_UNLOCK) && IS_SET(pexit->flags, EX_LOCKED))
 		{
 			REMOVE_BIT(pexit->flags, EX_LOCKED);
-			act( PLAIN, "S³yszysz g³uche klikniêcie $T.", ch, NULL, txt,
+			act( PLAIN, "Sï¿½yszysz gï¿½uche klikniï¿½cie $T.", ch, NULL, txt,
 			TO_CHAR);
-			act( PLAIN, "S³yszysz g³uche klikniêcie $T.", ch, NULL, txt,
+			act( PLAIN, "Sï¿½yszysz gï¿½uche klikniï¿½cie $T.", ch, NULL, txt,
 			TO_ROOM);
 			if ((pexit_rev = pexit->rexit) != NULL && pexit_rev->to_room == ch->in_room)
 				REMOVE_BIT(pexit_rev->flags, EX_LOCKED);
@@ -2395,9 +2395,9 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 				TRIG_LOCK) && !IS_SET(pexit->flags, EX_LOCKED))
 		{
 			SET_BIT(pexit->flags, EX_LOCKED);
-			act( PLAIN, "S³yszysz g³uche klikniêcie $T.", ch, NULL, txt,
+			act( PLAIN, "Sï¿½yszysz gï¿½uche klikniï¿½cie $T.", ch, NULL, txt,
 			TO_CHAR);
-			act( PLAIN, "S³yszysz g³uche klikniêcie $T.", ch, NULL, txt,
+			act( PLAIN, "Sï¿½yszysz gï¿½uche klikniï¿½cie $T.", ch, NULL, txt,
 			TO_ROOM);
 			if ((pexit_rev = pexit->rexit) != NULL && pexit_rev->to_room == ch->in_room)
 				SET_BIT(pexit_rev->flags, EX_LOCKED);
@@ -2407,14 +2407,14 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 				TRIG_OPEN) && IS_SET(pexit->flags, EX_CLOSED))
 		{
 			REMOVE_BIT(pexit->flags, EX_CLOSED);
-			for (rch = room->first_person; rch; rch = rch->next_in_room)
-				act( COL_ACTION, "$d otwieraj± siê.", rch, NULL, pexit->keyword,
+			for (auto* rch : room->people)
+				act( COL_ACTION, "$d otwierajï¿½ siï¿½.", rch, NULL, pexit->keyword,
 				TO_CHAR);
 			if ((pexit_rev = pexit->rexit) != NULL && pexit_rev->to_room == ch->in_room)
 			{
 				REMOVE_BIT(pexit_rev->flags, EX_CLOSED);
-				for (rch = to_room->first_person; rch; rch = rch->next_in_room)
-					act( COL_ACTION, "$d otwieraj± siê.", rch, NULL, pexit_rev->keyword, TO_CHAR);
+				for (auto* rch : to_room->people)
+					act( COL_ACTION, "$d otwierajï¿½ siï¿½.", rch, NULL, pexit_rev->keyword, TO_CHAR);
 			}
 			check_room_for_traps(ch, trap_door[edir]);
 			return;
@@ -2423,14 +2423,14 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 				TRIG_CLOSE) && !IS_SET(pexit->flags, EX_CLOSED))
 		{
 			SET_BIT(pexit->flags, EX_CLOSED);
-			for (rch = room->first_person; rch; rch = rch->next_in_room)
-				act( COL_ACTION, "$d zamykaj± siê.", rch, NULL, pexit->keyword,
+			for (auto* rch : room->people)
+				act( COL_ACTION, "$d zamykajï¿½ siï¿½.", rch, NULL, pexit->keyword,
 				TO_CHAR);
 			if ((pexit_rev = pexit->rexit) != NULL && pexit_rev->to_room == ch->in_room)
 			{
 				SET_BIT(pexit_rev->flags, EX_CLOSED);
-				for (rch = to_room->first_person; rch; rch = rch->next_in_room)
-					act( COL_ACTION, "$d zamykaj± siê.", rch, NULL, pexit_rev->keyword, TO_CHAR);
+				for (auto* rch : to_room->people)
+					act( COL_ACTION, "$d zamykajï¿½ siï¿½.", rch, NULL, pexit_rev->keyword, TO_CHAR);
 			}
 			check_room_for_traps(ch, trap_door[edir]);
 			return;
@@ -2446,7 +2446,7 @@ DEF_DO_FUN( pull )
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
 	{
-		send_to_char("Poci±gn±æ co?" NL, ch);
+		send_to_char("Pociï¿½gnï¿½ï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -2455,7 +2455,7 @@ DEF_DO_FUN( pull )
 
 	if ((obj = get_obj_here(ch, arg)) == NULL)
 	{
-		act( PLAIN, "Nie ma tu ¿adnego $T.", ch, NULL, arg, TO_CHAR);
+		act( PLAIN, "Nie ma tu ï¿½adnego $T.", ch, NULL, arg, TO_CHAR);
 		return;
 	}
 
@@ -2470,7 +2470,7 @@ DEF_DO_FUN( push )
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
 	{
-		send_to_char("Wcisn±æ co?" NL, ch);
+		send_to_char("Wcisnï¿½ï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -2479,7 +2479,7 @@ DEF_DO_FUN( push )
 
 	if ((obj = get_obj_here(ch, arg)) == NULL)
 	{
-		act( PLAIN, "Nie ma tu ¿adnego $T.", ch, NULL, arg, TO_CHAR);
+		act( PLAIN, "Nie ma tu ï¿½adnego $T.", ch, NULL, arg, TO_CHAR);
 		return;
 	}
 
@@ -2495,7 +2495,7 @@ DEF_DO_FUN( tamp )
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
 	{
-		send_to_char("Nabiæ co?" NL, ch);
+		send_to_char("Nabiï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -2509,7 +2509,7 @@ DEF_DO_FUN( tamp )
 	}
 	if (pipe->item_type != ITEM_PIPE)
 	{
-		send_to_char("Nie mo¿esz tego nabiæ." NL, ch);
+		send_to_char("Nie moï¿½esz tego nabiï¿½." NL, ch);
 		return;
 	}
 	if (!IS_SET(pipe->value[3], PIPE_TAMPED))
@@ -2519,7 +2519,7 @@ DEF_DO_FUN( tamp )
 		SET_BIT(pipe->value[3], PIPE_TAMPED);
 		return;
 	}
-	send_to_char("Nie musisz tego nabijaæ." NL, ch);
+	send_to_char("Nie musisz tego nabijaï¿½." NL, ch);
 }
 
 DEF_DO_FUN( smoke )
@@ -2530,7 +2530,7 @@ DEF_DO_FUN( smoke )
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
 	{
-		send_to_char("Wypaliæ co?" NL, ch);
+		send_to_char("Wypaliï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -2549,22 +2549,22 @@ DEF_DO_FUN( smoke )
 
 	if (pipe->item_type != ITEM_PIPE)
 	{
-		act( COL_ACTION, "Próbujesz paliæ $p$3... ale jako¶ nic siê nie dzieje.", ch, pipe, NULL, TO_CHAR);
-		act( COL_ACTION, "$n próbuje paliæ $p$3... (Ciekawe jak $e to nabi³$o?)", ch, pipe, NULL, TO_ROOM);
+		act( COL_ACTION, "Prï¿½bujesz paliï¿½ $p$3... ale jakoï¿½ nic siï¿½ nie dzieje.", ch, pipe, NULL, TO_CHAR);
+		act( COL_ACTION, "$n prï¿½buje paliï¿½ $p$3... (Ciekawe jak $e to nabiï¿½$o?)", ch, pipe, NULL, TO_ROOM);
 		return;
 	}
 	if (!IS_SET(pipe->value[3], PIPE_LIT))
 	{
-		act( COL_ACTION, "Próbujesz zaci±gn±æ siê $p$4, ale to siê nie pali.", ch, pipe, NULL, TO_CHAR);
-		act( COL_ACTION, "$n próbuje zaci±gn±æ siê $p$4, ale to siê nie pali.", ch, pipe, NULL, TO_ROOM);
+		act( COL_ACTION, "Prï¿½bujesz zaciï¿½gnï¿½ï¿½ siï¿½ $p$4, ale to siï¿½ nie pali.", ch, pipe, NULL, TO_CHAR);
+		act( COL_ACTION, "$n prï¿½buje zaciï¿½gnï¿½ï¿½ siï¿½ $p$4, ale to siï¿½ nie pali.", ch, pipe, NULL, TO_ROOM);
 		return;
 	}
 	if (pipe->value[1] > 0)
 	{
 		if (!oprog_use_trigger(ch, pipe, NULL, NULL, NULL))
 		{
-			act( COL_ACTION, "Bez opamiêtania zaci±gasz siê $p$4.", ch, pipe, NULL, TO_CHAR);
-			act( COL_ACTION, "$n bez opamiêtania zaci±ga siê $p$4.", ch, pipe, NULL, TO_ROOM);
+			act( COL_ACTION, "Bez opamiï¿½tania zaciï¿½gasz siï¿½ $p$4.", ch, pipe, NULL, TO_CHAR);
+			act( COL_ACTION, "$n bez opamiï¿½tania zaciï¿½ga siï¿½ $p$4.", ch, pipe, NULL, TO_ROOM);
 		}
 
 		if ( IS_VALID_HERB( pipe->value[2] ) && pipe->value[2] < top_herb)
@@ -2599,7 +2599,7 @@ DEF_DO_FUN( light )
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
 	{
-		send_to_char("Zapaliæ co?" NL, ch);
+		send_to_char("Zapaliï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -2613,24 +2613,24 @@ DEF_DO_FUN( light )
 	}
 	if (pipe->item_type != ITEM_PIPE)
 	{
-		send_to_char("Nie mo¿esz tego zapaliæ." NL, ch);
+		send_to_char("Nie moï¿½esz tego zapaliï¿½." NL, ch);
 		return;
 	}
 	if (!IS_SET(pipe->value[3], PIPE_LIT))
 	{
 		if (pipe->value[1] < 1)
 		{
-			act( COL_ACTION, "Próbujesz zapaliæ $p$3, ale to jest puste.", ch, pipe, NULL, TO_CHAR);
-			act( COL_ACTION, "$n próbuje zapaliæ $p$3, ale to jest puste.", ch, pipe, NULL, TO_ROOM);
+			act( COL_ACTION, "Prï¿½bujesz zapaliï¿½ $p$3, ale to jest puste.", ch, pipe, NULL, TO_CHAR);
+			act( COL_ACTION, "$n prï¿½buje zapaliï¿½ $p$3, ale to jest puste.", ch, pipe, NULL, TO_ROOM);
 			return;
 		}
-		act( COL_ACTION, "Ostro¿nie przypalasz $p$3.", ch, pipe, NULL, TO_CHAR);
-		act( COL_ACTION, "$n ostro¿nie przypala $p$3.", ch, pipe, NULL,
+		act( COL_ACTION, "Ostroï¿½nie przypalasz $p$3.", ch, pipe, NULL, TO_CHAR);
+		act( COL_ACTION, "$n ostroï¿½nie przypala $p$3.", ch, pipe, NULL,
 		TO_ROOM);
 		SET_BIT(pipe->value[3], PIPE_LIT);
 		return;
 	}
-	send_to_char("To ju¿ siê pali." NL, ch);
+	send_to_char("To juï¿½ siï¿½ pali." NL, ch);
 }
 
 DEF_DO_FUN( empty )
@@ -2646,7 +2646,7 @@ DEF_DO_FUN( empty )
 
 	if (arg1[0] == '\0')
 	{
-		send_to_char("Opró¿niæ co?" NL, ch);
+		send_to_char("Oprï¿½niï¿½ co?" NL, ch);
 		return;
 	}
 	if (ms_find_obj(ch))
@@ -2663,12 +2663,12 @@ DEF_DO_FUN( empty )
 	switch (obj->item_type)
 	{
 	default:
-		act( COL_ACTION, "Potrz±sasz $p$4 próbuj±c to opró¿niæ...", ch, obj, NULL, TO_CHAR);
-		act( COL_ACTION, "$n zaczyna trz±¶æ $p$4 próbuj±c to opró¿niæ...", ch, obj, NULL, TO_ROOM);
+		act( COL_ACTION, "Potrzï¿½sasz $p$4 prï¿½bujï¿½c to oprï¿½niï¿½...", ch, obj, NULL, TO_CHAR);
+		act( COL_ACTION, "$n zaczyna trzï¿½ï¿½ï¿½ $p$4 prï¿½bujï¿½c to oprï¿½niï¿½...", ch, obj, NULL, TO_ROOM);
 		return;
 	case ITEM_PIPE:
-		act( COL_ACTION, "Delikatnie stukasz w $p$3 i opró¿niasz to.", ch, obj, NULL, TO_CHAR);
-		act( COL_ACTION, "$n delikatnie stuka w $p$3 i opró¿nia to.", ch, obj, NULL, TO_ROOM);
+		act( COL_ACTION, "Delikatnie stukasz w $p$3 i oprï¿½niasz to.", ch, obj, NULL, TO_CHAR);
+		act( COL_ACTION, "$n delikatnie stuka w $p$3 i oprï¿½nia to.", ch, obj, NULL, TO_ROOM);
 		REMOVE_BIT(obj->value[3], PIPE_FULLOFASH);
 		REMOVE_BIT(obj->value[3], PIPE_LIT);
 		obj->value[1] = 0;
@@ -2676,54 +2676,54 @@ DEF_DO_FUN( empty )
 	case ITEM_DRINK_CON:
 		if (obj->value[1] < 1)
 		{
-			send_to_char("To jest ju¿ puste." NL, ch);
+			send_to_char("To jest juï¿½ puste." NL, ch);
 			return;
 		}
-		act( COL_ACTION, "Opró¿niasz $p$3.", ch, obj, NULL, TO_CHAR);
-		act( COL_ACTION, "$n opró¿nia $p$3.", ch, obj, NULL, TO_ROOM);
+		act( COL_ACTION, "Oprï¿½niasz $p$3.", ch, obj, NULL, TO_CHAR);
+		act( COL_ACTION, "$n oprï¿½nia $p$3.", ch, obj, NULL, TO_ROOM);
 		obj->value[1] = 0;
 		return;
 	case ITEM_CONTAINER:
 		if (IS_SET(obj->value[1], CONT_CLOSED))
 		{
 			if (obj->gender == GENDER_MALE)
-				act( PLAIN, "$p jest zamkniêty.", ch, obj, NULL, TO_CHAR);
+				act( PLAIN, "$p jest zamkniï¿½ty.", ch, obj, NULL, TO_CHAR);
 			else if (obj->gender == GENDER_FEMALE)
-				act( PLAIN, "$p jest zamkniêta.", ch, obj, NULL, TO_CHAR);
+				act( PLAIN, "$p jest zamkniï¿½ta.", ch, obj, NULL, TO_CHAR);
 			else if (obj->gender == GENDER_NEUTRAL)
-				act( PLAIN, "$p jest zamkniête.", ch, obj, NULL, TO_CHAR);
+				act( PLAIN, "$p jest zamkniï¿½te.", ch, obj, NULL, TO_CHAR);
 			else
-				act( PLAIN, "$p s± zamkniête.", ch, obj, NULL, TO_CHAR);
+				act( PLAIN, "$p sï¿½ zamkniï¿½te.", ch, obj, NULL, TO_CHAR);
 			return;
 		}
-		if (!obj->first_content)
+		if (obj->contents.empty())
 		{
-			send_to_char("To jest ju¿ puste." NL, ch);
+			send_to_char("To jest juï¿½ puste." NL, ch);
 			return;
 		}
 		if (arg2[0] == '\0')
 		{
 			if ( IS_SET(ch->in_room->room_flags, ROOM_NODROP) || (!IS_NPC(ch) && IS_SET(ch->act, PLR_LITTERBUG)))
 			{
-				send_to_char("Moc powstrzymuje ciê!" NL, ch);
+				send_to_char("Moc powstrzymuje ciï¿½!" NL, ch);
 				send_to_char(
-				FB_BLUE "Kto¶ mówi ci 'Bez ¶miecenia proszê!'" EOL, ch);
+				FB_BLUE "Ktoï¿½ mï¿½wi ci 'Bez ï¿½miecenia proszï¿½!'" EOL, ch);
 				return;
 			}
 			if (IS_SET(ch->in_room->room_flags, ROOM_NODROPALL))
 			{
-				send_to_char("Nie mo¿esz zrobiæ tego tutaj..." NL, ch);
+				send_to_char("Nie moï¿½esz zrobiï¿½ tego tutaj..." NL, ch);
 				return;
 			}
 			if (empty_obj(obj, NULL, ch->in_room))
 			{
-				act( COL_ACTION, "Opró¿niasz $p.", ch, obj, NULL, TO_CHAR);
-				act( COL_ACTION, "$n opró¿nia $p.", ch, obj, NULL, TO_ROOM);
+				act( COL_ACTION, "Oprï¿½niasz $p.", ch, obj, NULL, TO_CHAR);
+				act( COL_ACTION, "$n oprï¿½nia $p.", ch, obj, NULL, TO_ROOM);
 				if (IS_SET(sysdata.save_flags, SV_DROP))
 					save_char_obj(ch);
 			}
 			else
-				send_to_char("Hmmm... nie uda³o ci siê." NL, ch);
+				send_to_char("Hmmm... nie udaï¿½o ci siï¿½." NL, ch);
 		}
 		else
 		{
@@ -2736,7 +2736,7 @@ DEF_DO_FUN( empty )
 			}
 			if (dest == obj)
 			{
-				send_to_char("Nie mo¿esz wypró¿niæ przedmiotu do niego samego!" NL, ch);
+				send_to_char("Nie moï¿½esz wyprï¿½niï¿½ przedmiotu do niego samego!" NL, ch);
 				return;
 			}
 			if (dest->item_type != ITEM_CONTAINER)
@@ -2747,25 +2747,25 @@ DEF_DO_FUN( empty )
 			if (IS_SET(dest->value[1], CONT_CLOSED))
 			{
 				if (dest->gender == GENDER_MALE)
-					act( PLAIN, "$p jest zamkniêty.", ch, dest, NULL, TO_CHAR);
+					act( PLAIN, "$p jest zamkniï¿½ty.", ch, dest, NULL, TO_CHAR);
 				else if (dest->gender == GENDER_FEMALE)
-					act( PLAIN, "$p jest zamkniêta.", ch, dest, NULL, TO_CHAR);
+					act( PLAIN, "$p jest zamkniï¿½ta.", ch, dest, NULL, TO_CHAR);
 				else if (dest->gender == GENDER_NEUTRAL)
-					act( PLAIN, "$p jest zamkniête.", ch, dest, NULL, TO_CHAR);
+					act( PLAIN, "$p jest zamkniï¿½te.", ch, dest, NULL, TO_CHAR);
 				else
-					act( PLAIN, "$p s± zamkniête.", ch, dest, NULL, TO_CHAR);
+					act( PLAIN, "$p sï¿½ zamkniï¿½te.", ch, dest, NULL, TO_CHAR);
 				return;
 			}
 			separate_obj(dest);
 			if (empty_obj(obj, dest, NULL))
 			{
-				act( COL_ACTION, "Przek³adasz zawarto¶æ $p$1 do $P$1.", ch, obj, dest, TO_CHAR);
-				act( COL_ACTION, "$n przek³ada zawarto¶æ $p$1 do $P$1.", ch, obj, dest, TO_ROOM);
+				act( COL_ACTION, "Przekï¿½adasz zawartoï¿½ï¿½ $p$1 do $P$1.", ch, obj, dest, TO_CHAR);
+				act( COL_ACTION, "$n przekï¿½ada zawartoï¿½ï¿½ $p$1 do $P$1.", ch, obj, dest, TO_ROOM);
 				if (!dest->carried_by && IS_SET(sysdata.save_flags, SV_PUT))
 					save_char_obj(ch);
 			}
 			else
-				act( COL_ACTION, "$P nie pomie¶ci niczego wiêcej.", ch, obj, dest, TO_CHAR);
+				act( COL_ACTION, "$P nie pomieï¿½ci niczego wiï¿½cej.", ch, obj, dest, TO_CHAR);
 		}
 		return;
 	}
@@ -2781,7 +2781,7 @@ DEF_DO_FUN( apply )
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Wetrzeæ sobie co?" NL, ch);
+		send_to_char("Wetrzeï¿½ sobie co?" NL, ch);
 		return;
 	}
 
@@ -2800,8 +2800,8 @@ DEF_DO_FUN( apply )
 
 	if (obj->item_type != ITEM_SALVE)
 	{
-		act( COL_ACTION, "$n próbuje wetrzeæ sobie $p$3 w skórê... Dziwna osoba", ch, obj, NULL, TO_ROOM);
-		act( COL_ACTION, "Próbujesz wcieraæ sobie $p$3 w skórê... Zwariowa³$a¶?", ch, obj, NULL, TO_CHAR);
+		act( COL_ACTION, "$n prï¿½buje wetrzeï¿½ sobie $p$3 w skï¿½rï¿½... Dziwna osoba", ch, obj, NULL, TO_ROOM);
+		act( COL_ACTION, "Prï¿½bujesz wcieraï¿½ sobie $p$3 w skï¿½rï¿½... Zwariowaï¿½$aï¿½?", ch, obj, NULL, TO_CHAR);
 		return;
 	}
 
@@ -2812,18 +2812,18 @@ DEF_DO_FUN( apply )
 	{
 		if (obj->value[1] <= 0)
 		{
-			act( COL_ACTION, "Puszka z $p$4 jest ju¿ pusta.", ch, obj, NULL,
+			act( COL_ACTION, "Puszka z $p$4 jest juï¿½ pusta.", ch, obj, NULL,
 			TO_CHAR);
 		}
 		else
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act( COL_ACTION, "Wcierasz sobie $p$3 w skórê.", ch, obj, NULL,
+				act( COL_ACTION, "Wcierasz sobie $p$3 w skï¿½rï¿½.", ch, obj, NULL,
 				TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act( COL_ACTION, "$n wciera sobie w skórê $p$3.", ch, obj, NULL,
+			act( COL_ACTION, "$n wciera sobie w skï¿½rï¿½ $p$3.", ch, obj, NULL,
 			TO_ROOM);
 		}
 
@@ -2858,19 +2858,19 @@ DEF_DO_FUN( hail )
 
 	if (ch->position == POS_FIGHTING)
 	{
-		send_to_char("Mo¿e najpierw skoñczysz walkê?!?" NL, ch);
+		send_to_char("Moï¿½e najpierw skoï¿½czysz walkï¿½?!?" NL, ch);
 		return;
 	}
 
 	if (ch->position < POS_STANDING)
 	{
-		send_to_char("Mo¿e najpierw wstaniesz..." NL, ch);
+		send_to_char("Moï¿½e najpierw wstaniesz..." NL, ch);
 		return;
 	}
 
 	if (IS_SET(ch->act, PLR_KILLER))
 	{
-		send_to_char("¯adna taksówka nie zatrzyma siê dla "
+		send_to_char("ï¿½adna taksï¿½wka nie zatrzyma siï¿½ dla "
 		FB_RED "MORDERCY" PLAIN NL, ch);
 		return;
 
@@ -2878,25 +2878,25 @@ DEF_DO_FUN( hail )
 
 	if (ch->in_room->sector_type != SECT_CITY)
 	{
-		send_to_char("Nie jeste¶ w mie¶cie, ¿adna taksówka nie przyleci po ciebie tutaj." NL, ch);
+		send_to_char("Nie jesteï¿½ w mieï¿½cie, ï¿½adna taksï¿½wka nie przyleci po ciebie tutaj." NL, ch);
 		return;
 	}
 
 	if (IS_SET(ch->in_room->room_flags, ROOM_INDOORS))
 	{
-		send_to_char("¯eby to zrobiæ musisz wyj¶æ na zewn±trz." NL, ch);
+		send_to_char("ï¿½eby to zrobiï¿½ musisz wyjï¿½ï¿½ na zewnï¿½trz." NL, ch);
 		return;
 	}
 
 	if (IS_SET(ch->in_room->room_flags, ROOM_SPACECRAFT))
 	{
-		send_to_char("Nie mo¿esz zrobiæ tego na statku!" NL, ch);
+		send_to_char("Nie moï¿½esz zrobiï¿½ tego na statku!" NL, ch);
 		return;
 	}
 
 	if (ch->gold < UMAX(ch->top_level - 9, 20))
 	{
-		send_to_char("Nie staæ ciê na taki luksus." NL, ch);
+		send_to_char("Nie staï¿½ ciï¿½ na taki luksus." NL, ch);
 		return;
 	}
 
@@ -2918,22 +2918,22 @@ DEF_DO_FUN( hail )
 
 	if (room == NULL)
 	{
-		send_to_char("W pobli¿u nie ma ¿adnych taksówek." NL, ch);
+		send_to_char("W pobliï¿½u nie ma ï¿½adnych taksï¿½wek." NL, ch);
 		return;
 	}
 
 	int cost = UMAX(ch->top_level - 9, 20);
 	ch->gold -= cost; //UMAX(ch->top_level-9 , 20);
 
-	act( COL_ACTION, "$n odje¿dza szukaæ schronienia.", ch, NULL, NULL,
+	act( COL_ACTION, "$n odjeï¿½dza szukaï¿½ schronienia.", ch, NULL, NULL,
 	TO_ROOM);
 
 	char_from_room(ch);
 	char_to_room(ch, room);
 
-	ch_printf(ch, "Taksówka nadlatuje i zabiera ciê do bezpiecznego miejsca." NL
-	"P³acisz szoferowi %d kredytek." NL NL, cost);
-	act( COL_ACTION, "$n $T", ch, NULL, "nadlatuje taksówk±, p³aci szoferowi i wysiada.", TO_ROOM);
+	ch_printf(ch, "Taksï¿½wka nadlatuje i zabiera ciï¿½ do bezpiecznego miejsca." NL
+	"Pï¿½acisz szoferowi %d kredytek." NL NL, cost);
+	act( COL_ACTION, "$n $T", ch, NULL, "nadlatuje taksï¿½wkï¿½, pï¿½aci szoferowi i wysiada.", TO_ROOM);
 
 	do_look(ch, (char*) "auto");
 
@@ -2952,7 +2952,7 @@ bool check_cost( CHAR_DATA *ch, CHAR_DATA *mob, int money, int cost, int atr )
 
 	if( ch->gold < money )
 	{
-		ch_tell( mob, ch, "Nie staæ ciê. Nie ma trenowania." );
+		ch_tell( mob, ch, "Nie staï¿½ ciï¿½. Nie ma trenowania." );
 		return false;
 	}
 
@@ -2970,7 +2970,7 @@ bool check_cost( CHAR_DATA *ch, CHAR_DATA *mob, int money, int cost, int atr )
 
 	if( ch->pcdata->practices < cost )
 	{
-		ch_tell( mob, ch, "Za ma³o masz praktyk. Nie ma trenowania." );
+		ch_tell( mob, ch, "Za maï¿½o masz praktyk. Nie ma trenowania." );
 		return false;
 	}
 	ch->gold -= money;
@@ -3005,20 +3005,20 @@ DEF_DO_FUN( train )
 
 		if (!IS_AWAKE(ch))
 		{
-			send_to_char("Co ci siê ¶ni?" NL, ch);
+			send_to_char("Co ci siï¿½ ï¿½ni?" NL, ch);
 			return;
 		}
 
 		if (arg[0] == '\0')
 		{
-			send_to_char("Co chcesz trenowaæ?" NL NL, ch);
+			send_to_char("Co chcesz trenowaï¿½?" NL NL, ch);
 			send_to_char("Masz do wyboru: " NL
-			FB_WHITE "SI£" PLAIN "ê, " NL
-			FB_WHITE "INT" PLAIN "eligencjê, " NL
-			FB_WHITE "M¡D" PLAIN "ro¶æ, " NL
-			FB_WHITE "ZRÊ" PLAIN "czno¶æ, " NL
-			FB_WHITE "KON" PLAIN "dycjê lub " NL
-			FB_WHITE "CHA" PLAIN "ryzmê", ch);
+			FB_WHITE "SIï¿½" PLAIN "ï¿½, " NL
+			FB_WHITE "INT" PLAIN "eligencjï¿½, " NL
+			FB_WHITE "Mï¿½D" PLAIN "roï¿½ï¿½, " NL
+			FB_WHITE "ZRï¿½" PLAIN "cznoï¿½ï¿½, " NL
+			FB_WHITE "KON" PLAIN "dycjï¿½ lub " NL
+			FB_WHITE "CHA" PLAIN "ryzmï¿½", ch);
 #if defined( ARMAGEDDON )
 			prac = ch->pcdata->practices;
 
@@ -3027,10 +3027,10 @@ DEF_DO_FUN( train )
 					FB_WHITE "MV" PLAIN "." NL, ch );
 			ch_printf( ch, NL
 					"Masz do wykorzystania " FB_WHITE "%d" PLAIN " prakty%s." NL,
-					prac, NUMBER_SUFF( prac, "kê", "ki", "k" ) );
+					prac, NUMBER_SUFF( prac, "kï¿½", "ki", "k" ) );
 
 			ch_printf( ch,
-					"Koszt trenowania atrybutów: %d kredyt%s i %d prakty%s." NL
+					"Koszt trenowania atrybutï¿½w: %d kredyt%s i %d prakty%s." NL
 					"Koszt trenowania hp/mv: %d kredyt%s i %d prakty%s." NL,
 					money*5, NUMBER_SUFF( money*5, "ka", "ki", "ek" ),
 					NUM_PRACT_FOR_ATTR, NUMBER_SUFF( NUM_PRACT_FOR_ATTR, "ka", "ki", "k" ),
@@ -3042,7 +3042,7 @@ DEF_DO_FUN( train )
 			return;
 		}
 
-		for (mob = ch->in_room->first_person; mob; mob = mob->next_in_room)
+		for (auto* mob : ch->in_room->people)
 			if ( IS_NPC(mob) && IS_SET(mob->act, ACT_TRAIN) && can_see(ch, mob))
 			{
 				tfound = true;
@@ -3051,17 +3051,17 @@ DEF_DO_FUN( train )
 
 		if ((!mob) || (!tfound))
 		{
-			send_to_char("Nie mo¿esz zrobiæ tego tutaj." NL, ch);
+			send_to_char("Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch);
 			return;
 		}
 
-		if (str_cmp(arg, "si³") && str_cmp(arg, "si³ê") && str_cmp(arg, "zrê") && str_cmp(arg, "zrêczno¶æ") && str_cmp(arg, "kon")
-				&& str_cmp(arg, "kondycjê") && str_cmp(arg, "cha") && str_cmp(arg, "charyzmê") && str_cmp(arg, "m±d")
-				&& str_cmp(arg, "m±dro¶æ")
+		if (str_cmp(arg, "siï¿½") && str_cmp(arg, "siï¿½ï¿½") && str_cmp(arg, "zrï¿½") && str_cmp(arg, "zrï¿½cznoï¿½ï¿½") && str_cmp(arg, "kon")
+				&& str_cmp(arg, "kondycjï¿½") && str_cmp(arg, "cha") && str_cmp(arg, "charyzmï¿½") && str_cmp(arg, "mï¿½d")
+				&& str_cmp(arg, "mï¿½droï¿½ï¿½")
 #if defined( ARMAGEDDON )
                 && str_cmp( arg, "hp" ) && str_cmp( arg, "mv" )
 #endif
-				&& str_cmp(arg, "int") && str_cmp(arg, "inteligencjê"))
+				&& str_cmp(arg, "int") && str_cmp(arg, "inteligencjï¿½"))
 		{
 			do_train(ch, (char*) "");
 			return;
@@ -3075,29 +3075,29 @@ DEF_DO_FUN( train )
 
 		if( ch->pcdata->practices < cost )
 		{
-		    ch_tell(mob, ch, "Nie masz wystarczaj±cej ilo¶ci praktyk! Wróæ jak uzbierasz." );
+		    ch_tell(mob, ch, "Nie masz wystarczajï¿½cej iloï¿½ci praktyk! Wrï¿½ï¿½ jak uzbierasz." );
 		    return;
 		}
 #endif
 
-		if (!str_cmp(arg, "si³") || !str_cmp(arg, "si³ê"))
+		if (!str_cmp(arg, "siï¿½") || !str_cmp(arg, "siï¿½ï¿½"))
 		{
 			if (mob->perm_str <= ch->perm_str || ch->perm_str >= 20 + ch->race->str_plus || ch->perm_str >= 25)
 			{
-				act( COL_TELL, "$n mówi ci 'Nie pomogê ci. Jeste¶ ju¿ silniejsz$Y ni¿ ja sam$o.'", mob, NULL, ch, TO_VICT);
+				act( COL_TELL, "$n mï¿½wi ci 'Nie pomogï¿½ ci. Jesteï¿½ juï¿½ silniejsz$Y niï¿½ ja sam$o.'", mob, NULL, ch, TO_VICT);
 				return;
 			}
 #if defined( ARMAGEDDON )
 		      if( !check_cost( ch, mob, money*5, cost, ATR_STR ))
 		        return;
 #endif
-			send_to_char(FG_GREEN "Zaczynasz æwiczyæ na si³owni." EOL, ch);
+			send_to_char(FG_GREEN "Zaczynasz ï¿½wiczyï¿½ na siï¿½owni." EOL, ch);
 		}
-		if (!str_cmp(arg, "zrê") || !str_cmp(arg, "zrêczno¶æ"))
+		if (!str_cmp(arg, "zrï¿½") || !str_cmp(arg, "zrï¿½cznoï¿½ï¿½"))
 		{
 			if (mob->perm_dex <= ch->perm_dex || ch->perm_dex >= 20 + ch->race->dex_plus || ch->perm_dex >= 25)
 			{
-				act( COL_TELL, "$n mówi ci 'nie pomogê ci. Jeste¶ ju¿ zrêczniejsz$Y ni¿ ja sam$o'", mob, NULL, ch, TO_VICT);
+				act( COL_TELL, "$n mï¿½wi ci 'nie pomogï¿½ ci. Jesteï¿½ juï¿½ zrï¿½czniejsz$Y niï¿½ ja sam$o'", mob, NULL, ch, TO_VICT);
 				return;
 			}
 #if defined( ARMAGEDDON )
@@ -3105,13 +3105,13 @@ DEF_DO_FUN( train )
 		        return;
 #endif
 			send_to_char(
-			FG_GREEN "Podchodzisz do testów zwiêkszaj±cych twoj± koordynacjê ruchow±." EOL, ch);
+			FG_GREEN "Podchodzisz do testï¿½w zwiï¿½kszajï¿½cych twojï¿½ koordynacjï¿½ ruchowï¿½." EOL, ch);
 		}
-		if (!str_cmp(arg, "int") || !str_cmp(arg, "inteligencjê"))
+		if (!str_cmp(arg, "int") || !str_cmp(arg, "inteligencjï¿½"))
 		{
 			if (mob->perm_int <= ch->perm_int || ch->perm_int >= 20 + ch->race->int_plus || ch->perm_int >= 25)
 			{
-				act( COL_TELL, "$n mówi ci 'Nie pomogê ci. Jeste¶ ju¿ inteligentniejsz$Y ni¿ ja sam$o.'", mob, NULL, ch, TO_VICT);
+				act( COL_TELL, "$n mï¿½wi ci 'Nie pomogï¿½ ci. Jesteï¿½ juï¿½ inteligentniejsz$Y niï¿½ ja sam$o.'", mob, NULL, ch, TO_VICT);
 				return;
 			}
 #if defined( ARMAGEDDON )
@@ -3119,39 +3119,39 @@ DEF_DO_FUN( train )
 		        return;
 #endif
 			send_to_char(
-			FG_GREEN "Zaczynasz studiowaæ jakie¶ wzory matematyczne." EOL, ch);
+			FG_GREEN "Zaczynasz studiowaï¿½ jakieï¿½ wzory matematyczne." EOL, ch);
 		}
-		if (!str_cmp(arg, "m±d") || !str_cmp(arg, "m±dro¶æ"))
+		if (!str_cmp(arg, "mï¿½d") || !str_cmp(arg, "mï¿½droï¿½ï¿½"))
 		{
 			if (mob->perm_wis <= ch->perm_wis || ch->perm_wis >= 20 + ch->race->wis_plus || ch->perm_wis >= 25)
 			{
-				act( COL_TELL, "$n mówi ci 'Nie pomogê ci. Jeste¶ ju¿ m±drzejsz$Y ode mnie.'", mob, NULL, ch, TO_VICT);
+				act( COL_TELL, "$n mï¿½wi ci 'Nie pomogï¿½ ci. Jesteï¿½ juï¿½ mï¿½drzejsz$Y ode mnie.'", mob, NULL, ch, TO_VICT);
 				return;
 			}
 #if defined( ARMAGEDDON )
 		      if( !check_cost( ch, mob, money*5, cost, ATR_WIS ))
 		        return;
 #endif
-			send_to_char(FG_GREEN "Czytasz z pasj± staro¿ytne kroniki..." NL, ch);
+			send_to_char(FG_GREEN "Czytasz z pasjï¿½ staroï¿½ytne kroniki..." NL, ch);
 		}
-		if (!str_cmp(arg, "kon") || !str_cmp(arg, "kondycjê"))
+		if (!str_cmp(arg, "kon") || !str_cmp(arg, "kondycjï¿½"))
 		{
 			if (mob->perm_con <= ch->perm_con || ch->perm_con >= 20 + ch->race->con_plus || ch->perm_con >= 25)
 			{
-				act( COL_TELL, "$n mówi ci 'Nie pomogê ci. Twoje cia³o ju¿ wygl±da na wytrzymalsze ni¿ moje.'", mob, NULL, ch, TO_VICT);
+				act( COL_TELL, "$n mï¿½wi ci 'Nie pomogï¿½ ci. Twoje ciaï¿½o juï¿½ wyglï¿½da na wytrzymalsze niï¿½ moje.'", mob, NULL, ch, TO_VICT);
 				return;
 			}
 #if defined( ARMAGEDDON )
 		      if( !check_cost( ch, mob, money*5, cost, ATR_CON ))
 		        return;
 #endif
-			send_to_char(FG_GREEN "Odbywasz trening wytrzyma³o¶ci." EOL, ch);
+			send_to_char(FG_GREEN "Odbywasz trening wytrzymaï¿½oï¿½ci." EOL, ch);
 		}
-		if (!str_cmp(arg, "cha") || !str_cmp(arg, "charyzmê"))
+		if (!str_cmp(arg, "cha") || !str_cmp(arg, "charyzmï¿½"))
 		{
 			if (mob->perm_cha <= ch->perm_cha || ch->perm_cha >= 20 + ch->race->cha_plus || ch->perm_cha >= 25)
 			{
-				act( COL_TELL, "$n mówi ci 'Nie pomogê ci. Twoja elokwencja ju¿ przerasta moj±.'", mob, NULL, ch, TO_VICT);
+				act( COL_TELL, "$n mï¿½wi ci 'Nie pomogï¿½ ci. Twoja elokwencja juï¿½ przerasta mojï¿½.'", mob, NULL, ch, TO_VICT);
 				return;
 			}
 #if defined( ARMAGEDDON )
@@ -3167,14 +3167,14 @@ DEF_DO_FUN( train )
 		    tmr = 2;
 	    	    if( !check_cost( ch, mob, money, cost,ATR_HP_MV ) )
 		        return;
-                      send_to_char(FG_GREEN "Zaczynasz zaciekle æwiczyæ swoje hapy." EOL, ch);
+                      send_to_char(FG_GREEN "Zaczynasz zaciekle ï¿½wiczyï¿½ swoje hapy." EOL, ch);
           	}
 		if ( !str_cmp( arg, "mv" ) )
 		{
 		    tmr = 2;
 	    	    if( !check_cost( ch, mob, money, cost,ATR_HP_MV ) )
 		        return;
-                      send_to_char(FG_GREEN "Zaczynasz zaciekle æwiczyæ swoje punkty ruchu." EOL, ch);
+                      send_to_char(FG_GREEN "Zaczynasz zaciekle ï¿½wiczyï¿½ swoje punkty ruchu." EOL, ch);
           	}
 
             	add_timer ( ch , TIMER_DO_FUN , tmr , do_train , 1 );
@@ -3192,7 +3192,7 @@ DEF_DO_FUN( train )
 		break;
 
 	case SUB_TIMER_DO_ABORT:
-		break_skill(FG_GREEN "Twój trening nie zosta³ zakoñczony." EOL, ch);
+		break_skill(FG_GREEN "Twï¿½j trening nie zostaï¿½ zakoï¿½czony." EOL, ch);
 		return;
 	}
 
@@ -3207,91 +3207,91 @@ DEF_DO_FUN( train )
 		successful = true;
 	}
 
-	if (!str_cmp(arg, "si³") || !str_cmp(arg, "si³ê"))
+	if (!str_cmp(arg, "siï¿½") || !str_cmp(arg, "siï¿½ï¿½"))
 	{
 		if (!successful)
 		{
 			ch_printf(ch,
-			FB_RED "Czujesz, ¿e zmarnowa³%s¶ tyle energii i wszystko na nic..." EOL, SEX_SUFFIX_EAE(ch));
+			FB_RED "Czujesz, ï¿½e zmarnowaï¿½%sï¿½ tyle energii i wszystko na nic..." EOL, SEX_SUFFIX_EAE(ch));
 			return;
 		}
 		send_to_char(
-		FG_GREEN "Po wszystkich æwiczeniach, czujesz, ¿e twoja si³a nieco wzros³a." EOL, ch);
+		FG_GREEN "Po wszystkich ï¿½wiczeniach, czujesz, ï¿½e twoja siï¿½a nieco wzrosï¿½a." EOL, ch);
 		ch->perm_str++;
 		fevent_trigger(ch, FE_GAIN_STAT);
 		return;
 	}
 
-	if (!str_cmp(arg, "zre") || !str_cmp(arg, "zrêczno¶æ"))
+	if (!str_cmp(arg, "zre") || !str_cmp(arg, "zrï¿½cznoï¿½ï¿½"))
 	{
 		if (!successful)
 		{
 			send_to_char(
-			FB_RED "Po ca³ym tym treningu wci±¿ czujesz siê jak powolny klocek..." EOL, ch);
+			FB_RED "Po caï¿½ym tym treningu wciï¿½ï¿½ czujesz siï¿½ jak powolny klocek..." EOL, ch);
 			return;
 		}
 		send_to_char(
-		FG_GREEN "Po ciê¿kiej pracy nad swoj± gibko¶ci±, czujesz, ¿e twoje cia³o sta³o siê elastyczniejsze." EOL, ch);
+		FG_GREEN "Po ciï¿½kiej pracy nad swojï¿½ gibkoï¿½ciï¿½, czujesz, ï¿½e twoje ciaï¿½o staï¿½o siï¿½ elastyczniejsze." EOL, ch);
 		ch->perm_dex++;
 		fevent_trigger(ch, FE_GAIN_STAT);
 		return;
 	}
 
-	if (!str_cmp(arg, "int") || !str_cmp(arg, "inteligencjê"))
+	if (!str_cmp(arg, "int") || !str_cmp(arg, "inteligencjï¿½"))
 	{
 		if (!successful)
 		{
 			send_to_char(
-			FB_RED "Po od³o¿eniu o³ówka nie czujesz nic oprócz bólu oczu..." EOL, ch);
+			FB_RED "Po odï¿½oï¿½eniu oï¿½ï¿½wka nie czujesz nic oprï¿½cz bï¿½lu oczu..." EOL, ch);
 			return;
 		}
 		send_to_char(
-		FG_GREEN "Po od³o¿eniu o³ówka czujesz, ¿e twoja g³owa sta³a siê nieco pojemniejsza." EOL, ch);
+		FG_GREEN "Po odï¿½oï¿½eniu oï¿½ï¿½wka czujesz, ï¿½e twoja gï¿½owa staï¿½a siï¿½ nieco pojemniejsza." EOL, ch);
 		ch->perm_int++;
 		fevent_trigger(ch, FE_GAIN_STAT);
 		return;
 	}
 
-	if (!str_cmp(arg, "m±d") || !str_cmp(arg, "m±dro¶æ"))
+	if (!str_cmp(arg, "mï¿½d") || !str_cmp(arg, "mï¿½droï¿½ï¿½"))
 	{
 		if (!successful)
 		{
 			send_to_char(
-			FB_RED "Gdy odk³adasz ksi±¿ki stwierdzasz tylko 'Ale nudy...'" EOL, ch);
+			FB_RED "Gdy odkï¿½adasz ksiï¿½ï¿½ki stwierdzasz tylko 'Ale nudy...'" EOL, ch);
 			return;
 		}
 		send_to_char(
-		FG_GREEN "Po takiej lekturze, czujesz, ¿e jeste¶ w stanie poj±æ o wiele wiêcej." EOL, ch);
+		FG_GREEN "Po takiej lekturze, czujesz, ï¿½e jesteï¿½ w stanie pojï¿½ï¿½ o wiele wiï¿½cej." EOL, ch);
 		ch->perm_wis++;
 		fevent_trigger(ch, FE_GAIN_STAT);
 		return;
 	}
 
-	if (!str_cmp(arg, "kon") || !str_cmp(arg, "kondycjê"))
+	if (!str_cmp(arg, "kon") || !str_cmp(arg, "kondycjï¿½"))
 	{
 		if (!successful)
 		{
 			send_to_char(
-			FB_RED "Ciê¿ki trening nie da³ ci nic oprócz zadyszki...." EOL, ch);
+			FB_RED "Ciï¿½ki trening nie daï¿½ ci nic oprï¿½cz zadyszki...." EOL, ch);
 			return;
 		}
 		send_to_char(
-		FG_GREEN "Po takim wysi³ku wiesz ju¿, ¿e twoje cia³o bêdzie potrafi³o znie¶æ wiêcej." EOL, ch);
+		FG_GREEN "Po takim wysiï¿½ku wiesz juï¿½, ï¿½e twoje ciaï¿½o bï¿½dzie potrafiï¿½o znieï¿½ï¿½ wiï¿½cej." EOL, ch);
 		ch->perm_con++;
 		fevent_trigger(ch, FE_GAIN_STAT);
 		return;
 	}
 
-	if (!str_cmp(arg, "cha") || !str_cmp(arg, "charyzmê"))
+	if (!str_cmp(arg, "cha") || !str_cmp(arg, "charyzmï¿½"))
 	{
 		if (!successful)
 		{
 			send_to_char(
-			FB_RED "Wpadasz w depresjê. Nic nie wysz³o z nauki." EOL, ch);
+			FB_RED "Wpadasz w depresjï¿½. Nic nie wyszï¿½o z nauki." EOL, ch);
 			return;
 		}
 		send_to_char(
-		FG_GREEN "Po takiej lekcji zaczynasz bardziej w siebie wierzyæ." EOL, ch);
+		FG_GREEN "Po takiej lekcji zaczynasz bardziej w siebie wierzyï¿½." EOL, ch);
 		ch->perm_cha++;
 		fevent_trigger(ch, FE_GAIN_STAT);
 		return;
@@ -3302,7 +3302,7 @@ DEF_DO_FUN( train )
 	int add_hp      =
 	    UMAX(1, con_app[get_curr_con( ch )].hitp/2);
 
-	send_to_char(FB_GREEN "Ilo¶æ twoich punktów uderzeniowych ro¶nie." EOL, ch);
+	send_to_char(FB_GREEN "Iloï¿½ï¿½ twoich punktï¿½w uderzeniowych roï¿½nie." EOL, ch);
         ch->max_hit+=add_hp;
 	if ( !successful )
              return;
@@ -3314,7 +3314,7 @@ DEF_DO_FUN( train )
 	int add_move      = add_move    =
     	    number_range( 2, ( get_curr_con( ch ) + get_curr_dex( ch ) ) / 6 );
 
-	send_to_char(FB_GREEN "Ilo¶æ twoich punktów ruchu ro¶nie." EOL, ch);
+	send_to_char(FB_GREEN "Iloï¿½ï¿½ twoich punktï¿½w ruchu roï¿½nie." EOL, ch);
         ch->max_move+=add_move;
 	if ( !successful )
              return;
@@ -3341,30 +3341,30 @@ DEF_DO_FUN( bank )
 
 	if (!ch->in_room || !IS_SET(ch->in_room->room_flags, ROOM_BANK))
 	{
-		send_to_char("By to zrobiæ musisz byæ w banku." NL, ch);
+		send_to_char("By to zrobiï¿½ musisz byï¿½ w banku." NL, ch);
 		return;
 	}
 
 	if (arg1[0] == '\0')
 	{
-		send_to_char("Sk³adnia: BANK <deposit|withdraw|ballance|transfer> [suma] [adresat]" NL, ch);
-		send_to_char("Lub:      BANK <wp³aæ|wyp³aæ|sprawd¼|przelej> [suma] [adresat]" NL, ch);
+		send_to_char("Skï¿½adnia: BANK <deposit|withdraw|ballance|transfer> [suma] [adresat]" NL, ch);
+		send_to_char("Lub:      BANK <wpï¿½aï¿½|wypï¿½aï¿½|sprawdï¿½|przelej> [suma] [adresat]" NL, ch);
 		return;
 	}
 
 	if (arg2[0] != '\0')
 		amount = atoi(arg2);
 
-	if (!str_prefix(arg1, "ballance") || !str_prefix(arg1, "sprawd¼"))
+	if (!str_prefix(arg1, "ballance") || !str_prefix(arg1, "sprawdï¿½"))
 	{
 		ch_printf(ch, "Na twoim koncie jest obecnie %ld kredytek." NL, ch->pcdata->bank);
 		return;
 	}
-	else if (!str_prefix(arg1, "deposit") || !str_prefix(arg1, "wp³aæ"))
+	else if (!str_prefix(arg1, "deposit") || !str_prefix(arg1, "wpï¿½aï¿½"))
 	{
 		if (amount <= 0)
 		{
-			send_to_char("Niestety bankier nie uznaje tej sumy za godn± uwagi." NL, ch);
+			send_to_char("Niestety bankier nie uznaje tej sumy za godnï¿½ uwagi." NL, ch);
 			do_bank(ch, (char*) "");
 			return;
 		}
@@ -3379,14 +3379,14 @@ DEF_DO_FUN( bank )
 		ch->pcdata->bank += amount;
 
 		ch_printf(ch, "Deponujesz na swoje konto %ld kredytek." NL, amount);
-		do_bank(ch, (char*) "sprawd¼");
+		do_bank(ch, (char*) "sprawdï¿½");
 		return;
 	}
-	else if (!str_prefix(arg1, "withdraw") || !str_prefix(arg1, "wyp³aæ"))
+	else if (!str_prefix(arg1, "withdraw") || !str_prefix(arg1, "wypï¿½aï¿½"))
 	{
 		if (amount <= 0)
 		{
-			send_to_char("Bankierowi nie chce siê i¶æ do sejfu po tak± ma³± sumê." NL, ch);
+			send_to_char("Bankierowi nie chce siï¿½ iï¿½ï¿½ do sejfu po takï¿½ maï¿½ï¿½ sumï¿½." NL, ch);
 			do_bank(ch, (char*) "");
 			return;
 		}
@@ -3400,8 +3400,8 @@ DEF_DO_FUN( bank )
 		ch->gold += amount;
 		ch->pcdata->bank -= amount;
 
-		ch_printf(ch, "Wyp³acasz %ld kredytek ze swojego konta." NL, amount);
-		do_bank(ch, (char*) "sprawd¼");
+		ch_printf(ch, "Wypï¿½acasz %ld kredytek ze swojego konta." NL, amount);
+		do_bank(ch, (char*) "sprawdï¿½");
 		return;
 
 	}
@@ -3410,7 +3410,7 @@ DEF_DO_FUN( bank )
 	{
 		if (amount <= 0)
 		{
-			send_to_char("Bank nie jest w stanie przelaæ takiej kwoty." NL, ch);
+			send_to_char("Bank nie jest w stanie przelaï¿½ takiej kwoty." NL, ch);
 			return;
 		}
 
@@ -3418,7 +3418,7 @@ DEF_DO_FUN( bank )
 
 		if (!*arg3)
 		{
-			ch_printf(ch, "Nie poda³%c¶ adresata przelewu." NL,
+			ch_printf(ch, "Nie podaï¿½%cï¿½ adresata przelewu." NL,
 			FEMALE( ch ) ? 'a' : 'e');
 			do_bank(ch, (char*) "");
 			return;
@@ -3432,13 +3432,13 @@ DEF_DO_FUN( bank )
 
 		if (victim == ch)
 		{
-			send_to_char("Nie ma sensu przelewaæ pieniêdzy ze swojego konta na swoje konto." NL, ch);
+			send_to_char("Nie ma sensu przelewaï¿½ pieniï¿½dzy ze swojego konta na swoje konto." NL, ch);
 			return;
 		}
 
 		if (ch->pcdata->bank < amount)
 		{
-			send_to_char("Nie posiadasz wystarczaj±cej liczby kredytek na swoim koncie." NL, ch);
+			send_to_char("Nie posiadasz wystarczajï¿½cej liczby kredytek na swoim koncie." NL, ch);
 			return;
 		}
 
@@ -3449,7 +3449,7 @@ DEF_DO_FUN( bank )
 				victim->przypadki[1]);
 		send_to_char(buf, ch);
 
-		sprintf(buf, "Na Twoje konto wp³yn±³ w³a¶nie przelew." NL\
+		sprintf(buf, "Na Twoje konto wpï¿½ynï¿½ï¿½ wï¿½aï¿½nie przelew." NL\
  "Nadawca: %s" NL\
  "Kwota: %ld kredyt%s" NL, ch->name, amount,
 				NUMBER_SUFF(amount, "ka", "ki", "ek"));
@@ -3458,7 +3458,7 @@ DEF_DO_FUN( bank )
 		 * notka poszla, wiec kasa musi na pewno wyladowac na koncie*/
 		save_char_obj(ch);
 		save_char_obj(victim);
-		do_bank(ch, (char*) "sprawd¼");
+		do_bank(ch, (char*) "sprawdï¿½");
 		return;
 	}
 	else

@@ -23,8 +23,6 @@
 
 struct	teleport_data
 {
-	TELEPORT_DATA		* next;
-	TELEPORT_DATA		* prev;
 	ROOM_INDEX_DATA		* room;
 	int					timer;
 };

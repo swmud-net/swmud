@@ -341,7 +341,7 @@ void failed_casting(SKILLTYPE *skill, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA
 		if (skill->miss_char && *skill->miss_char != '\0')
 			act(chit, skill->miss_char, ch, obj, victim, TO_CHAR);
 		else if (skill->type == SKILL_SPELL)
-			act(chit, "Nie uda³o ci siê.", ch, NULL, NULL, TO_CHAR);
+			act(chit, "Nie udaï¿½o ci siï¿½.", ch, NULL, NULL, TO_CHAR);
 	}
 
 	if (ch && skill->miss_room && *skill->miss_room != '\0')
@@ -359,7 +359,7 @@ void failed_casting(SKILLTYPE *skill, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA
 		if (skill->miss_char && *skill->miss_char != '\0')
 			act(chitme, skill->miss_char, ch, obj, victim, TO_CHAR);
 		else if (skill->type == SKILL_SPELL)
-			act(chitme, "Nie uda³o ci siê.", ch, NULL, NULL, TO_CHAR);
+			act(chitme, "Nie udaï¿½o ci siï¿½.", ch, NULL, NULL, TO_CHAR);
 	}
 }
 
@@ -385,7 +385,7 @@ void immune_casting(SKILLTYPE *skill, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA
 		else if (skill->miss_char && *skill->miss_char != '\0')
 			act(chit, skill->hit_char, ch, obj, victim, TO_CHAR);
 		else if (skill->type == SKILL_SPELL || skill->type == SKILL_SKILL)
-			act(chit, "To chyba nie da³o ¿adnych efektów.", ch, NULL, NULL, TO_CHAR);
+			act(chit, "To chyba nie daï¿½o ï¿½adnych efektï¿½w.", ch, NULL, NULL, TO_CHAR);
 	}
 	if (ch && skill->imm_room && *skill->imm_room != '\0')
 		act(chitroom, skill->imm_room, ch, obj, victim, TO_NOTVICT);
@@ -412,7 +412,7 @@ void immune_casting(SKILLTYPE *skill, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA
 		else if (skill->miss_char && *skill->miss_char != '\0')
 			act(chit, skill->hit_char, ch, obj, victim, TO_CHAR);
 		else if (skill->type == SKILL_SPELL || skill->type == SKILL_SKILL)
-			act(chit, "To chyba nie da³o ¿adnych efektów.", ch, NULL, NULL, TO_CHAR);
+			act(chit, "To chyba nie daï¿½o ï¿½adnych efektï¿½w.", ch, NULL, NULL, TO_CHAR);
 	}
 }
 
@@ -423,10 +423,10 @@ void say_spell(CHAR_DATA *ch, int sn)
 {
 	CHAR_DATA *rch;
 
-	for (rch = ch->in_room->first_person; rch; rch = rch->next_in_room)
+	for (auto* rch : ch->in_room->people)
 	{
 		if (rch != ch)
-			act( COL_FORCE, "$n zatrzymuje siê i koncentruje na moment.", ch, NULL, rch, TO_VICT);
+			act( COL_FORCE, "$n zatrzymuje siï¿½ i koncentruje na moment.", ch, NULL, rch, TO_VICT);
 	}
 
 	return;
@@ -761,12 +761,13 @@ bool process_spell_components(CHAR_DATA *ch, int sn)
 		switch (UPPER(arg[0]))
 		{
 		case 'T':
-			for (obj = ch->first_carrying; obj; obj = obj->next_content)
-				if (obj->item_type == value)
+			for (auto* o : ch->carrying)
+				if (o->item_type == value)
 				{
+					obj = o;
 					if (fail)
 					{
-						send_to_char("Co¶ nie pozwala ci u¿yæ tej mocy..." NL, ch);
+						send_to_char("Coï¿½ nie pozwala ci uï¿½yï¿½ tej mocy..." NL, ch);
 						return false;
 					}
 					found = true;
@@ -774,12 +775,13 @@ bool process_spell_components(CHAR_DATA *ch, int sn)
 				}
 			break;
 		case 'V':
-			for (obj = ch->first_carrying; obj; obj = obj->next_content)
-				if (obj->pIndexData->vnum == value)
+			for (auto* o : ch->carrying)
+				if (o->pIndexData->vnum == value)
 				{
+					obj = o;
 					if (fail)
 					{
-						send_to_char("Co¶ nie pozwala ci u¿yæ tej mocy..." NL, ch);
+						send_to_char("Coï¿½ nie pozwala ci uï¿½yï¿½ tej mocy..." NL, ch);
 						return false;
 					}
 					found = true;
@@ -787,12 +789,13 @@ bool process_spell_components(CHAR_DATA *ch, int sn)
 				}
 			break;
 		case 'K':
-			for (obj = ch->first_carrying; obj; obj = obj->next_content)
-				if (nifty_is_name(check, obj->name))
+			for (auto* o : ch->carrying)
+				if (nifty_is_name(check, o->name))
 				{
+					obj = o;
 					if (fail)
 					{
-						send_to_char("Co¶ nie pozwala ci u¿yæ tej mocy..." NL, ch);
+						send_to_char("Coï¿½ nie pozwala ci uï¿½yï¿½ tej mocy..." NL, ch);
 						return false;
 					}
 					found = true;
@@ -804,14 +807,14 @@ bool process_spell_components(CHAR_DATA *ch, int sn)
 			{
 				if (fail)
 				{
-					send_to_char("Co¶ nie pozwala ci u¿yæ tej mocy..." NL, ch);
+					send_to_char("Coï¿½ nie pozwala ci uï¿½yï¿½ tej mocy..." NL, ch);
 					return false;
 				}
 				else
 				{
 					if (consume)
 					{
-						send_to_char( FG_YELLOW "Czujesz, ¿e czego¶ ci uby³o..." EOL, ch);
+						send_to_char( FG_YELLOW "Czujesz, ï¿½e czegoï¿½ ci ubyï¿½o..." EOL, ch);
 						ch->gold -= value;
 					}
 					continue;
@@ -823,7 +826,7 @@ bool process_spell_components(CHAR_DATA *ch, int sn)
 			{
 				if (fail)
 				{
-					send_to_char("Co¶ nie pozwala ci u¿yæ tej mocy..." NL, ch);
+					send_to_char("Coï¿½ nie pozwala ci uï¿½yï¿½ tej mocy..." NL, ch);
 					return false;
 				}
 				else
@@ -831,7 +834,7 @@ bool process_spell_components(CHAR_DATA *ch, int sn)
 					if (consume)
 					{
 						send_to_char( FG_RED
-						"Czujesz, ¿e czego¶ ci uby³o..." EOL, ch);
+						"Czujesz, ï¿½e czegoï¿½ ci ubyï¿½o..." EOL, ch);
 						ch->hit -= value;
 						update_pos(ch);
 					}
@@ -846,7 +849,7 @@ bool process_spell_components(CHAR_DATA *ch, int sn)
 			continue;
 		if (!found)
 		{
-			send_to_char("Czego¶ ci jeszcze potrzeba..." NL, ch);
+			send_to_char("Czegoï¿½ ci jeszcze potrzeba..." NL, ch);
 			return false;
 		}
 		if (obj)
@@ -858,18 +861,18 @@ bool process_spell_components(CHAR_DATA *ch, int sn)
 					return false;
 				else if (--obj->value[val] == 0)
 				{
-					act( COL_FORCE, "$p jasno rozb³yskuje i znika w chmurze dymu!", ch, obj, NULL, TO_CHAR);
-					act( COL_FORCE, "$p jasno rozb³yskuje i znika w chmurze dymu!", ch, obj, NULL, TO_ROOM);
+					act( COL_FORCE, "$p jasno rozbï¿½yskuje i znika w chmurze dymu!", ch, obj, NULL, TO_CHAR);
+					act( COL_FORCE, "$p jasno rozbï¿½yskuje i znika w chmurze dymu!", ch, obj, NULL, TO_ROOM);
 					extract_obj(obj);
 				}
 				else
-					act( COL_FORCE, "$p jasno rozb³yskuje i lekko dymi.", ch, obj, NULL, TO_CHAR);
+					act( COL_FORCE, "$p jasno rozbï¿½yskuje i lekko dymi.", ch, obj, NULL, TO_CHAR);
 			}
 			else if (consume)
 			{
 				separate_obj(obj);
-				act( COL_FORCE, "$p jasno rozb³yskuje i znika w chmurze dymu!", ch, obj, NULL, TO_CHAR);
-				act( COL_FORCE, "$p jasno rozb³yskuje i znika w chmurze dymu!", ch, obj, NULL, TO_ROOM);
+				act( COL_FORCE, "$p jasno rozbï¿½yskuje i znika w chmurze dymu!", ch, obj, NULL, TO_CHAR);
+				act( COL_FORCE, "$p jasno rozbï¿½yskuje i znika w chmurze dymu!", ch, obj, NULL, TO_ROOM);
 				extract_obj(obj);
 			}
 			else
@@ -877,7 +880,7 @@ bool process_spell_components(CHAR_DATA *ch, int sn)
 				int count = obj->count;
 
 				obj->count = 1;
-				act( COL_FORCE, "$p jasno rozb³yskuje.", ch, obj, NULL, TO_CHAR);
+				act( COL_FORCE, "$p jasno rozbï¿½yskuje.", ch, obj, NULL, TO_CHAR);
 				obj->count = count;
 			}
 		}
@@ -912,7 +915,7 @@ void* locate_targets(CHAR_DATA *ch, char *arg, int sn, CHAR_DATA **victim, OBJ_D
 		{
 			if ((*victim = who_fighting(ch)) == NULL)
 			{
-				send_to_char("Na kim chcesz u¿yæ MOCY?" NL, ch);
+				send_to_char("Na kim chcesz uï¿½yï¿½ MOCY?" NL, ch);
 				return &pAbort;
 			}
 		}
@@ -930,7 +933,7 @@ void* locate_targets(CHAR_DATA *ch, char *arg, int sn, CHAR_DATA **victim, OBJ_D
 
 		if (ch == *victim)
 		{
-			send_to_char("Chcesz u¿yæ tego na sobie? W porz±dku..." NL, ch);
+			send_to_char("Chcesz uï¿½yï¿½ tego na sobie? W porzï¿½dku..." NL, ch);
 			/*
 			 send_to_char( "You can't do that to yourself." NL, ch );
 			 return &pAbort;
@@ -948,13 +951,13 @@ void* locate_targets(CHAR_DATA *ch, char *arg, int sn, CHAR_DATA **victim, OBJ_D
 
 				if (get_timer(ch, TIMER_PKILLED) > 0)
 				{
-					send_to_char("Zabito ciê ju¿ w czasie ostatnich piêciu minut." NL, ch);
+					send_to_char("Zabito ciï¿½ juï¿½ w czasie ostatnich piï¿½ciu minut." NL, ch);
 					return &pAbort;
 				}
 
 				if (get_timer(*victim, TIMER_PKILLED) > 0)
 				{
-					send_to_char("Ten gracz by³ ju¿ zabity w czasie ostatnich piêciu minut." NL, ch);
+					send_to_char("Ten gracz byï¿½ juï¿½ zabity w czasie ostatnich piï¿½ciu minut." NL, ch);
 					return &pAbort;
 				}
 
@@ -962,7 +965,7 @@ void* locate_targets(CHAR_DATA *ch, char *arg, int sn, CHAR_DATA **victim, OBJ_D
 
 			if ( IS_AFFECTED(ch, AFF_CHARM) && ch->master == *victim)
 			{
-				send_to_char("No co¶ ty! Przecie¿ to twój lojalny s³uga!" NL, ch);
+				send_to_char("No coï¿½ ty! Przecieï¿½ to twï¿½j lojalny sï¿½uga!" NL, ch);
 				return &pAbort;
 			}
 		}
@@ -987,7 +990,7 @@ void* locate_targets(CHAR_DATA *ch, char *arg, int sn, CHAR_DATA **victim, OBJ_D
 	case TAR_CHAR_SELF:
 		if (arg[0] != '\0' && !nifty_is_name(arg, ch->name))
 		{
-			send_to_char("Nie mo¿esz u¿yæ tej mocy na innych." NL, ch);
+			send_to_char("Nie moï¿½esz uï¿½yï¿½ tej mocy na innych." NL, ch);
 			return &pAbort;
 		}
 
@@ -997,7 +1000,7 @@ void* locate_targets(CHAR_DATA *ch, char *arg, int sn, CHAR_DATA **victim, OBJ_D
 	case TAR_OBJ_INV:
 		if (arg[0] == '\0')
 		{
-			send_to_char("Na czym chcesz u¿yæ tej mocy?" NL, ch);
+			send_to_char("Na czym chcesz uï¿½yï¿½ tej mocy?" NL, ch);
 			return &pAbort;
 		}
 
@@ -1041,7 +1044,7 @@ DEF_DO_FUN( cast )
 
 	if (ch->perm_frc <= 0)
 	{
-		send_to_char("Nie mo¿esz jeszcze tego zrobiæ." NL, ch);
+		send_to_char("Nie moï¿½esz jeszcze tego zrobiï¿½." NL, ch);
 		return;
 	}
 
@@ -1051,13 +1054,13 @@ DEF_DO_FUN( cast )
 		/* no ordering charmed mobs to cast spells */
 		if ( IS_NPC(ch) && IS_AFFECTED(ch, AFF_CHARM))
 		{
-			send_to_char("Jako¶ nie mo¿esz siê na to teraz zdecydowaæ..." NL, ch);
+			send_to_char("Jakoï¿½ nie moï¿½esz siï¿½ na to teraz zdecydowaï¿½..." NL, ch);
 			return;
 		}
 
 		if (IS_SET(ch->in_room->room_flags, ROOM_NO_FORCE))
 		{
-			send_to_char( COL_FORCE "Nie uda³o ci siê." EOL, ch);
+			send_to_char( COL_FORCE "Nie udaï¿½o ci siï¿½." EOL, ch);
 			return;
 		}
 
@@ -1066,7 +1069,7 @@ DEF_DO_FUN( cast )
 
 		if (arg1[0] == '\0')
 		{
-			send_to_char("Jak, na czym, gdzie i po co chcesz u¿yæ MOCY?" NL, ch);
+			send_to_char("Jak, na czym, gdzie i po co chcesz uï¿½yï¿½ MOCY?" NL, ch);
 			return;
 		}
 
@@ -1074,12 +1077,12 @@ DEF_DO_FUN( cast )
 		{
 			if ((sn = find_spell(ch, arg1, true)) < 0 || (!IS_NPC(ch) && ch->pcdata->learned[sn] <= 0))
 			{
-				send_to_char("Nie mo¿esz jeszcze tego zrobiæ." NL, ch);
+				send_to_char("Nie moï¿½esz jeszcze tego zrobiï¿½." NL, ch);
 				return;
 			}
 			if ((skill = get_skilltype(sn)) == NULL)
 			{
-				send_to_char("Nie mo¿esz teraz tego zrobiæ..." NL, ch);
+				send_to_char("Nie moï¿½esz teraz tego zrobiï¿½..." NL, ch);
 				return;
 			}
 		}
@@ -1087,17 +1090,17 @@ DEF_DO_FUN( cast )
 		{
 			if ((sn = skill_lookup(arg1)) < 0)
 			{
-				send_to_char("Nikt jeszcze o niczym takim nie s³ysza³..." NL, ch);
+				send_to_char("Nikt jeszcze o niczym takim nie sï¿½yszaï¿½..." NL, ch);
 				return;
 			}
 			if (sn >= MAX_SKILL)
 			{
-				send_to_char("Hmm... to mo¿e boleæ." NL, ch);
+				send_to_char("Hmm... to moï¿½e boleï¿½." NL, ch);
 				return;
 			}
 			if ((skill = get_skilltype(sn)) == NULL)
 			{
-				send_to_char("Z t± moc± mo¿e byæ akurat problem..." NL, ch);
+				send_to_char("Z tï¿½ mocï¿½ moï¿½e byï¿½ akurat problem..." NL, ch);
 				return;
 			}
 			if (skill->type != SKILL_SPELL)
@@ -1107,7 +1110,7 @@ DEF_DO_FUN( cast )
 			}
 			if (!skill->spell_fun)
 			{
-				send_to_char("Nikt nie s³ysza³ jeszcze o czym¶ takim..." NL, ch);
+				send_to_char("Nikt nie sï¿½yszaï¿½ jeszcze o czymï¿½ takim..." NL, ch);
 				return;
 			}
 		}
@@ -1120,19 +1123,19 @@ DEF_DO_FUN( cast )
 			switch (ch->position)
 			{
 			default:
-				send_to_char("Nie mo¿esz siê wystarczaj±co skoncentrowaæ." NL, ch);
+				send_to_char("Nie moï¿½esz siï¿½ wystarczajï¿½co skoncentrowaï¿½." NL, ch);
 				break;
 			case POS_SITTING:
-				send_to_char("Siedz±c, nie zgromadzisz w sobie wystarczaj±cej ilo¶ci energii." NL, ch);
+				send_to_char("Siedzï¿½c, nie zgromadzisz w sobie wystarczajï¿½cej iloï¿½ci energii." NL, ch);
 				break;
 			case POS_RESTING:
-				ch_printf(ch, "Jeste¶ zbyt rozlu¼nion%s by u¿ywaæ mocy.." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Jesteï¿½ zbyt rozluï¿½nion%s by uï¿½ywaï¿½ mocy.." NL, SEX_SUFFIX_YAE(ch));
 				break;
 			case POS_FIGHTING:
-				send_to_char("Walka nie pozwala ci siê wystarczaj±co skupiæ." NL, ch);
+				send_to_char("Walka nie pozwala ci siï¿½ wystarczajï¿½co skupiï¿½." NL, ch);
 				break;
 			case POS_SLEEPING:
-				send_to_char("Co ci siê ¶ni ???" NL, ch);
+				send_to_char("Co ci siï¿½ ï¿½ni ???" NL, ch);
 				break;
 			}
 			return;
@@ -1146,7 +1149,7 @@ DEF_DO_FUN( cast )
 
 		if (!skill->spell_fun)
 		{
-			send_to_char("Nie mo¿esz tego u¿yæ... jeszcze." NL, ch);
+			send_to_char("Nie moï¿½esz tego uï¿½yï¿½... jeszcze." NL, ch);
 			return;
 		}
 
@@ -1161,21 +1164,21 @@ DEF_DO_FUN( cast )
 
 		if (is_safe(ch, victim))
 		{
-			send_to_char( COL_FORCE "Nie mo¿esz tego zrobiæ." EOL, ch);
+			send_to_char( COL_FORCE "Nie moï¿½esz tego zrobiï¿½." EOL, ch);
 			return;
 		}
 
 		if (!IS_NPC(ch) && ch->mana < mana)
 		{
-			send_to_char("Moc w tobie jest za s³aba by to zrobiæ." NL, ch);
+			send_to_char("Moc w tobie jest za sï¿½aba by to zrobiï¿½." NL, ch);
 			return;
 		}
 		if (skill->participants <= 1)
 			break;
 		/* multi-participant spells			-Thoric */
 		add_timer(ch, TIMER_DO_FUN, UMIN(skill->beats / 10, 3), do_cast, 1);
-		act( COL_FORCE, "Zaczynasz czuæ moc w tobie i naoko³o siebie...", ch, NULL, NULL, TO_CHAR);
-		act( COL_FORCE, "$n jednoczy siê moc± z otoczeniem...", ch, NULL, NULL, TO_ROOM);
+		act( COL_FORCE, "Zaczynasz czuï¿½ moc w tobie i naokoï¿½o siebie...", ch, NULL, NULL, TO_CHAR);
+		act( COL_FORCE, "$n jednoczy siï¿½ mocï¿½ z otoczeniem...", ch, NULL, NULL, TO_ROOM);
 		swsnprintf(staticbuf, MIL, "%s %s", arg2, target_name);
 		STRDUP(ch->dest_buf, staticbuf);
 		ch->tempnum = sn;
@@ -1187,7 +1190,7 @@ DEF_DO_FUN( cast )
 		{
 			if ((skill = get_skilltype(sn)) == NULL)
 			{
-				send_to_char("Co¶ posz³o nie tak..." NL, ch);
+				send_to_char("Coï¿½ poszï¿½o nie tak..." NL, ch);
 				bug("SUB_TIMER_DO_ABORT: bad sn %d", sn);
 				return;
 			}
@@ -1196,7 +1199,7 @@ DEF_DO_FUN( cast )
 			if (get_trust(ch) < LEVEL_IMMORTAL) /* so imms dont lose mana */
 				ch->mana -= mana / 3;
 		}
-		send_to_char( COL_FORCE "Przerywasz koncentracjê." NL, ch);
+		send_to_char( COL_FORCE "Przerywasz koncentracjï¿½." NL, ch);
 		/* should add chance of backfire here */
 		return;
 
@@ -1204,13 +1207,13 @@ DEF_DO_FUN( cast )
 		sn = ch->tempnum;
 		if ((skill = get_skilltype(sn)) == NULL)
 		{
-			send_to_char("Co¶ posz³o nie tak..." NL, ch);
+			send_to_char("Coï¿½ poszï¿½o nie tak..." NL, ch);
 			bug("substate 1: bad sn %d", sn);
 			return;
 		}
 		if (!ch->dest_buf || !IS_VALID_SN(sn) || skill->type != SKILL_SPELL)
 		{
-			send_to_char("Co¶ neguje si³ê mocy." NL, ch);
+			send_to_char("Coï¿½ neguje siï¿½ï¿½ mocy." NL, ch);
 			bug("ch->dest_buf NULL or bad sn (%d)", sn);
 			return;
 		}
@@ -1222,23 +1225,22 @@ DEF_DO_FUN( cast )
 		if (skill->participants > 1)
 		{
 			int cnt = 1;
-			CHAR_DATA *tmp;
 			TIMER *t;
 
-			for (tmp = ch->in_room->first_person; tmp; tmp = tmp->next_in_room)
+			for (auto* tmp : ch->in_room->people)
 				if (tmp != ch && (t = get_timerptr(tmp, TIMER_DO_FUN)) != NULL && t->count >= 1 && t->do_fun == do_cast
 						&& tmp->tempnum == sn && tmp->dest_buf && !str_cmp(tmp->dest_buf, staticbuf))
 					++cnt;
 			if (cnt >= skill->participants)
 			{
-				for (tmp = ch->in_room->first_person; tmp; tmp = tmp->next_in_room)
+				for (auto* tmp : ch->in_room->people)
 					if (tmp != ch && (t = get_timerptr(tmp, TIMER_DO_FUN)) != NULL && t->count >= 1 && t->do_fun == do_cast
 							&& tmp->tempnum == sn && tmp->dest_buf && !str_cmp(tmp->dest_buf, staticbuf))
 					{
 						extract_timer(tmp, t);
-						act( COL_FORCE, "Zestrajasz sw± energiê z $n$4 pomagaj±c $m kierowaæ moc±.", ch, NULL, tmp, TO_VICT);
-						act( COL_FORCE, "$N zestraja z tob± swoj± energiê!", ch, NULL, tmp, TO_CHAR);
-						act( COL_FORCE, "$N zestraja z $n$4 swoj± energiê!", ch, NULL, tmp, TO_NOTVICT);
+						act( COL_FORCE, "Zestrajasz swï¿½ energiï¿½ z $n$4 pomagajï¿½c $m kierowaï¿½ mocï¿½.", ch, NULL, tmp, TO_VICT);
+						act( COL_FORCE, "$N zestraja z tobï¿½ swojï¿½ energiï¿½!", ch, NULL, tmp, TO_CHAR);
+						act( COL_FORCE, "$N zestraja z $n$4 swojï¿½ energiï¿½!", ch, NULL, tmp, TO_NOTVICT);
 						learn_from_success(tmp, sn);
 
 						tmp->mana -= mana;
@@ -1247,14 +1249,14 @@ DEF_DO_FUN( cast )
 						STRDUP(ch->dest_buf, "");
 					}
 				dont_wait = true;
-				send_to_char("Koncentrujesz ca³± energiê w jeden strumieñ Mocy!" NL, ch);
+				send_to_char("Koncentrujesz caï¿½ï¿½ energiï¿½ w jeden strumieï¿½ Mocy!" NL, ch);
 				vo = locate_targets(ch, arg2, sn, &victim, &obj);
 				if (vo == &pAbort)
 					return;
 			}
 			else
 			{
-				send_to_char("Niestety, nie wystarczy³o ci mocy..." NL, ch);
+				send_to_char("Niestety, nie wystarczyï¿½o ci mocy..." NL, ch);
 
 				if (get_trust(ch) < LEVEL_IMMORTAL) /* so imms dont lose mana */
 					ch->mana -= mana / 2;
@@ -1287,14 +1289,14 @@ DEF_DO_FUN( cast )
 	{
 		if (ch->alignment > skill->alignment)
 		{
-			send_to_char("Za ma³o w tobie gniewu, by to zrobiæ." NL, ch);
+			send_to_char("Za maï¿½o w tobie gniewu, by to zrobiï¿½." NL, ch);
 			if (get_trust(ch) < LEVEL_IMMORTAL) /* so imms dont lose mana */
 				ch->mana -= mana / 2;
 			return;
 		}
 		if (ch->alignment < skill->alignment)
 		{
-			send_to_char("Gniew i nienawi¶æ przeszkadzaj± ci w zrobieniu tego." NL, ch);
+			send_to_char("Gniew i nienawiï¿½ï¿½ przeszkadzajï¿½ ci w zrobieniu tego." NL, ch);
 			if (get_trust(ch) < LEVEL_IMMORTAL) /* so imms dont lose mana */
 				ch->mana -= mana / 2;
 			return;
@@ -1307,9 +1309,9 @@ DEF_DO_FUN( cast )
 		{
 		case 0: /* too busy */
 			if (ch->fighting)
-				send_to_char("To nie by³ dobry moment, nie uda³o ci siê odpowiednio skupiæ." NL, ch);
+				send_to_char("To nie byï¿½ dobry moment, nie udaï¿½o ci siï¿½ odpowiednio skupiï¿½." NL, ch);
 			else
-				ch_printf(ch, "Straci³%s¶ koncentracjê." NL, SEX_SUFFIX_EAE(ch));
+				ch_printf(ch, "Straciï¿½%sï¿½ koncentracjï¿½." NL, SEX_SUFFIX_EAE(ch));
 			break;
 		case 1: /* irritation */
 			if (number_bits(2) == 0)
@@ -1317,30 +1319,30 @@ DEF_DO_FUN( cast )
 				switch (number_bits(2))
 				{
 				case 0:
-					send_to_char("Zaswêdzia³ ciê nos i twoja koncentracja zniknê³a." NL, ch);
+					send_to_char("Zaswï¿½dziaï¿½ ciï¿½ nos i twoja koncentracja zniknï¿½a." NL, ch);
 					break;
 				case 1:
-					ch_printf(ch, "Poczu³%s¶ mrowienie na nodze i straci³%s¶ koncentracjê." NL, SEX_SUFFIX_EAE(ch), SEX_SUFFIX_EAE(ch));
+					ch_printf(ch, "Poczuï¿½%sï¿½ mrowienie na nodze i straciï¿½%sï¿½ koncentracjï¿½." NL, SEX_SUFFIX_EAE(ch), SEX_SUFFIX_EAE(ch));
 					break;
 				case 2:
-					send_to_char("Jaka¶ spro¶na my¶l odwróci³a twoje skupienie." NL, ch);
+					send_to_char("Jakaï¿½ sproï¿½na myï¿½l odwrï¿½ciï¿½a twoje skupienie." NL, ch);
 					break;
 				case 3:
-					send_to_char("Paproch w oku uniemo¿liwi³ ci u¿ycie mocy." NL, ch);
+					send_to_char("Paproch w oku uniemoï¿½liwiï¿½ ci uï¿½ycie mocy." NL, ch);
 					break;
 				}
 			}
 			else
-				send_to_char("Co¶ odwróci³o twoj± uwagê. Tracisz koncentracjê." NL, ch);
+				send_to_char("Coï¿½ odwrï¿½ciï¿½o twojï¿½ uwagï¿½. Tracisz koncentracjï¿½." NL, ch);
 			break;
 		case 2: /* not enough time */
 			if (ch->fighting)
-				ch_printf(ch, "Mia³%s¶ za ma³o czasu na skupienie. Nie uda³o siê." NL, SEX_SUFFIX_EAE(ch));
+				ch_printf(ch, "Miaï¿½%sï¿½ za maï¿½o czasu na skupienie. Nie udaï¿½o siï¿½." NL, SEX_SUFFIX_EAE(ch));
 			else
-				ch_printf(ch, "Straci³%s¶ koncentracjê." NL, SEX_SUFFIX_EAE(ch));
+				ch_printf(ch, "Straciï¿½%sï¿½ koncentracjï¿½." NL, SEX_SUFFIX_EAE(ch));
 			break;
 		case 3:
-			send_to_char("Zaburzenia mocy psuj± twoj± koncentracjê." NL, ch);
+			send_to_char("Zaburzenia mocy psujï¿½ twojï¿½ koncentracjï¿½." NL, ch);
 			break;
 		}
 
@@ -1366,7 +1368,7 @@ DEF_DO_FUN( cast )
 		}
 		else
 		{
-			// Thanos: ofensywne spelle pozwalaj± na danie informa.
+			// Thanos: ofensywne spelle pozwalajï¿½ na danie informa.
 			if (skill->target == TAR_CHAR_OFFENSIVE && victim && !char_died(victim) && victim != ch)
 				add_inform(victim, ch);
 
@@ -1392,7 +1394,7 @@ DEF_DO_FUN( cast )
 					+ log(skill->min_level + ch->pcdata->learned[sn] + ch->skill_level[FORCE_ABILITY]) / log(2);
 		force_exp = URANGE(0, force_exp, (exp_level(ch->skill_level[FORCE_ABILITY]+1)-exp_level(ch->skill_level[FORCE_ABILITY]))/20);
 		if (!ch->fighting)
-			ch_printf(ch, "Zdobywasz %d punkt%s do¶wiadczenia we w³adaniu Moc±." NL, force_exp, NUMBER_SUFF(force_exp, "", "y", "ów"));
+			ch_printf(ch, "Zdobywasz %d punkt%s doï¿½wiadczenia we wï¿½adaniu Mocï¿½." NL, force_exp, NUMBER_SUFF(force_exp, "", "y", "ï¿½w"));
 		gain_exp(ch, force_exp, FORCE_ABILITY);
 		learn_from_success(ch, sn);
 	}
@@ -1404,12 +1406,8 @@ DEF_DO_FUN( cast )
 	 */
 	if (skill->target == TAR_CHAR_OFFENSIVE && victim && !char_died(victim) && victim != ch)
 	{
-		CHAR_DATA *vch, *vch_next;
-
-		for (vch = ch->in_room->first_person; vch; vch = vch_next)
+		for (auto* vch : ch->in_room->people)
 		{
-			vch_next = vch->next_in_room;
-
 			if (vch == victim)
 			{
 				if (victim->master != ch && !victim->fighting)
@@ -1434,7 +1432,7 @@ ch_ret obj_cast_spell(int sn, int level, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_D
 	SKILLTYPE *skill = get_skilltype(sn);
 	struct timeval time_used;
 
-	if (sn == -1 || !sn) /* jak jest reserved to te¿ nic -- Thanos */
+	if (sn == -1 || !sn) /* jak jest reserved to teï¿½ nic -- Thanos */
 		return retcode;
 
 	IF_BUG(ch == NULL, "")
@@ -1451,7 +1449,7 @@ ch_ret obj_cast_spell(int sn, int level, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_D
 
 	if (IS_SET(ch->in_room->room_flags, ROOM_NO_FORCE))
 	{
-		send_to_char( COL_FORCE "Jako¶ nic siê nie dzieje..." EOL, ch);
+		send_to_char( COL_FORCE "Jakoï¿½ nic siï¿½ nie dzieje..." EOL, ch);
 		return rNONE;
 	}
 
@@ -1468,19 +1466,19 @@ ch_ret obj_cast_spell(int sn, int level, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_D
 			failed_casting(skill, ch, victim, NULL);
 			break;
 		case 1:
-			act( COL_FORCE, "Lamersko u¿ywasz $p$3 i niechc±cy kierujesz wszystko na siebie!", ch, obj, victim, TO_CHAR);
+			act( COL_FORCE, "Lamersko uï¿½ywasz $p$3 i niechcï¿½cy kierujesz wszystko na siebie!", ch, obj, victim, TO_CHAR);
 			if (victim)
-				act( COL_FORCE, "$n lamersko u¿ywa $p$3 i niechc±cy kieruje wszystko na siebie!", ch, obj, victim, TO_VICT);
-			act( COL_FORCE, "$n lamersko u¿ywa $p$3 i niechc±cy kieruje wszystko na siebie!", ch, obj, victim, TO_NOTVICT);
+				act( COL_FORCE, "$n lamersko uï¿½ywa $p$3 i niechcï¿½cy kieruje wszystko na siebie!", ch, obj, victim, TO_VICT);
+			act( COL_FORCE, "$n lamersko uï¿½ywa $p$3 i niechcï¿½cy kieruje wszystko na siebie!", ch, obj, victim, TO_NOTVICT);
 			return damage(ch, ch, number_range(1, level), TYPE_UNDEFINED);
 		case 2:
 			failed_casting(skill, ch, victim, NULL);
 			break;
 		case 3:
-			act( COL_FORCE, "Lamersko u¿ywasz $p$3 i niechc±cy kierujesz wszystko na siebie!", ch, obj, victim, TO_CHAR);
+			act( COL_FORCE, "Lamersko uï¿½ywasz $p$3 i niechcï¿½cy kierujesz wszystko na siebie!", ch, obj, victim, TO_CHAR);
 			if (victim)
-				act( COL_FORCE, "$n lamersko u¿ywa $p$3 i niechc±cy kieruje wszystko na siebie!", ch, obj, victim, TO_VICT);
-			act( COL_FORCE, "$n lamersko u¿ywa $p$3 i niechc±cy kieruje wszystko na siebie!", ch, obj, victim, TO_NOTVICT);
+				act( COL_FORCE, "$n lamersko uï¿½ywa $p$3 i niechcï¿½cy kieruje wszystko na siebie!", ch, obj, victim, TO_VICT);
+			act( COL_FORCE, "$n lamersko uï¿½ywa $p$3 i niechcï¿½cy kieruje wszystko na siebie!", ch, obj, victim, TO_NOTVICT);
 			return damage(ch, ch, number_range(1, level), TYPE_UNDEFINED);
 		}
 		return rNONE;
@@ -1508,7 +1506,7 @@ ch_ret obj_cast_spell(int sn, int level, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_D
 				victim = who_fighting(ch);
 			if (!victim || !IS_NPC(victim))
 			{
-				send_to_char("Nie mo¿esz tego zrobiæ" NL, ch);
+				send_to_char("Nie moï¿½esz tego zrobiï¿½" NL, ch);
 				return rNONE;
 			}
 		}
@@ -1540,7 +1538,7 @@ ch_ret obj_cast_spell(int sn, int level, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_D
 	case TAR_OBJ_INV:
 		if (obj == NULL)
 		{
-			send_to_char("Nie mo¿esz tego zrobiæ" NL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½" NL, ch);
 			return rNONE;
 		}
 		vo = (void*) obj;
@@ -1563,12 +1561,8 @@ ch_ret obj_cast_spell(int sn, int level, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_D
 
 	if (skill->target == TAR_CHAR_OFFENSIVE && victim != ch && !char_died(victim))
 	{
-		CHAR_DATA *vch;
-		CHAR_DATA *vch_next;
-
-		for (vch = ch->in_room->first_person; vch; vch = vch_next)
+		for (auto* vch : ch->in_room->people)
 		{
-			vch_next = vch->next_in_room;
 			if (victim == vch && !victim->fighting && victim->master != ch)
 			{
 				retcode = multi_hit(victim, ch, TYPE_UNDEFINED);
@@ -1591,7 +1585,7 @@ ch_ret spell_blindness(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (victim == ch)
 	{
-		send_to_char("Siebie chcesz o¶lepiæ?" NL, ch);
+		send_to_char("Siebie chcesz oï¿½lepiï¿½?" NL, ch);
 		return rSPELL_FAILED;
 	}
 
@@ -1617,7 +1611,7 @@ ch_ret spell_blindness(int sn, int level, CHAR_DATA *ch, void *vo)
 	af.duration = (1 + (level / 3)) * DUR_CONV;
 	af.bitvector = AFF_BLIND;
 	affect_to_char(victim, &af);
-	ch_printf(victim, "Zosta³%s¶ o¶lepion%s!" NL, SEX_SUFFIX_EAE(victim), SEX_SUFFIX_YAE(victim));
+	ch_printf(victim, "Zostaï¿½%sï¿½ oï¿½lepion%s!" NL, SEX_SUFFIX_EAE(victim), SEX_SUFFIX_YAE(victim));
 	if (ch != victim)
 		send_to_char("Ok." NL, ch);
 	return rNONE;
@@ -1663,14 +1657,14 @@ ch_ret spell_charm_person(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (victim == ch)
 	{
-		send_to_char("Lubisz ju¿ siebie. Ooo i to nawet bardzo!" NL, ch);
+		send_to_char("Lubisz juï¿½ siebie. Ooo i to nawet bardzo!" NL, ch);
 		return rSPELL_FAILED;
 	}
 
 	if (!IS_NPC(victim) && !IS_NPC(ch))
 	{
 		send_to_char("Ten numer nie przejdzie..." NL, ch);
-		send_to_char("Chyba kto¶ przed chwil± próbowa³ namieszaæ ci w g³owie." NL, victim);
+		send_to_char("Chyba ktoï¿½ przed chwilï¿½ prï¿½bowaï¿½ namieszaï¿½ ci w gï¿½owie." NL, victim);
 		return rSPELL_FAILED;
 	}
 
@@ -1678,7 +1672,7 @@ ch_ret spell_charm_person(int sn, int level, CHAR_DATA *ch, void *vo)
 	{
 		/* Thanos was here :P -- I Epizod sie klania */
 		if (number_percent() > 50)
-			ch_tell(victim, ch, "Co ty? My¶lisz, ¿e jeste¶ jaki¶ Jedi czy co?");
+			ch_tell(victim, ch, "Co ty? Myï¿½lisz, ï¿½e jesteï¿½ jakiï¿½ Jedi czy co?");
 		else
 			immune_casting(skill, ch, victim, NULL);
 		return rSPELL_FAILED;
@@ -1686,7 +1680,7 @@ ch_ret spell_charm_person(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (level < victim->top_level)
 	{
-		ch_tell(victim, ch, "Co ty? My¶lisz, ¿e jeste¶ jaki¶ Jedi czy co?");
+		ch_tell(victim, ch, "Co ty? Myï¿½lisz, ï¿½e jesteï¿½ jakiï¿½ Jedi czy co?");
 		return rSPELL_FAILED;
 	}
 
@@ -1708,8 +1702,8 @@ ch_ret spell_charm_person(int sn, int level, CHAR_DATA *ch, void *vo)
 	af.modifier = 0;
 	af.bitvector = AFF_CHARM;
 	affect_to_char(victim, &af);
-	act( COL_FORCE, "Czy¿ $n nie jest wspania³$y?", ch, NULL, victim, TO_VICT);
-	act( COL_FORCE, "Oczy $N$1 trac± blask...", ch, NULL, victim, TO_ROOM);
+	act( COL_FORCE, "Czyï¿½ $n nie jest wspaniaï¿½$y?", ch, NULL, victim, TO_VICT);
+	act( COL_FORCE, "Oczy $N$1 tracï¿½ blask...", ch, NULL, victim, TO_ROOM);
 	if (ch != victim)
 		send_to_char("Ok." NL, ch);
 
@@ -1735,7 +1729,7 @@ ch_ret spell_control_weather(int sn, int level, CHAR_DATA *ch, void *vo)
 		ch->in_room->area->planet->change -= dice(level / 3, 4);
 	else
 	{
-		send_to_char("Ma byæ lepsza czy gorsza pogoda?" NL, ch);
+		send_to_char("Ma byï¿½ lepsza czy gorsza pogoda?" NL, ch);
 		return rSPELL_FAILED;
 	}
 	successful_casting(skill, ch, NULL, NULL);
@@ -1758,14 +1752,14 @@ ch_ret spell_cure_blindness(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (ch != victim)
 	{
-		send_to_char("Zgodnie z kodeksem Jedi u¿ywasz mocy nios±c pomoc!" NL, ch);
+		send_to_char("Zgodnie z kodeksem Jedi uï¿½ywasz mocy niosï¿½c pomoc!" NL, ch);
 		ch->alignment += 25;
 		ch->alignment = URANGE(-1000, ch->alignment, 1000);
 		jedi_bonus(ch);
 	}
 
 	affect_strip(victim, gsn_blindness);
-	send_to_char( COL_FORCE "Twój wzrok powróci³!" EOL, victim);
+	send_to_char( COL_FORCE "Twï¿½j wzrok powrï¿½ciï¿½!" EOL, victim);
 	if (ch != victim)
 		send_to_char("Ok." NL, ch);
 	return rNONE;
@@ -1786,15 +1780,15 @@ ch_ret spell_cure_poison(int sn, int level, CHAR_DATA *ch, void *vo)
 	{
 		if (ch != victim)
 		{
-			send_to_char("Zgodnie z kodeksem Jedi u¿ywasz mocy nios±c pomoc!" NL, ch);
+			send_to_char("Zgodnie z kodeksem Jedi uï¿½ywasz mocy niosï¿½c pomoc!" NL, ch);
 			ch->alignment += 25;
 			ch->alignment = URANGE(-1000, ch->alignment, 1000);
 			jedi_bonus(ch);
 		}
 
 		affect_strip(victim, gsn_poison);
-		act( COL_FORCE, "$N wygl±da lepiej.", ch, NULL, victim, TO_NOTVICT);
-		send_to_char( COL_FORCE "Ciep³e uczucie ogarnia twoje cia³o." EOL, victim);
+		act( COL_FORCE, "$N wyglï¿½da lepiej.", ch, NULL, victim, TO_NOTVICT);
+		send_to_char( COL_FORCE "Ciepï¿½e uczucie ogarnia twoje ciaï¿½o." EOL, victim);
 		victim->mental_state = URANGE(-100, victim->mental_state, -10);
 		send_to_char("Ok." NL, ch);
 		return rNONE;
@@ -1850,14 +1844,14 @@ ch_ret spell_detect_poison(int sn, int level, CHAR_DATA *ch, void *vo)
 	{
 		if (obj->value[3] != 0)
 			send_to_char( COL_FORCE
-			"Wyczuwasz truciznê a¿ krêci siê w g³owie." EOL, ch);
+			"Wyczuwasz truciznï¿½ aï¿½ krï¿½ci siï¿½ w gï¿½owie." EOL, ch);
 		else
 			send_to_char( COL_FORCE
-			"Hmm.. To wygl±da apetycznie." EOL, ch);
+			"Hmm.. To wyglï¿½da apetycznie." EOL, ch);
 	}
 	else
 	{
-		send_to_char("To nie wygl±da aby by³o zatrute." NL, ch);
+		send_to_char("To nie wyglï¿½da aby byï¿½o zatrute." NL, ch);
 	}
 
 	return rNONE;
@@ -1874,13 +1868,13 @@ ch_ret spell_dispel_evil(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (IS_GOOD(victim))
 	{
-		act( COL_FORCE, "¦wiat³o zaczyna chroniæ $N$3.", ch, NULL, victim, TO_ROOM);
+		act( COL_FORCE, "ï¿½wiatï¿½o zaczyna chroniï¿½ $N$3.", ch, NULL, victim, TO_ROOM);
 		return rSPELL_FAILED;
 	}
 
 	if (IS_NEUTRAL(victim))
 	{
-		act( COL_FORCE, "$N$2 nic siê nie dzieje.", ch, NULL, victim, TO_CHAR);
+		act( COL_FORCE, "$N$2 nic siï¿½ nie dzieje.", ch, NULL, victim, TO_CHAR);
 		return rSPELL_FAILED;
 	}
 
@@ -1908,9 +1902,9 @@ ch_ret spell_dispel_force(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (victim->affected_by && ch == victim)
 	{
-		send_to_char( COL_FORCE "Oplatasz d³oñmi swoje cia³o..." EOL, ch);
-		while (victim->first_affect)
-			affect_remove(victim, victim->first_affect);
+		send_to_char( COL_FORCE "Oplatasz dï¿½oï¿½mi swoje ciaï¿½o..." EOL, ch);
+		while (!victim->affects.empty())
+			affect_remove(victim, victim->affects.front());
 		victim->affected_by = victim->race->affected;
 		return rNONE;
 	}
@@ -1922,7 +1916,7 @@ ch_ret spell_dispel_force(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (!IS_NPC(victim))
 	{
-		send_to_char("Nie mo¿esz tego zrobiæ... jeszcze." NL, ch);
+		send_to_char("Nie moï¿½esz tego zrobiï¿½... jeszcze." NL, ch);
 		return rSPELL_FAILED;
 	}
 
@@ -1966,12 +1960,12 @@ ch_ret spell_earthquake(int sn, int level, CHAR_DATA *ch, void *vo)
 	ch->alignment = URANGE(-1000, ch->alignment, 1000);
 	sith_penalty(ch);
 
-	act( COL_FORCE, "Ziemia trzêsie siê pod twoimi stopami!", ch, NULL, NULL, TO_CHAR);
-	act( COL_FORCE, "$n sprawia, ¿e ziemia trzêsie siê i dr¿y!", ch, NULL, NULL, TO_ROOM);
+	act( COL_FORCE, "Ziemia trzï¿½sie siï¿½ pod twoimi stopami!", ch, NULL, NULL, TO_CHAR);
+	act( COL_FORCE, "$n sprawia, ï¿½e ziemia trzï¿½sie siï¿½ i drï¿½y!", ch, NULL, NULL, TO_ROOM);
 
-	for (vch = first_char; vch; vch = vch_next)
+	auto char_snapshot = char_list;
+	for (auto* vch : char_snapshot)
 	{
-		vch_next = vch->next;
 		if (!vch->in_room)
 			continue;
 		if (vch->in_room == ch->in_room)
@@ -1997,7 +1991,7 @@ ch_ret spell_earthquake(int sn, int level, CHAR_DATA *ch, void *vo)
 
 		if (!ch_died && vch->in_room->area == ch->in_room->area)
 		{
-			send_to_char( COL_FORCE "Ziemia trzêsie siê i dr¿y." EOL, vch);
+			send_to_char( COL_FORCE "Ziemia trzï¿½sie siï¿½ i drï¿½y." EOL, vch);
 		}
 	}
 
@@ -2013,7 +2007,7 @@ ch_ret spell_enchant_weapon(int sn, int level, CHAR_DATA *ch, void *vo)
 	OBJ_DATA *obj = (OBJ_DATA*) vo;
 	AFFECT_DATA *paf;
 
-	if (obj->item_type != ITEM_WEAPON || IS_OBJ_STAT(obj, ITEM_FORCE) || obj->first_affect)
+	if (obj->item_type != ITEM_WEAPON || IS_OBJ_STAT(obj, ITEM_FORCE) || !obj->affects.empty())
 		return rSPELL_FAILED;
 
 	/* Bug fix here. -- Alty */
@@ -2024,7 +2018,7 @@ ch_ret spell_enchant_weapon(int sn, int level, CHAR_DATA *ch, void *vo)
 	paf->location = APPLY_HITROLL;
 	paf->modifier = level / 15;
 	paf->bitvector = 0;
-	LINK(paf, obj->first_affect, obj->last_affect, next, prev);
+	obj->affects.push_back(paf);
 
 	CREATE(paf, AFFECT_DATA, 1);
 	paf->type = -1;
@@ -2032,23 +2026,23 @@ ch_ret spell_enchant_weapon(int sn, int level, CHAR_DATA *ch, void *vo)
 	paf->location = APPLY_DAMROLL;
 	paf->modifier = level / 15;
 	paf->bitvector = 0;
-	LINK(paf, obj->first_affect, obj->last_affect, next, prev);
+	obj->affects.push_back(paf);
 
 	if (IS_GOOD(ch))
 	{
 		SET_BIT(obj->extra_flags, ITEM_ANTI_EVIL);
-		act( FB_BLUE, "$p rozb³yskuje na niebiesko.", ch, obj, NULL, TO_CHAR);
+		act( FB_BLUE, "$p rozbï¿½yskuje na niebiesko.", ch, obj, NULL, TO_CHAR);
 	}
 	else if (IS_EVIL(ch))
 	{
 		SET_BIT(obj->extra_flags, ITEM_ANTI_GOOD);
-		act( FB_RED, "$p rozb³yskuje na czerwono.", ch, obj, NULL, TO_CHAR);
+		act( FB_RED, "$p rozbï¿½yskuje na czerwono.", ch, obj, NULL, TO_CHAR);
 	}
 	else
 	{
 		SET_BIT(obj->extra_flags, ITEM_ANTI_EVIL);
 		SET_BIT(obj->extra_flags, ITEM_ANTI_GOOD);
-		act( FB_YELLOW, "$p rozb³yskuje ¿ó³tym ¶wiat³em.", ch, obj, NULL, TO_CHAR);
+		act( FB_YELLOW, "$p rozbï¿½yskuje ï¿½ï¿½tym ï¿½wiatï¿½em.", ch, obj, NULL, TO_CHAR);
 	}
 
 	send_to_char("Ok." NL, ch);
@@ -2124,8 +2118,8 @@ ch_ret spell_faerie_fire(int sn, int level, CHAR_DATA *ch, void *vo)
 	af.modifier = 2 * level;
 	af.bitvector = AFF_FAERIE_FIRE;
 	affect_to_char(victim, &af);
-	act( FB_PINK, "Otaczasz siê ró¿ow± pow³ok±.", victim, NULL, NULL, TO_CHAR);
-	act( FB_PINK, "$n otacza siê ró¿ow± pow³ok±.", victim, NULL, NULL, TO_ROOM);
+	act( FB_PINK, "Otaczasz siï¿½ rï¿½owï¿½ powï¿½okï¿½.", victim, NULL, NULL, TO_CHAR);
+	act( FB_PINK, "$n otacza siï¿½ rï¿½owï¿½ powï¿½okï¿½.", victim, NULL, NULL, TO_ROOM);
 	return rNONE;
 }
 
@@ -2133,10 +2127,10 @@ ch_ret spell_faerie_fog(int sn, int level, CHAR_DATA *ch, void *vo)
 {
 	CHAR_DATA *ich;
 
-	act( COL_FORCE, "$n otacza siê mgie³k± ró¿owego dymu.", ch, NULL, NULL, TO_ROOM);
-	act( COL_FORCE, "Otaczasz siê mgie³k± ró¿owego dymu.", ch, NULL, NULL, TO_CHAR);
+	act( COL_FORCE, "$n otacza siï¿½ mgieï¿½kï¿½ rï¿½owego dymu.", ch, NULL, NULL, TO_ROOM);
+	act( COL_FORCE, "Otaczasz siï¿½ mgieï¿½kï¿½ rï¿½owego dymu.", ch, NULL, NULL, TO_CHAR);
 
-	for (ich = ch->in_room->first_person; ich; ich = ich->next_in_room)
+	for (auto* ich : ch->in_room->people)
 	{
 		if (!IS_NPC(ich) && IS_SET(ich->act, PLR_WIZINVIS))
 			continue;
@@ -2151,7 +2145,7 @@ ch_ret spell_faerie_fog(int sn, int level, CHAR_DATA *ch, void *vo)
 			REMOVE_BIT(ich->affected_by, AFF_INVISIBLE);
 		if (!IS_RACE(ich, "NOGHRI"))
 			REMOVE_BIT(ich->affected_by, AFF_SNEAK);
-		act( COL_FORCE, "Kto¶ ujawnia $n$1!", ich, NULL, NULL, TO_ROOM);
+		act( COL_FORCE, "Ktoï¿½ ujawnia $n$1!", ich, NULL, NULL, TO_ROOM);
 		act( COL_FORCE, "Zostajesz ujawniony!", ich, NULL, NULL, TO_CHAR);
 	}
 	return rNONE;
@@ -2190,7 +2184,7 @@ ch_ret spell_identify(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (target_name[0] == '\0')
 	{
-		send_to_char("Co chcesz zidentyfikowaæ?" NL, ch);
+		send_to_char("Co chcesz zidentyfikowaï¿½?" NL, ch);
 		return rSPELL_FAILED;
 	}
 
@@ -2211,34 +2205,34 @@ ch_ret spell_identify(int sn, int level, CHAR_DATA *ch, void *vo)
 
 		if (IS_NPC(victim))
 		{
-			ch_printf(ch, "Ofiara wydaje siê mieæ poziom miêdzy %d a %d." NL, victim->top_level - (victim->top_level % 5),
+			ch_printf(ch, "Ofiara wydaje siï¿½ mieï¿½ poziom miï¿½dzy %d a %d." NL, victim->top_level - (victim->top_level % 5),
 					victim->top_level - (victim->top_level % 5) + 5);
 		}
 		else
 		{
-			ch_printf(ch, "Ofiara wydaje siê mieæ poziom %d." NL, victim->top_level);
+			ch_printf(ch, "Ofiara wydaje siï¿½ mieï¿½ poziom %d." NL, victim->top_level);
 		}
 
-		ch_printf(ch, "Ofiara wygl±da jak %s." NL, get_race(victim));
+		ch_printf(ch, "Ofiara wyglï¿½da jak %s." NL, get_race(victim));
 
 		if ((chance(ch, 50) && ch->top_level >= victim->top_level + 10) || IS_IMMORTAL(ch))
 		{
-			ch_printf(ch, "Ofiara zdaje siê byæ pod wp³ywem: ");
+			ch_printf(ch, "Ofiara zdaje siï¿½ byï¿½ pod wpï¿½ywem: ");
 
-			if (!victim->first_affect)
+			if (victim->affects.empty())
 			{
 				send_to_char("niczego." NL, ch);
 				return rNONE;
 			}
 
-			for (paf = victim->first_affect; paf; paf = paf->next)
+			for (auto* paf : victim->affects)
 			{
-				if (victim->first_affect != victim->last_affect)
+				if (victim->affects.size() > 1)
 				{
-					if (paf != victim->last_affect && (sktmp = get_skilltype(paf->type)) != NULL)
+					if (paf != victim->affects.back() && (sktmp = get_skilltype(paf->type)) != NULL)
 						ch_printf(ch, "%s, ", sktmp->name);
 
-					if (paf == victim->last_affect && (sktmp = get_skilltype(paf->type)) != NULL)
+					if (paf == victim->affects.back() && (sktmp = get_skilltype(paf->type)) != NULL)
 					{
 						ch_printf(ch, "i %s." NL, sktmp->name);
 						return rNONE;
@@ -2321,7 +2315,7 @@ ch_ret spell_invis(int sn, int level, CHAR_DATA *ch, void *vo)
 			return rNONE;
 		}
 	}
-	ch_printf(ch, "Nie mo¿esz znale¼æ %s!" NL, target_name);
+	ch_printf(ch, "Nie moï¿½esz znaleï¿½ï¿½ %s!" NL, target_name);
 	return rSPELL_FAILED;
 }
 
@@ -2347,19 +2341,19 @@ ch_ret spell_know_alignment(int sn, int level, CHAR_DATA *ch, void *vo)
 	ap = victim->alignment;
 
 	if (ap > 700)
-		msg = "Aura bia³a jak ¶niegi Hoth otacza $N$3.";
+		msg = "Aura biaï¿½a jak ï¿½niegi Hoth otacza $N$3.";
 	else if (ap > 350)
-		msg = "$N jest wzorem moralno¶ci i dobra.";
+		msg = "$N jest wzorem moralnoï¿½ci i dobra.";
 	else if (ap > 100)
-		msg = "$N jest mi³$Y i uczynn$Y.";
+		msg = "$N jest miï¿½$Y i uczynn$Y.";
 	else if (ap > -100)
 		msg = "$N nie jest najszlachetniejsz$Y.";
 	else if (ap > -350)
-		msg = "$N czêsto ok³amuje przyjació³.";
+		msg = "$N czï¿½sto okï¿½amuje przyjaciï¿½.";
 	else if (ap > -700)
-		msg = "$N wygl±da tak, jakby mia³ za chwilê ciê zabiæ!";
+		msg = "$N wyglï¿½da tak, jakby miaï¿½ za chwilï¿½ ciï¿½ zabiï¿½!";
 	else
-		msg = "$N to z³o, które przechodzi ciê dreszczem.";
+		msg = "$N to zï¿½o, ktï¿½re przechodzi ciï¿½ dreszczem.";
 
 	act( COL_FORCE, msg, ch, NULL, victim, TO_CHAR);
 	return rNONE;
@@ -2409,8 +2403,8 @@ ch_ret spell_pass_door(int sn, int level, CHAR_DATA *ch, void *vo)
 	af.modifier = 0;
 	af.bitvector = AFF_PASS_DOOR;
 	affect_to_char(victim, &af);
-	act( COL_FORCE, "$n rozp³ywa siê zmieniaj±c swe cia³o w przezroczyst± plazmê.", victim, NULL, NULL, TO_ROOM);
-	act( COL_FORCE, "Rozp³ywasz siê zmieniaj±c swe cia³o w przezroczyst± plazmê.", victim, NULL, NULL, TO_CHAR);
+	act( COL_FORCE, "$n rozpï¿½ywa siï¿½ zmieniajï¿½c swe ciaï¿½o w przezroczystï¿½ plazmï¿½.", victim, NULL, NULL, TO_ROOM);
+	act( COL_FORCE, "Rozpï¿½ywasz siï¿½ zmieniajï¿½c swe ciaï¿½o w przezroczystï¿½ plazmï¿½.", victim, NULL, NULL, TO_CHAR);
 	return rNONE;
 }
 
@@ -2438,7 +2432,7 @@ ch_ret spell_poison(int sn, int level, CHAR_DATA *ch, void *vo)
 	af.bitvector = AFF_POISON;
 	affect_join(victim, &af);
 	send_to_char( COL_FORCE, victim);
-	send_to_char("Czujesz, ¿e jest ci bardzo niedobrze." NL, victim);
+	send_to_char("Czujesz, ï¿½e jest ci bardzo niedobrze." NL, victim);
 	victim->mental_state = URANGE(20, victim->mental_state + (first ? 5 : 0), 100);
 	if (ch != victim)
 		send_to_char("Ok." NL, ch);
@@ -2461,21 +2455,22 @@ ch_ret spell_remove_trap(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (!target_name || target_name[0] == '\0')
 	{
-		send_to_char("Jak± pu³apkê chcesz rozbroiæ?" NL, ch);
+		send_to_char("Jakï¿½ puï¿½apkï¿½ chcesz rozbroiï¿½?" NL, ch);
 		return rSPELL_FAILED;
 	}
 
 	found = false;
 
-	if (!ch->in_room->first_content)
+	if (ch->in_room->contents.empty())
 	{
 		send_to_char("Nie widzisz niczego takiego." NL, ch);
 		return rNONE;
 	}
 
-	for (obj = ch->in_room->first_content; obj; obj = obj->next_content)
-		if (can_see_obj(ch, obj) && nifty_is_name(target_name, obj->name))
+	for (auto* o : ch->in_room->contents)
+		if (can_see_obj(ch, o) && nifty_is_name(target_name, o->name))
 		{
+			obj = o;
 			found = true;
 			break;
 		}
@@ -2544,7 +2539,7 @@ ch_ret spell_sleep(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (!IS_NPC(victim) && victim->fighting)
 	{
-		send_to_char("Nie uda ci siê u¶piæ gracza podczas walki." NL, ch);
+		send_to_char("Nie uda ci siï¿½ uï¿½piï¿½ gracza podczas walki." NL, ch);
 		return rSPELL_FAILED;
 	}
 
@@ -2601,8 +2596,8 @@ ch_ret spell_sleep(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (IS_AWAKE(victim))
 	{
-		act( COL_FORCE, "Czujesz, ¿e    chce...  ci.. siê. ..   spaæ.. .. . Zzzzzz.", victim, NULL, NULL, TO_CHAR);
-		act( COL_FORCE, "$n k³adzie siê do snu i zasypia.", victim, NULL, NULL, TO_ROOM);
+		act( COL_FORCE, "Czujesz, ï¿½e    chce...  ci.. siï¿½. ..   spaï¿½.. .. . Zzzzzz.", victim, NULL, NULL, TO_CHAR);
+		act( COL_FORCE, "$n kï¿½adzie siï¿½ do snu i zasypia.", victim, NULL, NULL, TO_ROOM);
 		victim->position = POS_SLEEPING;
 		fevent_trigger(victim, FE_POSITION);
 	}
@@ -2620,10 +2615,10 @@ ch_ret spell_ventriloquate(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	target_name = one_argument(target_name, speaker);
 
-	sprintf(buf1, "%s mówi '%s'." NL, speaker, target_name);
+	sprintf(buf1, "%s mï¿½wi '%s'." NL, speaker, target_name);
 	buf1[0] = UPPER(buf1[0]);
 
-	for (vch = ch->in_room->first_person; vch; vch = vch->next_in_room)
+	for (auto* vch : ch->in_room->people)
 	{
 		if (!is_name(speaker, vch->name))
 		{
@@ -2655,7 +2650,7 @@ ch_ret spell_weaken(int sn, int level, CHAR_DATA *ch, void *vo)
 	af.bitvector = 0;
 	affect_to_char(victim, &af);
 	send_to_char( COL_FORCE, victim);
-	ch_printf(victim, "Czujesz siê s³absz%s." NL, SEX_SUFFIX_YAE(victim));
+	ch_printf(victim, "Czujesz siï¿½ sï¿½absz%s." NL, SEX_SUFFIX_YAE(victim));
 	if (ch != victim)
 		send_to_char("Ok." NL, ch);
 	return rNONE;
@@ -2677,11 +2672,10 @@ ch_ret spell_acid_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (chance(ch, 2 * level) && !saves_breath(level, victim))
 	{
-		for (obj_lose = victim->first_carrying; obj_lose; obj_lose = obj_next)
+		auto carrying_snapshot = victim->carrying;
+		for (auto* obj_lose : carrying_snapshot)
 		{
 			int iWear;
-
-			obj_next = obj_lose->next_content;
 
 			if (number_bits(2) != 0)
 				continue;
@@ -2692,7 +2686,7 @@ ch_ret spell_acid_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 				if (obj_lose->value[0] > 0)
 				{
 					separate_obj(obj_lose);
-					act( COL_ACTION, "$p topi siê!", victim, obj_lose, NULL, TO_CHAR);
+					act( COL_ACTION, "$p topi siï¿½!", victim, obj_lose, NULL, TO_CHAR);
 					if ((iWear = obj_lose->wear_loc) != WEAR_NONE)
 						victim->armor -= apply_ac(obj_lose, iWear);
 					obj_lose->value[0] -= 1;
@@ -2704,9 +2698,9 @@ ch_ret spell_acid_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 
 			case ITEM_CONTAINER:
 				separate_obj(obj_lose);
-				act( COL_ACTION, "$p syczy i rozsypuje siê na kawa³ki!", victim, obj_lose, NULL, TO_CHAR);
-				act( COL_OBJECT, "Zawarto¶æ $p$1 wypada na ziemiê.", victim, obj_lose, NULL, TO_ROOM);
-				act( COL_OBJECT, "Zawarto¶æ $p$1 wypada na ziemiê.", victim, obj_lose, NULL, TO_CHAR);
+				act( COL_ACTION, "$p syczy i rozsypuje siï¿½ na kawaï¿½ki!", victim, obj_lose, NULL, TO_CHAR);
+				act( COL_OBJECT, "Zawartoï¿½ï¿½ $p$1 wypada na ziemiï¿½.", victim, obj_lose, NULL, TO_ROOM);
+				act( COL_OBJECT, "Zawartoï¿½ï¿½ $p$1 wypada na ziemiï¿½.", victim, obj_lose, NULL, TO_CHAR);
 				empty_obj(obj_lose, NULL, victim->in_room);
 				extract_obj(obj_lose);
 				break;
@@ -2731,11 +2725,11 @@ ch_ret spell_fire_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (chance(ch, 2 * level) && !saves_breath(level, victim))
 	{
-		for (obj_lose = victim->first_carrying; obj_lose; obj_lose = obj_next)
+		auto carrying_snapshot2 = victim->carrying;
+		for (auto* obj_lose : carrying_snapshot2)
 		{
 			const char *msg;
 
-			obj_next = obj_lose->next_content;
 			if (number_bits(2) != 0)
 				continue;
 
@@ -2789,11 +2783,11 @@ ch_ret spell_frost_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (chance(ch, 2 * level) && !saves_breath(level, victim))
 	{
-		for (obj_lose = victim->first_carrying; obj_lose; obj_lose = obj_next)
+		auto carrying_snapshot3 = victim->carrying;
+		for (auto* obj_lose : carrying_snapshot3)
 		{
 			const char *msg;
 
-			obj_next = obj_lose->next_content;
 			if (number_bits(2) != 0)
 				continue;
 
@@ -2844,9 +2838,9 @@ ch_ret spell_gas_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 		return rNONE;
 	}
 
-	for (vch = ch->in_room->first_person; vch; vch = vch_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* vch : people_snapshot)
 	{
-		vch_next = vch->next_in_room;
 		if (!IS_NPC(vch) && IS_SET(vch->act, PLR_WIZINVIS) && vch->pcdata->wizinvis >= LEVEL_IMMORTAL)
 			continue;
 
@@ -2932,7 +2926,7 @@ ch_ret spell_farsight(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (IS_IMMORTAL(victim))
 	{
-		ch_printf(victim, "%s spieguje Ciê za po¶rednictwem mocy." NL, ch->przypadki[0]);
+		ch_printf(victim, "%s spieguje Ciï¿½ za poï¿½rednictwem mocy." NL, ch->przypadki[0]);
 
 		if (!IS_IMMORTAL(ch))
 		{
@@ -2945,7 +2939,7 @@ ch_ret spell_farsight(int sn, int level, CHAR_DATA *ch, void *vo)
 
 			failed_casting(skill, ch, victim, NULL);
 			affect_to_char(ch, &af);
-			ch_printf(ch, "Blask %s o¶lepia Ciê!" NL, victim->przypadki[1]);
+			ch_printf(ch, "Blask %s oï¿½lepia Ciï¿½!" NL, victim->przypadki[1]);
 			return rSPELL_FAILED;
 		}
 	}
@@ -2968,7 +2962,7 @@ ch_ret spell_remove_invis(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (target_name[0] == '\0')
 	{
-		send_to_char("Co lub kto ma przestaæ byæ niewidzialnym?" NL, ch);
+		send_to_char("Co lub kto ma przestaï¿½ byï¿½ niewidzialnym?" NL, ch);
 		return rSPELL_FAILED;
 	}
 
@@ -2980,7 +2974,7 @@ ch_ret spell_remove_invis(int sn, int level, CHAR_DATA *ch, void *vo)
 			return rSPELL_FAILED;
 
 		REMOVE_BIT(obj->extra_flags, ITEM_INVIS);
-		act( COL_FORCE, "$p delikatnie pojawia siê w twoich d³oniach.", ch, obj, NULL, TO_CHAR);
+		act( COL_FORCE, "$p delikatnie pojawia siï¿½ w twoich dï¿½oniach.", ch, obj, NULL, TO_CHAR);
 
 		send_to_char("Ok." NL, ch);
 		return rNONE;
@@ -2995,7 +2989,7 @@ ch_ret spell_remove_invis(int sn, int level, CHAR_DATA *ch, void *vo)
 		{
 			if (!can_see(ch, victim))
 			{
-				ch_printf(ch, "Nie widzisz ¿adnego %s!" NL, target_name);
+				ch_printf(ch, "Nie widzisz ï¿½adnego %s!" NL, target_name);
 				return rSPELL_FAILED;
 			}
 
@@ -3004,7 +2998,7 @@ ch_ret spell_remove_invis(int sn, int level, CHAR_DATA *ch, void *vo)
 
 			if (!IS_AFFECTED(victim, AFF_INVISIBLE)) //Trog: moze tutaj trzeba forceinvis, MOZE.
 			{
-				ch_printf(ch, "Ale¿ twoja ofiara jest jak najbardziej widzialna!" NL);
+				ch_printf(ch, "Aleï¿½ twoja ofiara jest jak najbardziej widzialna!" NL);
 				return rSPELL_FAILED;
 			}
 
@@ -3041,15 +3035,15 @@ ch_ret spell_remove_invis(int sn, int level, CHAR_DATA *ch, void *vo)
 //    	affect_strip ( victim, gsn_forceinvis                   );
 			REMOVE_BIT(victim->affected_by, AFF_INVISIBLE);
 
-			/* BTW: to tak bez komunikatu, ¿e ofiara jest widzialna? Mo¿e ofiara nie
-			 widzi tego od razu, ale OTOCZENIE? Chyba powinno siê kapn±æ...
-			 No chyba, ¿e affect_strip() to za³atwia... 		-- Than */
+			/* BTW: to tak bez komunikatu, ï¿½e ofiara jest widzialna? Moï¿½e ofiara nie
+			 widzi tego od razu, ale OTOCZENIE? Chyba powinno siï¿½ kapnï¿½ï¿½...
+			 No chyba, ï¿½e affect_strip() to zaï¿½atwia... 		-- Than */
 
 			send_to_char("Ok." NL, ch);
 			return rNONE;
 		}
 
-		ch_printf(ch, "Nie widzisz tu ¿adnego %s!" NL, target_name);
+		ch_printf(ch, "Nie widzisz tu ï¿½adnego %s!" NL, target_name);
 		return rSPELL_FAILED;
 	}
 }
@@ -3074,12 +3068,11 @@ ch_ret spell_animate_dead(int sn, int level, CHAR_DATA *ch, void *vo)
 	int i;
 	found = false;
 
-	for (corpse = ch->in_room->first_content; corpse; corpse = corpse_next)
+	for (auto* c : ch->in_room->contents)
 	{
-		corpse_next = corpse->next_content;
-
-		if (corpse->item_type == ITEM_CORPSE_NPC && corpse->cost != -5)
+		if (c->item_type == ITEM_CORPSE_NPC && c->cost != -5)
 		{
+			corpse = c;
 			found = true;
 			break;
 		}
@@ -3154,13 +3147,15 @@ ch_ret spell_animate_dead(int sn, int level, CHAR_DATA *ch, void *vo)
 		af.bitvector = AFF_CHARM;
 		affect_to_char(mob, &af);
 
-		if (corpse->first_content)
-			for (obj = corpse->first_content; obj; obj = obj_next)
+		if (!corpse->contents.empty())
+		{
+			auto corpse_snapshot = corpse->contents;
+			for (auto* obj : corpse_snapshot)
 			{
-				obj_next = obj->next_content;
 				obj_from_obj(obj);
 				obj_to_room(obj, corpse->in_room);
 			}
+		}
 
 		separate_obj(corpse);
 		extract_obj(corpse);
@@ -3183,7 +3178,7 @@ ch_ret spell_possess(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (!ch->desc || ch->desc->original)
 	{
-		send_to_char("Twój stan nie pozwala ci na to." NL, ch);
+		send_to_char("Twï¿½j stan nie pozwala ci na to." NL, ch);
 		return rSPELL_FAILED;
 	}
 
@@ -3195,25 +3190,25 @@ ch_ret spell_possess(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (victim == ch)
 	{
-		send_to_char("Hmm.. Jak chcesz posi±¶æ swoj± w³asn± wolê?" NL, ch);
+		send_to_char("Hmm.. Jak chcesz posiï¿½ï¿½ï¿½ swojï¿½ wï¿½asnï¿½ wolï¿½?" NL, ch);
 		return rSPELL_FAILED;
 	}
 
 	if (!IS_NPC(victim))
 	{
-		send_to_char("Nie mo¿esz posi±¶æ woli innego gracza!" NL, ch);
+		send_to_char("Nie moï¿½esz posiï¿½ï¿½ï¿½ woli innego gracza!" NL, ch);
 		return rSPELL_FAILED;
 	}
 
 	if (IS_SET(victim->act, ACT_DROID))
 	{
-		send_to_char("Maszyny nie maj± umys³u." NL, ch);
+		send_to_char("Maszyny nie majï¿½ umysï¿½u." NL, ch);
 		return rSPELL_FAILED;
 	}
 
 	if (victim->desc)
 	{
-		ch_printf(ch, "Kto¶ ju¿ kontroluje zachowanie %s" PLAIN "." NL, victim->przypadki[1]);
+		ch_printf(ch, "Ktoï¿½ juï¿½ kontroluje zachowanie %s" PLAIN "." NL, victim->przypadki[1]);
 		return rSPELL_FAILED;
 	}
 
@@ -3241,7 +3236,7 @@ ch_ret spell_possess(int sn, int level, CHAR_DATA *ch, void *vo)
 	af.bitvector = AFF_POSSESS;
 	affect_to_char(victim, &af);
 
-	sprintf(buf, "Twój umys³ przejmuje kontrolê nad cia³em %s" PLAIN "!" NL, NAME(victim, 1));
+	sprintf(buf, "Twï¿½j umysï¿½ przejmuje kontrolï¿½ nad ciaï¿½em %s" PLAIN "!" NL, NAME(victim, 1));
 
 	ch->desc->character = victim;
 	ch->desc->original = ch;
@@ -3299,19 +3294,19 @@ ch_ret spell_dream(int sn, int level, CHAR_DATA *ch, void *vo)
 
 	if (victim->position != POS_SLEEPING)
 	{
-		ch_printf(ch, "%s" PLAIN " nie ¶pi." NL, victim->przypadki[0]);
+		ch_printf(ch, "%s" PLAIN " nie ï¿½pi." NL, victim->przypadki[0]);
 		return rSPELL_FAILED;
 	}
 
 	if (!target_name)
 	{
-		send_to_char("O czym ma ¶niæ ta osoba?" NL, ch);
+		send_to_char("O czym ma ï¿½niï¿½ ta osoba?" NL, ch);
 		return rSPELL_FAILED;
 	}
 
 	send_to_char(COL_TELL, victim);
 
-	ch_printf(victim, FB_WHITE "¦ni ci siê, ¿e %s" FB_WHITE " mówi ci '%s" FB_WHITE "'." NL, PERS(ch, victim, 0), target_name);
+	ch_printf(victim, FB_WHITE "ï¿½ni ci siï¿½, ï¿½e %s" FB_WHITE " mï¿½wi ci '%s" FB_WHITE "'." NL, PERS(ch, victim, 0), target_name);
 
 	send_to_char("Ok." NL, ch);
 	return rNONE;
@@ -3433,10 +3428,9 @@ ch_ret spell_area_attack(int sn, int level, CHAR_DATA *ch, void *vo)
 	if (skill->hit_room && *skill->hit_room != '\0')
 		act( COL_FORCE, skill->hit_room, ch, NULL, NULL, TO_ROOM);
 
-	for (vch = ch->in_room->first_person; vch; vch = vch_next)
+	auto people_snapshot2 = ch->in_room->people;
+	for (auto* vch : people_snapshot2)
 	{
-		vch_next = vch->next_in_room;
-
 		if (!IS_NPC(vch) && IS_SET(vch->act, PLR_WIZINVIS) && vch->pcdata->wizinvis >= LEVEL_IMMORTAL)
 			continue;
 
@@ -3564,7 +3558,7 @@ ch_ret spell_affectchar(int sn, int level, CHAR_DATA *ch, void *vo)
 			case APPLY_HIT:
 				if (ch != victim && victim->hit < victim->max_hit && af.modifier > 0)
 				{
-					send_to_char("Zgodnie z kodeksem Jedi u¿ywasz mocy nios±c pomoc!" NL, ch);
+					send_to_char("Zgodnie z kodeksem Jedi uï¿½ywasz mocy niosï¿½c pomoc!" NL, ch);
 					ch->alignment = ch->alignment + 20;
 					ch->alignment = URANGE(-1000, ch->alignment, 1000);
 					jedi_bonus(ch);
@@ -3579,7 +3573,7 @@ ch_ret spell_affectchar(int sn, int level, CHAR_DATA *ch, void *vo)
 					return rSPELL_FAILED;
 				if (ch != victim)
 				{
-					send_to_char("Zgodnie z kodeksem Jedi u¿ywasz mocy nios±c pomoc!" NL, ch);
+					send_to_char("Zgodnie z kodeksem Jedi uï¿½ywasz mocy niosï¿½c pomoc!" NL, ch);
 					ch->alignment = ch->alignment + 25;
 					ch->alignment = URANGE(-1000, ch->alignment, 1000);
 					jedi_bonus(ch);
@@ -3685,60 +3679,62 @@ ch_ret spell_affect(int sn, int level, CHAR_DATA *ch, void *vo)
 		}
 		if (skill->hit_vict && skill->hit_vict[0] != '\0')
 			hitvict = true;
-		if (victim)
-			victim = victim->in_room->first_person;
-		else
-			victim = ch->in_room->first_person;
+		/* group/area spell: iterate all room people */
 	}
 
-	IF_BUG(victim == NULL, "sn: %d", sn)
+	IF_BUG(victim == NULL && ch->in_room->people.empty(), "sn: %d", sn)
 	{
 		failed_casting(skill, ch, victim, NULL);
 		return rSPELL_FAILED;
 	}
 
-	for (; victim; victim = victim->next_in_room)
+	if (victim)
 	{
-		if (groupsp || areasp)
-		{
-			if ((groupsp && !is_same_group(victim, ch)) || IS_SET(victim->immune, RIS_FORCE) || is_immune(victim, SPELL_DAMAGE(skill))
-					|| check_save(sn, level, ch, victim) || (!SPELL_FLAG(skill, SF_RECASTABLE) && is_affected(victim, sn)))
-				continue;
-
-			if (hitvict && ch != victim)
-			{
-				act( COL_FORCE, skill->hit_vict, ch, NULL, victim, TO_VICT);
-				if (hitroom)
-				{
-					act( COL_FORCE, skill->hit_room, ch, NULL, victim, TO_NOTVICT);
-					act( COL_FORCE, skill->hit_room, ch, NULL, victim, TO_CHAR);
-				}
-			}
-			else if (hitroom)
-				act( COL_FORCE, skill->hit_room, ch, NULL, victim, TO_ROOM);
-			if (ch == victim)
-			{
-				if (hitvict)
-					act( COL_FORCE, skill->hit_vict, ch, NULL, ch, TO_CHAR);
-				else if (hitchar)
-					act( COL_FORCE, skill->hit_char, ch, NULL, ch, TO_CHAR);
-			}
-			else if (hitchar)
-				act( COL_FORCE, skill->hit_char, ch, NULL, victim, TO_CHAR);
-		}
+		/* Single-target path */
 		retcode = spell_affectchar(sn, level, ch, victim);
-		if (!groupsp && !areasp)
+		if (retcode == rSPELL_FAILED)
 		{
-			if (retcode == rSPELL_FAILED)
+			failed_casting(skill, ch, victim, NULL);
+			return rSPELL_FAILED;
+		}
+		if (retcode == rVICT_IMMUNE)
+			immune_casting(skill, ch, victim, NULL);
+		else
+			successful_casting(skill, ch, victim, NULL);
+	}
+	else
+	{
+		/* Group/area spell: iterate all people in the room */
+		for (auto* vch : ch->in_room->people)
+		{
+			if (groupsp || areasp)
 			{
-				failed_casting(skill, ch, victim, NULL);
-				return rSPELL_FAILED;
+				if ((groupsp && !is_same_group(vch, ch)) || IS_SET(vch->immune, RIS_FORCE) || is_immune(vch, SPELL_DAMAGE(skill))
+						|| check_save(sn, level, ch, vch) || (!SPELL_FLAG(skill, SF_RECASTABLE) && is_affected(vch, sn)))
+					continue;
+
+				if (hitvict && ch != vch)
+				{
+					act( COL_FORCE, skill->hit_vict, ch, NULL, vch, TO_VICT);
+					if (hitroom)
+					{
+						act( COL_FORCE, skill->hit_room, ch, NULL, vch, TO_NOTVICT);
+						act( COL_FORCE, skill->hit_room, ch, NULL, vch, TO_CHAR);
+					}
+				}
+				else if (hitroom)
+					act( COL_FORCE, skill->hit_room, ch, NULL, vch, TO_ROOM);
+				if (ch == vch)
+				{
+					if (hitvict)
+						act( COL_FORCE, skill->hit_vict, ch, NULL, ch, TO_CHAR);
+					else if (hitchar)
+						act( COL_FORCE, skill->hit_char, ch, NULL, ch, TO_CHAR);
+				}
+				else if (hitchar)
+					act( COL_FORCE, skill->hit_char, ch, NULL, vch, TO_CHAR);
 			}
-			if (retcode == rVICT_IMMUNE)
-				immune_casting(skill, ch, victim, NULL);
-			else
-				successful_casting(skill, ch, victim, NULL);
-			break;
+			retcode = spell_affectchar(sn, level, ch, vch);
 		}
 	}
 	return rNONE;
@@ -4240,12 +4236,12 @@ ch_ret spell_black_lightning(int sn, int level, CHAR_DATA *ch, void *vo)
 	ch->alignment -= 100;
 	ch->alignment = URANGE(-1000, ch->alignment, 1000);
 	sith_penalty(ch);
-	act( FB_BLUE, "Wi±zki elektryczno¶ci strzelaj± z palców $n$1, posy³aj±c $N$3 na ziemiê w bolesnych spazmach.", ch, NULL, victim,
+	act( FB_BLUE, "Wiï¿½zki elektrycznoï¿½ci strzelajï¿½ z palcï¿½w $n$1, posyï¿½ajï¿½c $N$3 na ziemiï¿½ w bolesnych spazmach.", ch, NULL, victim,
 			TO_NOTVICT);
-	act( FB_BLUE, "Wi±zki elektryczno¶ci strzelaj± z Twoich palców, posy³aj±c $N$3 na ziemiê w bolesnych spazmach.", ch, NULL, victim,
+	act( FB_BLUE, "Wiï¿½zki elektrycznoï¿½ci strzelajï¿½ z Twoich palcï¿½w, posyï¿½ajï¿½c $N$3 na ziemiï¿½ w bolesnych spazmach.", ch, NULL, victim,
 			TO_CHAR);
-	act( FB_BLUE, "Potê¿ny bó³ przechodzi przez Twoje cia³o podczas, gdy wi±zki elektryczno¶ci wydobywaj±ce siê z" NL
-	"palców $N$1 anihiluj± Cie.", victim, NULL, ch, TO_CHAR);
+	act( FB_BLUE, "Potï¿½ny bï¿½ przechodzi przez Twoje ciaï¿½o podczas, gdy wiï¿½zki elektrycznoï¿½ci wydobywajï¿½ce siï¿½ z" NL
+	"palcï¿½w $N$1 anihilujï¿½ Cie.", victim, NULL, ch, TO_CHAR);
 
 	if (saves_poison_death(level, victim))
 		return damage(ch, victim, dam, sn);
@@ -4267,12 +4263,13 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 	bool found = false;
 	va_list args;
 
-	if ( IS_NPC( ch ) || !ch->pcdata || !ch->pcdata->first_fevent)
+	if ( IS_NPC( ch ) || !ch->pcdata || ch->pcdata->fevents.empty())
 		return;
 
-	for (fevent = ch->pcdata->first_fevent; fevent; fevent = fevent_next, found = false)
+	auto fevents_snapshot = ch->pcdata->fevents;
+	for (auto* fevent : fevents_snapshot)
 	{
-		fevent_next = fevent->next;
+		found = false;
 
 		if (fevent->trigger != trigger)
 			continue;
@@ -4290,7 +4287,7 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 		{
 			OBJ_DATA *obj;
 
-			FOREACH( obj, ch->in_room->first_content )
+			for (auto* obj : ch->in_room->contents)
 				if (obj->pIndexData->vnum == fevent->attr[0])
 				{
 					found = true;
@@ -4303,7 +4300,7 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 		{
 			CHAR_DATA *mob;
 
-			FOREACH( mob, ch->in_room->first_person )
+			for (auto* mob : ch->in_room->people)
 				if ( IS_NPC( mob ) && mob->pIndexData->vnum == fevent->attr[0])
 				{
 					found = true;
@@ -4316,7 +4313,7 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 		{
 			CHAR_DATA *player;
 
-			FOREACH( player, ch->in_room->first_person )
+			for (auto* player : ch->in_room->people)
 				if (!IS_NPC(player) && ((*fevent->sattr && !str_cmp(player->name, fevent->sattr)) || !*fevent->sattr))
 				{
 					found = true;
@@ -4329,7 +4326,7 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 		{
 			SHIP_DATA *ship;
 
-			FOREACH( ship, ch->in_room->first_ship )
+			for (auto* ship : ch->in_room->ships)
 				if (((*fevent->sattr && !str_cmp(ship->name, fevent->sattr)) || !*fevent->sattr))
 				{
 					found = true;
@@ -4521,7 +4518,7 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 			buf << " completed force event: " << bit_name(fevent_types_list, fevent->trigger);
 			log_string(buf.c_str());
 
-			UNLINK(fevent, ch->pcdata->first_fevent, ch->pcdata->last_fevent, next, prev);
+			ch->pcdata->fevents.remove(fevent);
 			free_fevent(fevent);
 		}
 
@@ -4529,14 +4526,14 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 	}
 
 	/* jesli tak, to gracz dostaje moc */
-	if (!ch->pcdata->first_fevent)
+	if (ch->pcdata->fevents.empty())
 	{
 		char buf[MSL];
 
 		ch->perm_frc = URANGE(1, ch->pcdata->fevents + ch->race->frc_plus, 20);
 		ch->max_mana = (get_curr_int(ch) * 10) + get_curr_wis(ch);
 
-		send_to_char( FB_WHITE "Czujesz siê... inaczej, tak jakby to ¶wiat zale¿a³ od Ciebie." EOL, ch);
+		send_to_char( FB_WHITE "Czujesz siï¿½... inaczej, tak jakby to ï¿½wiat zaleï¿½aï¿½ od Ciebie." EOL, ch);
 		sprintf(buf, "giving %d (+%d) frc to player %s due to force events completed", ch->pcdata->fevents, ch->race->frc_plus, ch->name);
 		log_string(buf);
 		ch->pcdata->fevents = 0;
@@ -4675,13 +4672,13 @@ void drawlots_fevents(CHAR_DATA *ch)
 			int i = 0;
 			int num;
 
-			FOREACH( quest, first_quest_index )
+			for (auto* quest : quest_index_list)
 				i++;
 
 			num = number_range(0, i - 1);
 
 			i = 0;
-			FOREACH( quest, first_quest_index )
+			for (auto* quest : quest_index_list)
 				if (i++ == num)
 				{
 					fevent->attr[0] = quest->quest_id;
@@ -4700,13 +4697,13 @@ void drawlots_fevents(CHAR_DATA *ch)
 			int i = 0;
 			int num;
 
-			FOREACH( ship, first_ship )
+			for (auto* ship : ship_list)
 				i++;
 
 			num = number_range(0, i - 1);
 
 			i = 0;
-			FOREACH( ship, first_ship )
+			for (auto* ship : ship_list)
 				if (i++ == num)
 				{
 					STRDUP(fevent->sattr, ship->name);
@@ -4766,7 +4763,7 @@ void drawlots_fevents(CHAR_DATA *ch)
 		}
 
 		if (link)
-			LINK(fevent, ch->pcdata->first_fevent, ch->pcdata->last_fevent, next, prev);
+			ch->pcdata->fevents.push_back(fevent);
 	}
 }
 

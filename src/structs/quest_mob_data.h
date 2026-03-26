@@ -23,8 +23,6 @@
 
 struct	quest_mob_data
 {
-	QUEST_MOB_DATA		* next;
-	QUEST_MOB_DATA		* prev;
 	CHAR_DATA			* mob;
 	bool				invited;
 	int					vnum;

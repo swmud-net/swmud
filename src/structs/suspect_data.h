@@ -23,8 +23,6 @@
 
 struct suspect_data
 {
-	SUSPECT_DATA		* next;
-	SUSPECT_DATA		* prev;
 	CRIME_DATA			* crime;
 	char				* name;
 	int					age;

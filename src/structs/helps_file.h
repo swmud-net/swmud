@@ -20,13 +20,11 @@
 #define HELPS_FILE_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	helps_file
 {
-	HELPS_FILE			* next;
-	HELPS_FILE			* prev;
-	HELP_DATA			* first_help;
-	HELP_DATA			* last_help;
+	std::list<HELP_DATA*> helps;
 	char				* name;
 };
 

@@ -23,13 +23,11 @@
 
 struct inform_data
 {
-	INFORM_DATA			* next;
-	INFORM_DATA			* prev;
 	char				* victim;
 	char				* attacker;
 	time_t				time;
-	bool				reported;/* Je¶li ofiara poskar¿y siê na go¶cia
-					którego nie ma w grze */
+	bool				reported;/* Jeï¿½li ofiara poskarï¿½y siï¿½ na goï¿½cia
+					ktï¿½rego nie ma w grze */
 };
 
 #endif //INFORM_DATA_H_

@@ -23,10 +23,6 @@
 
 struct astro_data
 {
-	ASTRO_DATA			* next;
-	ASTRO_DATA			* prev;
-	ASTRO_DATA			* next_in_starsystem;
-	ASTRO_DATA			* prev_in_starsystem;
 	SPACE_DATA			* starsystem;
 	SHIP_DATA			* target0;
 	int					type;

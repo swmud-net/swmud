@@ -20,17 +20,15 @@
 #define TURBOCAR_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct turbocar_data /* Trog */
 {
-	TURBOCAR	*next;
-	TURBOCAR	*prev;
 	char		*name;
 	char		*filename;
 	int			vnum;
 	TC_STATION	*current_station;
-	TC_STATION	*first_station;
-	TC_STATION	*last_station;
+	std::list<TC_STATION*> stations;
 };
 
 #endif //TURBOCAR_DATA_H_

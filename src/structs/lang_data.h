@@ -20,15 +20,12 @@
 #define LANG_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	lang_data
 {
-	LANG_DATA			* next;
-	LANG_DATA			* prev;
-	LCNV_DATA			* first_precnv;
-	LCNV_DATA			* last_precnv;
-	LCNV_DATA			* first_cnv;
-	LCNV_DATA			* last_cnv;
+	std::list<LCNV_DATA*> precnv;
+	std::list<LCNV_DATA*> cnv;
 	char				* name;
 	char				* alphabet;
 	char				* deny_text;

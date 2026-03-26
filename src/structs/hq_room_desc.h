@@ -23,8 +23,6 @@
 
 struct hq_room_desc
 {
-	HQ_ROOM_DESC *		next;
-	HQ_ROOM_DESC *		prev;
 	hq_room_type		type;		/*! type of room */
 	char *				room_name;	/*! clan specific room name */
 	char *				room_desc;	/*! clan specific room desc */

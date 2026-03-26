@@ -34,27 +34,27 @@ const char *const dir_name_orig[] =
 { "north", "east", "south", "west", "up", "down", "north-east", "north-west", "south-east", "south-west", "somewhere" };
 
 /*
- * added by Thanos (te dwie tablice ró¿ni± siê tylko jednym wyrazem
- * 'góra' i górê') niemniej jednak s± to mianowniki i celowniki
- * nazw kierunków
+ * added by Thanos (te dwie tablice rï¿½niï¿½ siï¿½ tylko jednym wyrazem
+ * 'gï¿½ra' i gï¿½rï¿½') niemniej jednak sï¿½ to mianowniki i celowniki
+ * nazw kierunkï¿½w
  */
 const char *const dir_name[] =
-{ "pó³noc", "wschód", "po³udnie", "zachód", "góra", "dó³", "pó³nocny-wschód", "pó³nocny-zachód", "po³udniowy-wschód", "po³udniowy-zachód",
-		"gdzie¶" };
+{ "pï¿½noc", "wschï¿½d", "poï¿½udnie", "zachï¿½d", "gï¿½ra", "dï¿½", "pï¿½nocny-wschï¿½d", "pï¿½nocny-zachï¿½d", "poï¿½udniowy-wschï¿½d", "poï¿½udniowy-zachï¿½d",
+		"gdzieï¿½" };
 
 const char *const dir_where_name[] =
-{ "pó³noc", "wschód", "po³udnie", "zachód", "górê", "dó³", "pó³nocny-wschód", "pó³nocny-zachód", "po³udniowy-wschód", "po³udniowy-zachód",
-		"gdzie¶" };
+{ "pï¿½noc", "wschï¿½d", "poï¿½udnie", "zachï¿½d", "gï¿½rï¿½", "dï¿½", "pï¿½nocny-wschï¿½d", "pï¿½nocny-zachï¿½d", "poï¿½udniowy-wschï¿½d", "poï¿½udniowy-zachï¿½d",
+		"gdzieï¿½" };
 
-/* kierunki 'powrotne' --> inna kolejno¶æ !!!*/
+/* kierunki 'powrotne' --> inna kolejnoï¿½ï¿½ !!!*/
 const char *const dir_rev_name[] =
-{ "z po³udnia", "z zachodu", "z pó³nocy", "ze wschodu", "z do³u", "z góry", "z po³udniowego-zachodu", "z po³udniowego-wschodu",
-		"z pó³nocnego-zachodu", "z pó³nocnego-wschodu", "sk±d¶" };
+{ "z poï¿½udnia", "z zachodu", "z pï¿½nocy", "ze wschodu", "z doï¿½u", "z gï¿½ry", "z poï¿½udniowego-zachodu", "z poï¿½udniowego-wschodu",
+		"z pï¿½nocnego-zachodu", "z pï¿½nocnego-wschodu", "skï¿½dï¿½" };
 
-//Rozdaje kierunków, na potrzebe skilli
+//Rozdaje kierunkï¿½w, na potrzebe skilli
 const char *const dir_type_name[] =
-{ "pó³nocny", "wschodni", "po³udniowy", "zachodni", "ku górze", "ku dole", "pó³nocno-wschodni", "pó³nocno-zachodni", "po³udniowo-wschodni",
-		"po³udniowo-zachodni", "nieokre¶lony" };
+{ "pï¿½nocny", "wschodni", "poï¿½udniowy", "zachodni", "ku gï¿½rze", "ku dole", "pï¿½nocno-wschodni", "pï¿½nocno-zachodni", "poï¿½udniowo-wschodni",
+		"poï¿½udniowo-zachodni", "nieokreï¿½lony" };
 
 const int trap_door[] =
 {
@@ -64,7 +64,7 @@ TRAP_NE, TRAP_NW, TRAP_SE, TRAP_SW };
 const int rev_dir[] =
 { 2, 3, 0, 1, 5, 4, 9, 8, 7, 6, 10 };
 
-ROOM_INDEX_DATA *vroom_hash[64];
+std::forward_list<ROOM_INDEX_DATA*> vroom_hash[64];
 
 /*
  * Local functions.
@@ -73,20 +73,20 @@ bool has_key args( ( CHAR_DATA *ch, int key ) );
 
 const char *const sect_names[SECT_MAX][2] =
 {
-{ "Wnêtrze", "inside" },
+{ "Wnï¿½trze", "inside" },
 { "Miejska ulica", "cities" },
 { "Otwarte Pole", "fields" },
 { "W lesie", "forests" },
-{ "Wzgórze", "hills" },
-{ "Na szczycie góry", "mountains" },
+{ "Wzgï¿½rze", "hills" },
+{ "Na szczycie gï¿½ry", "mountains" },
 { "W wodzie", "waters" },
-{ "W g³êbokiej wodzie", "waters" },
-{ "Pod wod±", "underwaters" },
+{ "W gï¿½ï¿½bokiej wodzie", "waters" },
+{ "Pod wodï¿½", "underwaters" },
 { "W powietrzu", "air" },
 { "Na pustyni", "deserts" },
-{ "Gdzie¶", "unknown" },
+{ "Gdzieï¿½", "unknown" },
 { "Tafla oceanu", "ocean floor" },
-{ "Pod ziemi±", "underground" } };
+{ "Pod ziemiï¿½", "underground" } };
 
 const int sent_total[SECT_MAX] =
 { 4, 24, 4, 4, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1 };
@@ -97,59 +97,59 @@ const char *const room_sents[SECT_MAX][25] =
 		"You notice signs of a recent battle from the bloodstains on the floor.",
 		"This place hasa damp musty odour not unlike rotting vegetation." },
 
-{ "Kilku podejrzanych osobników chowa przed tob± zawarto¶æ ma³ej torebki, któr± jeszcze przed chwil± namiêtnie upychali w lufce.",
-		"W tym rejonie niebo czê¶ciej zas³aniaj± wielkie frachtowce, to zapewne tutaj znajduj± siê najwiêksze l±dowiska miasta.",
-		"Przechodz±c dostrzegasz swoje odbicie w transpalistalowych oknach budyknów."
-				"Przez iluminatory dostrzegasz jakiego¶ transportowca osiadaj±cego na jednym z pobliskich l±dowisk.",
-		"Grupka ludzi od d³u¿szego czasu próbuje przedostaæ siê na drug± stronê ulicy tworz±c do¶æ zabawne widowisko.",
-		"Widzisz jak jaki¶ wyg³odzony Chadra-Fan rozgl±da siê w poszukiwaniu po¿ywienia.",
-		"Wysokie wie¿owce strzelaj± kopu³ami prosto w niebo mijaj±c chmury w po³owie swojej wysoko¶ci.",
-		"Widzisz jak ma³a grupka osobników przeró¿nych ras próbuje zarobiæ kilka kredytek pokazuj±c cyrkowe niemal sztuczki.",
-		"Dwoje Ewoków naprzeciwko ciebie k³óci siê niemal nie zauwa¿aj±c twojej obecno¶ci.",
-		"Ch³odna bryza delikatnie muska twoje policzki by po chwili znów znikn±æ w g±szczu drapaczy chmur.",
-		"Chmury nad twoj± g³ow± zas³aniaj± niektóre budynki nie daj±c ci dostrzec ich wysoko¶ci.",
-		"Tu¿ obok ciebie wolno i ostro¿nie przelatuje ¶cigacz pilotowany prze jakiego¶ Rodianina, dziwi ciê jego dba³o¶æ o przechodniów.",
-		"Powietrze na tej wysoko¶ci jest gêste i mimo klimatyzacji w tunelach ciê¿ko siê nim oddycha.",
-		"Ogromna ilo¶æ zapachów miasta wystawia twoje zmys³y na ciê¿k± próbê.",
-		"G³o¶ny wrzask dobiega ciê z daleka, daje ci to do zrozumienia, ¿e nie jeste¶ tu do koñca bezpieczny.",
-		"Gdy tylko mijasz jaki¶ budynek, na twojej drodze zaraz pojawia siê nastêpny i nastêpny, tak w nieskoñczono¶æ.",
-		"Miasto rozci±ga siê na wszystkie kierunki w nieskoñczono¶æ tworz±c imponuj±c± arteriê poch³aniaj±c± przestrzeni± ca³± planetê.",
-		"Ulica tutaj jest prosta jak strza³a i d³uga, na tyle bo osi±gn±æ ¶cigaczem konkretn± prêdko¶æ.",
-		"Pod³o¿e jest gor±ce od panuj±cego tutaj ruchu, czujesz jak krêci ci siê w g³owie przy ka¿dym g³êbszym wdechu.",
-		"Zdajesz sobie sprawê, jak ³atwo jest zab³±dziæ w tak wielkim i zat³oczonym mie¶cie.",
-		"Nad i pod tob± widzisz pl±taninê innych ulic zamkniêtych w durastalowych tunelach.",
-		"Na tym poziomie jest wiele wej¶æ do ró¿nych budynków, to zapewne mieszkaniowa czê¶æ miasta.",
-		"Mimo, ¿e iluminatory tuneli ulicznych rzadko s± otwarte, niskie barierki wstrz±sowe postawiono tu ze wzglêdów bezpieczeñstwa.",
-		"Wygl±daj±c przez duraplastowe os³ony ulicy zauwa¿asz ni¿sze, równie imponuj±ce obszary miasta.",
-		"Nie wiesz co to za krzyki, które s³yszysz, ale id±c dalej masz wra¿enie jakby siê nasila³y.", },
+{ "Kilku podejrzanych osobnikï¿½w chowa przed tobï¿½ zawartoï¿½ï¿½ maï¿½ej torebki, ktï¿½rï¿½ jeszcze przed chwilï¿½ namiï¿½tnie upychali w lufce.",
+		"W tym rejonie niebo czï¿½ciej zasï¿½aniajï¿½ wielkie frachtowce, to zapewne tutaj znajdujï¿½ siï¿½ najwiï¿½ksze lï¿½dowiska miasta.",
+		"Przechodzï¿½c dostrzegasz swoje odbicie w transpalistalowych oknach budyknï¿½w."
+				"Przez iluminatory dostrzegasz jakiegoï¿½ transportowca osiadajï¿½cego na jednym z pobliskich lï¿½dowisk.",
+		"Grupka ludzi od dï¿½uï¿½szego czasu prï¿½buje przedostaï¿½ siï¿½ na drugï¿½ stronï¿½ ulicy tworzï¿½c doï¿½ï¿½ zabawne widowisko.",
+		"Widzisz jak jakiï¿½ wygï¿½odzony Chadra-Fan rozglï¿½da siï¿½ w poszukiwaniu poï¿½ywienia.",
+		"Wysokie wieï¿½owce strzelajï¿½ kopuï¿½ami prosto w niebo mijajï¿½c chmury w poï¿½owie swojej wysokoï¿½ci.",
+		"Widzisz jak maï¿½a grupka osobnikï¿½w przerï¿½nych ras prï¿½buje zarobiï¿½ kilka kredytek pokazujï¿½c cyrkowe niemal sztuczki.",
+		"Dwoje Ewokï¿½w naprzeciwko ciebie kï¿½ï¿½ci siï¿½ niemal nie zauwaï¿½ajï¿½c twojej obecnoï¿½ci.",
+		"Chï¿½odna bryza delikatnie muska twoje policzki by po chwili znï¿½w zniknï¿½ï¿½ w gï¿½szczu drapaczy chmur.",
+		"Chmury nad twojï¿½ gï¿½owï¿½ zasï¿½aniajï¿½ niektï¿½re budynki nie dajï¿½c ci dostrzec ich wysokoï¿½ci.",
+		"Tuï¿½ obok ciebie wolno i ostroï¿½nie przelatuje ï¿½cigacz pilotowany prze jakiegoï¿½ Rodianina, dziwi ciï¿½ jego dbaï¿½oï¿½ï¿½ o przechodniï¿½w.",
+		"Powietrze na tej wysokoï¿½ci jest gï¿½ste i mimo klimatyzacji w tunelach ciï¿½ko siï¿½ nim oddycha.",
+		"Ogromna iloï¿½ï¿½ zapachï¿½w miasta wystawia twoje zmysï¿½y na ciï¿½kï¿½ prï¿½bï¿½.",
+		"Gï¿½oï¿½ny wrzask dobiega ciï¿½ z daleka, daje ci to do zrozumienia, ï¿½e nie jesteï¿½ tu do koï¿½ca bezpieczny.",
+		"Gdy tylko mijasz jakiï¿½ budynek, na twojej drodze zaraz pojawia siï¿½ nastï¿½pny i nastï¿½pny, tak w nieskoï¿½czonoï¿½ï¿½.",
+		"Miasto rozciï¿½ga siï¿½ na wszystkie kierunki w nieskoï¿½czonoï¿½ï¿½ tworzï¿½c imponujï¿½cï¿½ arteriï¿½ pochï¿½aniajï¿½cï¿½ przestrzeniï¿½ caï¿½ï¿½ planetï¿½.",
+		"Ulica tutaj jest prosta jak strzaï¿½a i dï¿½uga, na tyle bo osiï¿½gnï¿½ï¿½ ï¿½cigaczem konkretnï¿½ prï¿½dkoï¿½ï¿½.",
+		"Podï¿½oï¿½e jest gorï¿½ce od panujï¿½cego tutaj ruchu, czujesz jak krï¿½ci ci siï¿½ w gï¿½owie przy kaï¿½dym gï¿½ï¿½bszym wdechu.",
+		"Zdajesz sobie sprawï¿½, jak ï¿½atwo jest zabï¿½ï¿½dziï¿½ w tak wielkim i zatï¿½oczonym mieï¿½cie.",
+		"Nad i pod tobï¿½ widzisz plï¿½taninï¿½ innych ulic zamkniï¿½tych w durastalowych tunelach.",
+		"Na tym poziomie jest wiele wejï¿½ï¿½ do rï¿½nych budynkï¿½w, to zapewne mieszkaniowa czï¿½ï¿½ miasta.",
+		"Mimo, ï¿½e iluminatory tuneli ulicznych rzadko sï¿½ otwarte, niskie barierki wstrzï¿½sowe postawiono tu ze wzglï¿½dï¿½w bezpieczeï¿½stwa.",
+		"Wyglï¿½dajï¿½c przez duraplastowe osï¿½ony ulicy zauwaï¿½asz niï¿½sze, rï¿½wnie imponujï¿½ce obszary miasta.",
+		"Nie wiesz co to za krzyki, ktï¿½re sï¿½yszysz, ale idï¿½c dalej masz wraï¿½enie jakby siï¿½ nasilaï¿½y.", },
 
 { "You notice sparce patches of brush and shrubs.", "There is a small cluster of trees far off in the distance.",
 		"Around you are grassy fields as far as the eye can see.",
 		"Throughout the plains a wide variety of weeds and wildflowers are scattered." },
 
-{ "D³ugie ciemne zaro¶la nie pozwalaj± ci dostrzec co jest dalej.", "Jest tu bardzo wiele starych i wielkich drzew przypominaj±cych dêby.",
-		"Samotna wierzba stoi tutaj sprawiaj±c wra¿enie, ¿e jest pani± tego lasu.",
+{ "Dï¿½ugie ciemne zaroï¿½la nie pozwalajï¿½ ci dostrzec co jest dalej.", "Jest tu bardzo wiele starych i wielkich drzew przypominajï¿½cych dï¿½by.",
+		"Samotna wierzba stoi tutaj sprawiajï¿½c wraï¿½enie, ï¿½e jest paniï¿½ tego lasu.",
 		"To your left is a patch of bright white birch trees, slender and tall." },
 
 { "The rolling hills are lightly speckled with violet wildflowers." },
 
-{ "W tej skalistej górze dostrzec mo¿na wiele ciekawych kryjówek." },
+{ "W tej skalistej gï¿½rze dostrzec moï¿½na wiele ciekawych kryjï¿½wek." },
 
-{ "Tafla wody jest g³adka jak powierzchnia duraplastowej szyby." },
+{ "Tafla wody jest gï¿½adka jak powierzchnia duraplastowej szyby." },
 
 { "Rough waves splash about angrily." },
 
-{ "Stadko ma³ych rybek przep³ywa obok praktycznie ciê nie dostrzegaj±c." },
+{ "Stadko maï¿½ych rybek przepï¿½ywa obok praktycznie ciï¿½ nie dostrzegajï¿½c." },
 
-{ "Ziemia jest daleko daleko pod twoimi stopami.", "Ma³a chmurka szybuje obok ciebie." },
+{ "Ziemia jest daleko daleko pod twoimi stopami.", "Maï¿½a chmurka szybuje obok ciebie." },
 
-{ "Wszêdzie, jak daleko siêgasz wzrokiem, piasek.", "Zdaje ci siê, ¿e widzisz oazê gdzie¶ oddali." },
+{ "Wszï¿½dzie, jak daleko siï¿½gasz wzrokiem, piasek.", "Zdaje ci siï¿½, ï¿½e widzisz oazï¿½ gdzieï¿½ oddali." },
 
-{ "Nie zauwa¿asz nic szczególnego." },
+{ "Nie zauwaï¿½asz nic szczegï¿½lnego." },
 
-{ "Dno oceanu pokrywa rafa koralowa i jakie¶ pojedyncze ska³ki." },
+{ "Dno oceanu pokrywa rafa koralowa i jakieï¿½ pojedyncze skaï¿½ki." },
 
-{ "Stoisz w d³ugim skalistym tunelu." }
+{ "Stoisz w dï¿½ugim skalistym tunelu." }
 
 };
 
@@ -346,29 +346,16 @@ void clear_vrooms()
 
 	for (hash = 0; hash < 64; hash++)
 	{
-		while (vroom_hash[hash] && !vroom_hash[hash]->first_person && !vroom_hash[hash]->first_content)
-		{
-			room = vroom_hash[hash];
-			vroom_hash[hash] = room->next;
-			clean_room(room);
-			free_room(room);
-			--top_vroom;
-		}
-		prev = NULL;
-		for (room = vroom_hash[hash]; room; room = room_next)
-		{
-			room_next = room->next;
-			if (!room->first_person && !room->first_content)
+		vroom_hash[hash].remove_if([&](ROOM_INDEX_DATA* room) {
+			if (room->people.empty() && room->contents.empty())
 			{
-				if (prev)
-					prev->next = room_next;
 				clean_room(room);
 				free_room(room);
 				--top_vroom;
+				return true;
 			}
-			if (room)
-				prev = room;
-		}
+			return false;
+		});
 	}
 }
 
@@ -386,7 +373,7 @@ ED* get_exit( RID *room, int dir)
 		return NULL;
 	}
 
-	for (xit = room->first_exit; xit; xit = xit->next)
+	for (auto* xit : room->exits)
 		if (xit->vdir == dir)
 			return xit;
 	return NULL;
@@ -405,7 +392,7 @@ ED* get_exit_to( RID *room, int dir, int vnum)
 		return NULL;
 	}
 
-	for (xit = room->first_exit; xit; xit = xit->next)
+	for (auto* xit : room->exits)
 		if (xit->vdir == dir && xit->vnum == vnum)
 			return xit;
 	return NULL;
@@ -425,7 +412,7 @@ ED* get_exit_num( RID *room, int count)
 		return NULL;
 	}
 
-	for (cnt = 0, xit = room->first_exit; xit; xit = xit->next)
+	cnt = 0; for (auto* xit : room->exits)
 		if (++cnt == count)
 			return xit;
 	return NULL;
@@ -481,7 +468,7 @@ bool will_fall(CHAR_DATA *ch, int fall)
 			fall = 0;
 			return true;
 		}
-		send_to_char( COL_ACTION "Spadasz w dó³..." EOL, ch);
+		send_to_char( COL_ACTION "Spadasz w dï¿½..." EOL, ch);
 		move_char(ch, get_exit(ch->in_room, DIR_DOWN), ++fall);
 		return true;
 	}
@@ -537,9 +524,10 @@ RID* generate_exit( RID *in_room, ED **pexit)
 	}
 	hash = serial % 64;
 
-	for (room = vroom_hash[hash]; room; room = room->next)
-		if (room->vnum == serial && room->tele_vnum == roomnum)
+	for (auto* r : vroom_hash[hash])
+		if (r->vnum == serial && r->tele_vnum == roomnum)
 		{
+			room = r;
 			found = true;
 			break;
 		}
@@ -552,13 +540,12 @@ RID* generate_exit( RID *in_room, ED **pexit)
 		room->sector_type = in_room->sector_type;
 
 		room->room_flags = in_room->room_flags;
-		/* Added by Thanos - lepiej, ¿eby vroom nie by³ plr_home */
-		/* Kto by chcia³ mieszkaæ w pokoju, który istnieje tylko CZASEM ;) */
+		/* Added by Thanos - lepiej, ï¿½eby vroom nie byï¿½ plr_home */
+		/* Kto by chciaï¿½ mieszkaï¿½ w pokoju, ktï¿½ry istnieje tylko CZASEM ;) */
 		REMOVE_BIT(room->room_flags, ROOM_PLR_HOME);
 
 		decorate_room(room);
-		room->next = vroom_hash[hash];
-		vroom_hash[hash] = room;
+		vroom_hash[hash].push_front(room);
 		++top_vroom;
 	}
 	if (!found || (xit = get_exit(room, vdir)) == NULL)
@@ -629,9 +616,9 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	if (!pexit || (to_room = pexit->to_room) == NULL || !CAN_ENTER(ch, pexit->to_room))
 	{
 		if (drunk)
-			send_to_char("Auæ! Walisz g³ow± w ¶cianê. Nic dziwnego, tam nie ma drzwi." NL, ch);
+			send_to_char("Auï¿½! Walisz gï¿½owï¿½ w ï¿½cianï¿½. Nic dziwnego, tam nie ma drzwi." NL, ch);
 		else
-			send_to_char("Niestety nie mo¿esz pój¶æ w tym kierunku." NL, ch);
+			send_to_char("Niestety nie moï¿½esz pï¿½jï¿½ï¿½ w tym kierunku." NL, ch);
 		return rNONE;
 	}
 
@@ -644,19 +631,19 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	 */
 	if ( IS_SET( pexit->flags, EX_WINDOW ) && !IS_SET(pexit->flags, EX_ISDOOR))
 	{
-		send_to_char("Niestety nie mo¿esz pój¶æ w tym kierunku." NL, ch);
+		send_to_char("Niestety nie moï¿½esz pï¿½jï¿½ï¿½ w tym kierunku." NL, ch);
 		return rNONE;
 	}
 
 	if ( IS_SET(pexit->flags, EX_PORTAL) && IS_NPC(ch))
 	{
-		act( PLAIN, "Moby nie mog± wchodziæ w portale.", ch, NULL, NULL, TO_CHAR);
+		act( PLAIN, "Moby nie mogï¿½ wchodziï¿½ w portale.", ch, NULL, NULL, TO_CHAR);
 		return rNONE;
 	}
 
 	if ( IS_SET(pexit->flags, EX_NOMOB) && IS_NPC(ch))
 	{
-		act( PLAIN, "Tam nie mo¿esz wej¶æ.", ch, NULL, NULL, TO_CHAR);
+		act( PLAIN, "Tam nie moï¿½esz wejï¿½ï¿½.", ch, NULL, NULL, TO_CHAR);
 		return rNONE;
 	}
 
@@ -666,21 +653,21 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 		{
 			if (drunk)
 			{
-				act( PLAIN, "$n wali w $d z ca³ej si³y, ale nie mo¿e ich przenikn±æ.", ch, NULL, pexit->keyword, TO_ROOM);
-				act( PLAIN, "Walisz w $d z ca³ej si³y, ale nie mo¿esz ich przenikn±æ.", ch, NULL, pexit->keyword, TO_CHAR);
+				act( PLAIN, "$n wali w $d z caï¿½ej siï¿½y, ale nie moï¿½e ich przeniknï¿½ï¿½.", ch, NULL, pexit->keyword, TO_ROOM);
+				act( PLAIN, "Walisz w $d z caï¿½ej siï¿½y, ale nie moï¿½esz ich przeniknï¿½ï¿½.", ch, NULL, pexit->keyword, TO_CHAR);
 			}
 			else
-				act( PLAIN, "Te $d s± zamkniête.", ch, NULL, pexit->keyword, TO_CHAR);
+				act( PLAIN, "Te $d sï¿½ zamkniï¿½te.", ch, NULL, pexit->keyword, TO_CHAR);
 		}
 		else
 		{
 			if (drunk)
-				send_to_char("Auæ! Przez ten pijacki stan walisz siê g³ow± w ¶cianê." NL, ch);
+				send_to_char("Auï¿½! Przez ten pijacki stan walisz siï¿½ gï¿½owï¿½ w ï¿½cianï¿½." NL, ch);
 			else
-				send_to_char("Nie mo¿esz pój¶æ w tym kierunku." NL, ch);
+				send_to_char("Nie moï¿½esz pï¿½jï¿½ï¿½ w tym kierunku." NL, ch);
 		}
 
-		/*Added by Thanos - Holylight umo¿liwia prze³a¿enie przez drzwi*/
+		/*Added by Thanos - Holylight umoï¿½liwia przeï¿½aï¿½enie przez drzwi*/
 		if ((!IS_NPC(ch) && IS_SET(ch->act, PLR_HOLYLIGHT)))
 			send_to_char( EOL FB_WHITE "Passing throught closed door !!!" EOL NL, ch);
 		else
@@ -693,17 +680,17 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 
 	/*
 	 * That's really crazy 					-Thanos
-	 * Spróbujmy powstrzymaæ mobki przed generowaniem pokoi wirtualnych
-	 * Zlitujmy siê nad RAMem
+	 * Sprï¿½bujmy powstrzymaï¿½ mobki przed generowaniem pokoi wirtualnych
+	 * Zlitujmy siï¿½ nad RAMem
 	 *
-	 Wersja mo¿e i bardziej chamska ale bezpieczniejsza:
+	 Wersja moï¿½e i bardziej chamska ale bezpieczniejsza:
 
 	 if ( distance > 1 )
 	 {
 	 if( IS_NPC( ch ) )
 	 distance  = 1;
 	 else if ( (to_room=generate_exit(in_room, &pexit)) == NULL )
-	 send_to_char( "Niestety nie mo¿esz pój¶æ w tamtym kierunku." NL, ch );
+	 send_to_char( "Niestety nie moï¿½esz pï¿½jï¿½ï¿½ w tamtym kierunku." NL, ch );
 	 }
 	 zamiast:
 	 */
@@ -711,11 +698,11 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	/* Ale narazie niech zostanie tak: */
 	if (distance > 1)
 		if ((to_room = generate_exit(in_room, &pexit)) == NULL)
-			send_to_char("Niestety nie mo¿esz pój¶æ w tamtym kierunku." NL, ch);
+			send_to_char("Niestety nie moï¿½esz pï¿½jï¿½ï¿½ w tamtym kierunku." NL, ch);
 
 	if (!fall && IS_AFFECTED(ch, AFF_CHARM) && ch->master && in_room == ch->master->in_room)
 	{
-		send_to_char("Co? Chesz zostawiæ swojego pana i dobroczyñcê?" NL, ch);
+		send_to_char("Co? Chesz zostawiï¿½ swojego pana i dobroczyï¿½cï¿½?" NL, ch);
 		return rNONE;
 	}
 
@@ -738,12 +725,12 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 		{
 			if (ch->mount && !IS_AFFECTED(ch->mount, AFF_FLYING))
 			{
-				send_to_char("Twój pojazd nie umie lataæ." NL, ch);
+				send_to_char("Twï¿½j pojazd nie umie lataï¿½." NL, ch);
 				return rNONE;
 			}
 			if (!ch->mount && !IS_AFFECTED(ch, AFF_FLYING))
 			{
-				send_to_char("Musisz umieæ lataæ by siê tam dostaæ." NL, ch);
+				send_to_char("Musisz umieï¿½ lataï¿½ by siï¿½ tam dostaï¿½." NL, ch);
 				return rNONE;
 			}
 		}
@@ -766,7 +753,7 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 			 * Look for a boat.
 			 */
 			if (!found)
-				for (obj = ch->first_carrying; obj; obj = obj->next_content)
+				for (auto* obj : ch->carrying)
 				{
 					if (obj->item_type == ITEM_BOAT)
 					{
@@ -781,7 +768,7 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 
 			if (!found)
 			{
-				send_to_char("Potrzebujesz ³odzi by siê tam dostaæ." NL, ch);
+				send_to_char("Potrzebujesz ï¿½odzi by siï¿½ tam dostaï¿½." NL, ch);
 				return rNONE;
 			}
 		}
@@ -800,7 +787,7 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 			{
 				if ((!IS_NPC(ch) && number_percent() > ch->pcdata->learned[gsn_climb]) || drunk || ch->mental_state < -90)
 				{
-					send_to_char("Zaczynasz siê wspinaæ... ale tracisz uchwyt i spadasz!" NL, ch);
+					send_to_char("Zaczynasz siï¿½ wspinaï¿½... ale tracisz uchwyt i spadasz!" NL, ch);
 					learn_from_failure(ch, gsn_climb);
 					if (pexit->vdir == DIR_DOWN)
 					{
@@ -808,7 +795,7 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 						return retcode;
 					}
 					send_to_char( COL_HURT, ch);
-					send_to_char("OOouch! Walisz w ziemiê!" EOL, ch);
+					send_to_char("OOouch! Walisz w ziemiï¿½!" EOL, ch);
 					WAIT_STATE(ch, 20);
 					retcode = damage(ch, ch, (pexit->vdir == DIR_UP ? 10 : 5),
 					TYPE_UNDEFINED);
@@ -817,12 +804,12 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 				found = true;
 				learn_from_success(ch, gsn_climb);
 				WAIT_STATE(ch, skill_table[gsn_climb]->beats);
-				txt = "wspina siê";
+				txt = "wspina siï¿½";
 			}
 
 			if (!found)
 			{
-				send_to_char("Nie umiesz siê wspinaæ." NL, ch);
+				send_to_char("Nie umiesz siï¿½ wspinaï¿½." NL, ch);
 				return rNONE;
 			}
 		}
@@ -832,29 +819,29 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 			switch (ch->mount->position)
 			{
 			case POS_DEAD:
-				send_to_char("Twój pojazd nie ¿yje!" NL, ch);
+				send_to_char("Twï¿½j pojazd nie ï¿½yje!" NL, ch);
 				return rNONE;
 				break;
 			case POS_MORTAL:
 			case POS_INCAP:
-				send_to_char("Twój pojazd jest zbyt ranny by siê poruszyæ." NL, ch);
+				send_to_char("Twï¿½j pojazd jest zbyt ranny by siï¿½ poruszyï¿½." NL, ch);
 				return rNONE;
 				break;
 			case POS_STUNNED:
-				send_to_char("Twój pojazd jest zbyt og³uszony by siê poruszyæ." NL, ch);
+				send_to_char("Twï¿½j pojazd jest zbyt ogï¿½uszony by siï¿½ poruszyï¿½." NL, ch);
 				return rNONE;
 				break;
 			case POS_SLEEPING:
-				send_to_char("Twój pojazd ¶pi." NL, ch);
+				send_to_char("Twï¿½j pojazd ï¿½pi." NL, ch);
 				return rNONE;
 				break;
 
 			case POS_RESTING:
-				send_to_char("Twój pojazd w³a¶nie sobie odpoczywa." NL, ch);
+				send_to_char("Twï¿½j pojazd wï¿½aï¿½nie sobie odpoczywa." NL, ch);
 				return rNONE;
 				break;
 			case POS_SITTING:
-				send_to_char("Twój pojazd siedzi sobie w najlepsze." NL, ch);
+				send_to_char("Twï¿½j pojazd siedzi sobie w najlepsze." NL, ch);
 				return rNONE;
 				break;
 			default:
@@ -867,7 +854,7 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 				move = 1;
 			if (ch->mount->move < move)
 			{
-				send_to_char("Twój pojazd jest zbyt wyczerpany." NL, ch);
+				send_to_char("Twï¿½j pojazd jest zbyt wyczerpany." NL, ch);
 				return rNONE;
 			}
 		}
@@ -879,7 +866,7 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 				move = 1;
 			if (ch->move < move)
 			{
-				ch_printf(ch, "Jeste¶ zbyt wyczerpan%s." NL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, "Jesteï¿½ zbyt wyczerpan%s." NL, SEX_SUFFIX_YAE(ch));
 				return rNONE;
 			}
 		}
@@ -899,7 +886,7 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 		CHAR_DATA *ctmp;
 		int count = ch->mount ? 1 : 0;
 
-		for (ctmp = to_room->first_person; ctmp; ctmp = ctmp->next_in_room)
+		for (auto* ctmp : to_room->people)
 		{
 			if (!IS_IMMORTAL(ctmp))
 				++count;
@@ -908,7 +895,7 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 				if (ch->mount && count == to_room->tunnel)
 					send_to_char("Albo ty, albo pojazd." NL, ch);
 				else
-					send_to_char("Nie mie¶cisz siê." NL, ch);
+					send_to_char("Nie mieï¿½cisz siï¿½." NL, ch);
 				return rNONE;
 			}
 		}
@@ -926,41 +913,41 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 			{
 				if (ch->in_room->sector_type == SECT_WATER_SWIM || ch->in_room->sector_type == SECT_WATER_NOSWIM
 						|| ch->in_room->sector_type == SECT_UNDERWATER || ch->in_room->sector_type == SECT_OCEANFLOOR)
-					txt = (char*) (drunk ? "ledwo odp³ywa" : "odp³ywa");
+					txt = (char*) (drunk ? "ledwo odpï¿½ywa" : "odpï¿½ywa");
 				else if (IS_AFFECTED(ch->mount, AFF_FLOATING))
 					txt = "szybuje";
 				else if (IS_AFFECTED(ch->mount, AFF_FLYING))
 					txt = "odlatuje";
 				else
-					txt = "odje¿d¿a";
+					txt = "odjeï¿½dï¿½a";
 			}
 			else
 			{
 				if (ch->in_room->sector_type == SECT_WATER_SWIM || ch->in_room->sector_type == SECT_WATER_NOSWIM
 						|| ch->in_room->sector_type == SECT_UNDERWATER || ch->in_room->sector_type == SECT_OCEANFLOOR)
-					txt = (char*) (drunk ? "ledwo odp³ywa" : "odp³ywa");
+					txt = (char*) (drunk ? "ledwo odpï¿½ywa" : "odpï¿½ywa");
 				else if (IS_AFFECTED(ch, AFF_FLOATING))
 				{
 					if (drunk)
-						txt = "szybuje zakre¶laj±c dziwne ³uki";
+						txt = "szybuje zakreï¿½lajï¿½c dziwne ï¿½uki";
 					else
 						txt = "szybuje";
 				}
 				else if (IS_AFFECTED(ch, AFF_FLYING))
 				{
 					if (drunk)
-						txt = "odlatuje dziwnie zmieniaj±c kierunki lotu";
+						txt = "odlatuje dziwnie zmieniajï¿½c kierunki lotu";
 					else
 						txt = "odlatuje";
 				}
 				else if (ch->position == POS_SHOVE)
-					txt = "zosta³$o wypchniêt$y";
+					txt = "zostaï¿½$o wypchniï¿½t$y";
 				else if (ch->position == POS_DRAG)
-					txt = "zosta³$o wyrzucon$y";
+					txt = "zostaï¿½$o wyrzucon$y";
 				else
 				{
 					if (drunk)
-						txt = "kieruje swój chwiejny krok";
+						txt = "kieruje swï¿½j chwiejny krok";
 					else
 						txt = "odchodzi";
 				}
@@ -982,8 +969,8 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	if (char_died(ch))
 		return global_retcode;
 
-	/* zmieniamy was_in_room TYLKO je¶li wychodzimy z lokacji NIEVIRTUALNEJ */
-	/* To jest __Konieczne__ do poprawnego zapisu mobów questowych  -Thanos */
+	/* zmieniamy was_in_room TYLKO jeï¿½li wychodzimy z lokacji NIEVIRTUALNEJ */
+	/* To jest __Konieczne__ do poprawnego zapisu mobï¿½w questowych  -Thanos */
 	if (ch->in_room->vnum <= MAX_VNUM)
 		ch->was_in_room = ch->in_room;
 
@@ -1004,42 +991,42 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	if (!IS_AFFECTED(ch, AFF_SNEAK) && ( IS_NPC(ch) || !IS_SET(ch->act, PLR_WIZINVIS)))
 	{
 		if (fall)
-			txt = "spad³$o";
+			txt = "spadï¿½$o";
 		else if (ch->mount)
 		{
 			if (IS_AFFECTED(ch->mount, AFF_FLOATING))
-				txt = "przyszybowa³$o";
+				txt = "przyszybowaï¿½$o";
 			else if (IS_AFFECTED(ch->mount, AFF_FLYING))
-				txt = "przylecia³$o";
+				txt = "przyleciaï¿½$o";
 			else
-				txt = "przyjecha³$o";
+				txt = "przyjechaï¿½$o";
 		}
 		else
 		{
 			if (IS_AFFECTED(ch, AFF_FLOATING))
 			{
 				if (drunk)
-					txt = "przyszybowa³$o z pijackim impetem";
+					txt = "przyszybowaï¿½$o z pijackim impetem";
 				else
-					txt = "przyszybowa³$o";
+					txt = "przyszybowaï¿½$o";
 			}
 			else if (IS_AFFECTED(ch, AFF_FLYING))
 			{
 				if (drunk)
-					txt = "przylecia³$o niemal nie skrêcaj±c karku";
+					txt = "przyleciaï¿½$o niemal nie skrï¿½cajï¿½c karku";
 				else
-					txt = "przylecia³$o";
+					txt = "przyleciaï¿½$o";
 			}
 			else if (ch->position == POS_SHOVE)
-				txt = "wpad³$o tutaj";
+				txt = "wpadï¿½$o tutaj";
 			else if (ch->position == POS_DRAG)
-				txt = "wpad³$o tutaj";
+				txt = "wpadï¿½$o tutaj";
 			else
 			{
 				if (drunk)
-					txt = "chwiejnie wgramoli³$o siê tutaj";
+					txt = "chwiejnie wgramoliï¿½$o siï¿½ tutaj";
 				else
-					txt = "przyby³$o";
+					txt = "przybyï¿½$o";
 			}
 		}
 
@@ -1058,9 +1045,9 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	if (!IS_IMMORTAL(ch) && !IS_NPC(ch) && ch->in_room->area != to_room->area)
 	{
 		if (ch->top_level < to_room->area->low_range)
-			send_to_char(COL_FORCE "Ten dziwny obszar wywo³uje u ciebie niezrozumia³e uczucia..." EOL, ch);
+			send_to_char(COL_FORCE "Ten dziwny obszar wywoï¿½uje u ciebie niezrozumiaï¿½e uczucia..." EOL, ch);
 		else if (ch->top_level > to_room->area->high_range)
-			send_to_char(COL_FORCE "Czujesz, ¿e nie skorzystasz wiele z pobytu tutaj..." EOL, ch);
+			send_to_char(COL_FORCE "Czujesz, ï¿½e nie skorzystasz wiele z pobytu tutaj..." EOL, ch);
 	}
 
 	if (ch->desc)
@@ -1080,23 +1067,22 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 		CHAR_DATA *nextinroom;
 		int chars = 0, count = 0;
 
-		for (fch = from_room->first_person; fch; fch = fch->next_in_room)
-			chars++;
+		chars = static_cast<int>(from_room->people.size());
 
-		for (fch = from_room->first_person; fch && (count < chars); fch = nextinroom)
+		{ auto snapshot = from_room->people; for (auto* fch : snapshot)
 		{
-			nextinroom = fch->next_in_room;
+			if (count > chars) break;
 			count++;
 			if (fch != ch /* loop room bug fix here by Thoric */
 			&& fch->master == ch && fch->position == POS_STANDING)
 			{
-				act( COL_ACTION, "Pod±¿asz za $N$4.", fch, NULL, ch, TO_CHAR);
+				act( COL_ACTION, "Podï¿½ï¿½asz za $N$4.", fch, NULL, ch, TO_CHAR);
 				move_char(fch, pexit, 0);
 			}
-		}
+		} }
 	}
 
-	if (ch->in_room->first_content)
+	if (!ch->in_room->contents.empty())
 		retcode = check_room_for_traps(ch, TRAP_ENTER_ROOM);
 	if (retcode != rNONE)
 		return retcode;
@@ -1114,8 +1100,8 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	 */
 
 	/*
-	 * Thanos: Ano po to, ¿eby dzia³a³y i MobProgi i RoomProgi
-	 * 	   zdj±³em twój rem. Nie wspominam ju¿ o tym, ¿e
+	 * Thanos: Ano po to, ï¿½eby dziaï¿½aï¿½y i MobProgi i RoomProgi
+	 * 	   zdjï¿½ï¿½em twï¿½j rem. Nie wspominam juï¿½ o tym, ï¿½e
 	 *         pierwszy to 'entry' prog a drugi, 'enter'.
 	 */
 	rprog_enter_trigger(ch);
@@ -1152,16 +1138,16 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	{
 		if (!IS_AFFECTED(ch, AFF_FLOATING) || (ch->mount && !IS_AFFECTED(ch->mount, AFF_FLOATING)))
 		{
-			send_to_char( FB_RED "OOoch! Walisz w ziemiê!" EOL, ch);
+			send_to_char( FB_RED "OOoch! Walisz w ziemiï¿½!" EOL, ch);
 			WAIT_STATE(ch, 20);
 			retcode = damage(ch, ch, 50 * fall, TYPE_UNDEFINED);
 		}
 		else
-			send_to_char( FB_BLUE "Powolutku opadasz na ziemiê..." EOL, ch);
+			send_to_char( FB_BLUE "Powolutku opadasz na ziemiï¿½..." EOL, ch);
 	}
 
 	if ( IS_SET( to_room->room_flags, ROOM_PROTOTYPE ) && (IS_OLCMAN( ch ) || get_trust(ch) > 102 || IS_ADMIN(ch->name)))
-		send_to_char( MOD_BOLD "Wchodzisz do pomieszczenia z flag± PROTOTYPE!" EOL, ch);
+		send_to_char( MOD_BOLD "Wchodzisz do pomieszczenia z flagï¿½ PROTOTYPE!" EOL, ch);
 
 	fevent_trigger(ch, FE_FIND_ROOM);
 
@@ -1259,20 +1245,20 @@ EXIT_DATA* find_door(CHAR_DATA *ch, char *arg, bool quiet)
 		door = 9;
 	else
 	{
-		for (pexit = ch->in_room->first_exit; pexit; pexit = pexit->next)
+		for (auto* pexit : ch->in_room->exits)
 		{
 			if ((quiet || IS_SET(pexit->flags, EX_ISDOOR)) && pexit->keyword && is_name_prefix(arg, pexit->keyword))
 				return pexit;
 		}
 		if (!quiet)
-			act( PLAIN, "Nie widzê tu ¿adnego $T.", ch, NULL, arg, TO_CHAR);
+			act( PLAIN, "Nie widzï¿½ tu ï¿½adnego $T.", ch, NULL, arg, TO_CHAR);
 		return NULL;
 	}
 
 	if ((pexit = get_exit(ch->in_room, door)) == NULL)
 	{
 		if (!quiet)
-			act( PLAIN, "Nie widzisz tu ¿adnego $T.", ch, NULL, arg, TO_CHAR);
+			act( PLAIN, "Nie widzisz tu ï¿½adnego $T.", ch, NULL, arg, TO_CHAR);
 		return NULL;
 	}
 
@@ -1281,13 +1267,13 @@ EXIT_DATA* find_door(CHAR_DATA *ch, char *arg, bool quiet)
 
 	if (IS_SET(pexit->flags, EX_SECRET))
 	{
-		act( PLAIN, "Nie widzisz tu ¿adnego $T.", ch, NULL, arg, TO_CHAR);
+		act( PLAIN, "Nie widzisz tu ï¿½adnego $T.", ch, NULL, arg, TO_CHAR);
 		return NULL;
 	}
 
 	if (!IS_SET(pexit->flags, EX_ISDOOR))
 	{
-		send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+		send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 		return NULL;
 	}
 
@@ -1343,17 +1329,17 @@ DEF_DO_FUN( open )
 
 		if (!IS_SET(pexit->flags, EX_ISDOOR))
 		{
-			send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 			return;
 		}
 		if (!IS_SET(pexit->flags, EX_CLOSED))
 		{
-			send_to_char("To jest ju¿ otwarte." NL, ch);
+			send_to_char("To jest juï¿½ otwarte." NL, ch);
 			return;
 		}
 		if (IS_SET(pexit->flags, EX_LOCKED))
 		{
-			send_to_char("To jest zamkniête na klucz." NL, ch);
+			send_to_char("To jest zamkniï¿½te na klucz." NL, ch);
 			return;
 		}
 
@@ -1365,8 +1351,8 @@ DEF_DO_FUN( open )
 			{
 				CHAR_DATA *rch;
 
-				for (rch = pexit->to_room->first_person; rch; rch = rch->next_in_room)
-					act( COL_ACTION, "$d otwieraj± siê.", rch, NULL, pexit_rev->keyword, TO_CHAR);
+				for (auto* rch : pexit->to_room->people)
+					act( COL_ACTION, "$d otwierajï¿½ siï¿½.", rch, NULL, pexit_rev->keyword, TO_CHAR);
 				sound_to_room(pexit->to_room, "!!SOUND(door)");
 			}
 			remove_bexit_flag(pexit, EX_CLOSED);
@@ -1388,17 +1374,17 @@ DEF_DO_FUN( open )
 		}
 		if (!IS_SET(obj->value[1], CONT_CLOSED))
 		{
-			ch_printf(ch, "%s jest ju¿ otwarte." NL, capitalize(obj->przypadki[0]));
+			ch_printf(ch, "%s jest juï¿½ otwarte." NL, capitalize(obj->przypadki[0]));
 			return;
 		}
 		if (!IS_SET(obj->value[1], CONT_CLOSEABLE))
 		{
-			ch_printf(ch, "%s nie mo¿e byæ zamkniête ani otwarte." NL, capitalize(obj->przypadki[0]));
+			ch_printf(ch, "%s nie moï¿½e byï¿½ zamkniï¿½te ani otwarte." NL, capitalize(obj->przypadki[0]));
 			return;
 		}
 		if (IS_SET(obj->value[1], CONT_LOCKED))
 		{
-			ch_printf(ch, "%s jest zamkniête na klucz." NL, capitalize(obj->przypadki[0]));
+			ch_printf(ch, "%s jest zamkniï¿½te na klucz." NL, capitalize(obj->przypadki[0]));
 			return;
 		}
 
@@ -1442,12 +1428,12 @@ DEF_DO_FUN( close )
 
 		if (!IS_SET(pexit->flags, EX_ISDOOR))
 		{
-			send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 			return;
 		}
 		if (IS_SET(pexit->flags, EX_CLOSED))
 		{
-			send_to_char("To jest ju¿ zamkniête." NL, ch);
+			send_to_char("To jest juï¿½ zamkniï¿½te." NL, ch);
 			return;
 		}
 
@@ -1460,8 +1446,8 @@ DEF_DO_FUN( close )
 			CHAR_DATA *rch;
 
 			SET_BIT(pexit_rev->flags, EX_CLOSED);
-			for (rch = pexit->to_room->first_person; rch; rch = rch->next_in_room)
-				act( COL_ACTION, "$d zamykaj± siê.", rch, NULL, pexit_rev->keyword, TO_CHAR);
+			for (auto* rch : pexit->to_room->people)
+				act( COL_ACTION, "$d zamykajï¿½ siï¿½.", rch, NULL, pexit_rev->keyword, TO_CHAR);
 		}
 		set_bexit_flag(pexit, EX_CLOSED);
 		if ((door = pexit->vdir) >= 0 && door < 10)
@@ -1479,12 +1465,12 @@ DEF_DO_FUN( close )
 		}
 		if (IS_SET(obj->value[1], CONT_CLOSED))
 		{
-			ch_printf(ch, "%s jest ju¿ zamkniêt%s." NL, capitalize(obj->przypadki[0]), OSEX_SUFFIX_YAEE(obj));
+			ch_printf(ch, "%s jest juï¿½ zamkniï¿½t%s." NL, capitalize(obj->przypadki[0]), OSEX_SUFFIX_YAEE(obj));
 			return;
 		}
 		if (!IS_SET(obj->value[1], CONT_CLOSEABLE))
 		{
-			ch_printf(ch, "%s nie mo¿na zamkn±æ ani otworzyæ." NL, capitalize(obj->przypadki[1]));
+			ch_printf(ch, "%s nie moï¿½na zamknï¿½ï¿½ ani otworzyï¿½." NL, capitalize(obj->przypadki[1]));
 			return;
 		}
 
@@ -1511,7 +1497,7 @@ bool has_key(CHAR_DATA *ch, int key)
 
 	if (key == 0)
 		return true;
-	for (obj = ch->first_carrying; obj; obj = obj->next_content)
+	for (auto* obj : ch->carrying)
 		if (obj->pIndexData->vnum == key || obj->value[0] == key)
 			return true;
 
@@ -1528,7 +1514,7 @@ DEF_DO_FUN( lock )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Zakluczyæ co?" NL, ch);
+		send_to_char("Zakluczyï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -1538,17 +1524,17 @@ DEF_DO_FUN( lock )
 
 		if (!IS_SET(pexit->flags, EX_ISDOOR))
 		{
-			send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 			return;
 		}
 		if (!IS_SET(pexit->flags, EX_CLOSED))
 		{
-			send_to_char("To nie jest zamkniête." NL, ch);
+			send_to_char("To nie jest zamkniï¿½te." NL, ch);
 			return;
 		}
 		if (pexit->key < 0)
 		{
-			send_to_char("To nie mo¿e zostaæ zakluczone." NL, ch);
+			send_to_char("To nie moï¿½e zostaï¿½ zakluczone." NL, ch);
 			return;
 		}
 		if (!has_key(ch, pexit->key))
@@ -1558,7 +1544,7 @@ DEF_DO_FUN( lock )
 		}
 		if (IS_SET(pexit->flags, EX_LOCKED))
 		{
-			send_to_char("To jest ju¿ zakluczone." NL, ch);
+			send_to_char("To jest juï¿½ zakluczone." NL, ch);
 			return;
 		}
 
@@ -1581,12 +1567,12 @@ DEF_DO_FUN( lock )
 		}
 		if (!IS_SET(obj->value[1], CONT_CLOSED))
 		{
-			send_to_char("To nie jest zamkniête." NL, ch);
+			send_to_char("To nie jest zamkniï¿½te." NL, ch);
 			return;
 		}
 		if (obj->value[2] < 0)
 		{
-			send_to_char("To nie mo¿e byæ zakluczone." NL, ch);
+			send_to_char("To nie moï¿½e byï¿½ zakluczone." NL, ch);
 			return;
 		}
 		if (!has_key(ch, obj->value[2]))
@@ -1596,7 +1582,7 @@ DEF_DO_FUN( lock )
 		}
 		if (IS_SET(obj->value[1], CONT_LOCKED))
 		{
-			send_to_char("To jest ju¿ zakluczone." NL, ch);
+			send_to_char("To jest juï¿½ zakluczone." NL, ch);
 			return;
 		}
 
@@ -1606,7 +1592,7 @@ DEF_DO_FUN( lock )
 		return;
 	}
 
-	ch_printf(ch, "Nie widzisz tu ¿adnego %s." NL, arg);
+	ch_printf(ch, "Nie widzisz tu ï¿½adnego %s." NL, arg);
 	return;
 }
 
@@ -1620,7 +1606,7 @@ DEF_DO_FUN( unlock )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Odkluczyæ co?" NL, ch);
+		send_to_char("Odkluczyï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -1630,17 +1616,17 @@ DEF_DO_FUN( unlock )
 
 		if (!IS_SET(pexit->flags, EX_ISDOOR))
 		{
-			send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 			return;
 		}
 		if (!IS_SET(pexit->flags, EX_CLOSED))
 		{
-			send_to_char("To nie jest zamkniête." NL, ch);
+			send_to_char("To nie jest zamkniï¿½te." NL, ch);
 			return;
 		}
 		if (pexit->key < 0)
 		{
-			send_to_char("To nie mo¿e byæ odkluczone." NL, ch);
+			send_to_char("To nie moï¿½e byï¿½ odkluczone." NL, ch);
 			return;
 		}
 		if (!has_key(ch, pexit->key))
@@ -1650,7 +1636,7 @@ DEF_DO_FUN( unlock )
 		}
 		if (!IS_SET(pexit->flags, EX_LOCKED))
 		{
-			send_to_char("To jest ju¿ odkluczone." NL, ch);
+			send_to_char("To jest juï¿½ odkluczone." NL, ch);
 			return;
 		}
 
@@ -1673,12 +1659,12 @@ DEF_DO_FUN( unlock )
 		}
 		if (!IS_SET(obj->value[1], CONT_CLOSED))
 		{
-			send_to_char("To nie jest zamkniête." NL, ch);
+			send_to_char("To nie jest zamkniï¿½te." NL, ch);
 			return;
 		}
 		if (obj->value[2] < 0)
 		{
-			send_to_char("To nie mo¿e byc odkluczone." NL, ch);
+			send_to_char("To nie moï¿½e byc odkluczone." NL, ch);
 			return;
 		}
 		if (!has_key(ch, obj->value[2]))
@@ -1688,7 +1674,7 @@ DEF_DO_FUN( unlock )
 		}
 		if (!IS_SET(obj->value[1], CONT_LOCKED))
 		{
-			send_to_char("To jest ju¿ odkluczone." NL, ch);
+			send_to_char("To jest juï¿½ odkluczone." NL, ch);
 			return;
 		}
 
@@ -1698,7 +1684,7 @@ DEF_DO_FUN( unlock )
 		return;
 	}
 
-	ch_printf(ch, "Nie widzisz tu ¿adnego %s." NL, arg);
+	ch_printf(ch, "Nie widzisz tu ï¿½adnego %s." NL, arg);
 	return;
 }
 
@@ -1710,7 +1696,7 @@ DEF_DO_FUN( bashdoor )
 
 	if (!IS_NPC(ch) && ch->pcdata->learned[gsn_bashdoor] <= 0)
 	{
-		send_to_char("Za ma³o w tobie wojownika by to zrobiæ!" NL, ch);
+		send_to_char("Za maï¿½o w tobie wojownika by to zrobiï¿½!" NL, ch);
 		return;
 	}
 
@@ -1718,13 +1704,13 @@ DEF_DO_FUN( bashdoor )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Rozwaliæ które drzwi?" NL, ch);
+		send_to_char("Rozwaliï¿½ ktï¿½re drzwi?" NL, ch);
 		return;
 	}
 
 	if (ch->fighting)
 	{
-		send_to_char("Nie mo¿esz przerwaæ walki." NL, ch);
+		send_to_char("Nie moï¿½esz przerwaï¿½ walki." NL, ch);
 		return;
 	}
 
@@ -1737,14 +1723,14 @@ DEF_DO_FUN( bashdoor )
 
 		if (!IS_SET(pexit->flags, EX_CLOSED))
 		{
-			send_to_char("Spokojnie. To jest ju¿ otwarte." NL, ch);
+			send_to_char("Spokojnie. To jest juï¿½ otwarte." NL, ch);
 			return;
 		}
 
 		WAIT_STATE(ch, skill_table[gsn_bashdoor]->beats);
 
 		if (IS_SET(pexit->flags, EX_SECRET))
-			keyword = "¶cianê";
+			keyword = "ï¿½cianï¿½";
 		else
 			keyword = pexit->keyword;
 		if (!IS_NPC(ch))
@@ -1772,30 +1758,30 @@ DEF_DO_FUN( bashdoor )
 					REMOVE_BIT(pexit_rev->flags, EX_LOCKED);
 				SET_BIT(pexit_rev->flags, EX_BASHED);
 
-				for (rch = to_room->first_person; rch; rch = rch->next_in_room)
+				for (auto* rch : to_room->people)
 				{
-					act(COL_ACTION, "Kto¶ rozwala $d!", rch, NULL, pexit_rev->keyword, TO_CHAR);
+					act(COL_ACTION, "Ktoï¿½ rozwala $d!", rch, NULL, pexit_rev->keyword, TO_CHAR);
 				}
 			}
 			damage(ch, ch, (ch->max_hit / 20), gsn_bashdoor);
 		}
 		else
 		{
-			act(COL_ACTION, "WHAAAAM!!!  Walisz z impetem w $d, ale nie udaje ci siê tego rozwaliæ.", ch, NULL, keyword, TO_CHAR);
-			act(COL_ACTION, "WHAAAAM!!!  $n wali z impetem w $d, ale nie udaje $m siê tego rozwaliæ.", ch, NULL, keyword, TO_ROOM);
+			act(COL_ACTION, "WHAAAAM!!!  Walisz z impetem w $d, ale nie udaje ci siï¿½ tego rozwaliï¿½.", ch, NULL, keyword, TO_CHAR);
+			act(COL_ACTION, "WHAAAAM!!!  $n wali z impetem w $d, ale nie udaje $m siï¿½ tego rozwaliï¿½.", ch, NULL, keyword, TO_ROOM);
 			damage(ch, ch, (ch->max_hit / 20) + 10, gsn_bashdoor);
 			learn_from_failure(ch, gsn_bashdoor);
 		}
 	}
 	else
 	{
-		act(COL_ACTION, "WHAAAAM!!!  Walisz z impetem w ¶cianê, ale nie udaje ci siê tego rozwaliæ.", ch, NULL, NULL, TO_CHAR);
-		act(COL_ACTION, "WHAAAAM!!!  $n wali z impetem w $d, ale nie udaje $m siê tego rozwaliæ.", ch, NULL, NULL, TO_ROOM);
+		act(COL_ACTION, "WHAAAAM!!!  Walisz z impetem w ï¿½cianï¿½, ale nie udaje ci siï¿½ tego rozwaliï¿½.", ch, NULL, NULL, TO_CHAR);
+		act(COL_ACTION, "WHAAAAM!!!  $n wali z impetem w $d, ale nie udaje $m siï¿½ tego rozwaliï¿½.", ch, NULL, NULL, TO_ROOM);
 		damage(ch, ch, (ch->max_hit / 20) + 10, gsn_bashdoor);
 		learn_from_failure(ch, gsn_bashdoor);
 	}
 	if (!char_died(ch))
-		for (gch = ch->in_room->first_person; gch; gch = gch->next_in_room)
+		for (auto* gch : ch->in_room->people)
 		{
 			if ( IS_AWAKE(gch) && !gch->fighting && ( IS_NPC( gch ) && !IS_AFFECTED(gch, AFF_CHARM))
 					&& (ch->top_level - gch->top_level <= 4) && number_bits(2) == 0)
@@ -1812,28 +1798,28 @@ DEF_DO_FUN( stand )
 	case POS_SLEEPING:
 		if (IS_AFFECTED(ch, AFF_SLEEP))
 		{
-			send_to_char("Jako¶ nie mo¿esz siê obudziæ. ZZzzz.. " NL, ch);
+			send_to_char("Jakoï¿½ nie moï¿½esz siï¿½ obudziï¿½. ZZzzz.. " NL, ch);
 			return;
 		}
-		send_to_char("Budzisz siê i szybko stajesz na nogach." NL, ch);
-		act( COL_ACTION, "$n budzi siê ze snu.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Budzisz siï¿½ i szybko stajesz na nogach." NL, ch);
+		act( COL_ACTION, "$n budzi siï¿½ ze snu.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_STANDING;
 		break;
 	case POS_RESTING:
-		send_to_char("Podnosisz siê i wstajesz." NL, ch);
-		act( COL_ACTION, "$n podnosi siê i wstaje.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Podnosisz siï¿½ i wstajesz." NL, ch);
+		act( COL_ACTION, "$n podnosi siï¿½ i wstaje.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_STANDING;
 		break;
 	case POS_SITTING:
-		send_to_char("Szybko podnosisz siê i wstajesz." NL, ch);
+		send_to_char("Szybko podnosisz siï¿½ i wstajesz." NL, ch);
 		act( COL_ACTION, "$n wstaje.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_STANDING;
 		break;
 	case POS_STANDING:
-		send_to_char("Ju¿ stoisz." NL, ch);
+		send_to_char("Juï¿½ stoisz." NL, ch);
 		break;
 	case POS_FIGHTING:
-		send_to_char("W³a¶nie walczysz!" NL, ch);
+		send_to_char("Wï¿½aï¿½nie walczysz!" NL, ch);
 		break;
 	}
 
@@ -1847,16 +1833,16 @@ DEF_DO_FUN( sit )
 	case POS_SLEEPING:
 		if (IS_AFFECTED(ch, AFF_SLEEP))
 		{
-			send_to_char("Jako¶ nie mo¿esz siê obudziæ. ZZzzz.." NL, ch);
+			send_to_char("Jakoï¿½ nie moï¿½esz siï¿½ obudziï¿½. ZZzzz.." NL, ch);
 			return;
 		}
-		send_to_char("Budzisz siê i siadasz." NL, ch);
-		act( COL_ACTION, "$n budzi siê i siada sobie wygodnie.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Budzisz siï¿½ i siadasz." NL, ch);
+		act( COL_ACTION, "$n budzi siï¿½ i siada sobie wygodnie.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_SITTING;
 		break;
 
 	case POS_RESTING:
-		send_to_char("Przestajesz odpoczywaæ i siadasz." NL, ch);
+		send_to_char("Przestajesz odpoczywaï¿½ i siadasz." NL, ch);
 		act( COL_ACTION, "$n przestaje odpoczywac i siada sobie wygodnie.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_SITTING;
 		break;
@@ -1866,13 +1852,13 @@ DEF_DO_FUN( sit )
 		ch->position = POS_SITTING;
 		break;
 	case POS_SITTING:
-		send_to_char("Ju¿ siedzisz." NL, ch);
+		send_to_char("Juï¿½ siedzisz." NL, ch);
 		return;
 	case POS_FIGHTING:
-		ch_printf(ch, "Jeste¶ teraz zajêt%s walk±!" NL, SEX_SUFFIX_YAE(ch));
+		ch_printf(ch, "Jesteï¿½ teraz zajï¿½t%s walkï¿½!" NL, SEX_SUFFIX_YAE(ch));
 		return;
 	case POS_MOUNTED:
-		send_to_char("Przecie¿ ju¿ siedzisz - na swoim poje¼dzie." NL, ch);
+		send_to_char("Przecieï¿½ juï¿½ siedzisz - na swoim pojeï¿½dzie." NL, ch);
 		return;
 	}
 	return;
@@ -1885,32 +1871,32 @@ DEF_DO_FUN( rest )
 	case POS_SLEEPING:
 		if (IS_AFFECTED(ch, AFF_SLEEP))
 		{
-			send_to_char("Jako¶ nie mo¿esz siê obudziæ. ZZzzz.. " NL, ch);
+			send_to_char("Jakoï¿½ nie moï¿½esz siï¿½ obudziï¿½. ZZzzz.. " NL, ch);
 			return;
 		}
-		send_to_char("Budzisz siê z drzemki." NL, ch);
-		act( COL_ACTION, "$n budzi siê ze swojej drzemki.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Budzisz siï¿½ z drzemki." NL, ch);
+		act( COL_ACTION, "$n budzi siï¿½ ze swojej drzemki.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_RESTING;
 		break;
 	case POS_RESTING:
-		send_to_char("Przecie¿ ju¿ odpoczywasz." NL, ch);
+		send_to_char("Przecieï¿½ juï¿½ odpoczywasz." NL, ch);
 		return;
 
 	case POS_STANDING:
-		send_to_char("Rozwalasz siê wygodnie do odpoczynku." NL, ch);
-		act( COL_ACTION, "$n rozwala siê wygodnie do odpoczynku.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Rozwalasz siï¿½ wygodnie do odpoczynku." NL, ch);
+		act( COL_ACTION, "$n rozwala siï¿½ wygodnie do odpoczynku.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_RESTING;
 		break;
 	case POS_SITTING:
-		send_to_char("Rozwalasz siê jeszcze wygodniej i zaczynasz odpoczywaæ." NL, ch);
-		act( COL_ACTION, "$n rozwala siê wygodnie do odpoczynku.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Rozwalasz siï¿½ jeszcze wygodniej i zaczynasz odpoczywaï¿½." NL, ch);
+		act( COL_ACTION, "$n rozwala siï¿½ wygodnie do odpoczynku.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_RESTING;
 		break;
 	case POS_FIGHTING:
-		send_to_char("Chyba masz teraz inne zajêcie!" NL, ch);
+		send_to_char("Chyba masz teraz inne zajï¿½cie!" NL, ch);
 		return;
 	case POS_MOUNTED:
-		send_to_char("Najpierw lepiej zsi±d¼ z wierzchowca." NL, ch);
+		send_to_char("Najpierw lepiej zsiï¿½dï¿½ z wierzchowca." NL, ch);
 		return;
 	}
 	rprog_rest_trigger(ch);
@@ -1922,50 +1908,50 @@ DEF_DO_FUN( sleep )
 	switch (ch->position)
 	{
 	case POS_SLEEPING:
-		send_to_char("Przecie¿ ju¿ ¶pisz. ZZzzz" NL, ch);
+		send_to_char("Przecieï¿½ juï¿½ ï¿½pisz. ZZzzz" NL, ch);
 		return;
 
 	case POS_RESTING:
 		if (ch->mental_state > 30 && (number_percent() + 10) < ch->mental_state)
 		{
-			send_to_char("Nie mo¿esz siê wystarczaj±co uspokoiæ by zasn±æ." NL, ch);
-			act( COL_ACTION, "$n zamyka oczy na kilka chwil, ale nie mo¿e zasn±æ.", ch, NULL, NULL, TO_ROOM);
+			send_to_char("Nie moï¿½esz siï¿½ wystarczajï¿½co uspokoiï¿½ by zasnï¿½ï¿½." NL, ch);
+			act( COL_ACTION, "$n zamyka oczy na kilka chwil, ale nie moï¿½e zasnï¿½ï¿½.", ch, NULL, NULL, TO_ROOM);
 			return;
 		}
-		send_to_char("Zamykasz oczy i pogr±¿asz siê we ¶nie..." NL, ch);
-		act( COL_ACTION, "$n zamyka oczy i pogr±¿a siê w g³êbokim ¶nie.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Zamykasz oczy i pogrï¿½ï¿½asz siï¿½ we ï¿½nie..." NL, ch);
+		act( COL_ACTION, "$n zamyka oczy i pogrï¿½ï¿½a siï¿½ w gï¿½ï¿½bokim ï¿½nie.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_SLEEPING;
 		break;
 
 	case POS_SITTING:
 		if (ch->mental_state > 30 && (number_percent() + 5) < ch->mental_state)
 		{
-			send_to_char("Nie mo¿esz siê wystarczaj±co uspokoiæ by zasn±æ." NL, ch);
-			act( COL_ACTION, "$n zamyka oczy na kilka chwil, ale nie mo¿e zasn±æ.", ch, NULL, NULL, TO_ROOM);
+			send_to_char("Nie moï¿½esz siï¿½ wystarczajï¿½co uspokoiï¿½ by zasnï¿½ï¿½." NL, ch);
+			act( COL_ACTION, "$n zamyka oczy na kilka chwil, ale nie moï¿½e zasnï¿½ï¿½.", ch, NULL, NULL, TO_ROOM);
 			return;
 		}
-		send_to_char("Padasz na ziemiê i zasypiasz..." NL, ch);
-		act( COL_ACTION, "$n pada na ziemiê i zasypia.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Padasz na ziemiï¿½ i zasypiasz..." NL, ch);
+		act( COL_ACTION, "$n pada na ziemiï¿½ i zasypia.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_SLEEPING;
 		break;
 
 	case POS_STANDING:
 		if (ch->mental_state > 30 && number_percent() < ch->mental_state)
 		{
-			send_to_char("Nie mo¿esz siê wystarczaj±co uspokoiæ by zasn±æ.." NL, ch);
-			act( COL_ACTION, "$n zamyka oczy na kilka chwil, ale nie mo¿e zasn±æ.", ch, NULL, NULL, TO_ROOM);
+			send_to_char("Nie moï¿½esz siï¿½ wystarczajï¿½co uspokoiï¿½ by zasnï¿½ï¿½.." NL, ch);
+			act( COL_ACTION, "$n zamyka oczy na kilka chwil, ale nie moï¿½e zasnï¿½ï¿½.", ch, NULL, NULL, TO_ROOM);
 			return;
 		}
-		send_to_char("K³adziesz siê i zasypiasz." NL, ch);
-		act( COL_ACTION, "$n k³adzie siê i zasypia.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Kï¿½adziesz siï¿½ i zasypiasz." NL, ch);
+		act( COL_ACTION, "$n kï¿½adzie siï¿½ i zasypia.", ch, NULL, NULL, TO_ROOM);
 		ch->position = POS_SLEEPING;
 		break;
 
 	case POS_FIGHTING:
-		send_to_char("Chyba masz teraz co robiæ!" NL, ch);
+		send_to_char("Chyba masz teraz co robiï¿½!" NL, ch);
 		return;
 	case POS_MOUNTED:
-		send_to_char("Chyba najpierw zejd¼ z wierzchowca." NL, ch);
+		send_to_char("Chyba najpierw zejdï¿½ z wierzchowca." NL, ch);
 		return;
 	}
 
@@ -1987,7 +1973,7 @@ DEF_DO_FUN( wake )
 
 	if (!IS_AWAKE(ch))
 	{
-		send_to_char("Mo¿e najpierw ty wstañ!" NL, ch);
+		send_to_char("Moï¿½e najpierw ty wstaï¿½!" NL, ch);
 		return;
 	}
 
@@ -1999,19 +1985,19 @@ DEF_DO_FUN( wake )
 
 	if (IS_AWAKE(victim))
 	{
-		act( PLAIN, "$N ju¿ nie ¶pi.", ch, NULL, victim, TO_CHAR);
+		act( PLAIN, "$N juï¿½ nie ï¿½pi.", ch, NULL, victim, TO_CHAR);
 		return;
 	}
 
 	if ( IS_AFFECTED(victim, AFF_SLEEP) || victim->position < POS_SLEEPING)
 	{
-		act( PLAIN, "Jako¶ nie mo¿esz $I obudziæ!", ch, NULL, victim, TO_CHAR);
+		act( PLAIN, "Jakoï¿½ nie moï¿½esz $I obudziï¿½!", ch, NULL, victim, TO_CHAR);
 		return;
 	}
 
 	act( COL_ACTION, "Budzisz $I.", ch, NULL, victim, TO_CHAR);
 	victim->position = POS_STANDING;
-	act( COL_ACTION, "$n budzi ciê.", ch, NULL, victim, TO_VICT);
+	act( COL_ACTION, "$n budzi ciï¿½.", ch, NULL, victim, TO_VICT);
 	act( COL_ACTION, "$n budzi $N$3.", ch, NULL, victim, TO_NOTVICT);
 	return;
 }
@@ -2026,7 +2012,7 @@ void teleportch(CHAR_DATA *ch, ROOM_INDEX_DATA *room, bool show)
 	act( COL_ACTION, "$n znika nagle!", ch, NULL, NULL, TO_ROOM);
 	char_from_room(ch);
 	char_to_room(ch, room);
-	act( COL_ACTION, "$n pojawia siê nagle!", ch, NULL, NULL, TO_ROOM);
+	act( COL_ACTION, "$n pojawia siï¿½ nagle!", ch, NULL, NULL, TO_ROOM);
 	if (show)
 		do_look(ch, (char*) "auto");
 }
@@ -2051,11 +2037,10 @@ void teleport(CHAR_DATA *ch, int room, int64 flags)
 		teleportch(ch, pRoomIndex, show);
 		return;
 	}
-	for (nch = ch->in_room->first_person; nch; nch = nch_next)
+	{ auto snapshot = ch->in_room->people; for (auto* nch : snapshot)
 	{
-		nch_next = nch->next_in_room;
 		teleportch(nch, pRoomIndex, show);
-	}
+	} }
 }
 
 /*
@@ -2067,13 +2052,13 @@ DEF_DO_FUN( climb )
 
 	if (argument[0] == '\0')
 	{
-		for (pexit = ch->in_room->first_exit; pexit; pexit = pexit->next)
+		for (auto* pexit : ch->in_room->exits)
 			if ( IS_SET( pexit->flags, EX_xCLIMB ) && CAN_ENTER(ch, pexit->to_room))
 			{
 				move_char(ch, pexit, 0);
 				return;
 			}
-		send_to_char("Nie mo¿esz siê tu wspinaæ." NL, ch);
+		send_to_char("Nie moï¿½esz siï¿½ tu wspinaï¿½." NL, ch);
 		return;
 	}
 
@@ -2082,7 +2067,7 @@ DEF_DO_FUN( climb )
 		move_char(ch, pexit, 0);
 		return;
 	}
-	send_to_char("Nie mo¿esz siê tam wspi±æ." NL, ch);
+	send_to_char("Nie moï¿½esz siï¿½ tam wspiï¿½ï¿½." NL, ch);
 	return;
 }
 
@@ -2095,13 +2080,13 @@ DEF_DO_FUN( enter )
 
 	if (argument[0] == '\0')
 	{
-		for (pexit = ch->in_room->first_exit; pexit; pexit = pexit->next)
+		for (auto* pexit : ch->in_room->exits)
 			if ( IS_SET( pexit->flags, EX_xENTER ) && CAN_ENTER(ch, pexit->to_room))
 			{
 				move_char(ch, pexit, 0);
 				return;
 			}
-		send_to_char("Nie mo¿esz nigdzie znale¼æ wej¶æia." NL, ch);
+		send_to_char("Nie moï¿½esz nigdzie znaleï¿½ï¿½ wejï¿½ï¿½ia." NL, ch);
 		return;
 	}
 
@@ -2124,7 +2109,7 @@ DEF_DO_FUN( leave )
 
 	if (argument[0] == '\0')
 	{
-		for (pexit = ch->in_room->first_exit; pexit; pexit = pexit->next)
+		for (auto* pexit : ch->in_room->exits)
 			if (IS_SET(pexit->flags, EX_xLEAVE))
 			{
 				move_char(ch, pexit, 0);
@@ -2158,7 +2143,7 @@ DEF_DO_FUN( shove )
 
 	if (!*arg)
 	{
-		send_to_char("Wypchn±æ kogo?" NL, ch);
+		send_to_char("Wypchnï¿½ï¿½ kogo?" NL, ch);
 		return;
 	}
 
@@ -2170,25 +2155,25 @@ DEF_DO_FUN( shove )
 
 	if (victim == ch)
 	{
-		send_to_char("Pchasz siê jak w kolejce przed hipermarketem." NL, ch);
+		send_to_char("Pchasz siï¿½ jak w kolejce przed hipermarketem." NL, ch);
 		return;
 	}
 
 	if ((victim->position) != POS_STANDING)
 	{
-		act( PLAIN, "$N nie stoi. Jak zamierzasz $I wypchn±æ ???", ch, NULL, victim, TO_CHAR);
+		act( PLAIN, "$N nie stoi. Jak zamierzasz $I wypchnï¿½ï¿½ ???", ch, NULL, victim, TO_CHAR);
 		return;
 	}
 
 	if (!*arg2)
 	{
-		send_to_char("W któr± stronê ¿yczysz sobie popchn±æ delikwenta?" NL, ch);
+		send_to_char("W ktï¿½rï¿½ stronï¿½ ï¿½yczysz sobie popchnï¿½ï¿½ delikwenta?" NL, ch);
 		return;
 	}
 
 	if (IS_NPC(victim))
 	{
-		send_to_char("Mo¿esz pchaæ tylko graczy." NL, ch);
+		send_to_char("Moï¿½esz pchaï¿½ tylko graczy." NL, ch);
 //#warning Trog: dlaczego?
 // bo tak :P  -- Thanos
 		return;
@@ -2197,7 +2182,7 @@ DEF_DO_FUN( shove )
 	exit_dir = get_dir(arg2);
 	if ( IS_SET(victim->in_room->room_flags, ROOM_SAFE) && get_timer(victim, TIMER_SHOVEDRAG) <= 0)
 	{
-		send_to_char("Ta osoba nie mo¿e byæ teraz wypchana. Jest zbyt bezpieczna." NL, ch);
+		send_to_char("Ta osoba nie moï¿½e byï¿½ teraz wypchana. Jest zbyt bezpieczna." NL, ch);
 		return;
 	}
 	victim->position = POS_SHOVE;
@@ -2209,7 +2194,7 @@ DEF_DO_FUN( shove )
 
 	if (nogo)
 	{
-		send_to_char("Mi³o, ¿e chcesz popchn±æ w tê stronê. Ale widzisz... Tam nie ma drzwi." NL, ch);
+		send_to_char("Miï¿½o, ï¿½e chcesz popchnï¿½ï¿½ w tï¿½ stronï¿½. Ale widzisz... Tam nie ma drzwi." NL, ch);
 		victim->position = POS_STANDING;
 		return;
 	}
@@ -2229,13 +2214,13 @@ DEF_DO_FUN( shove )
 
 	if (chance < number_percent())
 	{
-		send_to_char("Nie uda³o ci siê." NL, ch);
+		send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
 		victim->position = POS_STANDING;
 		return;
 	}
 
 	act( COL_ACTION, "Wypychasz $N$3.", ch, NULL, victim, TO_CHAR);
-	act( COL_ACTION, "$n wypycha ciê.", ch, NULL, victim, TO_VICT);
+	act( COL_ACTION, "$n wypycha ciï¿½.", ch, NULL, victim, TO_VICT);
 	move_char(victim, get_exit(ch->in_room, exit_dir), 0);
 	if (!char_died(victim))
 		victim->position = POS_STANDING;
@@ -2260,7 +2245,7 @@ DEF_DO_FUN( drag )
 
 	if (!*arg)
 	{
-		send_to_char("Kogo chcesz bezlito¶nie wyci±gn±æ za chabety w celu zapewne wymiany argumentów?" NL, ch);
+		send_to_char("Kogo chcesz bezlitoï¿½nie wyciï¿½gnï¿½ï¿½ za chabety w celu zapewne wymiany argumentï¿½w?" NL, ch);
 		return;
 	}
 
@@ -2272,39 +2257,39 @@ DEF_DO_FUN( drag )
 
 	if (victim == ch)
 	{
-		send_to_char("£apiesz siê za ³eb i ci±gniesz po ca³ej okolicy. Kopnij siê jeszcze! ;-)" NL, ch);
+		send_to_char("ï¿½apiesz siï¿½ za ï¿½eb i ciï¿½gniesz po caï¿½ej okolicy. Kopnij siï¿½ jeszcze! ;-)" NL, ch);
 		return;
 	}
 
 	if (IS_NPC(victim))
 	{
-		send_to_char("Mo¿esz ci±gaæ za ³eb tylko graczy." NL, ch);
+		send_to_char("Moï¿½esz ciï¿½gaï¿½ za ï¿½eb tylko graczy." NL, ch);
 		/* Trog: a moby mozesz za inne czesci ciala? :) */
 		return;
 	}
 
 	if (victim->fighting)
 	{
-		send_to_char("Starasz siê jak mo¿esz, ale w ferworze walki nie mo¿esz podej¶æ tak blisko." NL, ch);
+		send_to_char("Starasz siï¿½ jak moï¿½esz, ale w ferworze walki nie moï¿½esz podejï¿½ï¿½ tak blisko." NL, ch);
 		return;
 	}
 
 	if (victim->position <= POS_SLEEPING || IS_AFFECTED(victim, AFF_SLEEP))
 	{
-		send_to_char("Twoja ofiara jest zbyt bezw³adna, wy¶lizguje ci siê z r±k." NL, ch);
+		send_to_char("Twoja ofiara jest zbyt bezwï¿½adna, wyï¿½lizguje ci siï¿½ z rï¿½k." NL, ch);
 		return;
 	}
 
 	if (!*arg2)
 	{
-		send_to_char("A gdzie¿ to chcesz bezlito¶nie wyci±gn±æ sw± ofiarê?" NL, ch);
+		send_to_char("A gdzieï¿½ to chcesz bezlitoï¿½nie wyciï¿½gnï¿½ï¿½ swï¿½ ofiarï¿½?" NL, ch);
 		return;
 	}
 
 	exit_dir = get_dir(arg2);
 	if ( IS_SET(victim->in_room->room_flags, ROOM_SAFE) && get_timer(victim, TIMER_SHOVEDRAG) <= 0)
 	{
-		send_to_char("Ta osoba jest ju¿ zbyt bezpieczna." NL, ch);
+		send_to_char("Ta osoba jest juï¿½ zbyt bezpieczna." NL, ch);
 		return;
 	}
 
@@ -2316,7 +2301,7 @@ DEF_DO_FUN( drag )
 
 	if (nogo)
 	{
-		send_to_char("Tam nie ma drzwi! Chcesz rozmazaæ sw± ofiarê na ¶cianie ???" NL, ch);
+		send_to_char("Tam nie ma drzwi! Chcesz rozmazaï¿½ swï¿½ ofiarï¿½ na ï¿½cianie ???" NL, ch);
 		return;
 	}
 
@@ -2329,7 +2314,7 @@ DEF_DO_FUN( drag )
 
 	if (chance < number_percent())
 	{
-		send_to_char("Nie uda³o ci siê." NL, ch);
+		send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
 		victim->position = POS_STANDING;
 		return;
 	}
@@ -2340,8 +2325,8 @@ DEF_DO_FUN( drag )
 
 		temp = victim->position;
 		victim->position = POS_DRAG;
-		act( COL_ACTION, "£apiesz $N$3 za ³eb i wyci±gasz w inne miejsce.", ch, NULL, victim, TO_CHAR);
-		act( COL_ACTION, "$n ³apie ciê za ³eb i wyci±ga w nieznane.", ch, NULL, victim, TO_VICT);
+		act( COL_ACTION, "ï¿½apiesz $N$3 za ï¿½eb i wyciï¿½gasz w inne miejsce.", ch, NULL, victim, TO_CHAR);
+		act( COL_ACTION, "$n ï¿½apie ciï¿½ za ï¿½eb i wyciï¿½ga w nieznane.", ch, NULL, victim, TO_VICT);
 		move_char(victim, get_exit(ch->in_room, exit_dir), 0);
 		if (!char_died(victim))
 			victim->position = temp;
@@ -2352,5 +2337,5 @@ DEF_DO_FUN( drag )
 		return;
 	}
 
-	send_to_char("Ta osoba stoi, nie dasz rady jej z³apaæ za ³eb." NL, ch);
+	send_to_char("Ta osoba stoi, nie dasz rady jej zï¿½apaï¿½ za ï¿½eb." NL, ch);
 }

@@ -20,17 +20,13 @@
 #define CHAPTER_INDEX_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct chapter_index_data
 {
-	CHAPTER_INDEX_DATA	* prev;
-	CHAPTER_INDEX_DATA	* next;
-	QUEST_CMND_DATA		* first_init_cmd;
-	QUEST_CMND_DATA		* last_init_cmd;
-	QUEST_CMND_DATA		* first_event;
-	QUEST_CMND_DATA		* last_event;
-	QUEST_ACTION_DATA	* first_action;
-	QUEST_ACTION_DATA	* last_action;
+	std::list<QUEST_CMND_DATA*> init_cmds;
+	std::list<QUEST_CMND_DATA*> events;
+	std::list<QUEST_ACTION_DATA*> actions;
 	char				* name;
 	int					type;
 };

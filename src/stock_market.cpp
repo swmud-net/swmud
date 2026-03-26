@@ -24,15 +24,15 @@
 
 /*! \fn DEF_DO_FUN( exchange )
 *	\brief zaloguj sie do terminala gieldowego
-*	\param ch - loguj±cy siê gracz
-*	\param argument - interesuj±ca nas aukcja
+*	\param ch - logujï¿½cy siï¿½ gracz
+*	\param argument - interesujï¿½ca nas aukcja
 */
-/*! \todo ob³uga zakoñczonej aukcji przedmiotów sprzedawanych w wiêcej niz jednym egzemplarzu
- * \todo Rozstrzyganie kto wygra³ i ile obiektów zabierze w aukcji na wiele
- * przedmiotów
- * \todo Na zakoñczenie aukcji przekazaæ notke do uczestników
- * \todo Dodaæ obs³uge sprzeda¿y materia³ów i produktów
- * \todo Dodaæ magazyny po³¹czone z gie³dami
+/*! \todo obï¿½uga zakoï¿½czonej aukcji przedmiotï¿½w sprzedawanych w wiï¿½cej niz jednym egzemplarzu
+ * \todo Rozstrzyganie kto wygraï¿½ i ile obiektï¿½w zabierze w aukcji na wiele
+ * przedmiotï¿½w
+ * \todo Na zakoï¿½czenie aukcji przekazaï¿½ notke do uczestnikï¿½w
+ * \todo Dodaï¿½ obsï¿½uge sprzedaï¿½y materiaï¿½ï¿½w i produktï¿½w
+ * \todo Dodaï¿½ magazyny poï¿½ï¿½czone z gieï¿½dami
  * \todo Opuszczanie aukcji
  */
 #include "olc.h"
@@ -82,10 +82,10 @@ void prepare_terminal_header(CHAR_DATA *ch)
 	if (ch==NULL)
 		return;
 	pager_printf(ch,EOL "   [" FG_CYAN
-		"---------------------------- " PLAIN "Terminal gie³dowy"
+		"---------------------------- " PLAIN "Terminal gieï¿½dowy"
 		FG_CYAN " ---------------------------" PLAIN "]");
 	pager_printf(ch, NL FG_CYAN "      Planeta  : " PLAIN "%-15s%10s" NL
-			FG_CYAN "      Gie³da   : " PLAIN "%-10s" EOL NL,
+			FG_CYAN "      Gieï¿½da   : " PLAIN "%-10s" EOL NL,
 			ch->in_room->area->planet ?  ch->in_room->area->planet->name : "brak"
 			,"",ch->in_room->name);
 }
@@ -98,7 +98,7 @@ STOCK_EXCHANGE_DATA * get_stock_exchange(CHAR_DATA * ch)
 	STOCK_EXCHANGE_DATA * pStock = NULL;
 	if (!pPlanet)
 		return pStock;
-	FOREACH(pStock,first_stock_exchange)
+	for (auto* pStock : stock_exchange_list)
 		if (!strcmp(pStock->pPlanet->name,pPlanet->name))
 			return pStock;
 	return pStock;
@@ -114,7 +114,7 @@ int parse_atodate( CHAR_DATA * ch, char * argument)
 	//najpierw idzie liczba
 	if ( !is_number(arg))
 	{
-		pager_printf( ch, "Sk³adnia: czas nr <dzieñ/dni> nr <godzinê/godziny/godzin>" NL);
+		pager_printf( ch, "Skï¿½adnia: czas nr <dzieï¿½/dni> nr <godzinï¿½/godziny/godzin>" NL);
 		return -1;
 	}
 	day = atoi(arg);
@@ -125,7 +125,7 @@ int parse_atodate( CHAR_DATA * ch, char * argument)
 	{
 		if (day < 1 || day > 23 )
 		{
-			pager_printf( ch, " W³aœciwy zakres godzin to od 1 godziny do 23 godzin" NL);
+			pager_printf( ch, " Wï¿½aï¿½ciwy zakres godzin to od 1 godziny do 23 godzin" NL);
 			return -1;
 		}
 		return day;
@@ -136,7 +136,7 @@ int parse_atodate( CHAR_DATA * ch, char * argument)
 		{
 			if ( day <1 || day > 14 )
 			{
-				pager_printf( ch, " W³aœciwy zakres dni trwania aukcji to od 1 do 14 dni" NL);
+				pager_printf( ch, " Wï¿½aï¿½ciwy zakres dni trwania aukcji to od 1 do 14 dni" NL);
 				return -1;
 			}
 		}
@@ -144,14 +144,14 @@ int parse_atodate( CHAR_DATA * ch, char * argument)
 		{
 			if (day < 1 || day > 23 )
 			{
-				pager_printf( ch, " W³aœciwy zakres godzin to od 1 godziny do 23 godzin" NL);
+				pager_printf( ch, " Wï¿½aï¿½ciwy zakres godzin to od 1 godziny do 23 godzin" NL);
 				return -1;
 			}
 			return day;
 		}
 		else
 		{
-			pager_printf( ch, "Sk³adnia: czas nr <dzieñ/dni> nr <godzinê/godziny/godzin>" NL);
+			pager_printf( ch, "Skï¿½adnia: czas nr <dzieï¿½/dni> nr <godzinï¿½/godziny/godzin>" NL);
 			return -1;
 		}
 	}
@@ -160,13 +160,13 @@ int parse_atodate( CHAR_DATA * ch, char * argument)
 		return day*24+hours;
 	if ( !is_number(arg))
 	{
-		pager_printf( ch, "Sk³adnia: czas nr <dzieñ/dni> nr <godzinê/godziny/godzin>" NL);
+		pager_printf( ch, "Skï¿½adnia: czas nr <dzieï¿½/dni> nr <godzinï¿½/godziny/godzin>" NL);
 		return -1;
 	}
 	hours = atoi(arg);
 	if (hours < 1 || hours > 23 )
 	{
-		pager_printf( ch, " W³aœciwy zakres godzin to od 1 godziny do 23 godzin" NL);
+		pager_printf( ch, " Wï¿½aï¿½ciwy zakres godzin to od 1 godziny do 23 godzin" NL);
 		return -1;
 	}
 	return day*24+hours;
@@ -179,7 +179,7 @@ AUCTION_DATA * auction_exist( CHAR_DATA * ch, char * arg , char * text, STOCK_EX
 
 	if ( !is_number ( arg ) )
 	{
-		pager_printf( ch, "Podaj numer aukcji, któr¹ chcesz %s." NL NL, text);
+		pager_printf( ch, "Podaj numer aukcji, ktï¿½rï¿½ chcesz %s." NL NL, text);
 		return NULL;
 	}
 	number = atoi( arg );
@@ -194,15 +194,13 @@ AUCTION_DATA * auction_exist( CHAR_DATA * ch, char * arg , char * text, STOCK_EX
 }
 
 /**
-* @brief zapisz gie³de do pliku
+* @brief zapisz gieï¿½de do pliku
 *
-* @param pStock zapisywana gie³da
+* @param pStock zapisywana gieï¿½da
 */
 void save_stock_market( STOCK_EXCHANGE_DATA * pStock )
 {
 	FILE			* fp;
-	AUCTION_DATA	* pAuction;
-	BETS_PROGRES	* pBets;
 	int 			bidders_count=0;
 	char			buf[MIL];
 
@@ -227,7 +225,7 @@ void save_stock_market( STOCK_EXCHANGE_DATA * pStock )
 		return;
     }
 
-    FOREACH(pAuction,pStock->first)
+    for (auto* pAuction : pStock->auctions)
     {
 		fprintf(fp,"\n#AUCTION\n");
 		fprintf(fp,"Seller          %s~\n",pAuction->seller_name);
@@ -239,7 +237,7 @@ void save_stock_market( STOCK_EXCHANGE_DATA * pStock )
 		fprintf(fp,"Payment         %d\n",pAuction->payment_collected ? 1:0);
 		fprintf(fp,"Item_collected  %d\n",pAuction->item_collected ? 1:0);
 		fprintf(fp,"Cargo_type      %d\n",pAuction->type);
-		FOREACH(pBets,pAuction->first)
+		for (auto* pBets : pAuction->bets)
 		{
 			bidders_count++;
 			fprintf(fp,"  Bidder        %s~\n",pBets->name);
@@ -247,7 +245,7 @@ void save_stock_market( STOCK_EXCHANGE_DATA * pStock )
 			fprintf(fp,"  Bets_quantity %lld\n",pBets->quantity);
 			fprintf(fp,"  Buy_out       %d\n\n",pBets->buy_out? 1:0);
 		}
-		//tutaj trzeba zapisaæ zró¿nicowany zapis licytowanego gad¿etu
+		//tutaj trzeba zapisaï¿½ zrï¿½nicowany zapis licytowanego gadï¿½etu
 		pAuction->bidders_count = bidders_count;
 		fprintf(fp,"Item_name		%s~\n\n",pAuction->stock_name);
 		switch ( pAuction->type)
@@ -272,19 +270,17 @@ void save_stock_market( STOCK_EXCHANGE_DATA * pStock )
 }
 
 /**
-* @brief odczytaj gie³de z podanego pliku
+* @brief odczytaj gieï¿½de z podanego pliku
 *
-* @param filename plik z gie³da
+* @param filename plik z gieï¿½da
 *
-* @param pStock odczytana gie³da
+* @param pStock odczytana gieï¿½da
 */
 int fread_stock_market( char * filename, STOCK_EXCHANGE_DATA * pStock)
 {
     FILE *			fp;
 	AUCTION_DATA	* pAuction = 0;
 	BETS_PROGRES	* pBets = 0;
-	OBJ_DATA		* obj;
-	OBJ_DATA		* obj_next;
 
 	const char		* word;
 	bool			fMatch;
@@ -302,9 +298,9 @@ int fread_stock_market( char * filename, STOCK_EXCHANGE_DATA * pStock)
 				if (!str_cmp(word,"#OBJECT"))
 				{
 					fread_obj(supermob,fp,OS_CARRY);
-					for(obj = supermob->first_carrying;obj;obj=obj_next)
+					auto carrying_snapshot = supermob->carrying;
+					for (auto* obj : carrying_snapshot)
 					{
-						obj_next=obj->next_content;
 						obj_from_char(obj);
 						pAuction->item = obj;
 					}
@@ -314,7 +310,7 @@ int fread_stock_market( char * filename, STOCK_EXCHANGE_DATA * pStock)
 				if (!str_cmp(word, "#AUCTION" ) )
 				{
 					pAuction = new_auction();
-					LINK( pAuction, pStock->first, pStock->last, next, prev );
+					pStock->auctions.push_back( pAuction );
 					fMatch = true;
 					break;
 				}
@@ -334,7 +330,7 @@ int fread_stock_market( char * filename, STOCK_EXCHANGE_DATA * pStock)
 				{
 					fMatch = true;
 					pBets = new_bets();
-					LINK( pBets, pAuction->first, pAuction->last, next, prev );
+					pAuction->bets.push_back( pBets );
 					STRDUP( pBets->name, fread_string( fp ) );
 					pAuction->bidders_count++;
 				}
@@ -382,13 +378,12 @@ int fread_stock_market( char * filename, STOCK_EXCHANGE_DATA * pStock)
 }
 
 /**
-* @brief tworzy katalog oraz puste pliki z gie³dami
+* @brief tworzy katalog oraz puste pliki z gieï¿½dami
 */
 void recreate_stock_markets_list()
 {
     FILE *		fpList,* fpList1;
 	char		buf[MSL];
-	PLANET_DATA * pPlanet = NULL;
 
 	if ( ( fpList = fopen( STOCKS_LIST, "r" ) ) == NULL )
 	{
@@ -399,7 +394,7 @@ void recreate_stock_markets_list()
 		}
 	}
 	//sprawdzamy czy jest utworzony katalog stocks
-	FOREACH(pPlanet, first_planet)
+	for (auto* pPlanet : planet_list)
 	{
 		fprintf( fpList, "%s\n",pPlanet->name );
 		sprintf( buf, "%s%s.stock",STOCK_MARKET_DIR, pPlanet->filename);
@@ -420,7 +415,7 @@ void recreate_stock_markets_list()
 }
 
 /**
-* @brief Oczytuje wszystkie gie³dy
+* @brief Oczytuje wszystkie gieï¿½dy
 */
 void load_stock_markets( )
 {
@@ -428,7 +423,6 @@ void load_stock_markets( )
     const char *		filename;
 	char		buf[MSL];
 	STOCK_EXCHANGE_DATA * pStock = NULL;
-	AUCTION_DATA *		pAuction= NULL;
 	PLANET_DATA * pPlanet = NULL;
 
     RESERVE_CLOSE;
@@ -450,7 +444,7 @@ void load_stock_markets( )
 
 		pStock = new_stock_exchange();
 		pPlanet = get_planet(filename);
-		LINK( pStock, first_stock_exchange, last_stock_exchange, next, prev );
+		stock_exchange_list.push_back( pStock );
 		pStock->pPlanet=pPlanet;
 		sprintf( buf, "%s%s.stock",STOCK_MARKET_DIR, pPlanet->filename);
 		if ( !fread_stock_market( buf, pStock ) )
@@ -472,7 +466,7 @@ void load_stock_markets( )
 		else
 		{
 			sort_stock_market_auctions( pStock );
-			FOREACH(pAuction, pStock->first)
+			for (auto* pAuction : pStock->auctions)
 				sort_auction_bets( pAuction );
 		}
 	}
@@ -485,10 +479,10 @@ void load_stock_markets( )
 
 //////////////////////////////////////////////////////////////////////////////
 /**
- * @brief Poka¿ ekran terminala gie³dowego z szczegó³ami dotycz¹cymi
+ * @brief Pokaï¿½ ekran terminala gieï¿½dowego z szczegï¿½ami dotyczï¿½cymi
  * licytowanego przedmiotu
  *
- * @param ch gracz przegl¹daj¹cy terminal
+ * @param ch gracz przeglï¿½dajï¿½cy terminal
  */
 /*void stock_show_items_details( CHAR_DATA * ch )
 {
@@ -503,7 +497,7 @@ void load_stock_markets( )
 	if ( !pObject && (!pAuction->item_collected || pAuction->quantity == 0))
 	{
 		bug("Missing auctioned pObject pointer");
-		pager_printf( ch, "Nast¹pi³ b³¹d. Gdzieœ zagin¹³ licytowany obiekt. Zg³oœ to do koderów." NL);
+		pager_printf( ch, "Nastï¿½piï¿½ bï¿½ï¿½d. Gdzieï¿½ zaginï¿½ï¿½ licytowany obiekt. Zgï¿½oï¿½ to do koderï¿½w." NL);
 		ch->pcdata->line_nr = STOCK_STATE_MAIN;
 		stock_show_terminal( ch );
 		return;
@@ -511,13 +505,13 @@ void load_stock_markets( )
 	if ( auction_finished( pAuction ) && !auction_creator( ch->name, pAuction )
 		   && !is_auction_member( ch->name, pAuction ) )
 	{
-		ch_printf( ch, "Ta aukcja jest ju¿ zakoñczona i nie masz do"
-				" niej dostêpu." NL );
+		ch_printf( ch, "Ta aukcja jest juï¿½ zakoï¿½czona i nie masz do"
+				" niej dostï¿½pu." NL );
 		ch->pcdata->line_nr = STOCK_STATE_MAIN;
 		stock_show_terminal( ch );
 		return;
 	}
-	sprintf(buf,"Gie³da->Przedmioty");
+	sprintf(buf,"Gieï¿½da->Przedmioty");
 	if (!pAuction->item_collected)
 	{
 		strcat(buf,"->");
@@ -530,20 +524,20 @@ void load_stock_markets( )
 		(auction_creator(ch,pAuction)) ? "(czyli Ty)":"");
 
 	if ( pAuction->quantity > 1 )
-		pager_printf( ch, FG_CYAN "    Iloœæ egzemplarzy tego przedmiotu : " PLAIN "%d" NL, pAuction->quantity);
+		pager_printf( ch, FG_CYAN "    Iloï¿½ï¿½ egzemplarzy tego przedmiotu : " PLAIN "%d" NL, pAuction->quantity);
 	if ( !pAuction->item_collected )
 		auction_show_obj_stats( ch, pObject );
 	else
-		pager_printf( ch, FG_CYAN "    Przedmiot licytacji zosta³ ju¿ odebrany" NL);
+		pager_printf( ch, FG_CYAN "    Przedmiot licytacji zostaï¿½ juï¿½ odebrany" NL);
 
 	if ( auction_creator( ch->name, pAuction ) && pAuction->payment_collected )
-		pager_printf ( ch, FG_CYAN "    Odebra³eœ ju¿ swoj¹ wygran¹" NL);
+		pager_printf ( ch, FG_CYAN "    Odebraï¿½eï¿½ juï¿½ swojï¿½ wygranï¿½" NL);
 
 	pager_printf( ch, NL FG_CYAN "    Opis sprzedawcy:" PLAIN "%s" EOL,pAuction->desc );
 
 	pager_printf ( ch, NL FG_CYAN "    %s : " PLAIN "%s" FG_CYAN " kredyt%s." NL NL,
-		pAuction->first ? "Aktualna stawka" : "Cena wywo³awcza to",
-		advitoa( pAuction->bet, true), NUMBER_SUFF( pAuction->bet, "kê", "ki", "ek" ) );
+		!pAuction->bets.empty() ? "Aktualna stawka" : "Cena wywoï¿½awcza to",
+		advitoa( pAuction->bet, true), NUMBER_SUFF( pAuction->bet, "kï¿½", "ki", "ek" ) );
 
 	pager_printf( ch, NL NL );
 	show_all_betters(ch, pAuction);
@@ -552,9 +546,9 @@ void load_stock_markets( )
 		pager_printf( ch, NL FG_CYAN "    Twoja aukcja ");
 	else    pager_printf( ch, NL FG_CYAN "    Aukcja ");
 	if ( !auction_finished( pAuction ) )
-		pager_printf( ch, FG_CYAN "zakoñczy siê za %s" NL,
+		pager_printf( ch, FG_CYAN "zakoï¿½czy siï¿½ za %s" NL,
 				prepare_time(pAuction->end_time,false,false));
-	else 	pager_printf( ch, FG_CYAN "zakoñczy³a siê" NL);
+	else 	pager_printf( ch, FG_CYAN "zakoï¿½czyï¿½a siï¿½" NL);
 
 	pager_printf( ch, NL PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL "    " );
 
@@ -566,8 +560,8 @@ void load_stock_markets( )
 		if ( pAuction->quantity > 1 && is_auction_member( ch->name, pAuction ) )
 			pager_printf( ch,"[" FG_CYAN "Ilosc" PLAIN "]" );
 	}
-	if ( IS_IMMORTAL( ch ) || ( auction_creator( ch->name, pAuction ) && !pAuction->first ) )
-		pager_printf( ch,"[" FG_CYAN "Usuñ" PLAIN "]" );
+	if ( IS_IMMORTAL( ch ) || ( auction_creator( ch->name, pAuction ) && pAuction->bets.empty() ) )
+		pager_printf( ch,"[" FG_CYAN "Usuï¿½" PLAIN "]" );
 	if ( auction_finished( pAuction ) &&
 		( ( auction_creator( ch->name, pAuction ) && !pAuction->payment_collected )
 		|| is_auction_member( ch->name, pAuction ) ) )
@@ -583,7 +577,7 @@ void stock_show_new_offert(CHAR_DATA * ch)
 	AUCTION_DATA *	pAuction = (AUCTION_DATA*)ch->desc->olc_editing;
 	ROOM_INDEX_DATA * pRoom = NULL;
 
-	pager_printf( ch, PLAIN "   [" FG_CYAN "%s" PLAIN "]" NL, make_stock_state_info("Gie³da->Nowa oferta") );
+	pager_printf( ch, PLAIN "   [" FG_CYAN "%s" PLAIN "]" NL, make_stock_state_info("Gieï¿½da->Nowa oferta") );
 	pager_printf( ch, PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL );
 	pager_printf( ch, NL "   " FG_CYAN "Typ aukcji" NL);
 	pager_printf( ch, PLAIN "    [%s]" FG_CYAN "%-10s"
@@ -591,7 +585,7 @@ void stock_show_new_offert(CHAR_DATA * ch)
 			PLAIN "[%s]" FG_CYAN "%-10s" PLAIN "[%s]" FG_CYAN "%-10s" NL NL,
 			pAuction->type == AUCTION_ITEM ? "x":" ","Item",
 			pAuction->type == AUCTION_SHIP ? "x":" ","Statek",
-			pAuction->type == AUCTION_MATERIAL ? "x":"|","Materia³",
+			pAuction->type == AUCTION_MATERIAL ? "x":"|","Materiaï¿½",
 			pAuction->type == AUCTION_PRODUCT ? "x":"|","Produkt",
 			pAuction->type == AUCTION_HOUSE ? "x":"|","Dom");
 
@@ -613,19 +607,19 @@ void stock_show_new_offert(CHAR_DATA * ch)
 	}
 	else
 	{
-		pager_printf( ch, FG_CYAN "   %-25s%-20s%-10s" NL,"Licytowany towar:"," ","Iloœæ:");
+		pager_printf( ch, FG_CYAN "   %-25s%-20s%-10s" NL,"Licytowany towar:"," ","Iloï¿½ï¿½:");
 		pager_printf( ch, PLAIN "    [ " FG_YELLOW "%-30s" PLAIN " ]",pAuction->stock_name);
 		pager_printf( ch,"          " PLAIN "[ " FG_CYAN "%s" PLAIN " ]" NL NL,advitoa(pAuction->quantity,true) );
 	}
 
-	pager_printf( ch, FG_CYAN "   %-25s%-20s%-20s" NL, "Cena wywo³awcza:"," ","Cena BuyOut:");
+	pager_printf( ch, FG_CYAN "   %-25s%-20s%-20s" NL, "Cena wywoï¿½awcza:"," ","Cena BuyOut:");
 	pager_printf( ch,PLAIN "    [ " FG_CYAN "%-15s" PLAIN " ]%-25s",
 		advitoa(pAuction->starting_price,true)," "	);
 	pager_printf( ch,PLAIN "[ " FG_CYAN "%s" PLAIN " ]" NL NL,
 		pAuction->buy_out_now ? advitoa(pAuction->buy_out_now,true) : "Brak");
 
 	pager_printf( ch, FG_CYAN "   Czas trwania aukcji:");
-	if (pAuction->duration) pager_printf( ch, "          Czyli skoñczy siê :");
+	if (pAuction->duration) pager_printf( ch, "          Czyli skoï¿½czy siï¿½ :");
 	pager_printf( ch, NL PLAIN "    [ " FG_CYAN "%d d, %d h" PLAIN " ]" , pAuction->duration/24, pAuction->duration%24);
 	if (pAuction->duration)
 	{
@@ -643,7 +637,7 @@ void stock_show_new_offert(CHAR_DATA * ch)
 
 	pager_printf( ch, NL NL FG_CYAN "   %-25s" NL PLAIN "    [%s]" FG_CYAN "%-13s"
 			PLAIN "[%s]" FG_CYAN "%-13s" NL NL,
-			"Forma p³atno¶ci", " ","Przelew","x","Gotówka");
+			"Forma pï¿½atnoï¿½ci", " ","Przelew","x","Gotï¿½wka");
 
 	pager_printf( ch, FG_CYAN "   %-25s" NL PLAIN "  %s" NL NL,
 			"Opis sprzedawcy :", pAuction->desc);
@@ -651,9 +645,9 @@ void stock_show_new_offert(CHAR_DATA * ch)
 
 	pager_printf( ch,
 			PLAIN "     [" FG_CYAN "Typ" PLAIN "][" FG_CYAN "Towar" PLAIN
-			"][" FG_CYAN "Ilo¶æ" PLAIN "][" FG_CYAN "Cena" PLAIN "]["
+			"][" FG_CYAN "Iloï¿½ï¿½" PLAIN "][" FG_CYAN "Cena" PLAIN "]["
 			FG_CYAN "BuyOut" PLAIN "][" FG_CYAN "Czas" PLAIN "]"
-			"[" FG_CYAN "P³atno¶æ" PLAIN "][" FG_CYAN "Opis" PLAIN "]["
+			"[" FG_CYAN "Pï¿½atnoï¿½ï¿½" PLAIN "][" FG_CYAN "Opis" PLAIN "]["
 			FG_YELLOW "Send" PLAIN "][" FG_YELLOW "Erase" PLAIN "]["
 			FB_YELLOW "Back" PLAIN "]" NL NL);
 }
@@ -661,27 +655,26 @@ void stock_show_new_offert(CHAR_DATA * ch)
 void stock_show_planet_info(CHAR_DATA * ch)
 {
 	PLANET_DATA	* pPlanet = ch->in_room->area->planet;
-	DEPOSIT_DATA	* pDeposit = NULL;
 
 	if (!pPlanet)
 	{
-		pager_printf(ch, "Ta gie³da jest niepowi¹zana z ¿adn¹ planeta" NL);
-		pager_printf(ch, "Zgloœ to do Builderow" NL);
+		pager_printf(ch, "Ta gieï¿½da jest niepowiï¿½zana z ï¿½adnï¿½ planeta" NL);
+		pager_printf(ch, "Zgloï¿½ to do Builderow" NL);
 		return;
 	}
 
 	pager_printf( ch, NL PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL NL
-			"   " FG_CYAN "  Planeta pod rz¹dami :" NL);
+			"   " FG_CYAN "  Planeta pod rzï¿½dami :" NL);
 	pager_printf( ch, PLAIN "      [ " FG_CYAN "%-25s" PLAIN " ]" NL NL,
 					strip_colors( pPlanet->governed_by ?
 						CLANNAME(pPlanet->governed_by) : "" ,25));
 
-	pager_printf( ch, FG_CYAN "     Iloœæ mieszkañców :" NL
+	pager_printf( ch, FG_CYAN "     Iloï¿½ï¿½ mieszkaï¿½cï¿½w :" NL
 			PLAIN "      [ " FG_CYAN "%-6d" PLAIN " ]" NL NL, pPlanet->population);
 
-	pager_printf( ch, FG_CYAN "     Z³o¿a minera³ów :" NL);
-	if (pPlanet->first_deposit)
-		FOREACH(pDeposit,pPlanet->first_deposit)
+	pager_printf( ch, FG_CYAN "     Zï¿½oï¿½a mineraï¿½ï¿½w :" NL);
+	if (!pPlanet->deposits.empty())
+		for (auto* pDeposit : pPlanet->deposits)
 		{
 
 			pager_printf(ch, FG_YELLOW "        %-25s     "
@@ -724,8 +717,8 @@ void stock_show_details( CHAR_DATA * ch )
 	if ( auction_finished( pAuction ) && !auction_creator( ch->name, pAuction )
 		   && !is_auction_member( ch->name, pAuction ) )
 	{
-		ch_printf( ch, "Ta aukcja jest ju¿ zakoñczona i nie masz do"
-				" niej dostêpu." NL );
+		ch_printf( ch, "Ta aukcja jest juï¿½ zakoï¿½czona i nie masz do"
+				" niej dostï¿½pu." NL );
 		if ( pAuction->type == AUCTION_ITEM )
 			ch->pcdata->line_nr = STOCK_STATE_ITEMS;
 		else if ( pAuction->type == AUCTION_SHIP )
@@ -741,12 +734,12 @@ void stock_show_details( CHAR_DATA * ch )
 			if ( !pObject && (!pAuction->item_collected || pAuction->quantity == 0))
 			{
 				bug("Missing auctioned pObject pointer");
-				pager_printf( ch, "Nast¹pi³ b³¹d. Gdzieœ zagin¹³ licytowany obiekt. Zg³oœ to do koderów." NL);
+				pager_printf( ch, "Nastï¿½piï¿½ bï¿½ï¿½d. Gdzieï¿½ zaginï¿½ï¿½ licytowany obiekt. Zgï¿½oï¿½ to do koderï¿½w." NL);
 				ch->pcdata->line_nr = STOCK_STATE_ITEMS;
 				stock_show_terminal( ch );
 				return;
 			}
-			sprintf(buf,"Gie³da->Przedmioty");
+			sprintf(buf,"Gieï¿½da->Przedmioty");
 			if (!pAuction->item_collected)
 			{
 				strcat(buf,"->");
@@ -758,12 +751,12 @@ void stock_show_details( CHAR_DATA * ch )
 			if ( !pShip && (!pAuction->item_collected || pAuction->quantity == 0))
 			{
 				bug("Missing auctioned pShip pointer");
-				pager_printf( ch, "Nast¹pi³ b³¹d. Gdzieœ zagin¹³ licytowany obiekt. Zg³oœ to do koderów." NL);
+				pager_printf( ch, "Nastï¿½piï¿½ bï¿½ï¿½d. Gdzieï¿½ zaginï¿½ï¿½ licytowany obiekt. Zgï¿½oï¿½ to do koderï¿½w." NL);
 				ch->pcdata->line_nr = STOCK_STATE_SHIPS;
 				stock_show_terminal( ch );
 				return;
 			}
-			sprintf(buf,"Gie³da->Statki");
+			sprintf(buf,"Gieï¿½da->Statki");
 			if (!pAuction->item_collected)
 			{
 				strcat(buf,"->");
@@ -780,23 +773,23 @@ void stock_show_details( CHAR_DATA * ch )
 		(auction_creator(ch->name,pAuction)) ? "(czyli Ty)":"");
 
 	if ( pAuction->quantity > 1 )
-		pager_printf( ch, FG_CYAN "    Ilo¶æ egzemplarzy tego przedmiotu : " PLAIN "%d" NL, pAuction->quantity);
+		pager_printf( ch, FG_CYAN "    Iloï¿½ï¿½ egzemplarzy tego przedmiotu : " PLAIN "%d" NL, pAuction->quantity);
 
 	if ( pAuction->item_collected )
-		pager_printf( ch, FG_CYAN "    Przedmiot licytacji zosta³ ju¿ odebrany" NL);
+		pager_printf( ch, FG_CYAN "    Przedmiot licytacji zostaï¿½ juï¿½ odebrany" NL);
 	else if ( pAuction->type == AUCTION_ITEM )
 		auction_show_obj_stats( ch, pObject );
 	else if ( pAuction->type == AUCTION_SHIP )
 		auction_show_ship_info( ch, pShip );
 
 	if ( auction_creator( ch->name, pAuction ) && pAuction->payment_collected )
-		pager_printf ( ch, FG_CYAN "    Odebra³e¶ ju¿ swoj± wygran±" NL);
+		pager_printf ( ch, FG_CYAN "    Odebraï¿½eï¿½ juï¿½ swojï¿½ wygranï¿½" NL);
 
 	pager_printf( ch, NL FG_CYAN "    Opis sprzedawcy:" PLAIN "%s" EOL,pAuction->desc );
 
 	pager_printf ( ch, NL FG_CYAN "    %s : " PLAIN "%s" FG_CYAN " kredyt%s." NL NL,
-		pAuction->first ? "Aktualna stawka" : "Cena wywo³awcza to",
-		advitoa( pAuction->bet, true), NUMBER_SUFF( pAuction->bet, "kê", "ki", "ek" ) );
+		!pAuction->bets.empty() ? "Aktualna stawka" : "Cena wywoï¿½awcza to",
+		advitoa( pAuction->bet, true), NUMBER_SUFF( pAuction->bet, "kï¿½", "ki", "ek" ) );
 
 	pager_printf( ch, NL NL );
 	show_all_betters(ch, pAuction);
@@ -805,9 +798,9 @@ void stock_show_details( CHAR_DATA * ch )
 		pager_printf( ch, NL FG_CYAN "    Twoja aukcja ");
 	else    pager_printf( ch, NL FG_CYAN "    Aukcja ");
 	if ( !auction_finished( pAuction ) )
-		pager_printf( ch, FG_CYAN "zakoñczy siê za %s" NL,
+		pager_printf( ch, FG_CYAN "zakoï¿½czy siï¿½ za %s" NL,
 				prepare_time(pAuction->end_time,false,false));
-	else 	pager_printf( ch, FG_CYAN "zakoñczy³a siê" NL);
+	else 	pager_printf( ch, FG_CYAN "zakoï¿½czyï¿½a siï¿½" NL);
 
 	pager_printf( ch, NL PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL "    " );
 
@@ -819,8 +812,8 @@ void stock_show_details( CHAR_DATA * ch )
 		if ( pAuction->quantity > 1 && is_auction_member( ch->name, pAuction ) )
 			pager_printf( ch,"[" FG_CYAN "Ilosc" PLAIN "]" );
 	}
-	if ( IS_IMMORTAL( ch ) || ( auction_creator( ch->name, pAuction ) && !pAuction->first ) )
-		pager_printf( ch,"[" FG_CYAN "Usuñ" PLAIN "]" );
+	if ( IS_IMMORTAL( ch ) || ( auction_creator( ch->name, pAuction ) && pAuction->bets.empty() ) )
+		pager_printf( ch,"[" FG_CYAN "Usuï¿½" PLAIN "]" );
 	if ( auction_finished( pAuction ) &&
 		( ( auction_creator( ch->name, pAuction ) && !pAuction->payment_collected )
 		|| is_auction_member( ch->name, pAuction ) ) )
@@ -831,16 +824,15 @@ void stock_show_details( CHAR_DATA * ch )
 void stock_show_list(CHAR_DATA * ch )
 {
     STOCK_EXCHANGE_DATA	*	pStock	= NULL;
-	AUCTION_DATA *			pAuction= NULL;
 	int						vis_auct= 0; //ilosc aukcji ktore widzimy
 	int						my_auct = 0;
-	int						fin_auct = 0; //aukcje zakoñczone i nale¿¹ce do gracza
+	int						fin_auct = 0; //aukcje zakoï¿½czone i naleï¿½ï¿½ce do gracza
 	int index = 0;
 
     pStock = get_stock_exchange(ch);
-	pager_printf( ch, PLAIN "   [" FG_CYAN "%s" PLAIN "]" NL, make_stock_state_info("Gie³da->Lista licytowanych statków") );
+	pager_printf( ch, PLAIN "   [" FG_CYAN "%s" PLAIN "]" NL, make_stock_state_info("Gieï¿½da->Lista licytowanych statkï¿½w") );
 	pager_printf( ch, PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL NL NL );
-	FOREACH( pAuction, pStock->first)
+	for (auto* pAuction : pStock->auctions)
 	{
 		if ( !IS_IMMORTAL( ch ) )
 		{
@@ -869,7 +861,7 @@ void stock_show_list(CHAR_DATA * ch )
 				|| ( is_auction_member( ch->name, pAuction ) ) ) )
 			fin_auct++;
 		vis_auct++;
-		//wyswiatlamy nag³ówek je¶li widzimy przynajmniej jedn± aukcjê
+		//wyswiatlamy nagï¿½ï¿½wek jeï¿½li widzimy przynajmniej jednï¿½ aukcjï¿½
 		if ( vis_auct == 1 )
 		{
 			pager_printf( ch, "     " PLAIN "[" FG_CYAN "%-2s" PLAIN "]["
@@ -878,14 +870,14 @@ void stock_show_list(CHAR_DATA * ch )
 					FG_CYAN "%-1s" PLAIN "][" FG_CYAN "%-12s" PLAIN "]"
 					FG_CYAN NL "    --------------------------"
 					"------------------------------------------------" EOL,
-					"Nr","Nazwa przedmiotu","Ilo","Lic","Cena","B","Do koñca");
+					"Nr","Nazwa przedmiotu","Ilo","Lic","Cena","B","Do koï¿½ca");
 		}
 		show_1_auction_list(ch, pAuction, index);
 	}
 
-	if ( !vis_auct || !pStock->first)	//poniewa¿ niektórych aukcji nie widzimy, bo siê skoñczy³y, a nie s± nasze
+	if ( !vis_auct || pStock->auctions.empty())	//poniewaï¿½ niektï¿½rych aukcji nie widzimy, bo siï¿½ skoï¿½czyï¿½y, a nie sï¿½ nasze
 	{
-		pager_printf( ch,NL NL NL NL NL PLAIN "%-26s%s" EOL NL NL NL ,"","Nie toczy siê ¿adna licytacja" NL );
+		pager_printf( ch,NL NL NL NL NL PLAIN "%-26s%s" EOL NL NL NL ,"","Nie toczy siï¿½ ï¿½adna licytacja" NL );
 		pager_printf( ch, NL PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL );
 	}
 	else if (vis_auct<10)
@@ -901,8 +893,8 @@ void stock_show_list(CHAR_DATA * ch )
 		pager_printf( ch,"[" FG_CYAN "Odbierz" PLAIN "]" );
 	if ( my_auct || ( IS_IMMORTAL( ch ) && vis_auct ) )
 	{
-		pager_printf( ch,"[" FG_CYAN "Zakoñcz" PLAIN "]" );
-		pager_printf( ch,"[" FG_CYAN "Usuñ" PLAIN "]" );
+		pager_printf( ch,"[" FG_CYAN "Zakoï¿½cz" PLAIN "]" );
+		pager_printf( ch,"[" FG_CYAN "Usuï¿½" PLAIN "]" );
 	}
 	pager_printf( ch, "[" FB_YELLOW "Back" PLAIN "]" NL NL);
 }
@@ -915,7 +907,7 @@ void stock_show_terminal(CHAR_DATA *ch)
 
 	if ( ch->pcdata->line_nr ==  STOCK_STATE_MAIN)
 	{
-		pager_printf( ch, PLAIN "   [" FG_CYAN "%s" PLAIN "]" NL, make_stock_state_info("G³ówny ekran") );
+		pager_printf( ch, PLAIN "   [" FG_CYAN "%s" PLAIN "]" NL, make_stock_state_info("Gï¿½ï¿½wny ekran") );
 		pager_printf( ch, PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL );
 		pager_printf( ch, NL PLAIN "    [ " MOD_BOLD "1" FG_CYAN "  : %-30s" PLAIN "]" NL
 				"    [ " MOD_BOLD "2" FG_CYAN "  : %-30s" PLAIN "]" NL
@@ -928,17 +920,17 @@ void stock_show_terminal(CHAR_DATA *ch)
 				"    [ " MOD_BOLD "9" FG_CYAN "  : %-30s" PLAIN "]" NL
 				"    [ " MOD_BOLD "10" FG_CYAN " : %-30s" PLAIN "]" NL
 				"    [ " MOD_BOLD "11" FG_CYAN " : %-30s" PLAIN "]" NL NL,
-				"Oferty sprzeda¿y przedmiotów",
-				"Oferty sprzeda¿y statków",
-				"Oferty sprzeda¿y materia³ów",
-				"Oferty sprzedazy produktów",
-				"Oferty sprzedazy mieszka¿",
-				"Oferty kontraktów terminowych",
-				"Oferty zleceñ prywatnych",
-				"Przygotuj now± oferte",
+				"Oferty sprzedaï¿½y przedmiotï¿½w",
+				"Oferty sprzedaï¿½y statkï¿½w",
+				"Oferty sprzedaï¿½y materiaï¿½ï¿½w",
+				"Oferty sprzedazy produktï¿½w",
+				"Oferty sprzedazy mieszkaï¿½",
+				"Oferty kontraktï¿½w terminowych",
+				"Oferty zleceï¿½ prywatnych",
+				"Przygotuj nowï¿½ oferte",
 				"Informacje o planecie",
 				"Moje aukcje",
-				"Wyjd¿"
+				"Wyjdï¿½"
 				);
 		pager_printf( ch, PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL );
 	}
@@ -963,7 +955,7 @@ void stock_prepare_new_offert(CHAR_DATA * ch)
 		return;
 
 	//teraz sprawdzamy czy nie ma przypadkiem innej nie opublikowanej oferty
-	FOREACH(pAuction, pStock->first_new_offert)
+	for (auto* pAuction : pStock->new_offers)
 		if (auction_creator(ch->name,pAuction))
 		{
 			ch->desc->olc_editing	= (void*)pAuction;
@@ -974,7 +966,7 @@ void stock_prepare_new_offert(CHAR_DATA * ch)
 	pAuction->end_time=0;
 	STRDUP( pAuction->seller_name, ch->name);
 	ch->desc->olc_editing	= (void*)pAuction;
-	LINK( pAuction, pStock->first_new_offert, pStock->last_new_offert, next, prev );
+	pStock->new_offers.push_back( pAuction );
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1032,7 +1024,7 @@ void stock_main_interpret( CHAR_DATA * ch, char * argument)
     {
 		ch->desc->olc_editing	= NULL;
 		ch->desc->connected		= CON_PLAYING;
-		send_to_char( "Wylogowujesz si¿ z terminala gie¿dowego." NL, ch );
+		send_to_char( "Wylogowujesz siï¿½ z terminala gieï¿½dowego." NL, ch );
         return;
     }
 	interpret( ch, argument);
@@ -1043,20 +1035,20 @@ bool stock_new_offert_test_object( CHAR_DATA * ch, OBJ_DATA * pObject)
 {
 	if (pObject->timer > 0)
 	{
-		send_to_char ("Nie mo¿esz wystawiæ na aukcjê tak "
-				" nietrwa³ego przedmiotu." NL, ch);
+		send_to_char ("Nie moï¿½esz wystawiï¿½ na aukcjï¿½ tak "
+				" nietrwaï¿½ego przedmiotu." NL, ch);
 		return false;
 	}
 	if( IS_OBJ_STAT( pObject, ITEM_PERSONAL ) )
 	{
-		send_to_char( "Zaufaj. Nie chcesz siê tego pozbyæ" NL, ch );
+		send_to_char( "Zaufaj. Nie chcesz siï¿½ tego pozbyï¿½" NL, ch );
 		return false;
 	}
 
 	if ( pObject->inquest)
 	{
-		send_to_char( "Zaufaj. Bêdziesz potrzebowa³ tego przedmiotu"
-				"by ukoñczyæ swój quest" NL, ch );
+		send_to_char( "Zaufaj. Bï¿½dziesz potrzebowaï¿½ tego przedmiotu"
+				"by ukoï¿½czyï¿½ swï¿½j quest" NL, ch );
 		return false;
 	}
 	return true;
@@ -1093,15 +1085,15 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 	{
 		if ( !str_prefix ( arg2, ""))
 		{
-			pager_printf( ch, "Musisz wybraæ typ licytowanego przedmiotu" NL );
-			pager_printf( ch, "Na dzieñ dzisiejszy funckjonuje tylko handel" NL );
+			pager_printf( ch, "Musisz wybraï¿½ typ licytowanego przedmiotu" NL );
+			pager_printf( ch, "Na dzieï¿½ dzisiejszy funckjonuje tylko handel" NL );
 			pager_printf( ch, "przedmiotami" NL NL );
 			return;
 		}
 		else if ( !str_prefix( arg2, "przedmiot" ) || !str_prefix( arg2, "item" ))
 		{
 			//przy zmienianiu typu tocz?cej si? aukcji musimy te? usun? nazwy
-			//obiektów, które ju¿ zosta?y na niej wystawione
+			//obiektï¿½w, ktï¿½re juï¿½ zosta?y na niej wystawione
 			pAuction->type = AUCTION_ITEM;
 			STRDUP(pAuction->stock_name, "");
 			pager_printf( ch, "Zmieniasz typ utworzonej aukcji" NL);
@@ -1109,8 +1101,8 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		}
 		else if ( !str_prefix( arg2, "statek" ) )
 		{
-		//przy zmienianiu typu tocz¹cej siê aukcji musimy te¿ usun¹æ nazwy
-		//obiektów, które ju¿ zosta³y na niej wystawione
+		//przy zmienianiu typu toczï¿½cej siï¿½ aukcji musimy teï¿½ usunï¿½ï¿½ nazwy
+		//obiektï¿½w, ktï¿½re juï¿½ zostaï¿½y na niej wystawione
 
 			pAuction->type = AUCTION_SHIP;
 			STRDUP(pAuction->stock_name, "");
@@ -1119,8 +1111,8 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		}
 		else if ( !str_prefix( arg2, "dom" ) )
 		{
-		//przy zmienianiu typu tocz¹cej siê aukcji musimy te¿ usun¹æ nazwy
-		//obiektów, które ju¿ zosta³y na niej wystawione
+		//przy zmienianiu typu toczï¿½cej siï¿½ aukcji musimy teï¿½ usunï¿½ï¿½ nazwy
+		//obiektï¿½w, ktï¿½re juï¿½ zostaï¿½y na niej wystawione
 
 			pAuction->type = AUCTION_HOUSE;
 			STRDUP(pAuction->stock_name, "");
@@ -1129,8 +1121,8 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		}
 		else if ( !str_prefix( arg2, "material" ) )
 		{
-		//przy zmienianiu typu tocz¹cej siê aukcji musimy te¿ usun¹æ nazwy
-		//obiektów, które ju¿ zosta³y na niej wystawione
+		//przy zmienianiu typu toczï¿½cej siï¿½ aukcji musimy teï¿½ usunï¿½ï¿½ nazwy
+		//obiektï¿½w, ktï¿½re juï¿½ zostaï¿½y na niej wystawione
 
 			pAuction->type = AUCTION_MATERIAL;
 			STRDUP(pAuction->stock_name, "");
@@ -1139,8 +1131,8 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		}
 		else if ( !str_prefix( arg2, "produkt" ) )
 		{
-		//przy zmienianiu typu tocz¹cej siê aukcji musimy te¿ usun¹æ nazwy
-		//obiektów, które ju¿ zosta³y na niej wystawione
+		//przy zmienianiu typu toczï¿½cej siï¿½ aukcji musimy teï¿½ usunï¿½ï¿½ nazwy
+		//obiektï¿½w, ktï¿½re juï¿½ zostaï¿½y na niej wystawione
 
 			pAuction->type = AUCTION_PRODUCT;
 			STRDUP(pAuction->stock_name, "");
@@ -1180,7 +1172,7 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 			}
 			case AUCTION_MATERIAL:
 			{
-				pager_printf( ch, "Licytowanie materia?ów jest na razie wy??czone." NL);
+				pager_printf( ch, "Licytowanie materia?ï¿½w jest na razie wy??czone." NL);
 				break;
 			}
 			case AUCTION_HOUSE:
@@ -1190,12 +1182,12 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				{
 					if ( ch->plr_home->area->planet )
 					{
-						pager_printf( ch, " Twoje mieszkanie znajduje siê na planecie %s i w dzielnicy %s." NL,
+						pager_printf( ch, " Twoje mieszkanie znajduje siï¿½ na planecie %s i w dzielnicy %s." NL,
 							ch->plr_home->area->planet->name, ch->plr_home->area->name);
 					}
 					else
 					{
-						pager_printf( ch, " Twoje mieszkanie znajduje siê w dzielnicy %s." NL,
+						pager_printf( ch, " Twoje mieszkanie znajduje siï¿½ w dzielnicy %s." NL,
 							ch->plr_home->area->name);
 					}
 					STRDUP( pAuction->stock_name, "        ");
@@ -1205,14 +1197,14 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				}
 				else
 				{
-					pager_printf( ch, "Nie jesteœ w³aœcicielem ¿adnego mieszkania" NL);
+					pager_printf( ch, "Nie jesteï¿½ wï¿½aï¿½cicielem ï¿½adnego mieszkania" NL);
 					return;
 				}
 				break;
 			}
 			case AUCTION_PRODUCT:
 			{
-				pager_printf( ch, "Licytowanie produktów jest na razie wy??czone." NL);
+				pager_printf( ch, "Licytowanie produktï¿½w jest na razie wy??czone." NL);
 				break;
 			}
 			case AUCTION_SHIP:
@@ -1221,10 +1213,10 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				if (arg2[0]=='\0')
 				{
 					number =0;
-					send_to_pager( "Oto lista statków posiadanych przez ciebie lub twoj± organiacjê:" NL, ch );
-					send_to_pager( FB_WHITE "Statek                              W³a¶ciciel" NL,ch);
+					send_to_pager( "Oto lista statkï¿½w posiadanych przez ciebie lub twojï¿½ organiacjï¿½:" NL, ch );
+					send_to_pager( FB_WHITE "Statek                              Wï¿½aï¿½ciciel" NL,ch);
 
-					for ( pShip = first_ship; pShip; pShip = pShip->next )
+					for (auto* pShip : ship_list)
 					{
 						if ( str_cmp(pShip->owner, ch->name) )
 							continue;
@@ -1243,7 +1235,7 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 					}
 
 					if ( !number )
-						send_to_pager( "Nie posiadasz ¿adnego statku." NL, ch );
+						send_to_pager( "Nie posiadasz ï¿½adnego statku." NL, ch );
 					return;
 				}
 
@@ -1267,7 +1259,7 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 	{
 		if ( !is_number(arg2) )
 		{
-			pager_printf( ch, "Podaj ile sztuk tego towaru chcesz sprzedaæ ( od 0 w góre)" NL NL);
+			pager_printf( ch, "Podaj ile sztuk tego towaru chcesz sprzedaï¿½ ( od 0 w gï¿½re)" NL NL);
 			return;
 		}
 		number = atoi(arg2);
@@ -1280,17 +1272,17 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				if (!pObject)
 				{
 					//przedmiot jakos 'zagin??' - trzeba uporz?dkowa? aukcje
-					pager_printf( ch, "Wystaw najpierw przedmiot, który chcesz sprzedaæ, a dopiero"
-					" potem ustal ile" NL " jego sztuk chcesz sprzedaæ." NL NL);
+					pager_printf( ch, "Wystaw najpierw przedmiot, ktï¿½ry chcesz sprzedaï¿½, a dopiero"
+					" potem ustal ile" NL " jego sztuk chcesz sprzedaï¿½." NL NL);
 					return;
 				}
 				if ( number < 1 )
 				{
-					pager_printf( ch, "Musisz wystawiæ do sprzedania przynajmniej jednæ sztukê %d" NL NL,
+					pager_printf( ch, "Musisz wystawiï¿½ do sprzedania przynajmniej jednï¿½ sztukï¿½ %d" NL NL,
 						pAuction->item->przypadki[1]);
 					return;
 				}
-				quantity = pObject->count; //ile obiektów jeszcze jest w posiadaniu gracza
+				quantity = pObject->count; //ile obiektï¿½w jeszcze jest w posiadaniu gracza
 				if (quantity < number )
 				{
 					pager_printf( ch, "Masz tylko %lld sztuk%s %s." NL,
@@ -1300,30 +1292,30 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 					return;
 				}
 				if ( pAuction->quantity > number)
-					pager_printf( ch, "Zmniejszasz iloœæ przedmiotów na sprzeda¿" NL);
+					pager_printf( ch, "Zmniejszasz iloï¿½ï¿½ przedmiotï¿½w na sprzedaï¿½" NL);
 				else if ( pAuction->quantity < number)
-					pager_printf( ch, "Zwiêkszasz iloœæ przedmiotów na sprzeda¿" NL);
+					pager_printf( ch, "Zwiï¿½kszasz iloï¿½ï¿½ przedmiotï¿½w na sprzedaï¿½" NL);
 				pAuction->quantity = number;
 				return;
 			}
 			case AUCTION_MATERIAL:
 			{
-				pager_printf( ch, "Licytowanie wiêkszych iloœci materia³ów jest na razie wy³¹czone." NL);
+				pager_printf( ch, "Licytowanie wiï¿½kszych iloï¿½ci materiaï¿½ï¿½w jest na razie wyï¿½ï¿½czone." NL);
 				break;
 			}
 			case AUCTION_HOUSE:
 			{
-				pager_printf( ch, "Licytowanie wiêkszych iloœci mieszkañ jest na razie wy³¹czone." NL);
+				pager_printf( ch, "Licytowanie wiï¿½kszych iloï¿½ci mieszkaï¿½ jest na razie wyï¿½ï¿½czone." NL);
 				break;
 			}
 			case AUCTION_PRODUCT:
 			{
-				pager_printf( ch, "Licytowanie wiêkszych iloœci produktów jest na razie wy³¹czone." NL);
+				pager_printf( ch, "Licytowanie wiï¿½kszych iloï¿½ci produktï¿½w jest na razie wyï¿½ï¿½czone." NL);
 				break;
 			}
 			case AUCTION_SHIP:
 			{
-				pager_printf( ch, "Licytowanie wiêkszych iloœci statków jest na razie wy³¹czone." NL);
+				pager_printf( ch, "Licytowanie wiï¿½kszych iloï¿½ci statkï¿½w jest na razie wyï¿½ï¿½czone." NL);
 				break;
 			}
 			default:
@@ -1343,14 +1335,14 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				if (!pObject)
 				{
 					//przedmiot jakos 'zagin??' - trzeba uporz?dkowa? aukcje
-					pager_printf( ch, "Wystaw najpierw przedmiot, który chcesz sprzedaæ, a dopiero"
+					pager_printf( ch, "Wystaw najpierw przedmiot, ktï¿½ry chcesz sprzedaï¿½, a dopiero"
 							" potem ustal ile" NL " za niego chcesz." NL NL);
 					return;
 				}
 
 				if ( !is_number(arg2) )
 				{
-					pager_printf( ch, "Podaj cene wywo³awcz¹." NL);
+					pager_printf( ch, "Podaj cene wywoï¿½awczï¿½." NL);
 					return;
 				}
 				number = atoi(arg2);
@@ -1361,14 +1353,14 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				}
 				else if (pAuction->starting_price == number)
 				{
-					pager_printf( ch, "Przecie? w?a¶nie taka jest cena "
+					pager_printf( ch, "Przecie? w?aï¿½nie taka jest cena "
 							" wywo?awcza \n");
 					return;
 				}
 				else
 				{
 					pAuction->starting_price = number;
-					pager_printf( ch, "Zmieniasz cen? wywo?awcz± na"
+					pager_printf( ch, "Zmieniasz cen? wywo?awczï¿½ na"
 							" %d kredyt%s.\n",
 							number,NUMBER_SUFF(number,"ke","ki","ek"));
 					return;
@@ -1376,17 +1368,17 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 			}
 			case AUCTION_MATERIAL:
 			{
-				pager_printf( ch, "Licytowanie wiêkszych iloœci materia³ów jest na razie wy³¹czone." NL);
+				pager_printf( ch, "Licytowanie wiï¿½kszych iloï¿½ci materiaï¿½ï¿½w jest na razie wyï¿½ï¿½czone." NL);
 				break;
 			}
 			case AUCTION_HOUSE:
 			{
-				pager_printf( ch, "Licytowanie wiêkszych iloœci mieszkañ jest na razie wy³¹czone." NL);
+				pager_printf( ch, "Licytowanie wiï¿½kszych iloï¿½ci mieszkaï¿½ jest na razie wyï¿½ï¿½czone." NL);
 				break;
 			}
 			case AUCTION_PRODUCT:
 			{
-				pager_printf( ch, "Licytowanie wiêkszych iloœci produktów jest na razie wy³¹czone." NL);
+				pager_printf( ch, "Licytowanie wiï¿½kszych iloï¿½ci produktï¿½w jest na razie wyï¿½ï¿½czone." NL);
 				break;
 			}
 			case AUCTION_SHIP:
@@ -1396,14 +1388,14 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				if (!pShip)
 				{
 					//przedmiot jakos 'zagin??' - trzeba uporz?dkowa? aukcje
-					pager_printf( ch, "Wystaw najpierw statek, który chcesz sprzedaæ, a dopiero"
+					pager_printf( ch, "Wystaw najpierw statek, ktï¿½ry chcesz sprzedaï¿½, a dopiero"
 							" potem ustal ile" NL " za niego chcesz." NL NL);
 					return;
 				}
 
 				if ( !is_number(arg2) )
 				{
-					pager_printf( ch, "Podaj cene wywo³awcz¹." NL);
+					pager_printf( ch, "Podaj cene wywoï¿½awczï¿½." NL);
 					return;
 				}
 				number = atoi(arg2);
@@ -1414,14 +1406,14 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				}
 				else if (pAuction->starting_price == number)
 				{
-					pager_printf( ch, "Przecie? w?a¶nie taka jest cena "
+					pager_printf( ch, "Przecie? w?aï¿½nie taka jest cena "
 							" wywo?awcza \n");
 					return;
 				}
 				else
 				{
 					pAuction->starting_price = number;
-					pager_printf( ch, "Zmieniasz cen? wywo?awcz± na"
+					pager_printf( ch, "Zmieniasz cen? wywo?awczï¿½ na"
 							" %d kredyt%s.\n",
 							number,NUMBER_SUFF(number,"ke","ki","ek"));
 					return;
@@ -1438,8 +1430,8 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 			number = atoi(arg2);
 			if (number<=pAuction->starting_price)
 			{
-				pager_printf( ch, "Kwota wykupu musi byæ wy¿sza od"
-						" ceny wywo³awczej." NL);
+				pager_printf( ch, "Kwota wykupu musi byï¿½ wyï¿½sza od"
+						" ceny wywoï¿½awczej." NL);
 				return;
 			}
 			else
@@ -1453,7 +1445,7 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		}
 		else
 		{
-			pager_printf( ch, "Jako parametr podaj twoj¹ kwote wykupu.\n");
+			pager_printf( ch, "Jako parametr podaj twojï¿½ kwote wykupu.\n");
 			return;
 		}
 		return;
@@ -1466,8 +1458,8 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		{
 			pAuction->duration = number;
 			pager_printf( ch, "Ustawiasz czas trwania aukcji na %d d%s i %d godzin%s" NL,
-					number/24,NUMBER_SUFF(number/24,"zieñ","ni","ni"),
-					number%24,NUMBER_SUFF(number%24,"ê","y","") );
+					number/24,NUMBER_SUFF(number/24,"zieï¿½","ni","ni"),
+					number%24,NUMBER_SUFF(number%24,"ï¿½","y","") );
 			return;
 		}
 		else
@@ -1489,29 +1481,29 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		{
 			case AUCTION_ITEM:
 			{
-				//najpierw testy potwierdzaj¹ce prawid³owoœæ aukcji
+				//najpierw testy potwierdzajï¿½ce prawidï¿½owoï¿½ï¿½ aukcji
 				pObject = get_obj_carry (ch, pAuction->stock_name); // does char have the item ?
 				//najpierw - czy posiada ten przedmiot
 				if (!pObject)
 				{
-					//przedmiot jakos 'zagin¹³' - trzeba uporz?dkowa? aukcje
-					pager_printf( ch, "Obiekt, który wystawi³eœ na licytacje NIE znajduje siê w Twoim posiadaniu." NL
-							"Odzyskaj obiekt, który chcesz licytowaæ lub wybierz inny." NL NL );
+					//przedmiot jakos 'zaginï¿½ï¿½' - trzeba uporz?dkowa? aukcje
+					pager_printf( ch, "Obiekt, ktï¿½ry wystawiï¿½eï¿½ na licytacje NIE znajduje siï¿½ w Twoim posiadaniu." NL
+							"Odzyskaj obiekt, ktï¿½ry chcesz licytowaï¿½ lub wybierz inny." NL NL );
 					return;
 				}
 				if ( pAuction->starting_price == 0)
 				{
-					pager_printf( ch, "Cena wywo³awcza musi wynosiæ przynajmniej 1 kredytkê." NL);
+					pager_printf( ch, "Cena wywoï¿½awcza musi wynosiï¿½ przynajmniej 1 kredytkï¿½." NL);
 					return;
 				}
-				quantity = pObject->count; //ile obiektów jeszcze jest w posiadaniu gracza
+				quantity = pObject->count; //ile obiektï¿½w jeszcze jest w posiadaniu gracza
 				if (quantity < pAuction->quantity )
 				{
-					pager_printf( ch, "Masz tylko %lld sztuk%s %s, a zadeklarowa³e¶ chêæ sprzedania %d sztuk%s." NL,
+					pager_printf( ch, "Masz tylko %lld sztuk%s %s, a zadeklarowaï¿½eï¿½ chï¿½ï¿½ sprzedania %d sztuk%s." NL,
 						pAuction->quantity,
-						NUMBER_SUFF(pAuction->quantity,"ê","i",""),
+						NUMBER_SUFF(pAuction->quantity,"ï¿½","i",""),
 						pAuction->item->przypadki[1],
-						NUMBER_SUFF(pAuction->quantity,"ê","i",""));
+						NUMBER_SUFF(pAuction->quantity,"ï¿½","i",""));
 					return;
 				}
 
@@ -1533,24 +1525,24 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				pShip = get_ship(pAuction->stock_name);
 				if ( !pShip )
 				{
-					//przedmiot jakos 'zagin¹³' - trzeba uporz?dkowa? aukcje
-					pager_printf( ch, "Statek, który wystawi³eœ na licytacje NIE znajduje siê w Twoim posiadaniu." NL
-							"Odzyskaj ten statek, który chcesz licytowaæ lub wybierz inny." NL NL );
+					//przedmiot jakos 'zaginï¿½ï¿½' - trzeba uporz?dkowa? aukcje
+					pager_printf( ch, "Statek, ktï¿½ry wystawiï¿½eï¿½ na licytacje NIE znajduje siï¿½ w Twoim posiadaniu." NL
+							"Odzyskaj ten statek, ktï¿½ry chcesz licytowaï¿½ lub wybierz inny." NL NL );
 					return;
 				}
 				if ( pAuction->starting_price == 0)
 				{
-					pager_printf( ch, "Cena wywo³awcza musi wynosiæ przynajmniej 1 kredytkê." NL);
+					pager_printf( ch, "Cena wywoï¿½awcza musi wynosiï¿½ przynajmniej 1 kredytkï¿½." NL);
 					return;
 				}
-//				quantity = pObject->count; //ile obiektów jeszcze jest w posiadaniu gracza
+//				quantity = pObject->count; //ile obiektï¿½w jeszcze jest w posiadaniu gracza
 				if (quantity < pAuction->quantity )
 				{
-//					pager_printf( ch, "Masz tylko %lld sztuk%s %s, a zadeklarowa³eœ chêæ sprzedania %d sztuk%s." NL,
+//					pager_printf( ch, "Masz tylko %lld sztuk%s %s, a zadeklarowaï¿½eï¿½ chï¿½ï¿½ sprzedania %d sztuk%s." NL,
 //						pAuction->quantity,
-//						NUMBER_SUFF(pAuction->quantity,"ê","i",""),
+//						NUMBER_SUFF(pAuction->quantity,"ï¿½","i",""),
 //						pAuction->item->przypadki[1],
-//						NUMBER_SUFF(pAuction->quantity,"ê","i",""));
+//						NUMBER_SUFF(pAuction->quantity,"ï¿½","i",""));
 //					return;
 				}
 
@@ -1561,14 +1553,14 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				}
 				else if (pAuction->starting_price == number)
 				{
-					pager_printf( ch, "Przecie? w?a¶nie taka jest cena "
+					pager_printf( ch, "Przecie? w?aï¿½nie taka jest cena "
 							" wywo?awcza \n");
 					return;
 				}
 				else
 				{
 					pAuction->starting_price = number;
-					pager_printf( ch, "Zmieniasz cen? wywo?awcz± na"
+					pager_printf( ch, "Zmieniasz cen? wywo?awczï¿½ na"
 							" %d kredyt%s.\n",
 							number,NUMBER_SUFF(number,"ke","ki","ek"));
 					return;
@@ -1581,9 +1573,9 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				pRoom = get_room_index(  number );
 				if ( !pRoom )
 				{
-					//przedmiot jakos 'zagin¹³' - trzeba uporz?dkowa? aukcje
-					pager_printf( ch, "Musisz wskazaæ, które mieszkanie chcesz sprzedaæna." NL
-							"Odzyskaj ten statek, który chcesz licytowaæ lub wybierz inny." NL NL );
+					//przedmiot jakos 'zaginï¿½ï¿½' - trzeba uporz?dkowa? aukcje
+					pager_printf( ch, "Musisz wskazaï¿½, ktï¿½re mieszkanie chcesz sprzedaï¿½na." NL
+							"Odzyskaj ten statek, ktï¿½ry chcesz licytowaï¿½ lub wybierz inny." NL NL );
 					return;
 				}
 			}
@@ -1591,16 +1583,16 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 				return;
 		}
 
-		UNLINK( pAuction, pStock->first_new_offert, pStock->last_new_offert, next, prev );
-		LINK( pAuction, pStock->first, pStock->last, next, prev);
+		pStock->new_offers.remove( pAuction );
+		pStock->auctions.push_back( pAuction );
 		struct	tm	*tms;
       	tms = localtime(&current_time);
 		tms->tm_mday+=pAuction->duration/24;
 		tms->tm_hour+=pAuction->duration%24;
 		pAuction->end_time = mktime(tms);
 		pAuction->start_time = current_time-1;
-		pager_printf( ch, "Wysy³asz dane dotycz¹ce aukcji do g³ównego terminala gie³dy" NL
-				"Od teraz jest ona dostêpna dla ka¿dego innego aukcjonariusza." NL NL);
+		pager_printf( ch, "Wysyï¿½asz dane dotyczï¿½ce aukcji do gï¿½ï¿½wnego terminala gieï¿½dy" NL
+				"Od teraz jest ona dostï¿½pna dla kaï¿½dego innego aukcjonariusza." NL NL);
 		ch->desc->olc_editing = NULL;
 		sort_stock_market_auctions( pStock );
 		save_stock_market( pStock );
@@ -1637,11 +1629,11 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 	{
 		if (pAuction)
 		{
-			UNLINK( pAuction, pStock->first_new_offert, pStock->last_new_offert, next, prev );
+			pStock->new_offers.remove( pAuction );
 			free_auction( pAuction );
 		}
 		ch->desc->olc_editing = NULL;
-		pager_printf( ch, "Usuwasz dane dotycz¹ce aukcji z pamiêci terminala" NL NL);
+		pager_printf( ch, "Usuwasz dane dotyczï¿½ce aukcji z pamiï¿½ci terminala" NL NL);
 		ch->pcdata->line_nr = STOCK_STATE_MAIN;
 		stock_show_terminal(ch);
 		return;
@@ -1690,15 +1682,15 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		if ( IS_IMMORTAL( ch ) || auction_creator( ch->name, pAuction ) )
 		{
 			if ( IS_IMMORTAL( ch ) )
-				pager_printf( ch, "Korzystaj¹c z przys³uguj¹cych Ci mocy doprowadzasz do zakoñczenia aukcji." NL NL);
+				pager_printf( ch, "Korzystajï¿½c z przysï¿½ugujï¿½cych Ci mocy doprowadzasz do zakoï¿½czenia aukcji." NL NL);
 			else if ( !IS_IMMORTAL( ch ) && auction_creator( ch->name, pAuction ) )
 			{
-				if ( !pAuction->first )
-					pager_printf( ch, "Jako twórca tej aukcji mo¿esz j¹ zakoñczyæ. I tak te¿ robisz." NL);
+				if ( pAuction->bets.empty() )
+					pager_printf( ch, "Jako twï¿½rca tej aukcji moï¿½esz jï¿½ zakoï¿½czyï¿½. I tak teï¿½ robisz." NL);
 				else
 				{
-					pager_printf( ch, "Ju¿ nie mo¿esz zakoñczyæ aukcji. Bierze w niej udzia³ %d licytatn%s." NL,
-							pAuction->bidders_count,NUMBER_SUFF( pAuction->bidders_count, "","ów","ów") );
+					pager_printf( ch, "Juï¿½ nie moï¿½esz zakoï¿½czyï¿½ aukcji. Bierze w niej udziaï¿½ %d licytatn%s." NL,
+							pAuction->bidders_count,NUMBER_SUFF( pAuction->bidders_count, "","ï¿½w","ï¿½w") );
 					return;
 				}
 			}
@@ -1719,14 +1711,14 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 			interpret( ch, arg);
 			return;
 		}
-		if ( !(pAuction = auction_exist( ch, arg2 , "usun¹æ", pStock) ) )
+		if ( !(pAuction = auction_exist( ch, arg2 , "usunï¿½ï¿½", pStock) ) )
 			return;
-		//tutaj mamy usun¹æ aukcje
+		//tutaj mamy usunï¿½ï¿½ aukcje
 		ch->desc->olc_editing = NULL;
 		ch->pcdata->line_nr =  STOCK_STATE_ITEMS;
-		UNLINK( pAuction, pStock->first_new_offert, pStock->last_new_offert, next, prev );
+		pStock->new_offers.remove( pAuction );
 		free_auction( pAuction );
-		pager_printf( ch, "Korzystaj¹c z przys³uguj¹cych Ci mocy doprowadzasz do usuniêcia aukcji." NL NL);
+		pager_printf( ch, "Korzystajï¿½c z przysï¿½ugujï¿½cych Ci mocy doprowadzasz do usuniï¿½cia aukcji." NL NL);
 		stock_show_terminal( ch );
 		return;
     }
@@ -1739,24 +1731,24 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		}
 		if ( !is_number ( arg2 ) )
 		{
-			pager_printf( ch, "Podaj kwotê za jak¹ chcesz licytowaæ. Ta kwota bêdzie oznacza³a górny limit" NL
-					"ile pieniêdzy chcesz wydaæ na zakup tego przedmiotu" NL );
+			pager_printf( ch, "Podaj kwotï¿½ za jakï¿½ chcesz licytowaï¿½. Ta kwota bï¿½dzie oznaczaï¿½a gï¿½rny limit" NL
+					"ile pieniï¿½dzy chcesz wydaï¿½ na zakup tego przedmiotu" NL );
 			return;
 		}
 		new_bet = atoi( arg2 );
-		if (pAuction->first && new_bet < pAuction->first->max_price+5 )
+		if (!pAuction->bets.empty() && new_bet < pAuction->bets.front()->max_price+5 )
 		{
-			pager_printf( ch, "Przykro mi, ale musisz postawiæ wiêcej, by przebic innych graczy." NL);
+			pager_printf( ch, "Przykro mi, ale musisz postawiï¿½ wiï¿½cej, by przebic innych graczy." NL);
 			return;
 		}
-		else if ( !pAuction->first && pAuction->starting_price > new_bet)
+		else if ( pAuction->bets.empty() && pAuction->starting_price > new_bet)
 		{
-			pager_printf( ch, "Musisz postawiæ przynajmniej %lld" NL ,pAuction->starting_price);
+			pager_printf( ch, "Musisz postawiï¿½ przynajmniej %lld" NL ,pAuction->starting_price);
 			return;
 		}
 		if ( ch->gold < new_bet)
 		{
-			pager_printf( ch, "Nie staæ ciê na taki wydatek." NL);
+			pager_printf( ch, "Nie staï¿½ ciï¿½ na taki wydatek." NL);
 			return;
 		}
 
@@ -1765,7 +1757,7 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 			pBets = get_auction_member(ch->name, pAuction);
 			if (pBets->max_price > new_bet)
 			{
-				pager_printf(ch, "Ta stawka jest mniejsza od Twojej wczeœniejszej." NL);
+				pager_printf(ch, "Ta stawka jest mniejsza od Twojej wczeï¿½niejszej." NL);
 				return;
 			}
 			else
@@ -1780,10 +1772,10 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		else
 		{
 			pBets = new_bets();
-			LINK(pBets,pAuction->first,pAuction->last,next,prev);
+			pAuction->bets.push_back(pBets);
 			STRDUP(pBets->name,ch->name);
 			pBets->max_price = new_bet;
-			pager_printf( ch, "Do³¹czasz do tej licytacji ze stawk¹ %d kredyt%s" NL,
+			pager_printf( ch, "Doï¿½ï¿½czasz do tej licytacji ze stawkï¿½ %d kredyt%s" NL,
 					new_bet, NUMBER_SUFF(new_bet,"ki","ek","ek") );
 			ch->gold -= new_bet;
 		}
@@ -1800,14 +1792,14 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 			return;
 		}
 		if ( pAuction->bet > pAuction->buy_out_now ||
-				( pAuction->first && pAuction->first->max_price > pAuction->buy_out_now ) )
+				( !pAuction->bets.empty() && pAuction->bets.front()->max_price > pAuction->buy_out_now ) )
 		{
-			pager_printf( ch, "Licytowana cena przekroczy³a ju¿ kwote okreœlon¹ jako wykup natychmiastowy." NL );
+			pager_printf( ch, "Licytowana cena przekroczyï¿½a juï¿½ kwote okreï¿½lonï¿½ jako wykup natychmiastowy." NL );
 			return;
 		}
 		if ( ch->gold < pAuction->buy_out_now)
 		{
-			pager_printf( ch, "Nie staæ ciê na taki wydatek." NL);
+			pager_printf( ch, "Nie staï¿½ ciï¿½ na taki wydatek." NL);
 			return;
 		}
 		if (is_auction_member(ch,pAuction))
@@ -1822,11 +1814,11 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		else
 		{
 			pBets = new_bets();
-			LINK(pBets,pAuction->first,pAuction->last,next,prev);
+			pAuction->bets.push_back(pBets);
 			STRDUP(pBets->name,ch->name);
 			pBets->max_price = pAuction->buy_out_now;
 			pBets->quantity=1;
-			pager_printf( ch, "Do³¹czasz do tej licytacji ze stawk¹ %d kredyt%s" NL,
+			pager_printf( ch, "Doï¿½ï¿½czasz do tej licytacji ze stawkï¿½ %d kredyt%s" NL,
 					pAuction->buy_out_now, NUMBER_SUFF(pAuction->buy_out_now,"ki","ek","ek") );
 			ch->gold -= pAuction->buy_out_now;
 		}
@@ -1856,9 +1848,9 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		}
 		auction_item_gather( ch, pAuction );
 		//jesli kasa i przedmiot odebrany mozna aukcje usunac
-		if (pAuction->payment_collected && pAuction->item_collected && !pAuction->first)
+		if (pAuction->payment_collected && pAuction->item_collected && pAuction->bets.empty())
 		{
-			UNLINK(pAuction,pStock->first,pStock->last,next,prev);
+			pStock->auctions.remove(pAuction);
 			free_auction(pAuction);
 		}
 		save_stock_market( pStock );
@@ -1869,7 +1861,7 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 	}
 	else if ( !str_prefix( arg1, "ilosc" ) )
 	{
-		//jesli aukcja sie nie zakonczyla lub nie jesteœ cz³onkiem - to wybieranie ilosci nie ma sensu
+		//jesli aukcja sie nie zakonczyla lub nie jesteï¿½ czï¿½onkiem - to wybieranie ilosci nie ma sensu
 		if ( auction_finished( pAuction ) || !is_auction_member( ch->name, pAuction ) || pAuction->quantity == 1)
 		{
 			huh(ch);
@@ -1877,24 +1869,24 @@ void stock_new_offert_interpret( CHAR_DATA * ch, char * argument)
 		}
 		if ( !is_number( arg2 ) )
 		{
-			pager_printf( ch, "Wybierz ile egzemplarzy chcesz kupiæ." NL );
+			pager_printf( ch, "Wybierz ile egzemplarzy chcesz kupiï¿½." NL );
 			return;
 		}
 		number = atoi( arg2 );
 		if ( number < 1 )
 		{
-			pager_printf( ch, "Skoro zadeklarowa³eœ chêc licytowania - licytuj przynajmniej jeden egzemplarz." NL );
+			pager_printf( ch, "Skoro zadeklarowaï¿½eï¿½ chï¿½c licytowania - licytuj przynajmniej jeden egzemplarz." NL );
 			return;
 		}
 		if ( number > pAuction->quantity )
 		{
-			pager_printf( ch, "Nie mo¿esz kupiæ wiêcej ni¿ %d egzemplarz%s." NL,
+			pager_printf( ch, "Nie moï¿½esz kupiï¿½ wiï¿½cej niï¿½ %d egzemplarz%s." NL,
 					pAuction->quantity, NUMBER_SUFF( pAuction->quantity, "","e","y" ) );
 			return;
 		}
 		pBets = get_auction_member( ch->name, pAuction );
 		pBets->quantity = number;
-		pager_printf( ch, "Deklarujesz chêæ zakupienia %d egzemplarz%s." NL,
+		pager_printf( ch, "Deklarujesz chï¿½ï¿½ zakupienia %d egzemplarz%s." NL,
 				pBets->quantity, NUMBER_SUFF( pBets->quantity, "a","y","y" ) );
 		sort_auction_bets( pAuction );
 		save_stock_market( pStock );
@@ -1947,15 +1939,15 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 		if ( IS_IMMORTAL( ch ) || auction_creator( ch->name, pAuction ) )
 		{
 			if ( IS_IMMORTAL( ch ) )
-				pager_printf( ch, "Korzystaj¹c z przys³uguj¹cych Ci mocy doprowadzasz do zakoñczenia aukcji." NL NL);
+				pager_printf( ch, "Korzystajï¿½c z przysï¿½ugujï¿½cych Ci mocy doprowadzasz do zakoï¿½czenia aukcji." NL NL);
 			else if ( !IS_IMMORTAL( ch ) && auction_creator( ch->name, pAuction ) )
 			{
-				if ( !pAuction->first )
-					pager_printf( ch, "Jako twórca tej aukcji mo¿esz j¹ zakoñczyæ. I tak te¿ robisz." NL);
+				if ( pAuction->bets.empty() )
+					pager_printf( ch, "Jako twï¿½rca tej aukcji moï¿½esz jï¿½ zakoï¿½czyï¿½. I tak teï¿½ robisz." NL);
 				else
 				{
-					pager_printf( ch, "Ju¿ nie mo¿esz zakoñczyæ aukcji. Bierze w niej udzia³ %d licytatn%s." NL,
-							pAuction->bidders_count,NUMBER_SUFF( pAuction->bidders_count, "","ów","ów") );
+					pager_printf( ch, "Juï¿½ nie moï¿½esz zakoï¿½czyï¿½ aukcji. Bierze w niej udziaï¿½ %d licytatn%s." NL,
+							pAuction->bidders_count,NUMBER_SUFF( pAuction->bidders_count, "","ï¿½w","ï¿½w") );
 					return;
 				}
 			}
@@ -1976,17 +1968,17 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 			interpret( ch, arg);
 			return;
 		}
-		if ( !(pAuction = auction_exist( ch, arg2 , (char *)"usun¹æ", pStock) ) )
+		if ( !(pAuction = auction_exist( ch, arg2 , (char *)"usunï¿½ï¿½", pStock) ) )
 			return;
-		//tutaj mamy usun¹æ aukcje
+		//tutaj mamy usunï¿½ï¿½ aukcje
 		if ( type == AUCTION_ITEM )
 			ch->pcdata->line_nr = STOCK_STATE_ITEMS;
 		else if ( type == AUCTION_SHIP )
 			ch->pcdata->line_nr = STOCK_STATE_SHIPS;
 		ch->desc->olc_editing = NULL;
-		UNLINK( pAuction, pStock->first_new_offert, pStock->last_new_offert, next, prev );
+		pStock->new_offers.remove( pAuction );
 		free_auction( pAuction );
-		pager_printf( ch, "Korzystaj¹c z przys³uguj¹cych Ci mocy doprowadzasz do usuniêcia aukcji." NL NL);
+		pager_printf( ch, "Korzystajï¿½c z przysï¿½ugujï¿½cych Ci mocy doprowadzasz do usuniï¿½cia aukcji." NL NL);
 		stock_show_terminal( ch );
 		return;
     }
@@ -1999,24 +1991,24 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 		}
 		if ( !is_number ( arg2 ) )
 		{
-			pager_printf( ch, "Podaj kwotê za jak¹ chcesz licytowaæ. Ta kwota bêdzie oznacza³a górny limit" NL
-					"ile pieniêdzy chcesz wydaæ na zakup tego przedmiotu" NL );
+			pager_printf( ch, "Podaj kwotï¿½ za jakï¿½ chcesz licytowaï¿½. Ta kwota bï¿½dzie oznaczaï¿½a gï¿½rny limit" NL
+					"ile pieniï¿½dzy chcesz wydaï¿½ na zakup tego przedmiotu" NL );
 			return;
 		}
 		new_bet = atoi( arg2 );
-		if (pAuction->first && new_bet < pAuction->first->max_price+5 )
+		if (!pAuction->bets.empty() && new_bet < pAuction->bets.front()->max_price+5 )
 		{
-			pager_printf( ch, "Przykro mi, ale musisz postawiæ wiêcej, by przebic innych graczy." NL);
+			pager_printf( ch, "Przykro mi, ale musisz postawiï¿½ wiï¿½cej, by przebic innych graczy." NL);
 			return;
 		}
-		else if ( !pAuction->first && pAuction->starting_price > new_bet)
+		else if ( pAuction->bets.empty() && pAuction->starting_price > new_bet)
 		{
-			pager_printf( ch, "Musisz postawiæ przynajmniej %lld" NL ,pAuction->starting_price);
+			pager_printf( ch, "Musisz postawiï¿½ przynajmniej %lld" NL ,pAuction->starting_price);
 			return;
 		}
 		if ( ch->gold < new_bet)
 		{
-			pager_printf( ch, "Nie staæ ciê na taki wydatek." NL);
+			pager_printf( ch, "Nie staï¿½ ciï¿½ na taki wydatek." NL);
 			return;
 		}
 
@@ -2025,7 +2017,7 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 			pBets = get_auction_member(ch->name, pAuction);
 			if (pBets->max_price > new_bet)
 			{
-				pager_printf(ch, "Ta stawka jest mniejsza od Twojej wczeœniejszej." NL);
+				pager_printf(ch, "Ta stawka jest mniejsza od Twojej wczeï¿½niejszej." NL);
 				return;
 			}
 			else
@@ -2040,10 +2032,10 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 		else
 		{
 			pBets = new_bets();
-			LINK(pBets,pAuction->first,pAuction->last,next,prev);
+			pAuction->bets.push_back(pBets);
 			STRDUP(pBets->name,ch->name);
 			pBets->max_price = new_bet;
-			pager_printf( ch, "Do³¹czasz do tej licytacji ze stawk¹ %d kredyt%s" NL,
+			pager_printf( ch, "Doï¿½ï¿½czasz do tej licytacji ze stawkï¿½ %d kredyt%s" NL,
 					new_bet, NUMBER_SUFF(new_bet,"ki","ek","ek") );
 			ch->gold -= new_bet;
 		}
@@ -2060,14 +2052,14 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 			return;
 		}
 		if ( pAuction->bet > pAuction->buy_out_now ||
-				( pAuction->first && pAuction->first->max_price > pAuction->buy_out_now ) )
+				( !pAuction->bets.empty() && pAuction->bets.front()->max_price > pAuction->buy_out_now ) )
 		{
-			pager_printf( ch, "Licytowana cena przekroczy³a ju¿ kwote okreœlon¹ jako wykup natychmiastowy." NL );
+			pager_printf( ch, "Licytowana cena przekroczyï¿½a juï¿½ kwote okreï¿½lonï¿½ jako wykup natychmiastowy." NL );
 			return;
 		}
 		if ( ch->gold < pAuction->buy_out_now)
 		{
-			pager_printf( ch, "Nie staæ ciê na taki wydatek." NL);
+			pager_printf( ch, "Nie staï¿½ ciï¿½ na taki wydatek." NL);
 			return;
 		}
 		if (is_auction_member(ch->name,pAuction))
@@ -2082,11 +2074,11 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 		else
 		{
 			pBets = new_bets();
-			LINK(pBets,pAuction->first,pAuction->last,next,prev);
+			pAuction->bets.push_back(pBets);
 			STRDUP(pBets->name,ch->name);
 			pBets->max_price = pAuction->buy_out_now;
 			pBets->quantity=1;
-			pager_printf( ch, "Do³¹czasz do tej licytacji ze stawk¹ %d kredyt%s" NL,
+			pager_printf( ch, "Doï¿½ï¿½czasz do tej licytacji ze stawkï¿½ %d kredyt%s" NL,
 					pAuction->buy_out_now, NUMBER_SUFF(pAuction->buy_out_now,"ki","ek","ek") );
 			ch->gold -= pAuction->buy_out_now;
 		}
@@ -2116,9 +2108,9 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 		}
 		auction_item_gather( ch, pAuction );
 		//jesli kasa i przedmiot odebrany mozna aukcje usunac
-		if (pAuction->payment_collected && pAuction->item_collected && !pAuction->first)
+		if (pAuction->payment_collected && pAuction->item_collected && pAuction->bets.empty())
 		{
-			UNLINK(pAuction,pStock->first,pStock->last,next,prev);
+			pStock->auctions.remove(pAuction);
 			free_auction(pAuction);
 		}
 		save_stock_market( pStock );
@@ -2129,7 +2121,7 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 	}
 	else if ( !str_prefix( arg1, "ilosc" ) )
 	{
-		//jesli aukcja sie nie zakonczyla lub nie jesteœ cz³onkiem - to wybieranie ilosci nie ma sensu
+		//jesli aukcja sie nie zakonczyla lub nie jesteï¿½ czï¿½onkiem - to wybieranie ilosci nie ma sensu
 		if ( auction_finished( pAuction ) || !is_auction_member( ch->name, pAuction ) || pAuction->quantity == 1)
 		{
 			huh(ch);
@@ -2137,25 +2129,25 @@ void stock_details_interpret( CHAR_DATA * ch, char * argument )
 		}
 		if ( !is_number( arg2 ) )
 		{
-			pager_printf( ch, "Wybierz ile egzemplarzy chcesz kupiæ." NL );
+			pager_printf( ch, "Wybierz ile egzemplarzy chcesz kupiï¿½." NL );
 			return;
 		}
 		number = atoi( arg2 );
 		if ( number < 1 )
 		{
-			pager_printf( ch, "Skoro zadeklarowa³eœ chêc licytowania - licytuj przynajmniej jeden egzemplarz." NL );
+			pager_printf( ch, "Skoro zadeklarowaï¿½eï¿½ chï¿½c licytowania - licytuj przynajmniej jeden egzemplarz." NL );
 			return;
 		}
 		if ( number > pAuction->quantity )
 		{
-			pager_printf( ch, "Nie mo¿esz kupiæ wiêcej ni¿ %d egzemplarz%s." NL,
+			pager_printf( ch, "Nie moï¿½esz kupiï¿½ wiï¿½cej niï¿½ %d egzemplarz%s." NL,
 					pAuction->quantity, NUMBER_SUFF( pAuction->quantity, "","e","y" ) );
 			return;
 		}
 		pBets = get_auction_member( ch->name, pAuction );
 		pBets->quantity = number;
 
-		pager_printf( ch, "Deklarujesz chêæ zakupienia %d egzemplarz%s." NL,
+		pager_printf( ch, "Deklarujesz chï¿½ï¿½ zakupienia %d egzemplarz%s." NL,
 				pBets->quantity, NUMBER_SUFF( pBets->quantity, "a","y","y" ) );
 		sort_auction_bets( pAuction );
 		save_stock_market( pStock );
@@ -2220,7 +2212,7 @@ void stock_list_interpret( CHAR_DATA * ch, char * argument)
     {
 		if ( !is_number ( arg2 ) )
 		{
-			pager_printf( ch, "Podaj numer aukcji, któr¹ chcesz zakoñczyæ." NL NL);
+			pager_printf( ch, "Podaj numer aukcji, ktï¿½rï¿½ chcesz zakoï¿½czyï¿½." NL NL);
 			return;
 		}
 		number = atoi( arg2 );
@@ -2233,15 +2225,15 @@ void stock_list_interpret( CHAR_DATA * ch, char * argument)
 		if ( IS_IMMORTAL( ch ) || auction_creator( ch->name, pAuction ) )
 		{
 			if ( IS_IMMORTAL( ch ) )
-				pager_printf( ch, "Korzystaj¹c z przys³uguj¹cych Ci mocy doprowadzasz do zakoñczenia aukcji." NL NL);
+				pager_printf( ch, "Korzystajï¿½c z przysï¿½ugujï¿½cych Ci mocy doprowadzasz do zakoï¿½czenia aukcji." NL NL);
 			else if ( !IS_IMMORTAL( ch ) && auction_creator( ch->name, pAuction ) )
 			{
-				if ( !pAuction->first )
-					pager_printf( ch, "Jako twórca tej aukcji mo¿esz j¹ zakoñczyæ. I tak te¿ robisz." NL);
+				if ( pAuction->bets.empty() )
+					pager_printf( ch, "Jako twï¿½rca tej aukcji moï¿½esz jï¿½ zakoï¿½czyï¿½. I tak teï¿½ robisz." NL);
 				else
 				{
-					pager_printf( ch, "Ju¿ nie mo¿esz zakoñczyæ aukcji. Bierze w niej udzia³ %d licytatn%s." NL,
-							pAuction->bidders_count,NUMBER_SUFF( pAuction->bidders_count, "","ów","ów") );
+					pager_printf( ch, "Juï¿½ nie moï¿½esz zakoï¿½czyï¿½ aukcji. Bierze w niej udziaï¿½ %d licytatn%s." NL,
+							pAuction->bidders_count,NUMBER_SUFF( pAuction->bidders_count, "","ï¿½w","ï¿½w") );
 					return;
 				}
 			}
@@ -2249,7 +2241,7 @@ void stock_list_interpret( CHAR_DATA * ch, char * argument)
 		}
 		else
 		{
-			pager_printf( ch, "Nie mo¿esz zakoñczyæ tej aukcji. Nie nale¿y do Ciebie." NL NL);
+			pager_printf( ch, "Nie moï¿½esz zakoï¿½czyï¿½ tej aukcji. Nie naleï¿½y do Ciebie." NL NL);
 			return;
 		}
 		stock_show_terminal( ch );
@@ -2259,7 +2251,7 @@ void stock_list_interpret( CHAR_DATA * ch, char * argument)
     {
 		if ( !is_number ( arg2 ) )
 		{
-			pager_printf( ch, "Podaj numer aukcji, któr¹ chcesz usun¹æ." NL NL);
+			pager_printf( ch, "Podaj numer aukcji, ktï¿½rï¿½ chcesz usunï¿½ï¿½." NL NL);
 			return;
 		}
 		number = atoi( arg2 );
@@ -2270,15 +2262,15 @@ void stock_list_interpret( CHAR_DATA * ch, char * argument)
 			return;
 		}
 		if ( IS_IMMORTAL( ch ) )
-			pager_printf( ch, "Korzystaj¹c z przys³uguj¹cych Ci mocy usuwasz aukcje." NL NL);
+			pager_printf( ch, "Korzystajï¿½c z przysï¿½ugujï¿½cych Ci mocy usuwasz aukcje." NL NL);
 		else if ( !IS_IMMORTAL( ch ) && auction_creator( ch->name, pAuction ) )
 		{
-			if ( !pAuction->first )
-				pager_printf( ch, "Jako twórca tej aukcji mo¿esz j¹ usun¹æ. I tak te¿ robisz." NL);
+			if ( pAuction->bets.empty() )
+				pager_printf( ch, "Jako twï¿½rca tej aukcji moï¿½esz jï¿½ usunï¿½ï¿½. I tak teï¿½ robisz." NL);
 			else
 			{
-				pager_printf( ch, "Ju¿ nie mo¿esz usun¹æ aukcji. Bierze w niej udzia³ %d licytatn%s." NL,
-						pAuction->bidders_count,NUMBER_SUFF( pAuction->bidders_count, "","ów","ów") );
+				pager_printf( ch, "Juï¿½ nie moï¿½esz usunï¿½ï¿½ aukcji. Bierze w niej udziaï¿½ %d licytatn%s." NL,
+						pAuction->bidders_count,NUMBER_SUFF( pAuction->bidders_count, "","ï¿½w","ï¿½w") );
 				return;
 			}
 		}
@@ -2288,9 +2280,9 @@ void stock_list_interpret( CHAR_DATA * ch, char * argument)
 			return;
 		}
 
-		//tutaj mamy usun¹æ aukcje
+		//tutaj mamy usunï¿½ï¿½ aukcje
 		ch->desc->olc_editing = NULL;
-		UNLINK( pAuction, pStock->first, pStock->last, next, prev );
+		pStock->auctions.remove( pAuction );
 		free_auction( pAuction );
 		save_stock_market( pStock );
 		stock_show_terminal( ch );
@@ -2300,7 +2292,7 @@ void stock_list_interpret( CHAR_DATA * ch, char * argument)
 	{
 		if ( !is_number( arg2 ) )
 		{
-			pager_printf( ch, "Podaj numer aukcji z której chcesz odebraæ gotówkê lub przedmiot" NL);
+			pager_printf( ch, "Podaj numer aukcji z ktï¿½rej chcesz odebraï¿½ gotï¿½wkï¿½ lub przedmiot" NL);
 			return;
 		}
 		number = atoi( arg2 );
@@ -2323,9 +2315,9 @@ void stock_list_interpret( CHAR_DATA * ch, char * argument)
 			}
 		auction_item_gather( ch, pAuction );
 		//jesli kasa i przedmiot odebrany mozna aukcje usunac
-		if (pAuction->payment_collected && pAuction->item_collected && !pAuction->first)
+		if (pAuction->payment_collected && pAuction->item_collected && pAuction->bets.empty())
 		{
-			UNLINK(pAuction,pStock->first,pStock->last,next,prev);
+			pStock->auctions.remove(pAuction);
 			free_auction(pAuction);
 		}
 		save_stock_market( pStock );
@@ -2357,7 +2349,7 @@ void exchange( DESCRIPTOR_DATA * d, char * argument )
 
 	if (!IS_SET( ch->in_room->room_flags , ROOM_AUCTION ))
 	{
-		send_to_char( "Musisz byæ na sali aukcyjnej by to zrobic!" NL, ch );
+		send_to_char( "Musisz byï¿½ na sali aukcyjnej by to zrobic!" NL, ch );
 		if ( ch->desc->connected == CON_STOCK_MARKET)
 			edit_done( ch, (char *)"" );
 		return;
@@ -2416,7 +2408,7 @@ DEF_DO_FUN( exchange )
 	pStock = get_stock_exchange( ch );
 	if ( !pStock )
 	{
-        pager_printf( ch, "Na tej planecie nie funkcjonuje ¿adna gie³da" NL);
+        pager_printf( ch, "Na tej planecie nie funkcjonuje ï¿½adna gieï¿½da" NL);
 		bug("This auction room isn't connected with stockmarket [%d, %s, %s]",ch->in_room->vnum,
 			ch->in_room->area->name, ch->in_room->area->planet ?  ch->in_room->area->planet->name: "No planet" );
         	return;

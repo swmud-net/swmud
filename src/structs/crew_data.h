@@ -23,8 +23,6 @@
 
 struct crew_data
 {
-	CREW_DATA			* next;
-	CREW_DATA			* prev;
 	SHIP_DATA			* ship;
 	CHAR_DATA			* name;
 	int					rank;

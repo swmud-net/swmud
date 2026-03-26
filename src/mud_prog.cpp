@@ -69,9 +69,9 @@ void update_script args( ( SCRIPT_DATA *script ) );
  */
 CHAR_DATA *supermob;
 SCRIPT_DATA *curr_script;
-struct act_prog_data *room_act_list;
-struct act_prog_data *obj_act_list;
-struct act_prog_data *mob_act_list;
+std::list<act_prog_data*> room_act_list;
+std::list<act_prog_data*> obj_act_list;
+std::list<act_prog_data*> mob_act_list;
 /*
  * Local function prototypes
  */
@@ -218,12 +218,12 @@ bool mprog_veval(int lhs, char *opr, int rhs, CHAR_DATA *mob)
  * Trog
  * Dzieki tym funkcjom mozna policzyc nawet ilosc wlosow na jajach.
  */
-void obj_countname(CHAR_DATA *ch, OBJ_DATA *obj, char *name, int *ammount)
+void obj_countname(CHAR_DATA *ch, const std::list<OBJ_DATA*>& objlist, char *name, int *ammount)
 {
-	for (; obj; obj = obj->next_content)
+	for (auto* obj : objlist)
 	{
 		if (obj->item_type == ITEM_CONTAINER)
-			obj_countname(ch, obj->first_content, name, ammount);
+			obj_countname(ch, obj->contents, name, ammount);
 		if (can_see_obj(ch, obj) && !str_cmp(obj->name, name))
 			*ammount += obj->count;
 	}
@@ -239,12 +239,12 @@ typedef enum
 	CNT_NONE, CNT_INV, CNT_EQ
 } count_locations;
 
-void obj_count(CHAR_DATA *ch, OBJ_DATA *obj, count_locations loc, count_by type, void *data, int *ammount)
+void obj_count(CHAR_DATA *ch, const std::list<OBJ_DATA*>& objlist, count_locations loc, count_by type, void *data, int *ammount)
 {
-	for (; obj; obj = obj->next_content)
+	for (auto* obj : objlist)
 	{
 		if (obj->item_type == ITEM_CONTAINER)
-			obj_count(ch, obj->first_content, loc, type, data, ammount);
+			obj_count(ch, obj->contents, loc, type, data, ammount);
 		if (can_see_obj(ch, obj))
 			switch (type)
 			{
@@ -274,9 +274,9 @@ void obj_countall(CHAR_DATA *ch, count_locations loc, count_by type, void *data,
 {
 	CHAR_DATA *pCh;
 
-	for (pCh = ch->in_room->first_person; pCh; pCh = pCh->next_in_room)
-		obj_count(pCh, pCh->first_carrying, loc, type, data, ammount);
-	obj_count(ch, ch->in_room->first_content, loc, type, data, ammount);
+	for (auto* pCh : ch->in_room->people)
+		obj_count(pCh, pCh->carrying, loc, type, data, ammount);
+	obj_count(ch, ch->in_room->contents, loc, type, data, ammount);
 }
 
 /* This function performs the evaluation of the if checks.  It is
@@ -484,7 +484,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		for (oMob = mob->in_room->first_person; oMob; oMob = oMob->next_in_room)
+		for (auto* oMob : mob->in_room->people)
 			if ( IS_NPC(oMob) && oMob->pIndexData->vnum == vnum)
 				lhsvl++;
 		rhsvl = atoi(rval);
@@ -586,7 +586,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->in_room->first_content, CNT_NONE, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
+		obj_count(mob, mob->in_room->contents, CNT_NONE, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -603,7 +603,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->in_room->first_content, CNT_NONE, COUNT_NAME, (void*) cvar, &lhsvl);
+		obj_count(mob, mob->in_room->contents, CNT_NONE, COUNT_NAME, (void*) cvar, &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -626,7 +626,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->in_room->first_content, CNT_NONE, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
+		obj_count(mob, mob->in_room->contents, CNT_NONE, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -645,7 +645,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->first_carrying, CNT_NONE, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
+		obj_count(mob, mob->carrying, CNT_NONE, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -663,7 +663,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->first_carrying, CNT_NONE, COUNT_NAME, reinterpret_cast<void*>(cvar), &lhsvl);
+		obj_count(mob, mob->carrying, CNT_NONE, COUNT_NAME, reinterpret_cast<void*>(cvar), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -688,7 +688,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->first_carrying, CNT_NONE, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
+		obj_count(mob, mob->carrying, CNT_NONE, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -707,7 +707,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->first_carrying, CNT_EQ, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
+		obj_count(mob, mob->carrying, CNT_EQ, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -724,7 +724,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->first_carrying, CNT_EQ, COUNT_NAME, reinterpret_cast<void*>(cvar), &lhsvl);
+		obj_count(mob, mob->carrying, CNT_EQ, COUNT_NAME, reinterpret_cast<void*>(cvar), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -747,7 +747,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->first_carrying, CNT_EQ, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
+		obj_count(mob, mob->carrying, CNT_EQ, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -766,7 +766,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->first_carrying, CNT_INV, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
+		obj_count(mob, mob->carrying, CNT_INV, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -784,7 +784,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->first_carrying, CNT_INV, COUNT_NAME, (void*) cvar, &lhsvl);
+		obj_count(mob, mob->carrying, CNT_INV, COUNT_NAME, (void*) cvar, &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -809,7 +809,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, mob->first_carrying, CNT_INV, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
+		obj_count(mob, mob->carrying, CNT_INV, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -836,7 +836,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 		}
 
 		lhsvl = 0;
-		for (pObj = chkchar->first_carrying; pObj; pObj = pObj->next_content)
+		for (auto* pObj : chkchar->carrying)
 			if (can_see_obj(mob, pObj) && pObj->wear_loc == WEAR_NONE && pObj->item_type == ITEM_WEAPON && pObj->value[3] == type)
 				lhsvl = pObj->count;
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
@@ -848,7 +848,6 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 	}
 	if (!str_cmp(chck, "weapontypewear"))
 	{
-		OBJ_DATA *pObj;
 		int type;
 
 		if ( is_number(rval))
@@ -863,7 +862,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 		}
 
 		lhsvl = 0;
-		for (pObj = chkchar->first_carrying; pObj; pObj = pObj->next_content)
+		for (auto* pObj : chkchar->carrying)
 			if (can_see_obj(mob, pObj) && pObj->wear_loc != WEAR_NONE && pObj->item_type == ITEM_WEAPON && pObj->value[3] == type)
 				lhsvl = pObj->count;
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
@@ -875,7 +874,6 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 	}
 	if (!str_cmp(chck, "weapontypecarry"))
 	{
-		OBJ_DATA *pObj;
 		int type;
 
 		if ( is_number(rval))
@@ -890,7 +888,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 		}
 
 		lhsvl = 0;
-		for (pObj = chkchar->first_carrying; pObj; pObj = pObj->next_content)
+		for (auto* pObj : chkchar->carrying)
 			if (can_see_obj(mob, pObj) && pObj->item_type == ITEM_WEAPON && pObj->value[3] == type)
 				lhsvl = pObj->count;
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
@@ -951,7 +949,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, actor->first_carrying, CNT_INV, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
+		obj_count(mob, actor->carrying, CNT_INV, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -968,7 +966,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, actor->first_carrying, CNT_INV, COUNT_NAME, (void*) cvar, &lhsvl);
+		obj_count(mob, actor->carrying, CNT_INV, COUNT_NAME, (void*) cvar, &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -993,7 +991,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 		}
 
 		lhsvl = 0;
-		obj_count(mob, actor->first_carrying, CNT_INV, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
+		obj_count(mob, actor->carrying, CNT_INV, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -1012,7 +1010,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, actor->first_carrying, CNT_EQ, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
+		obj_count(mob, actor->carrying, CNT_EQ, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -1030,7 +1028,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, actor->first_carrying, CNT_EQ, COUNT_NAME, (void*) cvar, &lhsvl);
+		obj_count(mob, actor->carrying, CNT_EQ, COUNT_NAME, (void*) cvar, &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -1055,7 +1053,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 		}
 
 		lhsvl = 0;
-		obj_count(mob, actor->first_carrying, CNT_EQ, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
+		obj_count(mob, actor->carrying, CNT_EQ, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -1080,7 +1078,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 		}
 
 		lhsvl = 0;
-		obj_count(mob, actor->first_carrying, CNT_NONE, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
+		obj_count(mob, actor->carrying, CNT_NONE, COUNT_TYPE, reinterpret_cast<void*>(type), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -1099,7 +1097,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, actor->first_carrying, CNT_NONE, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
+		obj_count(mob, actor->carrying, CNT_NONE, COUNT_VNUM, reinterpret_cast<void*>(vnum), &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -1116,7 +1114,7 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 			return BERR;
 		}
 		lhsvl = 0;
-		obj_count(mob, actor->first_carrying, CNT_NONE, COUNT_NAME, (void*) cvar, &lhsvl);
+		obj_count(mob, actor->carrying, CNT_NONE, COUNT_NAME, (void*) cvar, &lhsvl);
 		rhsvl = is_number(rval) ? atoi(rval) : -1;
 		if (rhsvl < 1)
 			rhsvl = 1;
@@ -1463,13 +1461,13 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 	progbug("Unknown ifcheck", mob);
 	return BERR;
 
-	/* Ratm To makro ju¿ nie bêdzie potrzebne. */
+	/* Ratm To makro juï¿½ nie bï¿½dzie potrzebne. */
 #undef XOR
 }
 
 /* Ratm Funkcja wykonuje podstawianie wartosci checka
- do zmiennej (¿eby mog³y dzia³aæ takie konstrukcje jak: $vl0 = name($n) )
- spora czê¶æ tej funkcji to copy/paste z mprog_do_ifcheck()
+ do zmiennej (ï¿½eby mogï¿½y dziaï¿½aï¿½ takie konstrukcje jak: $vl0 = name($n) )
+ spora czï¿½ï¿½ tej funkcji to copy/paste z mprog_do_ifcheck()
  */
 int eval_check_func(char **var, char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *vo, CHAR_DATA *rndm)
 {
@@ -1702,8 +1700,8 @@ int eval_check_func(char **var, char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OB
 
 /* Ratm funkcja sprawdza czy to na co wskazuje point to na pewno check
  ( czy ma konstrukcje: chkname($x) ), a jesli tak to zaleznie od x podstawia
- odpowiednie warto¶ci pod chkchar i chkobj.
- Tak¿e tu spora czê¶æ tej funkcji to copy/paste z mprog_do_ifcheck() */
+ odpowiednie wartoï¿½ci pod chkchar i chkobj.
+ Takï¿½e tu spora czï¿½ï¿½ tej funkcji to copy/paste z mprog_do_ifcheck() */
 int is_check_fun(char *point, CHAR_DATA **chkchar, OBJ_DATA **chkobj, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *vo,
 		CHAR_DATA *rndm)
 {
@@ -1774,7 +1772,7 @@ int is_check_fun(char *point, CHAR_DATA **chkchar, OBJ_DATA **chkobj, CHAR_DATA 
 }
 
 /****************** Ratm - zmienne ******************
- Funkcja zwraca warto¶æ (wskaznik do stringa) zmiennej
+ Funkcja zwraca wartoï¿½ï¿½ (wskaznik do stringa) zmiennej
  o podanej nazwie
  ****************************************************/
 char* get_var_value(char *var_name, CHAR_DATA *mob)
@@ -1882,7 +1880,7 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 				one_argument(mob->name, t);
 		}
 		else
-			strcpy(t, "kto¶");
+			strcpy(t, "ktoï¿½");
 		break;
 
 	case 'I':
@@ -1894,11 +1892,11 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 			}
 			else
 			{
-				strcpy(t, "kto¶");
+				strcpy(t, "ktoï¿½");
 			}
 		}
 		else
-			strcpy(t, "kto¶");
+			strcpy(t, "ktoï¿½");
 		break;
 
 	case 'n':
@@ -1909,7 +1907,7 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 				*t = UPPER(*t);
 		}
 		else
-			strcpy(t, "Kto¶");
+			strcpy(t, "Ktoï¿½");
 		break;
 
 	case 'N':
@@ -1926,10 +1924,10 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 					strcat(t, PLAIN);
 				}
 			else
-				strcpy(t, "kto¶");
+				strcpy(t, "ktoï¿½");
 		}
 		else
-			strcpy(t, "kto¶");
+			strcpy(t, "ktoï¿½");
 		break;
 
 	case 't':
@@ -1940,7 +1938,7 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 				*t = UPPER(*t);
 		}
 		else
-			strcpy(t, "kto¶");
+			strcpy(t, "ktoï¿½");
 
 		break;
 
@@ -1958,10 +1956,10 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 					strcat(t, PLAIN);
 				}
 			else
-				strcpy(t, "kto¶");
+				strcpy(t, "ktoï¿½");
 		}
 		else
-			strcpy(t, "kto¶");
+			strcpy(t, "ktoï¿½");
 		break;
 
 	case 'r':
@@ -1974,7 +1972,7 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 			}
 		}
 		else
-			strcpy(t, "kto¶");
+			strcpy(t, "ktoï¿½");
 		break;
 
 	case 'R':
@@ -1994,16 +1992,16 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 					strcat(t, PLAIN);
 				}
 			else
-				strcpy(t, "kto¶");
+				strcpy(t, "ktoï¿½");
 		}
 		else
-			strcpy(t, "kto¶");
+			strcpy(t, "ktoï¿½");
 		break;
 
 	case 'e':
 		if (actor && !char_died(actor))
 		{
-			can_see(mob, actor) ? strcpy(t, he_she[actor->sex]) : strcpy(t, "kto¶");
+			can_see(mob, actor) ? strcpy(t, he_she[actor->sex]) : strcpy(t, "ktoï¿½");
 		}
 		else
 			strcpy(t, "to");
@@ -2012,7 +2010,7 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 	case 'm':
 		if (actor && !char_died(actor))
 		{
-			can_see(mob, actor) ? strcpy(t, him_her[actor->sex]) : strcpy(t, "kto¶");
+			can_see(mob, actor) ? strcpy(t, him_her[actor->sex]) : strcpy(t, "ktoï¿½");
 		}
 		else
 			strcpy(t, "temu");
@@ -2021,7 +2019,7 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 	case 's':
 		if (actor && !char_died(actor))
 		{
-			can_see(mob, actor) ? strcpy(t, his_her[actor->sex]) : strcpy(t, "czyj¶");
+			can_see(mob, actor) ? strcpy(t, his_her[actor->sex]) : strcpy(t, "czyjï¿½");
 		}
 		else
 			strcpy(t, "tego");
@@ -2030,7 +2028,7 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 	case 'E':
 		if (vict && !char_died(vict))
 		{
-			can_see(mob, vict) ? strcpy(t, he_she[vict->sex]) : strcpy(t, "kto¶");
+			can_see(mob, vict) ? strcpy(t, he_she[vict->sex]) : strcpy(t, "ktoï¿½");
 		}
 		else
 			strcpy(t, "to");
@@ -2039,7 +2037,7 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 	case 'M':
 		if (vict && !char_died(vict))
 		{
-			can_see(mob, vict) ? strcpy(t, him_her[vict->sex]) : strcpy(t, "komu¶");
+			can_see(mob, vict) ? strcpy(t, him_her[vict->sex]) : strcpy(t, "komuï¿½");
 		}
 		else
 			strcpy(t, "temu");
@@ -2048,10 +2046,10 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 	case 'S':
 		if (vict && !char_died(vict))
 		{
-			can_see(mob, vict) ? strcpy(t, his_her[vict->sex]) : strcpy(t, "czyj¶");
+			can_see(mob, vict) ? strcpy(t, his_her[vict->sex]) : strcpy(t, "czyjï¿½");
 		}
 		else
-			strcpy(t, "czego¶");
+			strcpy(t, "czegoï¿½");
 		break;
 
 	case 'j':
@@ -2090,64 +2088,64 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 	case 'J':
 		if (rndm && !char_died(rndm))
 		{
-			can_see(mob, rndm) ? strcpy(t, he_she[rndm->sex]) : strcpy(t, "kto¶");
+			can_see(mob, rndm) ? strcpy(t, he_she[rndm->sex]) : strcpy(t, "ktoï¿½");
 		}
 		else
-			strcpy(t, "co¶");
+			strcpy(t, "coï¿½");
 		break;
 
 	case 'K':
 		if (rndm && !char_died(rndm))
 		{
-			can_see(mob, rndm) ? strcpy(t, him_her[rndm->sex]) : strcpy(t, "komu¶");
+			can_see(mob, rndm) ? strcpy(t, him_her[rndm->sex]) : strcpy(t, "komuï¿½");
 		}
 		else
-			strcpy(t, "czemu¶");
+			strcpy(t, "czemuï¿½");
 		break;
 
 	case 'L':
 		if (rndm && !char_died(rndm))
 		{
-			can_see(mob, rndm) ? strcpy(t, his_her[rndm->sex]) : strcpy(t, "czyj¶");
+			can_see(mob, rndm) ? strcpy(t, his_her[rndm->sex]) : strcpy(t, "czyjï¿½");
 		}
 		else
-			strcpy(t, "czego¶");
+			strcpy(t, "czegoï¿½");
 		break;
 
 	case 'o':
 		if (obj && !obj_extracted(obj))
 		{
-			can_see_obj(mob, obj) ? one_argument(obj->name, t) : strcpy(t, "co¶");
+			can_see_obj(mob, obj) ? one_argument(obj->name, t) : strcpy(t, "coï¿½");
 		}
 		else
-			strcpy(t, "co¶");
+			strcpy(t, "coï¿½");
 		break;
 
 	case 'O':
 		if (obj && !obj_extracted(obj))
 		{
-			can_see_obj(mob, obj) ? strcpy(t, obj->przypadki[0]) : strcpy(t, "co¶");
+			can_see_obj(mob, obj) ? strcpy(t, obj->przypadki[0]) : strcpy(t, "coï¿½");
 		}
 		else
-			strcpy(t, "co¶");
+			strcpy(t, "coï¿½");
 		break;
 
 	case 'p':
 		if (v_obj && !obj_extracted(v_obj))
 		{
-			can_see_obj(mob, v_obj) ? one_argument(v_obj->name, t) : strcpy(t, "co¶");
+			can_see_obj(mob, v_obj) ? one_argument(v_obj->name, t) : strcpy(t, "coï¿½");
 		}
 		else
-			strcpy(t, "co¶");
+			strcpy(t, "coï¿½");
 		break;
 
 	case 'P':
 		if (v_obj && !obj_extracted(v_obj))
 		{
-			can_see_obj(mob, v_obj) ? strcpy(t, v_obj->przypadki[0]) : strcpy(t, "co¶");
+			can_see_obj(mob, v_obj) ? strcpy(t, v_obj->przypadki[0]) : strcpy(t, "coï¿½");
 		}
 		else
-			strcpy(t, "co¶");
+			strcpy(t, "coï¿½");
 		break;
 
 	case 'a':
@@ -2159,7 +2157,7 @@ int mprog_translate(char *var, char *t, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DA
 		break;
 
 		/*
-		 Thanos: dla zgodno¶ci progów z np. Ku¼ni± Dusz
+		 Thanos: dla zgodnoï¿½ci progï¿½w z np. Kuï¿½niï¿½ Dusz
 		 $1  - Thanos
 		 $2  - Thanosa
 		 .
@@ -2271,7 +2269,7 @@ void mprog_driver(char *com_list, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *ob
 
 	count = 0;
 	if (mob->in_room) //Trog: bugfix
-		for (vch = mob->in_room->first_person; vch; vch = vch->next_in_room)
+		for (auto* vch : mob->in_room->people)
 			if (!IS_NPC(vch) && can_see(mob, vch))
 			{
 				if (number_range(0, count) == 0)
@@ -2535,9 +2533,8 @@ log_string( "BERR" );
 /* Thanos 	-- uruchamia skrypt */
 void runscript(char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *vo, CHAR_DATA *rndm)
 {
-	MPROG_DATA *pMprg;
 	int prog_nr = 0;
-	int p_nr = 1;
+	int p_nr = 0;
 	char arg[MAX_INPUT_LENGTH];
 	ROOM_INDEX_DATA *s_room = NULL;
 	OBJ_DATA *s_obj = NULL;
@@ -2558,9 +2555,9 @@ void runscript(char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void
 
 	prog_nr = atoi(one_argument(cmnd, arg));
 
-	/* je¶liby odkomentowaæ tê liniê mud bêdzie zabezpiecza³
-	 siê przed wywo³aniem skryptu samego z siebie.
-	 A teraz nie pozwala na w³±czenie skryptu z poziomu skryptu W OGÓLE */
+	/* jeï¿½liby odkomentowaï¿½ tï¿½ liniï¿½ mud bï¿½dzie zabezpieczaï¿½
+	 siï¿½ przed wywoï¿½aniem skryptu samego z siebie.
+	 A teraz nie pozwala na wï¿½ï¿½czenie skryptu z poziomu skryptu W OGï¿½LE */
 	if (curr_script && curr_script->active
 	/*    &&  curr_script->trigger == prog_nr  */)
 	{
@@ -2605,9 +2602,10 @@ void runscript(char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void
 		return;
 	}
 
-	for (pMprg = s_room ? s_room->mudprogs : s_obj ? s_obj->pIndexData->mudprogs : mob->pIndexData->mudprogs; pMprg;
-			pMprg = pMprg->next, p_nr++)
+	auto& script_progs = s_room ? s_room->mudprogs : s_obj ? s_obj->pIndexData->mudprogs : mob->pIndexData->mudprogs;
+	for (auto* pMprg : script_progs)
 	{
+		p_nr++;
 		if (pMprg->type == SCRIPT_PROG && prog_nr == atoi(pMprg->arglist))
 		{
 			SCRIPT_DATA *pScript;
@@ -2644,7 +2642,7 @@ void runscript(char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void
 				mob->mpscriptrun++;
 			}
 
-			LINK(pScript, first_script_prog, last_script_prog, next, prev);
+			script_prog_list.push_back(pScript);
 
 			update_script(pScript);
 			return;
@@ -2660,13 +2658,13 @@ void runscript(char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void
 	return;
 }
 
-/* Thanos --> czy¶ci i usuwa z listy aktualnych skrypt */
+/* Thanos --> czyï¿½ci i usuwa z listy aktualnych skrypt */
 void stopscript(SCRIPT_DATA *script)
 {
 	if (curr_script == script)
 		curr_script = NULL;
 
-	UNLINK(script, first_script_prog, last_script_prog, next, prev);
+	script_prog_list.remove(script);
 
 	if (script->m_owner)
 		script->m_owner->mpscriptrun--;
@@ -2763,7 +2761,7 @@ int mprog_do_command(char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj
 	if (!str_cmp(firstword, "break"))
 		return BERR;
 
-	/* Ratm - Je¶li komenda zaczyna sie od $v to znaczy ze jest to
+	/* Ratm - Jeï¿½li komenda zaczyna sie od $v to znaczy ze jest to
 	 przypisanie wartosci zmiennej */
 	if (!str_prefix("$v", firstword))
 	{
@@ -2848,7 +2846,7 @@ int mprog_do_command(char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj
 	{
 		str = one_argument(buf, buf1);
 		str = one_argument(str, tmp);
-		// sprawdzamy czy mamy do czynienia z dzia³aniem matematycznym
+		// sprawdzamy czy mamy do czynienia z dziaï¿½aniem matematycznym
 		if (*str && (*tmp == '+' || *tmp == '-' || *tmp == '*' || *tmp == '/'))
 		{
 			int lval, rval;
@@ -2885,7 +2883,7 @@ int mprog_do_command(char *cmnd, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj
 	}
 
 	/* Thanos start scriptproga
-	 (hardcoding sux, ale tutaj ³atwiej zapamiêtac actora) */
+	 (hardcoding sux, ale tutaj ï¿½atwiej zapamiï¿½tac actora) */
 	one_argument(buf, buf1);
 	if (!str_prefix("mprunscript", buf1))
 		runscript(buf, mob, actor, obj, vo, rndm);
@@ -2959,17 +2957,18 @@ void mprog_wordlist_check(char *arg, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA 
 	char temp1[ MAX_STRING_LENGTH];
 	char temp2[ MAX_INPUT_LENGTH];
 	char word[ MAX_INPUT_LENGTH];
-	MPROG_DATA *mprg;
 	char *list;
 	char *start;
 	char *dupl;
 	char *end;
 	int i;
-	int prog_nr = 1;
+	int prog_nr = 0;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 
-	for (mprg = mob->pIndexData->mudprogs; mprg; mprg = mprg->next, prog_nr++)
+	for (auto* mprg : mob->pIndexData->mudprogs)
+	{
+		prog_nr++;
 		if (mprg->type & type)
 		{
 			strcpy(temp1, mprg->arglist);
@@ -3083,6 +3082,7 @@ void mprog_wordlist_check(char *arg, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA 
 							dupl = start + 1;
 			}
 		}
+	}
 
 	current_prog_line = old_prog_line;
 	current_prog_number = old_prog_nr;
@@ -3092,14 +3092,14 @@ void mprog_wordlist_check(char *arg, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA 
 
 void mprog_percent_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *vo, int type)
 {
-	MPROG_DATA *mprg;
-	int prog_nr = 1;
+	int prog_nr = 0;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 	int value;
 
-	for (mprg = mob->pIndexData->mudprogs; mprg; mprg = mprg->next, prog_nr++)
+	for (auto* mprg : mob->pIndexData->mudprogs)
 	{
+		prog_nr++;
 		if ((mprg->type & type) && (number_percent() <= (value = atoi(mprg->arglist))))
 		{
 			if (type != RAND_PROG || (type == RAND_PROG && value > 0))
@@ -3123,14 +3123,14 @@ void mprog_percent_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *
 
 void mprog_time_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *vo, int type)
 {
-	MPROG_DATA *mprg;
 	bool trigger_time;
-	int prog_nr = 1;
+	int prog_nr = 0;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 
-	for (mprg = mob->pIndexData->mudprogs; mprg; mprg = mprg->next, prog_nr++)
+	for (auto* mprg : mob->pIndexData->mudprogs)
 	{
+		prog_nr++;
 
 		trigger_time = ((GET_PLANET(mob))->hour == atoi(mprg->arglist));
 
@@ -3160,15 +3160,13 @@ void mprog_time_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *vo,
 
 void mob_act_add(CHAR_DATA *mob)
 {
-	struct act_prog_data *runner;
-
-	for (runner = mob_act_list; runner; runner = runner->next)
+	for (auto* runner : mob_act_list)
 		if (runner->vo == mob)
 			return;
+	struct act_prog_data *runner;
 	CREATE(runner, struct act_prog_data, 1);
 	runner->vo = mob;
-	runner->next = mob_act_list;
-	mob_act_list = runner;
+	mob_act_list.push_front(runner);
 }
 
 /* The triggers.. These are really basic, and since most appear only
@@ -3182,7 +3180,6 @@ void mob_act_add(CHAR_DATA *mob)
 void mprog_act_trigger(char *buf, CHAR_DATA *mob, CHAR_DATA *ch, OBJ_DATA *obj, void *vo)
 {
 	MPROG_ACT_LIST *tmp_act;
-	MPROG_DATA *mprg;
 	bool found = false;
 
 	if ( IS_NPC( mob ) && IS_SET(mob->pIndexData->progtypes, ACT_PROG))
@@ -3193,7 +3190,7 @@ void mprog_act_trigger(char *buf, CHAR_DATA *mob, CHAR_DATA *ch, OBJ_DATA *obj, 
 			return;
 
 		/* make sure this is a matching trigger */
-		for (mprg = mob->pIndexData->mudprogs; mprg; mprg = mprg->next)
+		for (auto* mprg : mob->pIndexData->mudprogs)
 			if (mprg->type & ACT_PROG && mprog_keyword_check(buf, mprg->arglist))
 			{
 				found = true;
@@ -3222,10 +3219,9 @@ void mprog_act_trigger(char *buf, CHAR_DATA *mob, CHAR_DATA *ch, OBJ_DATA *obj, 
 void mprog_bribe_trigger(CHAR_DATA *mob, CHAR_DATA *ch, int amount)
 {
 	char buf[ MAX_STRING_LENGTH];
-	MPROG_DATA *mprg;
 	OBJ_DATA *obj;
 	int i;
-	int prog_nr = 1;
+	int prog_nr = 0;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 
@@ -3246,7 +3242,9 @@ void mprog_bribe_trigger(CHAR_DATA *mob, CHAR_DATA *ch, int amount)
 		obj = obj_to_char(obj, mob);
 		mob->gold -= amount;
 
-		for (mprg = mob->pIndexData->mudprogs; mprg; mprg = mprg->next, prog_nr++)
+		for (auto* mprg : mob->pIndexData->mudprogs)
+		{
+			prog_nr++;
 			if ((mprg->type & BRIBE_PROG) && (amount >= atoi(mprg->arglist)))
 			{
 				// Ratm - zmienne. Wszystko ponizej do mprog_driver()
@@ -3261,6 +3259,7 @@ void mprog_bribe_trigger(CHAR_DATA *mob, CHAR_DATA *ch, int amount)
 				mob->variables->prog_args[0] = NULL; //Ratm zmienne
 				break;
 			}
+		}
 	}
 	current_prog_line = old_prog_line;
 	current_prog_number = old_prog_nr;
@@ -3302,8 +3301,7 @@ void mprog_give_trigger(CHAR_DATA *mob, CHAR_DATA *ch, OBJ_DATA *obj)
 {
 
 	char buf[MAX_INPUT_LENGTH];
-	MPROG_DATA *mprg;
-	int prog_nr = 1;
+	int prog_nr = 0;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 
@@ -3314,8 +3312,9 @@ void mprog_give_trigger(CHAR_DATA *mob, CHAR_DATA *ch, OBJ_DATA *obj)
 		if ( IS_NPC( ch ) && ch->pIndexData == mob->pIndexData)
 			return;
 
-		for (mprg = mob->pIndexData->mudprogs; mprg; mprg = mprg->next, prog_nr++)
+		for (auto* mprg : mob->pIndexData->mudprogs)
 		{
+			prog_nr++;
 			one_argument(mprg->arglist, buf);
 
 			if ((mprg->type & GIVE_PROG) && ((!str_cmp(obj->name, mprg->arglist)) || (!str_cmp("all", buf))))
@@ -3342,10 +3341,9 @@ void mprog_greet_trigger(CHAR_DATA *ch)
  log_string( buf );
 #endif
 
-	for (vmob = ch->in_room->first_person; vmob; vmob = vmob_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* vmob : people_snapshot)
 	{
-		vmob_next = vmob->next_in_room;
-
 		if (!IS_NPC(vmob) || vmob->fighting || !IS_AWAKE(vmob) || !can_see(vmob, ch))
 			continue;
 
@@ -3364,7 +3362,7 @@ void mprog_greet_trigger(CHAR_DATA *ch)
 
 void mprog_all_greet_trigger(CHAR_DATA *ch)
 {
-	CHAR_DATA *vmob, *vmob_next;
+	CHAR_DATA *vmob;
 
 	/* Imps are safe ;) */
 	if (!IS_NPC(ch) && (
@@ -3377,10 +3375,9 @@ void mprog_all_greet_trigger(CHAR_DATA *ch)
  log_string( buf );
 #endif
 
-	for (vmob = ch->in_room->first_person; vmob; vmob = vmob_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* vmob : people_snapshot)
 	{
-		vmob_next = vmob->next_in_room;
-
 		if (!IS_NPC(vmob))
 			continue;
 
@@ -3399,13 +3396,14 @@ void mprog_all_greet_trigger(CHAR_DATA *ch)
 void mprog_hitprcnt_trigger(CHAR_DATA *mob, CHAR_DATA *ch)
 {
 
-	MPROG_DATA *mprg;
-	int prog_nr = 1;
+	int prog_nr = 0;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 
 	if ( IS_NPC( mob ) && (mob->pIndexData->progtypes & HITPRCNT_PROG))
-		for (mprg = mob->pIndexData->mudprogs; mprg; mprg = mprg->next, prog_nr++)
+		for (auto* mprg : mob->pIndexData->mudprogs)
+		{
+			prog_nr++;
 			if ((mprg->type & HITPRCNT_PROG) && ((100 * mob->hit / mob->max_hit) < atoi(mprg->arglist)))
 			{
 				clear_local_variables(mob);
@@ -3414,6 +3412,7 @@ void mprog_hitprcnt_trigger(CHAR_DATA *mob, CHAR_DATA *ch)
 				mprog_driver(mprg->comlist, mob, ch, NULL, NULL, false);
 				break;
 			}
+		}
 	current_prog_line = old_prog_line;
 	current_prog_number = old_prog_nr;
 	return;
@@ -3445,12 +3444,9 @@ void mprog_hour_trigger(CHAR_DATA *mob)
 void mprog_speech_trigger(char *txt, CHAR_DATA *actor)
 {
 
-	CHAR_DATA *vmob, *vmob_next;
-
-	for (vmob = actor->in_room->first_person; vmob; vmob = vmob_next)
+	auto people_snapshot = actor->in_room->people;
+	for (auto* vmob : people_snapshot)
 	{
-		vmob_next = vmob->next_in_room;
-
 		if ( IS_NPC( vmob ) && (vmob->pIndexData->progtypes & SPEECH_PROG))
 		{
 			if ( IS_NPC( actor ) && actor->pIndexData == vmob->pIndexData)
@@ -3493,7 +3489,7 @@ void set_supermob(OBJ_DATA *obj)
 
 	if (!supermob)
 		init_supermob();
-	/* nie tam ¿adne mob_index bo supermob ma byc NIEMATERIALNY !!!
+	/* nie tam ï¿½adne mob_index bo supermob ma byc NIEMATERIALNY !!!
 	 supermob = create_mobile(get_mob_index( 3 ));
 	 -- Thanos */
 	if (!obj)
@@ -3537,7 +3533,7 @@ void set_supermob(OBJ_DATA *obj)
 /*
  * NOSZ KUWA !!!
  * Supermob ma nie stac w pokoju jak nic nie robi !!!
- * (za¶mieca tylko pokoje i w ogóle - stwarza wiele niebezpieczeñstw)
+ * (zaï¿½mieca tylko pokoje i w ogï¿½le - stwarza wiele niebezpieczeï¿½stw)
  * lepiej zeby mial in_room = NULL
  *								-- Thanos
  */
@@ -3557,14 +3553,15 @@ void release_supermob()
 
 bool oprog_percent_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *vo, int64 type)
 {
-	MPROG_DATA *mprg;
 	bool executed = false;
-	int prog_nr = 1;
+	int prog_nr = 0;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 	int value;
 
-	for (mprg = obj->pIndexData->mudprogs; mprg; mprg = mprg->next, prog_nr++)
+	for (auto* mprg : obj->pIndexData->mudprogs)
+	{
+		prog_nr++;
 		if ((mprg->type & type) && (number_percent() <= (value = atoi(mprg->arglist))))
 		{
 			if (type != RAND_PROG || (type == RAND_PROG && value > 0))
@@ -3578,6 +3575,7 @@ bool oprog_percent_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *
 					break;
 			}
 		}
+	}
 
 	current_prog_line = old_prog_line;
 	current_prog_number = old_prog_nr;
@@ -3609,7 +3607,7 @@ void oprog_greet_trigger(CHAR_DATA *ch)
 {
 	OBJ_DATA *vobj;
 
-	for (vobj = ch->in_room->first_content; vobj; vobj = vobj->next_content)
+	for (auto* vobj : ch->in_room->contents)
 		if (vobj->pIndexData->progtypes & GREET_PROG)
 		{
 			set_supermob(vobj); /* not very efficient to do here */
@@ -3622,10 +3620,8 @@ void oprog_greet_trigger(CHAR_DATA *ch)
 
 void oprog_speech_trigger(char *txt, CHAR_DATA *ch)
 {
-	OBJ_DATA *vobj;
-
 	/* supermob is set and released in oprog_wordlist_check */
-	for (vobj = ch->in_room->first_content; vobj; vobj = vobj->next_content)
+	for (auto* vobj : ch->in_room->contents)
 		if (vobj->pIndexData->progtypes & SPEECH_PROG)
 		{
 			oprog_wordlist_check(txt, supermob, ch, vobj, NULL, SPEECH_PROG, vobj);
@@ -3858,17 +3854,18 @@ void oprog_wordlist_check(char *arg, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA 
 	char temp1[ MAX_STRING_LENGTH];
 	char temp2[ MAX_INPUT_LENGTH];
 	char word[ MAX_INPUT_LENGTH];
-	MPROG_DATA *mprg;
 	char *list;
 	char *start;
 	char *dupl;
 	char *end;
 	int i;
-	int prog_nr = 1;
+	int prog_nr = 0;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 
-	for (mprg = iobj->pIndexData->mudprogs; mprg; mprg = mprg->next, prog_nr++)
+	for (auto* mprg : iobj->pIndexData->mudprogs)
+	{
+		prog_nr++;
 		if (mprg->type & type)
 		{
 			strcpy(temp1, mprg->arglist);
@@ -3991,6 +3988,7 @@ void oprog_wordlist_check(char *arg, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA 
 							dupl = start + 1;
 			}
 		}
+	}
 
 	current_prog_line = old_prog_line;
 	current_prog_number = old_prog_nr;
@@ -4031,7 +4029,6 @@ void rset_supermob(ROOM_INDEX_DATA *room)
 
 void rprog_percent_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *vo, int64 type)
 {
-	MPROG_DATA *mprg;
 	int prog_nr = 1;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
@@ -4040,7 +4037,7 @@ void rprog_percent_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *
 	if (!mob->in_room)
 		return;
 
-	for (mprg = mob->in_room->mudprogs; mprg; mprg = mprg->next)
+	for (auto* mprg : mob->in_room->mudprogs)
 		if ((mprg->type & type) && (number_percent() <= (value = atoi(mprg->arglist))))
 		{
 			if (type != RAND_PROG || (type == RAND_PROG && value > 0))
@@ -4190,20 +4187,21 @@ void rprog_wordlist_check(char *arg, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA 
 	char temp1[MAX_STRING_LENGTH];
 	char temp2[MAX_INPUT_LENGTH];
 	char word[MAX_INPUT_LENGTH];
-	MPROG_DATA *mprg;
 	char *list;
 	char *start;
 	char *dupl;
 	char *end;
 	int i;
-	int prog_nr = 1;
+	int prog_nr = 0;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 
 	if (actor && !char_died(actor) && actor->in_room)
 		room = actor->in_room;
 
-	for (mprg = room->mudprogs; mprg; mprg = mprg->next, prog_nr++)
+	for (auto* mprg : room->mudprogs)
+	{
+		prog_nr++;
 		if (mprg->type & type)
 		{
 			strcpy(temp1, mprg->arglist);
@@ -4323,6 +4321,7 @@ void rprog_wordlist_check(char *arg, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA 
 							dupl = start + 1;
 			}
 		}
+	}
 	current_prog_line = old_prog_line;
 	current_prog_number = old_prog_nr;
 	return;
@@ -4331,18 +4330,17 @@ void rprog_wordlist_check(char *arg, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA 
 void rprog_time_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *vo, int type)
 {
 	ROOM_INDEX_DATA *room = (ROOM_INDEX_DATA*) vo;
-	MPROG_DATA *mprg;
 	bool trigger_time;
 	int prog_nr = 1;
 	int old_prog_line = current_prog_line;
 	int old_prog_nr = current_prog_number;
 
-	for (mprg = room->mudprogs; mprg; mprg = mprg->next)
+	for (auto* mprg : room->mudprogs)
 	{
 		if (room->area && room->area->planet)
 			trigger_time = (room->area->planet->hour == atoi(mprg->arglist));
 		else
-			trigger_time = (first_planet->hour == atoi(mprg->arglist));
+			trigger_time = (!planet_list.empty() && planet_list.front()->hour == atoi(mprg->arglist));
 
 		if (!trigger_time)
 		{
@@ -4446,24 +4444,22 @@ void progbug(const char *str, CHAR_DATA *mob)
 
 void room_act_add(ROOM_INDEX_DATA *room)
 {
-	struct act_prog_data *runner;
-
-	for (runner = room_act_list; runner; runner = runner->next)
+	for (auto* runner : room_act_list)
 		if (runner->vo == room)
 			return;
+	struct act_prog_data *runner;
 	CREATE(runner, struct act_prog_data, 1);
 	runner->vo = room;
-	runner->next = room_act_list;
-	room_act_list = runner;
+	room_act_list.push_front(runner);
 }
 
 void room_act_update(void)
 {
-	struct act_prog_data *runner;
 	MPROG_ACT_LIST *mpact;
 
-	while ((runner = room_act_list) != NULL)
+	while (!room_act_list.empty())
 	{
+		struct act_prog_data *runner = room_act_list.front();
 		ROOM_INDEX_DATA *room = (RID*) runner->vo;
 
 		while ((mpact = room->mpact) != NULL)
@@ -4475,7 +4471,7 @@ void room_act_update(void)
 		}
 		room->mpact = NULL;
 		room->mpactnum = 0;
-		room_act_list = runner->next;
+		room_act_list.pop_front();
 		DISPOSE(runner);
 	}
 	return;
@@ -4483,23 +4479,21 @@ void room_act_update(void)
 
 void obj_act_add(OBJ_DATA *obj)
 {
-	struct act_prog_data *runner;
-
-	for (runner = obj_act_list; runner; runner = runner->next)
+	for (auto* runner : obj_act_list)
 		if (runner->vo == obj)
 			return;
+	struct act_prog_data *runner;
 	CREATE(runner, struct act_prog_data, 1);
 	runner->vo = obj;
-	runner->next = obj_act_list;
-	obj_act_list = runner;
+	obj_act_list.push_front(runner);
 }
 void obj_act_update(void)
 {
-	struct act_prog_data *runner;
 	MPROG_ACT_LIST *mpact;
 
-	while ((runner = obj_act_list) != NULL)
+	while (!obj_act_list.empty())
 	{
+		struct act_prog_data *runner = obj_act_list.front();
 		OBJ_DATA *obj = (OD*) runner->vo;
 
 		while ((mpact = obj->mpact) != NULL)
@@ -4510,7 +4504,7 @@ void obj_act_update(void)
 		}
 		obj->mpact = NULL;
 		obj->mpactnum = 0;
-		obj_act_list = runner->next;
+		obj_act_list.pop_front();
 		DISPOSE(runner);
 	}
 	return;
@@ -4569,13 +4563,9 @@ void update_script(SCRIPT_DATA *pScript)
 
 void scripts_update(void)
 {
-	SCRIPT_DATA *pScript;
-	SCRIPT_DATA *pScript_next;
-
-	for (pScript = first_script_prog; pScript; pScript = pScript_next)
+	auto scripts_snapshot = script_prog_list;
+	for (auto* pScript : scripts_snapshot)
 	{
-		pScript_next = pScript->next;
-
 		if (pScript->position > (int) strlen(pScript->command))
 			stopscript(pScript);
 		else

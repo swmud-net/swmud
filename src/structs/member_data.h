@@ -23,8 +23,6 @@
 
 struct member_data
 {
-	MEMBER_DATA			* next;
-	MEMBER_DATA			* prev;
 	char				* name;
 	char				* bestowments;
 	int					status;

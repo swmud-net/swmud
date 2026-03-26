@@ -23,8 +23,6 @@
 
 struct component_data
 {
-	COMPONENT_DATA		* next;
-	COMPONENT_DATA		* prev;
 	int					type;
 	int					nr;	// vnum jesli typ == v,
 							// numer wear_flagi jesli typ == w

@@ -328,8 +328,8 @@ DEF_DO_FUN( goto )
 		}
 		location->area = ch->pcdata->area;
 		send_to_char( FB_WHITE
-		"Machasz rêk± i tworzysz porz±dek z czystego chaosu," NL
-		"wkraczaj±c w now± rzeczywisto¶æ..." EOL, ch);
+		"Machasz rï¿½kï¿½ i tworzysz porzï¿½dek z czystego chaosu," NL
+		"wkraczajï¿½c w nowï¿½ rzeczywistoï¿½ï¿½..." EOL, ch);
 	}
 
 	if (room_is_private(ch, location) && !is_invited(ch, location))
@@ -399,19 +399,18 @@ DEF_DO_FUN( goto )
 			act( COL_IMMORT, "$T", ch, NULL, ch->pcdata->bamfin, TO_ROOM);
 		else
 			act( COL_IMMORT, "$n $T", ch, NULL,
-					"pojawia siê tu a Moc wiruje doko³a.", TO_ROOM);
+					"pojawia siï¿½ tu a Moc wiruje dokoï¿½a.", TO_ROOM);
 	}
 
 	do_look(ch, (char*) "auto");
 
 	if (ch->in_room == in_room)
 		return;
-	for (fch = in_room->first_person; fch; fch = fch_next)
+	for (auto* fch : in_room->people)
 	{
-		fch_next = fch->next_in_room;
 		if (fch->master == ch && IS_IMMORTAL(fch))
 		{
-			act( COL_ACTION, "Pod±¿asz za $N$4.", fch, NULL, ch, TO_CHAR);
+			act( COL_ACTION, "Podï¿½ï¿½asz za $N$4.", fch, NULL, ch, TO_CHAR);
 			do_goto(fch, argument);
 		}
 	}
@@ -446,7 +445,7 @@ DEF_DO_FUN( shgoto )
 
 	if (location == NULL)
 	{
-		if ((location = ship->first_location) == NULL)
+		if (ship->locations.empty() || (location = ship->locations.front()) == NULL)
 		{
 			send_to_char("Ship has no location." NL, ch);
 			return;
@@ -491,7 +490,7 @@ DEF_DO_FUN( shgoto )
 			act( COL_IMMORT, "$T", ch, NULL, ch->pcdata->bamfin, TO_ROOM);
 		else
 			act( COL_IMMORT, "$n $T", ch, NULL,
-					"pojawia siê tu a Moc wiruje doko³a.", TO_ROOM);
+					"pojawia siï¿½ tu a Moc wiruje dokoï¿½a.", TO_ROOM);
 	}
 
 	do_look(ch, (char*) "auto");
@@ -1042,7 +1041,7 @@ DEF_DO_FUN( mset )
 		if (IS_SET(sysdata.save_flags, SV_PASSCHG))
 			save_char_obj(victim);
 		send_to_char("Ok." NL, ch);
-		ch_printf(victim, "Twoje has³o zosta³o zmienione przez %s." NL,
+		ch_printf(victim, "Twoje hasï¿½o zostaï¿½o zmienione przez %s." NL,
 				PERS(ch, victim, 3));
 		return;
 	}
@@ -1497,12 +1496,12 @@ DEF_DO_FUN( mset )
 		{
 			CRIME_DATA *crime_next;
 
-			if (victim->first_crime)
-				for (crime = victim->first_crime; crime; crime = crime_next)
-				{
-					crime_next = crime->next;
+			if (!victim->crimes.empty())
+			{
+				auto snapshot = victim->crimes;
+				for (auto* crime : snapshot)
 					free_crime(victim, crime);
-				}
+			}
 
 			ch_printf(ch, "Wanted-flags clean." NL);
 			return;
@@ -1523,10 +1522,9 @@ DEF_DO_FUN( mset )
 			if (!str_cmp(argument, "remove"))
 			{
 
-				if (victim->first_crime)
+				if (!victim->crimes.empty())
 				{
-					for (crime = victim->first_crime; crime; crime =
-							crime->next)
+					for (auto* crime : victim->crimes)
 					{
 						if (!str_cmp(arg3, crime->planet))
 						{
@@ -1595,14 +1593,14 @@ DEF_DO_FUN( mset )
 				ch_printf(ch,
 						"!!! Warning !!! There is no such planet!\n\rLeave it if you're sure about that." NL);
 
-			/* usuwamy jedn± flagê */
+			/* usuwamy jednï¿½ flagï¿½ */
 			if (is_name(arg3, victim->s_vip_flags))
 			{
 				strcpy(buf, victim->s_vip_flags);
 				STRDUP(victim->s_vip_flags, (char* )cut_from_string(buf, arg3));
 				ch_printf(ch, "Vip-flag: %s removed." NL, arg3);
 			}
-			/* dodajemy jedn± flagê */
+			/* dodajemy jednï¿½ flagï¿½ */
 			else
 			{
 				strcpy(buf, victim->s_vip_flags);
@@ -2234,15 +2232,13 @@ DEF_DO_FUN( mset )
 	if (!str_cmp(arg2, "kin") && !str_cmp(arg3, "clear"))
 	{
 		KNOWN_CHAR_DATA *_friend;
-		while ((_friend = victim->last_known) != NULL)
+		while (!victim->known.empty())
 		{
+			auto* _friend = victim->known.back();
+			victim->known.pop_back();
 			STRFREE(_friend->name);
-			UNLINK(_friend, victim->first_known, victim->last_known, next,
-					prev);
 			DISPOSE(_friend);
 		}
-		victim->first_known = NULL;
-		victim->last_known = NULL;
 		return;
 	}
 	/*
@@ -2600,7 +2596,7 @@ DEF_DO_FUN( oset )
 		return;
 	}
 
-	//added by Thanos (ustalenie p³ci przedmiotu)
+	//added by Thanos (ustalenie pï¿½ci przedmiotu)
 	if (!str_cmp(arg2, "gender"))
 	{
 		if (!can_omodify(ch, obj))
@@ -2679,7 +2675,7 @@ DEF_DO_FUN( oset )
 
 		sprintf(short_descr, "%s", arg3);
 
-		//added by Thanos (prze³adujmy przypadki)
+		//added by Thanos (przeï¿½adujmy przypadki)
 		for (i = 0; i < 6; i++)
 		{
 			for (indexp = 0;
@@ -2821,12 +2817,10 @@ DEF_DO_FUN( oset )
 		paf->location = loc;
 		paf->modifier = value;
 		paf->bitvector = 0;
-		paf->next = NULL;
 		if (IS_OBJ_STAT(obj, ITEM_PROTOTYPE))
-			LINK(paf, obj->pIndexData->first_affect,
-					obj->pIndexData->last_affect, next, prev);
+			obj->pIndexData->affects.push_back(paf);
 		else
-			LINK(paf, obj->first_affect, obj->last_affect, next, prev);
+			obj->affects.push_back(paf);
 		++top_affect;
 		send_to_char("Done." NL, ch);
 		return;
@@ -2856,12 +2850,11 @@ DEF_DO_FUN( oset )
 			OBJ_INDEX_DATA *pObjIndex;
 
 			pObjIndex = obj->pIndexData;
-			for (paf = pObjIndex->first_affect; paf; paf = paf->next)
+			for (auto* paf : pObjIndex->affects)
 			{
 				if (++count == loc)
 				{
-					UNLINK(paf, pObjIndex->first_affect, pObjIndex->last_affect,
-							next, prev);
+					pObjIndex->affects.remove(paf);
 					DISPOSE(paf);
 					send_to_char("Removed." NL, ch);
 					--top_affect;
@@ -2873,12 +2866,11 @@ DEF_DO_FUN( oset )
 		}
 		else
 		{
-			for (paf = obj->first_affect; paf; paf = paf->next)
+			for (auto* paf : obj->affects)
 			{
 				if (++count == loc)
 				{
-					UNLINK(paf, obj->first_affect, obj->last_affect, next,
-							prev);
+					obj->affects.remove(paf);
 					DISPOSE(paf);
 					send_to_char("Removed." NL, ch);
 					--top_affect;
@@ -3355,8 +3347,8 @@ const SWString sprint_reset(CHAR_DATA *ch, RESET_DATA *pReset, int num, bool rli
 }
 
 /*
- * Stary REDIT zamieni³ siê w RSET na pro¶bê Aldegarda
- * Stary RSET natomiast zamieni³ siê w zawarto¶æ pliq /dev/null
+ * Stary REDIT zamieniï¿½ siï¿½ w RSET na proï¿½bï¿½ Aldegarda
+ * Stary RSET natomiast zamieniï¿½ siï¿½ w zawartoï¿½ï¿½ pliq /dev/null
  */
 DEF_DO_FUN( rset )
 {
@@ -3501,13 +3493,13 @@ DEF_DO_FUN( rset )
 		const char *bptr;
 		int num;
 
-		if (!location->first_reset)
+		if (location->resets.empty())
 		{
 			send_to_char("This location has no resets to list." NL, ch);
 			return;
 		}
 		num = 0;
-		for (pReset = location->first_reset; pReset; pReset = pReset->next)
+		for (auto* pReset : location->resets)
 		{
 			num++;
 			const SWString &sreset = sprint_reset(ch, pReset, num, true);
@@ -4018,36 +4010,34 @@ EXTRA_DESCR_DATA* SetRExtra(ROOM_INDEX_DATA *room, char *keywords)
 {
 	EXTRA_DESCR_DATA *ed;
 
-	for (ed = room->first_extradesc; ed; ed = ed->next)
+	for (auto* ed : room->extradesc)
 	{
 		if (is_name(keywords, ed->keyword))
-			break;
+			return ed;
 	}
-	if (!ed)
 	{
+		EXTRA_DESCR_DATA *ed;
 		CREATE(ed, EXTRA_DESCR_DATA, 1);
-		LINK(ed, room->first_extradesc, room->last_extradesc, next, prev);
+		room->extradesc.push_back(ed);
 		STRDUP(ed->keyword, keywords);
 		STRDUP(ed->description, "");
 		top_ed++;
+		return ed;
 	}
-	return ed;
 }
 
 bool DelRExtra(ROOM_INDEX_DATA *room, char *keywords)
 {
-	EXTRA_DESCR_DATA *rmed;
-
-	for (rmed = room->first_extradesc; rmed; rmed = rmed->next)
+	for (auto* rmed : room->extradesc)
 	{
 		if (is_name(keywords, rmed->keyword))
-			break;
+		{
+			room->extradesc.remove(rmed);
+			free_ed(rmed);
+			return true;
+		}
 	}
-	if (!rmed)
-		return false;
-	UNLINK(rmed, room->first_extradesc, room->last_extradesc, next, prev);
-	free_ed(rmed);
-	return true;
+	return false;
 }
 
 EXTRA_DESCR_DATA* SetOExtra(OBJ_DATA *obj, const char *keywords)
@@ -4057,74 +4047,66 @@ EXTRA_DESCR_DATA* SetOExtra(OBJ_DATA *obj, const char *keywords)
 
 EXTRA_DESCR_DATA* SetOExtra(OBJ_DATA *obj, char *keywords)
 {
-	EXTRA_DESCR_DATA *ed;
-
-	for (ed = obj->first_extradesc; ed; ed = ed->next)
+	for (auto* ed : obj->extradesc)
 	{
 		if (is_name(keywords, ed->keyword))
-			break;
+			return ed;
 	}
-	if (!ed)
 	{
+		EXTRA_DESCR_DATA *ed;
 		CREATE(ed, EXTRA_DESCR_DATA, 1);
-		LINK(ed, obj->first_extradesc, obj->last_extradesc, next, prev);
+		obj->extradesc.push_back(ed);
 		STRDUP(ed->keyword, keywords);
 		STRDUP(ed->description, "");
 		top_ed++;
+		return ed;
 	}
-	return ed;
 }
 
 bool DelOExtra(OBJ_DATA *obj, char *keywords)
 {
-	EXTRA_DESCR_DATA *rmed;
-
-	for (rmed = obj->first_extradesc; rmed; rmed = rmed->next)
+	for (auto* rmed : obj->extradesc)
 	{
 		if (is_name(keywords, rmed->keyword))
-			break;
+		{
+			obj->extradesc.remove(rmed);
+			free_ed(rmed);
+			return true;
+		}
 	}
-	if (!rmed)
-		return false;
-	UNLINK(rmed, obj->first_extradesc, obj->last_extradesc, next, prev);
-	free_ed(rmed);
-	return true;
+	return false;
 }
 
 EXTRA_DESCR_DATA* SetOExtraProto(OBJ_INDEX_DATA *obj, char *keywords)
 {
-	EXTRA_DESCR_DATA *ed;
-
-	for (ed = obj->first_extradesc; ed; ed = ed->next)
+	for (auto* ed : obj->extradesc)
 	{
 		if (is_name(keywords, ed->keyword))
-			break;
+			return ed;
 	}
-	if (!ed)
 	{
+		EXTRA_DESCR_DATA *ed;
 		CREATE(ed, EXTRA_DESCR_DATA, 1);
-		LINK(ed, obj->first_extradesc, obj->last_extradesc, next, prev);
+		obj->extradesc.push_back(ed);
 		STRDUP(ed->keyword, keywords);
 		STRDUP(ed->description, "");
 		top_ed++;
+		return ed;
 	}
-	return ed;
 }
 
 bool DelOExtraProto(OBJ_INDEX_DATA *obj, char *keywords)
 {
-	EXTRA_DESCR_DATA *rmed;
-
-	for (rmed = obj->first_extradesc; rmed; rmed = rmed->next)
+	for (auto* rmed : obj->extradesc)
 	{
 		if (is_name(keywords, rmed->keyword))
-			break;
+		{
+			obj->extradesc.remove(rmed);
+			free_ed(rmed);
+			return true;
+		}
 	}
-	if (!rmed)
-		return false;
-	UNLINK(rmed, obj->first_extradesc, obj->last_extradesc, next, prev);
-	free_ed(rmed);
-	return true;
+	return false;
 }
 
 /* Added by Thanos Nowy Format sekcji */
@@ -4204,9 +4186,9 @@ void adv_save_mobiles(AREA_DATA *tarea, FILE *fpout, bool install)
 			fprintf(fpout, "V %s~\n", pMobIndex->s_vip_flags);
 		fprintf(fpout, "Dialog    %s~\n", pMobIndex->dialog_name);
 
-		if (pMobIndex->mudprogs)
+		if (!pMobIndex->mudprogs.empty())
 		{
-			for (mprog = pMobIndex->mudprogs; mprog; mprog = mprog->next)
+			for (auto* mprog : pMobIndex->mudprogs)
 				fprintf(fpout, "> %s %s~\n%s~\n",
 						mprog_type_to_name(mprog->type), mprog->arglist,
 						strip_cr(mprog->comlist));
@@ -4234,8 +4216,7 @@ void vsave_resets(FILE *fp, AREA_DATA *pArea)
 		{
 			if (pRoomIndex->area == pArea)
 			{
-				for (pReset = pRoomIndex->first_reset; pReset;
-						pReset = pReset->next)
+				for (auto* pReset : pRoomIndex->resets)
 				{
 					switch (pReset->command)
 					/* extra arg1 arg2 arg3 */
@@ -4386,21 +4367,21 @@ void fold_area(AREA_DATA *tarea, char *filename, bool install)
 		fprintf(fpout, "%d %d %d\n", pObjIndex->weight, pObjIndex->cost,
 				pObjIndex->gender); //added by Thanos
 
-		// Thanos: wprowadzamy levele przedmiotów
+		// Thanos: wprowadzamy levele przedmiotï¿½w
 		fprintf(fpout, "0 0 %d 0 0 ~\n", pObjIndex->level);
 
-		for (ed = pObjIndex->first_extradesc; ed; ed = ed->next)
+		for (auto* ed : pObjIndex->extradesc)
 			fprintf(fpout, "E\n%s~\n%s~\n", ed->keyword,
 					strip_cr(ed->description));
 
-		for (req = pObjIndex->first_requirement; req; req = req->next)
+		for (auto* req : pObjIndex->requirements)
 		{
 			fprintf(fpout, "R %d 0 %d 0 %s~\n", req->location, req->modifier,
 					(req->location == REQ_SKILL && IS_VALID_SN(req->type)) ?
 							skill_table[req->type]->name : " ");
 		}
 
-		for (paf = pObjIndex->first_affect; paf; paf = paf->next)
+		for (auto* paf : pObjIndex->affects)
 			fprintf(fpout, "A\n%d %d\n", paf->location,
 					((paf->location == APPLY_WEAPONSPELL
 							|| paf->location == APPLY_WEARSPELL
@@ -4409,9 +4390,9 @@ void fold_area(AREA_DATA *tarea, char *filename, bool install)
 							&& IS_VALID_SN(paf->modifier)) ?
 							skill_table[paf->modifier]->slot : paf->modifier);
 
-		if (pObjIndex->mudprogs)
+		if (!pObjIndex->mudprogs.empty())
 		{
-			for (mprog = pObjIndex->mudprogs; mprog; mprog = mprog->next)
+			for (auto* mprog : pObjIndex->mudprogs)
 				fprintf(fpout, "> %s %s~\n%s~\n",
 						mprog_type_to_name(mprog->type), mprog->arglist,
 						strip_cr(mprog->comlist));
@@ -4436,17 +4417,17 @@ void fold_area(AREA_DATA *tarea, char *filename, bool install)
 			/* remove prototype flag from room */
 			REMOVE_BIT(room->room_flags, ROOM_PROTOTYPE);
 			/* purge room of (prototyped) mobiles */
-			for (victim = room->first_person; victim; victim = vnext)
 			{
-				vnext = victim->next_in_room;
-				if (IS_NPC(victim))
-					extract_char(victim, true);
+				auto snapshot = room->people;
+				for (auto* victim : snapshot)
+					if (IS_NPC(victim))
+						extract_char(victim, true);
 			}
 			/* purge room of (prototyped) objects */
-			for (obj = room->first_content; obj; obj = obj_next)
 			{
-				obj_next = obj->next_content;
-				extract_obj(obj);
+				auto snapshot = room->contents;
+				for (auto* obj : snapshot)
+					extract_obj(obj);
 			}
 		}
 		fprintf(fpout, "#%d\n", vnum);
@@ -4462,7 +4443,7 @@ void fold_area(AREA_DATA *tarea, char *filename, bool install)
 				room->sector_type, room->tele_delay, room->tele_vnum,
 				room->tunnel);
 
-		for (xit = room->first_exit; xit; xit = xit->next)
+		for (auto* xit : room->exits)
 		{
 			if (IS_SET(xit->orig_flags, EX_PORTAL)) /* don't fold portals */
 				continue;
@@ -4473,13 +4454,13 @@ void fold_area(AREA_DATA *tarea, char *filename, bool install)
 					xit->key, xit->vnum, xit->distance);
 		}
 
-		for (ed = room->first_extradesc; ed; ed = ed->next)
+		for (auto* ed : room->extradesc)
 			fprintf(fpout, "E\n%s~\n%s~\n", ed->keyword,
 					strip_cr(ed->description));
 
-		if (room->mudprogs)
+		if (!room->mudprogs.empty())
 		{
-			for (mprog = room->mudprogs; mprog; mprog = mprog->next)
+			for (auto* mprog : room->mudprogs)
 				fprintf(fpout, "> %s %s~\n%s~\n",
 						mprog_type_to_name(mprog->type), mprog->arglist,
 						strip_cr(mprog->comlist));
@@ -4593,9 +4574,10 @@ DEF_DO_FUN( foldarea )
 		}
 	}
 	else
-		for (tarea = first_area; tarea; tarea = tarea->next)
+		for (auto* tarea_ : area_list)
 		{
 			found = false;
+			tarea = tarea_;
 			if (!str_cmp(tarea->filename, arg))
 			{
 				found = true;
@@ -4635,7 +4617,7 @@ void write_area_list()
 		perror( AREA_LIST);
 		return;
 	}
-	for (tarea = first_area; tarea; tarea = tarea->next)
+	for (auto* tarea : area_list)
 		fprintf(fpout, "%s\n", tarea->filename);
 	fprintf(fpout, "$\n");
 	fclose(fpout);
@@ -4884,17 +4866,19 @@ DEF_DO_FUN( astat )
 	bool proto, found;
 
 	found = false;
-	for (tarea = first_area; tarea; tarea = tarea->next)
-		if (!str_cmp(tarea->filename, argument))
+	for (auto* ta : area_list)
+		if (!str_cmp(ta->filename, argument))
 		{
+			tarea = ta;
 			found = true;
 			break;
 		}
 
 	if (!found)
-		for (tarea = first_build; tarea; tarea = tarea->next)
-			if (!str_cmp(tarea->filename, argument))
+		for (auto* ta : build_list)
+			if (!str_cmp(ta->filename, argument))
 			{
+				tarea = ta;
 				found = true;
 				proto = true;
 				break;

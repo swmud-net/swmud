@@ -107,11 +107,11 @@ ch );
 
 
 
-/* Za³atwi³em fajne jêzyki ze smauga				-Thanos*/
+/* Zaï¿½atwiï¿½em fajne jï¿½zyki ze smauga				-Thanos*/
 /*
  * Tongues / Languages loading/saving functions			-Altrag
  */
-void fread_cnv(FILE * fp, LCNV_DATA **first_cnv, LCNV_DATA **last_cnv)
+void fread_cnv(FILE * fp, std::list<LCNV_DATA*>& cnv_list)
 {
     LCNV_DATA *cnv;
     char letter;
@@ -129,7 +129,7 @@ void fread_cnv(FILE * fp, LCNV_DATA **first_cnv, LCNV_DATA **last_cnv)
 	STRDUP( cnv->_new, fread_word(fp) );
 	cnv->nlen = strlen(cnv->_new);
 	fread_to_eol(fp);
-	LINK(cnv, *first_cnv, *last_cnv, next, prev);
+	cnv_list.push_back(cnv);
     }
 }
 
@@ -173,11 +173,11 @@ void load_tongues()
 	fread_to_eol(fp);
 	CREATE(lng, LANG_DATA, 1);
 	STRDUP(lng->name,word);
-	fread_cnv(fp, &lng->first_precnv, &lng->last_precnv);
+	fread_cnv(fp, lng->precnv);
 	lng->alphabet = fread_string(fp);
-	fread_cnv(fp, &lng->first_cnv, &lng->last_cnv);
+	fread_cnv(fp, lng->cnv);
 	fread_to_eol(fp);
-	LINK(lng, first_lang, last_lang, next, prev);
+	lang_list.push_back(lng);
     }
     fclose( fp );
     return;
@@ -186,21 +186,19 @@ void load_tongues()
 void fwrite_langs(void)
 {
     FILE *fp;
-    LANG_DATA *lng;
-    LCNV_DATA *cnv;
 
     if (!(fp=fopen(TONGUE_FILE, "w")))
     {
 	perror("fwrite_langs");
 	return;
     }
-    for (lng = first_lang; lng; lng = lng->next)
+    for (auto* lng : lang_list)
     {
 	fprintf(fp, "#%s\n", lng->name);
-	for (cnv = lng->first_precnv; cnv; cnv = cnv->next)
+	for (auto* cnv : lng->precnv)
 	    fprintf(fp, "'%s' '%s'\n", cnv->old, cnv->_new);
 	fprintf(fp, "~\n%s~\n", lng->alphabet);
-	for (cnv = lng->first_cnv; cnv; cnv = cnv->next)
+	for (auto* cnv : lng->cnv)
 	    fprintf(fp, "'%s' '%s'\n", cnv->old, cnv->_new);
 	fprintf(fp, "\n");
     }

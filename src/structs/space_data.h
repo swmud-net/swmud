@@ -20,25 +20,17 @@
 #define SPACE_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct space_data
 {
-	SPACE_DATA			* next;
-	SPACE_DATA			* prev;
-	SHIP_DATA			* first_ship;
-	SHIP_DATA			* last_ship;
-	ASTRO_DATA			* first_astro;	/*Alde*/
-	ASTRO_DATA			* last_astro;		/*Alde*/
-	MISSILE_DATA		* first_missile;
-	MISSILE_DATA		* last_missile;
-	PLANET_DATA			* first_planet;
-	PLANET_DATA			* last_planet;
-	STAR_DATA			* first_star;
-	STAR_DATA			* last_star;
-	MOON_DATA			* first_moon;
-	MOON_DATA			* last_moon;
-	RESET_DATA			* first_reset;	// Thanos
-	RESET_DATA			* last_reset;		// Thanos
+	std::list<SHIP_DATA*> ships;
+	std::list<ASTRO_DATA*> astros;
+	std::list<MISSILE_DATA*> missiles;
+	std::list<PLANET_DATA*> planets;
+	std::list<STAR_DATA*> stars;
+	std::list<MOON_DATA*> moons;
+	std::list<RESET_DATA*> resets;
 	char				* filename;
 	char				* name;
 	char				* resetmsg;		// Thanos

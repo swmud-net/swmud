@@ -23,8 +23,6 @@
 
 struct tc_station /* Trog */
 {
-	TC_STATION	*next;
-	TC_STATION	*prev;
 	char		*name;
 	int			vnum;
 };

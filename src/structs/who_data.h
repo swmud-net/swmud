@@ -23,8 +23,6 @@
 
 struct who_data
 {
-	WHO_DATA			* prev;
-	WHO_DATA			* next;
 	char				* text;
 	int					level;
 };

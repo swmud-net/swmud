@@ -20,14 +20,11 @@
 #define DIALOG_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct dialog_data
 {
-		/*! lista etapów dialogowych */
-	DIALOG_NODE			* first;	//pierwszy tekst jaki gracz moze wystosowac do moba
-	DIALOG_NODE			* last;
-	DIALOG_DATA			* next; //
-	DIALOG_DATA			* prev;
+	std::list<DIALOG_NODE*> nodes;
 	char				* name; //nazwa dla danego dialogu
 	int					dialog_ID;
 };

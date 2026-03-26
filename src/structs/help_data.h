@@ -24,8 +24,6 @@
 struct	help_data
 {
 	HELPS_FILE			* file;
-	HELP_DATA			* next;
-	HELP_DATA			* prev;
 	int					level;
 	int					type;
 	char				* keyword;

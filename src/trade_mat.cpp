@@ -21,6 +21,7 @@
 * ------------------------------------------------------------------------ *
 *			Materials for Trade				   *
 ****************************************************************************/
+#include <algorithm>
 #include "olc.h"
 
 #define KEY( literal, field, value )		\
@@ -36,9 +37,7 @@ int64 flag_lookup( const char *name, const struct flag_type *flag_table );
 
 MATERIAL_DATA * get_material( char * name, material_type typ)
 {
-	MATERIAL_DATA * pMat;
-
-	FOREACH( pMat, first_material)
+	for (auto* pMat : material_list)
 		if ( !str_cmp( name, pMat->name) && pMat->type == typ )
 			return pMat;
 
@@ -47,34 +46,20 @@ MATERIAL_DATA * get_material( char * name, material_type typ)
 
 void material_sort()
 {
-	MATERIAL_DATA	* pMat,* pMinMat;
-	MATERIAL_DATA	* pFirstMat = NULL;
-	MATERIAL_DATA	* pLastMat = NULL;
-
-	pMinMat = first_material;
-	while(first_material)
-	{
-		FOREACH( pMat, first_material )
-			if ( strcmp( pMinMat->name, pMat->name ) > 0 )
-				pMinMat = pMat;
-		UNLINK( pMinMat, first_material, last_material, next, prev );
-		LINK(pMinMat, pFirstMat, pLastMat, next, prev );
-		pMinMat = first_material;
-	}
-	first_material = pFirstMat;
-	last_material = pLastMat;
+	material_list.sort([](const MATERIAL_DATA* a, const MATERIAL_DATA* b) {
+		return strcmp(a->name, b->name) < 0;
+	});
 }
 
 DEF_DO_FUN( matlist )
 {
-	MATERIAL_DATA		* pMat;
 	int					number = 0;
 
 	ch_printf( ch, NL FG_CYAN "Lista nierafinowanych rud:" NL
 	"----------------------------------------"
 	"----------------------------------------" NL);
 
-	FOREACH( pMat, first_material)
+	for (auto* pMat : material_list)
 	{
 		if (pMat->type != U_ORE_FORM)
 			continue;
@@ -83,7 +68,7 @@ DEF_DO_FUN( matlist )
 			(number %4) ? "   " : NL);
 	}
 	if (!number)
-		ch_printf( ch, PLAIN "          Nie ma ¿adnych nierafinowanych rud" NL);
+		ch_printf( ch, PLAIN "          Nie ma ï¿½adnych nierafinowanych rud" NL);
 	else ch_printf( ch, EOL );
 
 	number = 0;
@@ -91,7 +76,7 @@ DEF_DO_FUN( matlist )
 	"----------------------------------------"
 	"----------------------------------------" NL);
 
-	FOREACH( pMat, first_material)
+	for (auto* pMat : material_list)
 	{
 		if (pMat->type != R_ORE_FORM)
 			continue;
@@ -100,15 +85,15 @@ DEF_DO_FUN( matlist )
 			(number %4) ? "   " : NL);
 	}
 	if (!number)
-		ch_printf( ch, PLAIN "Nie ma ¿adnych rafinowanych rud" NL);
+		ch_printf( ch, PLAIN "Nie ma ï¿½adnych rafinowanych rud" NL);
 	else ch_printf( ch, EOL );
 
-	ch_printf( ch, NL FG_CYAN "Lista stopów:" NL
+	ch_printf( ch, NL FG_CYAN "Lista stopï¿½w:" NL
 	"----------------------------------------"
 	"----------------------------------------" NL);
 	number = 0;
 
-	FOREACH( pMat, first_material)
+	for (auto* pMat : material_list)
 	{
 		if (pMat->type != ALLOY_FORM)
 			continue;
@@ -117,24 +102,23 @@ DEF_DO_FUN( matlist )
 			(number %4) ? "   " : NL);
 	}
 	if (!number)
-		ch_printf( ch, PLAIN "Nie ma ¿adnych stopów" NL);
+		ch_printf( ch, PLAIN "Nie ma ï¿½adnych stopï¿½w" NL);
 	send_to_char( NL, ch );
 }
 
 DEF_DO_FUN( matstat )
 {
-	MATERIAL_DATA	* pMat;
-	bool			bFound = false;
+	MATERIAL_DATA	* pMat = nullptr;
 
-	for(pMat = first_material;pMat;pMat=pMat->next)
-		if (!strcmp(pMat->name,argument))
+	for (auto* m : material_list)
+		if (!strcmp(m->name,argument))
 		{
-			bFound=true;
+			pMat = m;
 			break;
 		}
-	if (!bFound)
+	if (!pMat)
 	{
-		ch_printf( ch, "Nie ma materia³u o takiej nazwie." NL);
+		ch_printf( ch, "Nie ma materiaï¿½u o takiej nazwie." NL);
 		return;
 	}
 
@@ -166,7 +150,7 @@ void fread_material( FILE	* fp )
 	bool			fMatch;
 
 	pMat = new_material();
-	LINK( pMat, first_material, last_material, next, prev );
+	material_list.push_back(pMat);
 	for(;;)
 	{
 		word = feof( fp ) ? "End" : fread_word( fp );
@@ -245,7 +229,6 @@ void load_materials()
 void save_materials()
 {
 	FILE			* fp;
-	MATERIAL_DATA	* pMat;
 
 	RESERVE_CLOSE;
 
@@ -257,7 +240,7 @@ void save_materials()
 		return;
 	}
 
-	FOREACH( pMat, first_material)
+	for (auto* pMat : material_list)
 	{
 		fprintf( fp, "#MATERIAL\n");
 		fprintf( fp, "Name      %s~\n",pMat->name);
@@ -287,7 +270,7 @@ bool material_create(CHAR_DATA *ch, char *argument)
 	if (arg1[0]!='\0')
 	{
 		pMat = new_material();
-		LINK( pMat, first_material, last_material, next, prev );
+		material_list.push_back(pMat);
 		STRDUP( pMat->name, arg1 );
 	}
 	else return false;
@@ -336,28 +319,30 @@ void matedit( DESCRIPTOR_DATA *d, char *argument )
 	}
 	if ( !str_prefix( arg1, "next" ) || !str_cmp( arg1, ">" ) )
 	{
-		if ( pMat->next )
+		auto it = std::find(material_list.begin(), material_list.end(), pMat);
+		if ( it != material_list.end() && ++it != material_list.end() )
 		{
-			pMat = pMat->next;
+			pMat = *it;
 			ch->desc->olc_editing = (void *) pMat;
 			sprintf( buf, "%s", pMat->name);
 			do_matstat( ch, buf);
 		}
 		else
-			ch_printf( ch, "Nie ma ju¿ ¿adnych wiêcej materia³ów na li¶cie");
+			ch_printf( ch, "Nie ma juï¿½ ï¿½adnych wiï¿½cej materiaï¿½ï¿½w na liï¿½cie");
 		return;
 	}
 	if ( !str_prefix( arg1, "prev" ) || !str_cmp( arg1, "<") )
 	{
-		if ( pMat->prev )
+		auto it = std::find(material_list.begin(), material_list.end(), pMat);
+		if ( it != material_list.end() && it != material_list.begin() )
 		{
-			pMat = pMat->prev;
+			pMat = *--it;
 			ch->desc->olc_editing = (void *) pMat;
 			sprintf( buf, "%s", pMat->name);
 			do_matstat( ch, buf);
 		}
 		else
-			ch_printf( ch, "To jest pierwszy materia³ na li¶cie");
+			ch_printf( ch, "To jest pierwszy materiaï¿½ na liï¿½cie");
 		return;
 	}
 	SET_STR( "name", pMat->name, arg2 );
@@ -426,7 +411,7 @@ void matedit( DESCRIPTOR_DATA *d, char *argument )
 	}
 	if ( !str_prefix( arg1, "remove" ) || !str_prefix( arg1, "delete") )
 	{
-		UNLINK( pMat, first_material, last_material, next, prev );
+		material_list.remove(pMat);
 		free_material( pMat	);
 		edit_done(ch, (char *)"" );
 		return;
@@ -457,9 +442,11 @@ DEF_DO_FUN( matedit )
 	}
 	else
 	{
-		for( pMat = first_material; pMat; pMat = pMat->next )
-			if ( !str_prefix( arg1, pMat->name ) )
+		pMat = nullptr;
+		for( auto* m : material_list )
+			if ( !str_prefix( arg1, m->name ) )
 			{
+				pMat = m;
 				ch_printf( ch, "Editing material." NL);
 				break;
 			}

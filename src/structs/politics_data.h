@@ -23,8 +23,6 @@
 
 struct	politics_data
 {
-	POLITICS_DATA		* prev;
-	POLITICS_DATA		* next;
 	CLAN_DATA			* clan;
 	int					relations;
 };

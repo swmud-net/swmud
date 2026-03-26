@@ -20,23 +20,16 @@
 #define OBJ_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	obj_data
 {
-	OBJ_DATA			* next;
-	OBJ_DATA			* prev;
-	OBJ_DATA			* next_content;
-	OBJ_DATA			* prev_content;
-	OBJ_DATA			* first_content;
-	OBJ_DATA			* last_content;
+	std::list<OBJ_DATA*> contents;
 	OBJ_DATA			* in_obj;
 	CHAR_DATA			* carried_by;
-	EXTRA_DESCR_DATA	* first_extradesc;
-	EXTRA_DESCR_DATA	* last_extradesc;
-	AFFECT_DATA			* first_affect;
-	AFFECT_DATA			* last_affect;
-	REQUIREMENT_DATA	* first_requirement;
-	REQUIREMENT_DATA	* last_requirement;
+	std::list<EXTRA_DESCR_DATA*> extradesc;
+	std::list<AFFECT_DATA*> affects;
+	std::list<REQUIREMENT_DATA*> requirements;
 	OBJ_INDEX_DATA		* pIndexData;
 	ROOM_INDEX_DATA		* in_room;
 	VAR_DATA			* variables; /* Ratm - zmienne do mob_programow */
@@ -51,7 +44,7 @@ struct	obj_data
 	int					blaster_setting;
 	MPROG_ACT_LIST		* mpact;		/* mudprogs */
 	int					mpactnum;	/* mudprogs */
-	int					mpscriptrun;		/* Thanos - latwiej szukaæ proga */
+	int					mpscriptrun;		/* Thanos - latwiej szukaï¿½ proga */
 	int					wear_loc;
 	int					weight;
 	int					cost;

@@ -23,8 +23,6 @@
 
 struct shipdock_data
 {
-	SHIPDOCK_DATA		* next;
-	SHIPDOCK_DATA		* prev;
 	int					type;
 	int					vnum;
 	int					status;

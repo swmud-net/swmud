@@ -37,36 +37,36 @@
 ROOM_INDEX_DATA* generate_exit(ROOM_INDEX_DATA *in_room, EXIT_DATA **pexit);
 
 const char *const where_name[] =
-{ FG_CYAN "<u¿ywane jako ¶wiat³o>   " PLAIN,
-FG_CYAN "<za³o¿one na palec>      " PLAIN,
-FG_CYAN "<za³o¿one na palec>      " PLAIN,
-FG_CYAN "<owiniête wokó³ szyi>    " PLAIN,
+{ FG_CYAN "<uï¿½ywane jako ï¿½wiatï¿½o>   " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na palec>      " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na palec>      " PLAIN,
+FG_CYAN "<owiniï¿½te wokï¿½ szyi>    " PLAIN,
 FG_CYAN "<narzucone na kark>      " PLAIN,
-FG_CYAN "<za³o¿one na cia³o>      " PLAIN,
-FG_CYAN "<za³o¿one na g³owê>      " PLAIN,
-FG_CYAN "<za³o¿one na nogi>       " PLAIN,
-FG_CYAN "<za³o¿one na stopy>      " PLAIN,
-FG_CYAN "<za³o¿one na rêce>       " PLAIN,
-FG_CYAN "<za³o¿one na ramiona>    " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na ciaï¿½o>      " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na gï¿½owï¿½>      " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na nogi>       " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na stopy>      " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na rï¿½ce>       " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na ramiona>    " PLAIN,
 FG_CYAN "<tarcza energetyczna>    " PLAIN,
-FG_CYAN "<zarzucone wokó³ cia³a>  " PLAIN,
-FG_CYAN "<owiniête wokó³ pasa>    " PLAIN,
-FG_CYAN "<za³o¿one na nadgarstek> " PLAIN,
-FG_CYAN "<za³o¿one na nadgarstek> " PLAIN,
-FG_CYAN "<broñ>                   " PLAIN,
-FG_CYAN "<trzymane w rêku>        " PLAIN,
-FG_CYAN "<broñ druga>             " PLAIN,
-FG_CYAN "<wpiête w uszy>          " PLAIN,
-FG_CYAN "<za³o¿one na oczy>       " PLAIN,
-FG_CYAN "<broñ miotaj±ca>         " PLAIN };
+FG_CYAN "<zarzucone wokï¿½ ciaï¿½a>  " PLAIN,
+FG_CYAN "<owiniï¿½te wokï¿½ pasa>    " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na nadgarstek> " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na nadgarstek> " PLAIN,
+FG_CYAN "<broï¿½>                   " PLAIN,
+FG_CYAN "<trzymane w rï¿½ku>        " PLAIN,
+FG_CYAN "<broï¿½ druga>             " PLAIN,
+FG_CYAN "<wpiï¿½te w uszy>          " PLAIN,
+FG_CYAN "<zaï¿½oï¿½one na oczy>       " PLAIN,
+FG_CYAN "<broï¿½ miotajï¿½ca>         " PLAIN };
 
 /*
  * Local functions.
  */
 void show_char_to_char_0(CHAR_DATA *victim, CHAR_DATA *ch);
 void show_char_to_char_1(CHAR_DATA *victim, CHAR_DATA *ch);
-void show_char_to_char(CHAR_DATA *list, CHAR_DATA *ch);
-void show_ships_to_char(SHIP_DATA *ship, CHAR_DATA *ch);
+void show_char_to_char(const std::list<CHAR_DATA*>& list, CHAR_DATA *ch);
+void show_ships_to_char(const std::list<SHIP_DATA*>& list, CHAR_DATA *ch);
 void show_ship_to_char(SHIP_DATA *ship, CHAR_DATA *ch);
 bool check_blind(CHAR_DATA *ch);
 void show_condition(CHAR_DATA *ch, CHAR_DATA *victim);
@@ -99,9 +99,9 @@ char* format_obj_to_char(OBJ_DATA *obj, CHAR_DATA *ch, bool fShort)
 	if (IS_OBJ_STAT(obj, ITEM_INVIS))
 		strcat(buf, FG_CYAN "(Niewidka) ");
 	if ((IS_AFFECTED(ch, AFF_DETECT_FORCE) || IS_IMMORTAL(ch)) && IS_OBJ_STAT(obj, ITEM_FORCE))
-		strcat(buf, FB_BLUE "(B³êkitna Aura) ");
+		strcat(buf, FB_BLUE "(Bï¿½ï¿½kitna Aura) ");
 	if (IS_OBJ_STAT(obj, ITEM_GLOW))
-		strcat(buf, FB_YELLOW "(¦wieci) ");
+		strcat(buf, FB_YELLOW "(ï¿½wieci) ");
 	if (IS_OBJ_STAT(obj, ITEM_HUM))
 		strcat(buf, FG_YELLOW "(Buczy) ");
 	if (IS_OBJ_STAT(obj, ITEM_HIDDEN))
@@ -111,7 +111,7 @@ char* format_obj_to_char(OBJ_DATA *obj, CHAR_DATA *ch, bool fShort)
 	if (IS_IMMORTAL(ch) && IS_OBJ_STAT(obj, ITEM_PROTOTYPE))
 		strcat(buf, FG_GREEN "(PROTO) ");
 	if (IS_AFFECTED(ch, AFF_DETECTTRAPS) && is_trapped(obj))
-		strcat(buf, FB_YELLOW "(Pu³apka) ");
+		strcat(buf, FB_YELLOW "(Puï¿½apka) ");
 
 	strcat(buf, FG_CYAN);
 	if (fShort && obj->przypadki[0])
@@ -135,86 +135,86 @@ const char* halucinated_object(int ms, bool fShort)
 		case 1:
 			return "miecz";
 		case 2:
-			return "prêt";
+			return "prï¿½t";
 		case 3:
-			return "co¶ b³yszcz±cego";
+			return "coï¿½ bï¿½yszczï¿½cego";
 		case 4:
-			return "co¶";
+			return "coï¿½";
 		case 5:
-			return "co¶ interesuj±cego";
+			return "coï¿½ interesujï¿½cego";
 		case 6:
-			return "co¶ kolorowego";
+			return "coï¿½ kolorowego";
 		case 7:
-			return "co¶ super fajnego";
+			return "coï¿½ super fajnego";
 		case 8:
-			return "co¶ tajemniczego";
+			return "coï¿½ tajemniczego";
 		case 9:
-			return "mieni±cy sie kolorami p³aszcz";
+			return "mieniï¿½cy sie kolorami pï¿½aszcz";
 		case 10:
-			return "tajemniczy p³on±cy miecz";
+			return "tajemniczy pï¿½onï¿½cy miecz";
 		case 11:
-			return "miecz z py³u";
+			return "miecz z pyï¿½u";
 		case 12:
-			return "sztandar ¶mierci";
+			return "sztandar ï¿½mierci";
 		case 13:
-			return "wytwór twojej wyobra¼ni";
+			return "wytwï¿½r twojej wyobraï¿½ni";
 		case 14:
-			return "twój nagrobek";
+			return "twï¿½j nagrobek";
 		case 15:
-			return "d³ugie buty Dartha Vadera";
+			return "dï¿½ugie buty Dartha Vadera";
 		case 16:
-			return "po³yskuj±cy tom encyklopedii wiedzy tajemnych";
+			return "poï¿½yskujï¿½cy tom encyklopedii wiedzy tajemnych";
 		case 17:
-			return "d³ugo skrywany sekret";
+			return "dï¿½ugo skrywany sekret";
 		case 18:
 			return "znaczenie wszystkiego";
 		case 19:
-			return "odpowied¼";
+			return "odpowiedï¿½";
 		case 20:
-			return "klucz do ¿ycia, wszech¶wiata i reszty";
+			return "klucz do ï¿½ycia, wszechï¿½wiata i reszty";
 		}
 	switch (number_range(6 - URANGE(1, sms / 2, 5), sms))
 	{
 	case 1:
-		return "Piêkny miecz przyci±ga twoj± uwagê.";
+		return "Piï¿½kny miecz przyciï¿½ga twojï¿½ uwagï¿½.";
 	case 2:
-		return "Ziemia pokryta jest gór± prêtów.";
+		return "Ziemia pokryta jest gï¿½rï¿½ prï¿½tï¿½w.";
 	case 3:
-		return "Co¶ b³yszcz±cego skupia twoj± uwagê.";
+		return "Coï¿½ bï¿½yszczï¿½cego skupia twojï¿½ uwagï¿½.";
 	case 4:
-		return "Co¶ tu le¿y.";
+		return "Coï¿½ tu leï¿½y.";
 	case 5:
-		return "Co¶ interesuj±cego le¿y sobie na ziemi.";
+		return "Coï¿½ interesujï¿½cego leï¿½y sobie na ziemi.";
 	case 6:
-		return "Co¶ mieni siê tu kolorami.";
+		return "Coï¿½ mieni siï¿½ tu kolorami.";
 	case 7:
-		return "Co¶ super fajnego ¶wietnie le¿y na ziemi.";
+		return "Coï¿½ super fajnego ï¿½wietnie leï¿½y na ziemi.";
 	case 8:
-		return "Co¶ bardzo tajemniczego i wa¿nego le¿y tutaj.";
+		return "Coï¿½ bardzo tajemniczego i waï¿½nego leï¿½y tutaj.";
 	case 9:
-		return "P³aszcz mieni±cy siê kolorami le¿y porzucony na ziemi.";
+		return "Pï¿½aszcz mieniï¿½cy siï¿½ kolorami leï¿½y porzucony na ziemi.";
 	case 10:
-		return "Tajemniczy p³on±cy miecz pali siê pod twoimi stopami.";
+		return "Tajemniczy pï¿½onï¿½cy miecz pali siï¿½ pod twoimi stopami.";
 	case 11:
-		return "Kto¶ zostawi³ tu miecz z py³u.";
+		return "Ktoï¿½ zostawiï¿½ tu miecz z pyï¿½u.";
 	case 12:
-		return "Czarny jak ¶mieræ sztandar zwiastuje nieszczê¶cie.";
+		return "Czarny jak ï¿½mierï¿½ sztandar zwiastuje nieszczï¿½cie.";
 	case 13:
-		return "Na twoje ¿yczenie pojawia siê tu wytwór twojej wyobra¼ni.";
+		return "Na twoje ï¿½yczenie pojawia siï¿½ tu wytwï¿½r twojej wyobraï¿½ni.";
 	case 14:
-		return "Zauwa¿asz nagrobek... z twoim imieniem.";
+		return "Zauwaï¿½asz nagrobek... z twoim imieniem.";
 	case 15:
-		return "Buty, d³ugie czarne buty Dartha Vadera le¿± tutaj.";
+		return "Buty, dï¿½ugie czarne buty Dartha Vadera leï¿½ï¿½ tutaj.";
 	case 16:
-		return "B³yszczy siê przed tob± po³yskuj±cy tom wiedzy tajemnej.";
+		return "Bï¿½yszczy siï¿½ przed tobï¿½ poï¿½yskujï¿½cy tom wiedzy tajemnej.";
 	case 17:
-		return "D³ugo skrywany sekret odkrywa przed tob± swoje tajemnice.";
+		return "Dï¿½ugo skrywany sekret odkrywa przed tobï¿½ swoje tajemnice.";
 	case 18:
-		return "Znaczenie wszystkiego... Takie proste, oczywiste. W³a¶nie!";
+		return "Znaczenie wszystkiego... Takie proste, oczywiste. Wï¿½aï¿½nie!";
 	case 19:
-		return "Odpowied¼. Jedna. Zawsze by³a Jedna i Jedyna.";
+		return "Odpowiedï¿½. Jedna. Zawsze byï¿½a Jedna i Jedyna.";
 	case 20:
-		return "Klucz do ¿ycia, wszech¶wiata i reszty niemal sam wpada ci do rêki.";
+		return "Klucz do ï¿½ycia, wszechï¿½wiata i reszty niemal sam wpada ci do rï¿½ki.";
 	}
 	return "OooAAaa!!!";
 }
@@ -223,13 +223,12 @@ const char* halucinated_object(int ms, bool fShort)
  * Show a list to a character.
  * Can coalesce duplicated items.
  */
-void show_list_to_char(OBJ_DATA *list, CHAR_DATA *ch, bool fShort, bool fShowNothing)
+void show_list_to_char(const std::list<OBJ_DATA*>& list, CHAR_DATA *ch, bool fShort, bool fShowNothing)
 {
 	char **prgpstrShow;
 	int *prgnShow;
 	int *pitShow;
 	char *pstrShow;
-	OBJ_DATA *obj;
 	int nShow;
 	int iShow;
 	int count;
@@ -245,7 +244,7 @@ void show_list_to_char(OBJ_DATA *list, CHAR_DATA *ch, bool fShort, bool fShowNot
 	/*
 	 * if there's no list... then don't do all this crap!  -Thoric
 	 */
-	if (!list)
+	if (list.empty())
 	{
 		if (fShowNothing)
 		{
@@ -258,9 +257,7 @@ void show_list_to_char(OBJ_DATA *list, CHAR_DATA *ch, bool fShort, bool fShowNot
 	/*
 	 * Alloc space for output lines.
 	 */
-	count = 0;
-	for (obj = list; obj; obj = obj->next_content)
-		count++;
+	count = static_cast<int>(list.size());
 
 	ms = (ch->mental_state ? ch->mental_state : 1)
 			* (IS_NPC(ch) ? 1 : (ch->pcdata->condition[COND_DRUNK] ? (ch->pcdata->condition[COND_DRUNK] / 12) : 1));
@@ -300,7 +297,7 @@ void show_list_to_char(OBJ_DATA *list, CHAR_DATA *ch, bool fShort, bool fShowNot
 	/*
 	 * Format the list of objects.
 	 */
-	for (obj = list; obj; obj = obj->next_content)
+	for (auto* obj : list)
 	{
 		if (offcount < 0 && ++cnt > (count + offcount))
 			break;
@@ -401,20 +398,20 @@ void show_visible_affects_to_char(CHAR_DATA *victim, CHAR_DATA *ch)
 	{
 		if (IS_GOOD(victim))
 			ch_printf(ch, FB_CYAN
-			" %s" FB_CYAN " promieniuje moc±." EOL, capitalize(PERS(victim, ch, 0)));
+			" %s" FB_CYAN " promieniuje mocï¿½." EOL, capitalize(PERS(victim, ch, 0)));
 		else if (IS_EVIL(victim))
 			ch_printf(ch, FG_BLACK
 			" Ciemna energia emanuje z %s" FG_BLACK "." EOL, capitalize(PERS(victim, ch, 1)));
 		else
 			ch_printf(ch, FB_YELLOW
-			" %s" FB_YELLOW " okrywa siê ca³unem ¶wiate³ i cieni." EOL, capitalize(PERS(victim, ch, 0)));
+			" %s" FB_YELLOW " okrywa siï¿½ caï¿½unem ï¿½wiateï¿½ i cieni." EOL, capitalize(PERS(victim, ch, 0)));
 	}
 
 	if (IS_AFFECTED(victim, AFF_SHOCKSHIELD))
 	{
 		ch_printf(ch, " " FB_BLUE
-		"%s" FB_BLUE " jest otoczon%s kaskadami op³ywaj±cej %s energii." EOL, capitalize(PERS(victim, ch, 0)), SEX_SUFFIX_YAE(victim),
-				victim->sex == SEX_FEMALE ? "j±" : "go");
+		"%s" FB_BLUE " jest otoczon%s kaskadami opï¿½ywajï¿½cej %s energii." EOL, capitalize(PERS(victim, ch, 0)), SEX_SUFFIX_YAE(victim),
+				victim->sex == SEX_FEMALE ? "jï¿½" : "go");
 	}
 
 	if (IS_AFFECTED(victim, AFF_CHARM))
@@ -424,7 +421,7 @@ void show_visible_affects_to_char(CHAR_DATA *victim, CHAR_DATA *ch)
 	if (!IS_NPC(victim) && !victim->desc && victim->switched && IS_AFFECTED(victim->switched, AFF_POSSESS))
 	{
 		strcpy(buf, PERS(victim, ch, 0));
-		strcat(buf, " wydaje siê byæ w g³êbokim transie..." NL);
+		strcat(buf, " wydaje siï¿½ byï¿½ w gï¿½ï¿½bokim transie..." NL);
 	}
 }
 
@@ -498,7 +495,7 @@ void show_char_to_char_0(CHAR_DATA *victim, CHAR_DATA *ch)
 		strcat(buf, FB_CYAN "(Aura Mocy)" PLAIN " ");
 
 	if (get_curr_frc(ch) > 0 && IS_EVIL(victim))
-		strcat(buf, FG_RED "(Aura Z³a)" PLAIN " ");
+		strcat(buf, FG_RED "(Aura Zï¿½a)" PLAIN " ");
 
 	if (get_curr_frc(ch) > 0 && IS_GOOD(victim))
 		strcat(buf, FG_GREY MOD_BOLD "(Aura Dobra)" PLAIN " ");
@@ -507,7 +504,7 @@ void show_char_to_char_0(CHAR_DATA *victim, CHAR_DATA *ch)
 		strcat(buf, FB_GREEN "(Aura Protekcji)" PLAIN " ");
 
 	if (!IS_NPC(victim) && IS_SET(victim->act, PLR_LITTERBUG))
-		strcat(buf, PLAIN "(¦MIECIARZ) ");
+		strcat(buf, PLAIN "(ï¿½MIECIARZ) ");
 	if (IS_NPC(victim) && IS_IMMORTAL(ch) && IS_SET(victim->act, ACT_PROTOTYPE))
 		strcat(buf, FG_GREEN "(PROTOTYP)" PLAIN " ");
 
@@ -574,21 +571,21 @@ void show_char_to_char_0(CHAR_DATA *victim, CHAR_DATA *ch)
 		strcat(buf, MALE( victim ) ? " jest MARTWY!!" : FEMALE(victim) ? " jest MARTWA!!" : " jest MARTWE!!");
 		break;
 	case POS_MORTAL:
-		strcat(buf, MALE( victim ) ? " jest ¶miertelnie ranny." : FEMALE(victim) ? " jest ¶miertelnie ranna." : " jest ¶miertelnie ranne.");
+		strcat(buf, MALE( victim ) ? " jest ï¿½miertelnie ranny." : FEMALE(victim) ? " jest ï¿½miertelnie ranna." : " jest ï¿½miertelnie ranne.");
 		break;
 	case POS_INCAP:
 		strcat(buf, MALE( victim ) ? " jest nieprzytomny." : FEMALE(victim) ? " jest nieprzytomna." : " jest nieprzytomne.");
 		break;
 	case POS_STUNNED:
-		strcat(buf, MALE( victim ) ? " le¿y tu og³uszony." : FEMALE(victim) ? " le¿y tu og³uszona." : " le¿y tu og³uszone.");
+		strcat(buf, MALE( victim ) ? " leï¿½y tu ogï¿½uszony." : FEMALE(victim) ? " leï¿½y tu ogï¿½uszona." : " leï¿½y tu ogï¿½uszone.");
 		break;
 	case POS_SLEEPING:
 		if (ch->position == POS_SITTING || ch->position == POS_RESTING)
-			strcat(buf, " ¶pi nieopodal ciebie.");
+			strcat(buf, " ï¿½pi nieopodal ciebie.");
 		else
 			strcat(buf,
-					MALE(victim) ? " le¿y tu pogr±¿ony we ¶nie." :
-					FEMALE(victim) ? " le¿y tu pogr±¿ona we ¶nie." : " le¿y tu pogr±¿one we ¶nie.");
+					MALE(victim) ? " leï¿½y tu pogrï¿½ï¿½ony we ï¿½nie." :
+					FEMALE(victim) ? " leï¿½y tu pogrï¿½ï¿½ona we ï¿½nie." : " leï¿½y tu pogrï¿½ï¿½one we ï¿½nie.");
 		break;
 	case POS_RESTING:
 		if (ch->position == POS_RESTING)
@@ -600,7 +597,7 @@ void show_char_to_char_0(CHAR_DATA *victim, CHAR_DATA *ch)
 		break;
 	case POS_SITTING:
 		if (ch->position == POS_SITTING)
-			strcat(buf, " siedzi tu z tob±.");
+			strcat(buf, " siedzi tu z tobï¿½.");
 		else if (ch->position == POS_RESTING)
 			strcat(buf, " siedzi obok ciebie.");
 		else
@@ -620,9 +617,9 @@ void show_char_to_char_0(CHAR_DATA *victim, CHAR_DATA *ch)
 		else if (IS_AFFECTED(victim, AFF_FLOATING) || IS_AFFECTED(victim, AFF_FLYING))
 		{
 			if (!IS_AFFECTED(ch, AFF_FLYING) && !IS_AFFECTED(ch, AFF_FLOATING))
-				strcat(buf, " unosi siê lekko obok ciebie.");
+				strcat(buf, " unosi siï¿½ lekko obok ciebie.");
 			else
-				strcat(buf, " unosi siê nad twoj± g³ow±.");
+				strcat(buf, " unosi siï¿½ nad twojï¿½ gï¿½owï¿½.");
 		}
 		else
 			strcat(buf, " stoi tutaj.");
@@ -645,21 +642,21 @@ void show_char_to_char_0(CHAR_DATA *victim, CHAR_DATA *ch)
 			strcat(buf, ".");
 		}
 		else
-			strcat(buf, "kogo¶ kto wyszed³???");
+			strcat(buf, "kogoï¿½ kto wyszedï¿½???");
 		break;
 	case POS_FIGHTING:
 		strcat(buf, " walczy tutaj z ");
 		if (!victim->fighting)
 			strcat(buf, "powietrzem???");
 		else if (who_fighting(victim) == ch)
-			strcat(buf, "TOB¡!");
+			strcat(buf, "TOBï¿½!");
 		else if (victim->in_room == victim->fighting->who->in_room)
 		{
 			strcat(buf, PERS(victim->fighting->who, ch, 4));
 			strcat(buf, ".");
 		}
 		else
-			strcat(buf, "kim¶ kto sobie poszed³???");
+			strcat(buf, "kimï¿½ kto sobie poszedï¿½???");
 		break;
 	}
 
@@ -694,7 +691,7 @@ void show_char_to_char_1(CHAR_DATA *victim, CHAR_DATA *ch)
 	if (IS_DESCRIBED(victim))
 	{
 		const SWString &attrib = format_char_attribute(victim, 0);
-		ch_printf(ch, "Wygl±da jak" FG_YELLOW " %s" EOL, attrib.c_str());
+		ch_printf(ch, "Wyglï¿½da jak" FG_YELLOW " %s" EOL, attrib.c_str());
 	}
 
 	if (IS_AFFECTED( victim, AFF_DISGUISE ) && victim->pcdata && *victim->pcdata->fake_desc)
@@ -719,13 +716,13 @@ void show_char_to_char_1(CHAR_DATA *victim, CHAR_DATA *ch)
 				MALE( victim ) ? "On" : FEMALE(victim) ? "Ona" : "Ono", victim, TO_CHAR);
 				found = true;
 			}
-			/* by Ratm: Ugly haX00r, ale nie chce mi sie tego robiæ poprawnie
-			 bo bym musia³ zmieniaæ w pizdu rzeczy i potem godzinami
-			 testowaæ czy dzia³a, wybaczcie ;) */
+			/* by Ratm: Ugly haX00r, ale nie chce mi sie tego robiï¿½ poprawnie
+			 bo bym musiaï¿½ zmieniaï¿½ w pizdu rzeczy i potem godzinami
+			 testowaï¿½ czy dziaï¿½a, wybaczcie ;) */
 			if (iWear == WEAR_WIELD)
 			{
 				if (IS_SET(obj->wear_flags, ITEM_DUAL_WIELD))
-					send_to_char(FG_CYAN "<broñ dwurêczna>         " PLAIN, ch);
+					send_to_char(FG_CYAN "<broï¿½ dwurï¿½czna>         " PLAIN, ch);
 				else
 					send_to_char(where_name[iWear], ch);
 			}
@@ -745,9 +742,9 @@ void show_char_to_char_1(CHAR_DATA *victim, CHAR_DATA *ch)
 
 	if (number_percent() < ch->pcdata->learned[gsn_peek])
 	{
-		ch_printf(ch, NL FB_CYAN "Zagl±dasz w je%s ekwipunek:" EOL,
+		ch_printf(ch, NL FB_CYAN "Zaglï¿½dasz w je%s ekwipunek:" EOL,
 		FEMALE( victim ) ? "j" : "go");
-		show_list_to_char(victim->first_carrying, ch, true, true);
+		show_list_to_char(victim->carrying, ch, true, true);
 		learn_from_success(ch, gsn_peek);
 	}
 	else if (ch->pcdata->learned[gsn_peek])
@@ -756,11 +753,9 @@ void show_char_to_char_1(CHAR_DATA *victim, CHAR_DATA *ch)
 	return;
 }
 
-void show_char_to_char(CHAR_DATA *list, CHAR_DATA *ch)
+void show_char_to_char(const std::list<CHAR_DATA*>& list, CHAR_DATA *ch)
 {
-	CHAR_DATA *rch;
-
-	for (rch = list; rch; rch = rch->next_in_room)
+	for (auto* rch : list)
 	{
 		/* Thanos: najpierw moby */
 		if (rch == ch || !IS_NPC(rch))
@@ -770,13 +765,13 @@ void show_char_to_char(CHAR_DATA *list, CHAR_DATA *ch)
 			show_char_to_char_0(rch, ch);
 		else if (IS_RACE(rch, "DEFEL"))
 			send_to_char(FG_RED
-			"Para czerwonych oczu uwa¿nie ci siê przygl±da." EOL, ch);
+			"Para czerwonych oczu uwaï¿½nie ci siï¿½ przyglï¿½da." EOL, ch);
 		else if (room_is_dark(ch->in_room) && IS_AFFECTED(ch, AFF_INFRARED))
 			send_to_char(FB_RED
-			"Ciemny kszta³t ¿ywej istoty rysuje siê przed tob±." EOL, ch);
+			"Ciemny ksztaï¿½t ï¿½ywej istoty rysuje siï¿½ przed tobï¿½." EOL, ch);
 	}
 
-	for (rch = list; rch; rch = rch->next_in_room)
+	for (auto* rch : list)
 	{
 		/* Thanos: potem gracze */
 		if (rch == ch || IS_NPC(rch))
@@ -786,27 +781,25 @@ void show_char_to_char(CHAR_DATA *list, CHAR_DATA *ch)
 			show_char_to_char_0(rch, ch);
 		else if (IS_RACE( rch, "DEFEL" ) && (!IS_SET(rch->act, PLR_WIZINVIS) || rch->pcdata->wizinvis <= get_trust(ch)))
 			send_to_char(FG_RED
-			"Para czerwonych oczu uwa¿nie ci siê przygl±da." EOL, ch);
+			"Para czerwonych oczu uwaï¿½nie ci siï¿½ przyglï¿½da." EOL, ch);
 		else if (room_is_dark(ch->in_room) && IS_AFFECTED(ch, AFF_INFRARED))
 			send_to_char(FB_RED
-			"Ciemny kszta³t ¿ywej istoty rysuje siê przed tob±." EOL, ch);
+			"Ciemny ksztaï¿½t ï¿½ywej istoty rysuje siï¿½ przed tobï¿½." EOL, ch);
 	}
 	return;
 }
 
-/* Trog: zwraca wska¼nik na pierwszego gracza na statku
+/* Trog: zwraca wskaï¿½nik na pierwszego gracza na statku
  * i dodatkowo w polu newbie czy na statku jest co najmniej
  * jeden gracz NEWBIE */
 CHAR_DATA* player_on_ship(SHIP_DATA *ship, bool *newbie)
 {
-	CHAR_DATA *ch;
 	CHAR_DATA *first_ch = NULL;
-	ROOM_INDEX_DATA *room;
 
 	*newbie = false;
-	for (room = ship->first_location; room; room = room->next_on_ship)
+	for (auto* room : ship->locations)
 	{
-		for (ch = room->first_person; ch; ch = ch->next_in_room)
+		for (auto* ch : room->people)
 		{
 			if (!IS_NPC(ch) && !first_ch)
 				first_ch = NULL;
@@ -834,20 +827,21 @@ const char* player_ship_prefix(SH *ship)
 	return "";
 }
 
-void show_ships_to_char(SH *ship, CD *ch)
+void show_ships_to_char(const std::list<SHIP_DATA*>& list, CD *ch)
 {
-	SH *rship;
-	SH *nship = NULL;
-
-	for (rship = ship; rship; rship = nship)
+	auto it = list.begin();
+	while (it != list.end())
 	{
+		SH *rship = *it;
 		ch_printf(ch, "%8.8s" FB_CYAN "%s%-33s     " FB_CYAN, player_ship_prefix(rship), rship->hatchopen ? "  " : FG_GREEN "][" FB_CYAN,
 				SHIPNAME(rship));
 
-		if ((nship = rship->next_in_room) != NULL)
+		++it;
+		if (it != list.end())
 		{
+			SH *nship = *it;
 			ch_printf(ch, FB_CYAN "%s%-33s" FB_CYAN, nship->hatchopen ? "  " : FG_GREEN "][" FB_CYAN, SHIPNAME(nship));
-			nship = nship->next_in_room;
+			++it;
 		}
 		send_to_char(EOL, ch);
 	}
@@ -860,7 +854,7 @@ void show_ship_to_char(SHIP_DATA *ship, CHAR_DATA *ch)
 	ch_printf(ch, FB_CYAN "%s: %s" EOL "%s", SHIPNAME(ship), bit_name(ship_classes_name_list, ship->clazz),
 			*ship->description ? ship->description : "Nie widzisz w tym statku nic specjalnego." NL);
 
-	ch_printf(ch, "%s" PLAIN " ma %s klapê." NL, SHIPNAME(ship), ship->hatchopen ? "otwart±" : "zamkniêt±");
+	ch_printf(ch, "%s" PLAIN " ma %s klapï¿½." NL, SHIPNAME(ship), ship->hatchopen ? "otwartï¿½" : "zamkniï¿½tï¿½");
 	if (IS_OLCMAN(ch))
 		ch_printf(ch, "Ship Transponder: %s" NL, ship->transponder);
 	return;
@@ -940,13 +934,13 @@ DEF_DO_FUN( look )
 
 	if (ch->position < POS_SLEEPING)
 	{
-		send_to_char("Widzisz tylko gwiazdy... Ale¿ one piêkne!" NL, ch);
+		send_to_char("Widzisz tylko gwiazdy... Aleï¿½ one piï¿½kne!" NL, ch);
 		return;
 	}
 
 	if (ch->position == POS_SLEEPING)
 	{
-		send_to_char("Nic nie widzisz, przecie¿ ¶pisz! Zzzzz" NL, ch);
+		send_to_char("Nic nie widzisz, przecieï¿½ ï¿½pisz! Zzzzz" NL, ch);
 		return;
 	}
 
@@ -956,8 +950,8 @@ DEF_DO_FUN( look )
 	if (!IS_NPC(ch) && !IS_SET(ch->act, PLR_HOLYLIGHT) && !IS_AFFECTED(ch, AFF_TRUESIGHT) && !IS_AFFECTED(ch, AFF_INFRARED)
 			&& room_is_dark(ch->in_room))
 	{
-		send_to_char(FG_BLACK "Jest tylko czarna jak smo³a ciemno¶æ..." EOL, ch);
-		show_char_to_char(ch->in_room->first_person, ch);
+		send_to_char(FG_BLACK "Jest tylko czarna jak smoï¿½a ciemnoï¿½ï¿½..." EOL, ch);
+		show_char_to_char(ch->in_room->people, ch);
 		return;
 	}
 
@@ -1032,12 +1026,12 @@ DEF_DO_FUN( look )
 			SHIPDOCK_DATA *dock;
 
 			if (ship->entrance == ch->in_room)
-				ch_printf(ch, FG_CYAN "%s w³az" EOL, !ship->hatchopen ? "Zamkniêty" : "Otwarty");
+				ch_printf(ch, FG_CYAN "%s wï¿½az" EOL, !ship->hatchopen ? "Zamkniï¿½ty" : "Otwarty");
 
-			for (dock = ship->first_dock; dock; dock = dock->next)
+			for (auto* dock : ship->docks)
 				if (dock->vnum == ch->in_room->vnum)
-					ch_printf(ch, FG_CYAN "%s ¶luza %s" EOL,
-							dock->status == 0 ? "Zabezpieczona" : (dock->status > 1 ? "Wy³amana" : "Otwarta"),
+					ch_printf(ch, FG_CYAN "%s ï¿½luza %s" EOL,
+							dock->status == 0 ? "Zabezpieczona" : (dock->status > 1 ? "Wyï¿½amana" : "Otwarta"),
 							dock->target != NULL ? SHIPNAME(dock->target) : "");
 
 			if (!IS_NPC(ch)) /* <-- Thanos: bezpieczniczek */
@@ -1049,12 +1043,12 @@ DEF_DO_FUN( look )
 			SHIPDOCK_DATA *dock;
 
 			if (ship->entrance == ch->in_room)
-				ch_printf(ch, FG_CYAN "%s w³az" EOL, !ship->hatchopen ? "Zamkniêty" : "Otwarty");
+				ch_printf(ch, FG_CYAN "%s wï¿½az" EOL, !ship->hatchopen ? "Zamkniï¿½ty" : "Otwarty");
 
-			for (dock = ship->first_dock; dock; dock = dock->next)
+			for (auto* dock : ship->docks)
 				if (dock->vnum == ch->in_room->vnum)
-					ch_printf(ch, FG_CYAN "%s ¶luza %s" EOL,
-							dock->status == 0 ? "Zabezpieczona" : (dock->status > 1 ? "Wy³amana" : "Otwarta"),
+					ch_printf(ch, FG_CYAN "%s ï¿½luza %s" EOL,
+							dock->status == 0 ? "Zabezpieczona" : (dock->status > 1 ? "Wyï¿½amana" : "Otwarta"),
 							dock->target != NULL ? SHIPNAME(dock->target) : "");
 
 			if (!IS_NPC(ch)) /* <-- Thanos: bezpieczniczek */
@@ -1062,9 +1056,9 @@ DEF_DO_FUN( look )
 					show_module_to_char0(ship, ch, ch->in_room->vnum);
 		}
 
-		show_ships_to_char(ch->in_room->first_ship, ch);
-		show_list_to_char(ch->in_room->first_content, ch, false, false);
-		show_char_to_char(ch->in_room->first_person, ch);
+		show_ships_to_char(ch->in_room->ships, ch);
+		show_list_to_char(ch->in_room->contents, ch, false, false);
+		show_char_to_char(ch->in_room->people, ch);
 
 		if (str_cmp(arg1, "auto"))
 			if ((ship = ship_from_cockpit(ch->in_room)) != NULL || ((ship = ship_from_hangar(ch->in_room)) != NULL && (((hangar =
@@ -1072,7 +1066,7 @@ DEF_DO_FUN( look )
 					|| ((ship = ship_from_room(ch->in_room)) != NULL
 							&& (((dock = shipdock_from_room(ship, ch->in_room->vnum)) != NULL) && dock->status > 0 && dock->target == NULL)))
 			{
-				pager_printf(ch, NL FB_CYAN "Przez iluminator widaæ:" EOL);
+				pager_printf(ch, NL FB_CYAN "Przez iluminator widaï¿½:" EOL);
 
 				if ((starsystem = ship->starsystem) != NULL)
 				{
@@ -1086,14 +1080,14 @@ DEF_DO_FUN( look )
 					pager_printf(ch,
 					FB_GREEN "%s" EOL, starsystem->description2[0] != '\0' ? starsystem->description2 : "");
 					/*by Aldegard - jak cos jest dalej niz 'blabla' to tego po prostu nie widac*/
-					for (star = starsystem->first_star; star; star = star->next)
+					for (auto* star : starsystem->stars)
 						if (IS_SET(ch->act, PLR_HOLYLIGHT)
 								|| (srange((star->xpos - ship->vx), (star->ypos - ship->vy), (star->zpos - ship->vz)) < 150000))
 							pager_printf(ch,
 							FB_YELLOW "%-40s %-8.0f %-8.0f %.0f" EOL, star->name, star->xpos - ship->vx + number_range(-slma, slma),
 									star->ypos - ship->vy + number_range(-slma, slma), star->zpos - ship->vz + number_range(-slma, slma));
 
-					for (planet = starsystem->first_planet; planet; planet = planet->next_in_system)
+					for (auto* planet : starsystem->planets)
 						if (IS_SET(ch->act, PLR_HOLYLIGHT)
 								|| (srange((planet->xpos - ship->vx), (planet->ypos - ship->vy), (planet->zpos - ship->vz)) < 60000))
 							pager_printf(ch,
@@ -1101,16 +1095,15 @@ DEF_DO_FUN( look )
 									planet->ypos - ship->vy + number_range(-slma, slma),
 									planet->zpos - ship->vz + number_range(-slma, slma));
 
-					for (moon = starsystem->first_moon; moon; moon = moon->next)
+					for (auto* moon : starsystem->moons)
 						if (IS_SET(ch->act, PLR_HOLYLIGHT)
 								|| (srange((moon->xpos - ship->vx), (moon->ypos - ship->vy), (moon->zpos - ship->vz)) < 40000))
 							pager_printf(ch,
 							FB_WHITE "%-40s %-8.0f %-8.0f %-8.0f" EOL, moon->name, moon->xpos - ship->vx + number_range(-slma, slma),
 									moon->ypos - ship->vy + number_range(-slma, slma), moon->zpos - ship->vz + number_range(-slma, slma));
 
-					for (astro = ship->starsystem->first_astro; astro; astro = a_next)
+					for (auto* astro : ship->starsystem->astros)
 					{
-						a_next = astro->next_in_starsystem;
 						if (!IS_SET(ch->act, PLR_HOLYLIGHT)
 								&& srange((ship->vx - astro->ox), (ship->vy - astro->oy), (ship->vz - astro->oz))
 										> (astro->value + 1) * 150)
@@ -1118,7 +1111,7 @@ DEF_DO_FUN( look )
 						pager_printf(ch, FB_GREEN "%-33s" NL, astro_names[astro->type]);
 					}
 
-					for (target = ship->starsystem->first_ship; target; target = target->next_in_starsystem)
+					for (auto* target : ship->starsystem->ships)
 					{
 						if (!IS_SET(ch->act, PLR_HOLYLIGHT) /*Aldegard*/
 								&& (target->cloack != 0
@@ -1132,15 +1125,15 @@ DEF_DO_FUN( look )
 										> 3900 + target->size * 90))
 						{
 							pager_printf(ch, FB_GREEN
-							"Maleñki poruszaj±cy siê punkt." EOL);
+							"Maleï¿½ki poruszajï¿½cy siï¿½ punkt." EOL);
 							continue;
 						} /*done*/
 
 						if (target != ship)
 							pager_printf(ch, "%8.8s" FB_GREEN "%s %s%s" EOL, player_ship_prefix(target), target->sslook,
-									bit_name(ship_classes_name_list, target->clazz), target->timer >= 0 ? FB_RED " (P³onie)" FB_GREEN : "");
+									bit_name(ship_classes_name_list, target->clazz), target->timer >= 0 ? FB_RED " (Pï¿½onie)" FB_GREEN : "");
 					}
-					for (missile = ship->starsystem->first_missile; missile; missile = missile->next_in_starsystem)
+					for (auto* missile : ship->starsystem->missiles)
 					{
 						if (!IS_SET(ch->act, PLR_HOLYLIGHT)
 								&& (srange((missile->mx - ship->vx), (missile->my - ship->vy), (missile->mz - ship->vz)) > 2000))
@@ -1149,10 +1142,10 @@ DEF_DO_FUN( look )
 						}
 						pager_printf(ch, "%s" NL,
 								missile->missiletype == CONCUSSION_MISSILE ?
-										"         Pocisk Samonaprowadzaj±cy" :
+										"         Pocisk Samonaprowadzajï¿½cy" :
 										(missile->missiletype == PROTON_TORPEDO ?
 												"         Torpeda" :
-												(missile->missiletype == HEAVY_ROCKET ? "         Ciê¿ka Rakieta" : "         Ciê¿ka Bomba")));
+												(missile->missiletype == HEAVY_ROCKET ? "         Ciï¿½ka Rakieta" : "         Ciï¿½ka Bomba")));
 					}
 
 				}
@@ -1185,7 +1178,7 @@ DEF_DO_FUN( look )
 					ch_printf(ch, FB_GREEN "Wrak SSD Enforcer One" EOL);
 				}
 				else
-					ch_printf(ch, EOL " Tylko jakie¶ dziwne paski." NL);
+					ch_printf(ch, EOL " Tylko jakieï¿½ dziwne paski." NL);
 			}
 		send_to_char(PLAIN, ch);
 		fevent_trigger(ch, FE_FIND_OBJECT);
@@ -1202,7 +1195,7 @@ DEF_DO_FUN( look )
 		/* 'look under' */
 		if (arg2[0] == '\0')
 		{
-			send_to_char("Spojrzeæ pod co?" NL, ch);
+			send_to_char("Spojrzeï¿½ pod co?" NL, ch);
 			return;
 		}
 
@@ -1213,18 +1206,18 @@ DEF_DO_FUN( look )
 		}
 		if (ch->carry_weight + obj->weight > can_carry_w(ch))
 		{
-			send_to_char("Nie uniesiesz tego, by zajrzeæ pod spód." NL, ch);
+			send_to_char("Nie uniesiesz tego, by zajrzeï¿½ pod spï¿½d." NL, ch);
 			return;
 		}
 		count = obj->count;
 		obj->count = 1;
-		act(PLAIN, "Lekko podnosisz $p$3 i zagl±dasz pod spód:", ch, obj, NULL,
+		act(PLAIN, "Lekko podnosisz $p$3 i zaglï¿½dasz pod spï¿½d:", ch, obj, NULL,
 		TO_CHAR);
-		act(PLAIN, "$n lekko unosi $p$3 i zagl±da pod spód:", ch, obj, NULL,
+		act(PLAIN, "$n lekko unosi $p$3 i zaglï¿½da pod spï¿½d:", ch, obj, NULL,
 		TO_ROOM);
 		obj->count = count;
 		if (IS_OBJ_STAT(obj, ITEM_COVERING))
-			show_list_to_char(obj->first_content, ch, true, true);
+			show_list_to_char(obj->contents, ch, true, true);
 		else
 			send_to_char("Nic." NL, ch);
 		if (doProg)
@@ -1239,7 +1232,7 @@ DEF_DO_FUN( look )
 		/* 'look in' */
 		if (arg2[0] == '\0')
 		{
-			send_to_char("Spojrzeæ w co?" NL, ch);
+			send_to_char("Spojrzeï¿½ w co?" NL, ch);
 			return;
 		}
 
@@ -1264,8 +1257,8 @@ DEF_DO_FUN( look )
 				break;
 			}
 
-			ch_printf(ch, "To jest w %s po³owie wype³nione %s ciecz±." NL,
-					obj->value[1] < obj->value[0] / 4 ? "prawie" : obj->value[1] < 3 * obj->value[0] / 4 ? "oko³o" : "ponad",
+			ch_printf(ch, "To jest w %s poï¿½owie wypeï¿½nione %s cieczï¿½." NL,
+					obj->value[1] < obj->value[0] / 4 ? "prawie" : obj->value[1] < 3 * obj->value[0] / 4 ? "okoï¿½o" : "ponad",
 					liq_table[obj->value[2]].liq_color);
 
 			if (doProg)
@@ -1273,7 +1266,7 @@ DEF_DO_FUN( look )
 			break;
 
 		case ITEM_PORTAL:
-			for (pexit = ch->in_room->first_exit; pexit; pexit = pexit->next)
+			for (auto* pexit : ch->in_room->exits)
 			{
 				if (pexit->vdir == DIR_PORTAL && IS_SET(pexit->flags, EX_PORTAL))
 				{
@@ -1293,7 +1286,7 @@ DEF_DO_FUN( look )
 					return;
 				}
 			}
-			send_to_char("Widzisz wiruj±cy chaos..." NL, ch);
+			send_to_char("Widzisz wirujï¿½cy chaos..." NL, ch);
 			break;
 		case ITEM_CONTAINER:
 		case ITEM_PAZAAK_SIDE_DECK:
@@ -1302,9 +1295,9 @@ DEF_DO_FUN( look )
 		case ITEM_DROID_CORPSE:
 			if (IS_SET(obj->value[1], CONT_CLOSED))
 			{
-				ch_printf(ch, "%s %s %s zamkniêt%s." NL,
+				ch_printf(ch, "%s %s %s zamkniï¿½t%s." NL,
 						obj->gender == GENDER_MALE ? "Ten" : obj->gender == GENDER_FEMALE ? "Ta" :
-						obj->gender == GENDER_NEUTRAL ? "To" : "Te", obj->przypadki[0], obj->gender == GENDER_PLURAL ? "s±" : "jest",
+						obj->gender == GENDER_NEUTRAL ? "To" : "Te", obj->przypadki[0], obj->gender == GENDER_PLURAL ? "sï¿½" : "jest",
 						obj->gender == GENDER_MALE ? "y" : obj->gender == GENDER_FEMALE ? "a" : "e");
 				break;
 			}
@@ -1318,12 +1311,12 @@ DEF_DO_FUN( look )
 				count = obj->count;
 				obj->count = 1;
 				if (obj->gender == GENDER_PLURAL)
-					act(PLAIN, "$p zawieraj±:", ch, obj, NULL, TO_CHAR);
+					act(PLAIN, "$p zawierajï¿½:", ch, obj, NULL, TO_CHAR);
 				else
 					act(PLAIN, "$p zawiera:", ch, obj, NULL, TO_CHAR);
 				obj->count = count;
 
-				show_list_to_char(obj->first_content, ch, true, true);
+				show_list_to_char(obj->contents, ch, true, true);
 				send_to_char(PLAIN, ch);
 			}
 
@@ -1334,7 +1327,7 @@ DEF_DO_FUN( look )
 		return;
 	}
 
-	for (EXTRA_DESCR_DATA *ed = ch->in_room->first_extradesc; ed; ed = ed->next) /* Trog */
+	for (auto* ed : ch->in_room->extradesc) /* Trog */
 	{
 		if (*ed->keyword && is_name_prefix(ed->keyword, arg1))
 		{
@@ -1358,12 +1351,12 @@ DEF_DO_FUN( look )
 				if (IS_SET(pexit->flags, EX_SECRET) && door != -1)
 					send_to_char("Nie dostrzegasz niczego specjalnego." NL, ch);
 				else
-					act(PLAIN, "$d s± zamkniête.", ch, NULL, pexit->keyword,
+					act(PLAIN, "$d sï¿½ zamkniï¿½te.", ch, NULL, pexit->keyword,
 					TO_CHAR);
 				return;
 			}
 			if (IS_SET(pexit->flags, EX_BASHED))
-				act(FB_RED, "$d zosta³y wyrwane z zawiasów!", ch, NULL, pexit->keyword, TO_CHAR);
+				act(FB_RED, "$d zostaï¿½y wyrwane z zawiasï¿½w!", ch, NULL, pexit->keyword, TO_CHAR);
 		}
 
 		if (pexit->description && pexit->description[0] != '\0')
@@ -1379,7 +1372,7 @@ DEF_DO_FUN( look )
 			if (!IS_SET(pexit->flags, EX_xLOOK) && get_trust(ch) < LEVEL_IMMORTAL)
 			{
 				send_to_char(COL_FORCE, ch);
-				send_to_char("Próbujesz przeczuæ co jest w ¶rodku..." NL, ch);
+				send_to_char("Prï¿½bujesz przeczuï¿½ co jest w ï¿½rodku..." NL, ch);
 				/* Change by Narn, Sept 96 to allow characters who don't have the
 				 scry spell to benefit from objects that are affected by scry.
 				 */
@@ -1391,7 +1384,7 @@ DEF_DO_FUN( look )
 
 					if (number_percent() > percent)
 					{
-						send_to_char("Nie uda³o ci siê." NL, ch);
+						send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
 						return;
 					}
 				}
@@ -1451,11 +1444,13 @@ DEF_DO_FUN( look )
 
 	/* finally fixed the annoying look 2.obj desc bug	-Thoric */
 	number = number_argument(arg1, arg);
-	for (cnt = 0, obj = ch->last_carrying; obj; obj = obj->prev_content)
+	cnt = 0;
+	for (auto rit = ch->carrying.rbegin(); rit != ch->carrying.rend(); ++rit)
 	{
+		OBJ_DATA *obj = *rit;
 		if (can_see_obj(ch, obj))
 		{
-			if ((pdesc = get_extra_descr(arg, obj->first_extradesc)) != NULL)
+			if ((pdesc = get_extra_descr(arg, obj->extradesc)) != NULL)
 			{
 				if ((cnt += obj->count) < number)
 					continue;
@@ -1466,7 +1461,7 @@ DEF_DO_FUN( look )
 				return;
 			}
 
-			if ((pdesc = get_extra_descr(arg, obj->pIndexData->first_extradesc)) != NULL)
+			if ((pdesc = get_extra_descr(arg, obj->pIndexData->extradesc)) != NULL)
 			{
 				if ((cnt += obj->count) < number)
 					continue;
@@ -1483,9 +1478,9 @@ DEF_DO_FUN( look )
 					continue;
 				quest_trigger(ch, EVENT_LOOK_OBJ, obj, NULL);
 
-				pdesc = get_extra_descr(obj->name, obj->pIndexData->first_extradesc);
+				pdesc = get_extra_descr(obj->name, obj->pIndexData->extradesc);
 				if (!pdesc)
-					pdesc = get_extra_descr(obj->name, obj->first_extradesc);
+					pdesc = get_extra_descr(obj->name, obj->extradesc);
 				if (!pdesc)
 					send_to_char("Nie dostrzegasz niczego specjalnego.\r\n", ch);
 				else
@@ -1497,11 +1492,12 @@ DEF_DO_FUN( look )
 		}
 	}
 
-	for (obj = ch->in_room->last_content; obj; obj = obj->prev_content)
+	for (auto rit = ch->in_room->contents.rbegin(); rit != ch->in_room->contents.rend(); ++rit)
 	{
+		OBJ_DATA *obj = *rit;
 		if (can_see_obj(ch, obj))
 		{
-			if ((pdesc = get_extra_descr(arg, obj->first_extradesc)) != NULL)
+			if ((pdesc = get_extra_descr(arg, obj->extradesc)) != NULL)
 			{
 				if ((cnt += obj->count) < number)
 					continue;
@@ -1512,7 +1508,7 @@ DEF_DO_FUN( look )
 				return;
 			}
 
-			if ((pdesc = get_extra_descr(arg, obj->pIndexData->first_extradesc)) != NULL)
+			if ((pdesc = get_extra_descr(arg, obj->pIndexData->extradesc)) != NULL)
 			{
 				if ((cnt += obj->count) < number)
 					continue;
@@ -1527,9 +1523,9 @@ DEF_DO_FUN( look )
 				if ((cnt += obj->count) < number)
 					continue;
 				quest_trigger(ch, EVENT_LOOK_OBJ, obj, NULL);
-				pdesc = get_extra_descr(obj->name, obj->pIndexData->first_extradesc);
+				pdesc = get_extra_descr(obj->name, obj->pIndexData->extradesc);
 				if (!pdesc)
-					pdesc = get_extra_descr(obj->name, obj->first_extradesc);
+					pdesc = get_extra_descr(obj->name, obj->extradesc);
 				if (!pdesc)
 					send_to_char("Nie dostrzegasz niczego specjalnego.\r\n", ch);
 				else
@@ -1561,13 +1557,13 @@ void show_condition(CHAR_DATA *ch, CHAR_DATA *victim)
 	{
 
 		if (percent >= 100)
-			strcat(buf, " jest w doskona³ym stanie." NL);
+			strcat(buf, " jest w doskonaï¿½ym stanie." NL);
 		else if (percent >= 90)
 			strcat(buf, " ma lekko zadrapany pancerz." NL);
 		else if (percent >= 80)
-			strcat(buf, " ma kilka dra¶niêæ na obudowie." NL);
+			strcat(buf, " ma kilka draï¿½niï¿½ï¿½ na obudowie." NL);
 		else if (percent >= 70)
-			strcat(buf, " ma kilka naciêæ w obudowie." NL);
+			strcat(buf, " ma kilka naciï¿½ï¿½ w obudowie." NL);
 		else if (percent >= 60)
 			strcat(buf, " ma kilka dziur w pancerzu." NL);
 		else if (percent >= 50)
@@ -1592,13 +1588,13 @@ void show_condition(CHAR_DATA *ch, CHAR_DATA *victim)
 	{
 
 		if (percent >= 100)
-			strcat(buf, " jest w doskona³ym zdrowiu." NL);
+			strcat(buf, " jest w doskonaï¿½ym zdrowiu." NL);
 		else if (percent >= 90)
-			strcat(buf, " ma kilka zadrapañ." NL);
+			strcat(buf, " ma kilka zadrapaï¿½." NL);
 		else if (percent >= 80)
-			strcat(buf, " ma kilka dra¶niêæ." NL);
+			strcat(buf, " ma kilka draï¿½niï¿½ï¿½." NL);
 		else if (percent >= 70)
-			strcat(buf, " ma kilka naciêæ." NL);
+			strcat(buf, " ma kilka naciï¿½ï¿½." NL);
 		else if (percent >= 60)
 			strcat(buf, " ma kilka ran." NL);
 		else if (percent >= 50)
@@ -1608,9 +1604,9 @@ void show_condition(CHAR_DATA *ch, CHAR_DATA *victim)
 		else if (percent >= 30)
 			strcat(buf, " krwawi obficie." NL);
 		else if (percent >= 20)
-			strcat(buf, " broczy posok±." NL);
+			strcat(buf, " broczy posokï¿½." NL);
 		else if (percent >= 10)
-			strcat(buf, " ledwie trzyma siê na nogach." NL);
+			strcat(buf, " ledwie trzyma siï¿½ na nogach." NL);
 		else
 			strcat(buf, " UMIERA." NL);
 
@@ -1637,13 +1633,13 @@ DEF_DO_FUN( glance )
 
 	if (ch->position < POS_SLEEPING)
 	{
-		send_to_char("Widzisz tylko gwiazdy... Ale¿ one piêkne!" NL, ch);
+		send_to_char("Widzisz tylko gwiazdy... Aleï¿½ one piï¿½kne!" NL, ch);
 		return;
 	}
 
 	if (ch->position == POS_SLEEPING)
 	{
-		send_to_char("Nic nie widzisz, przecie¿ ¶pisz!" NL, ch);
+		send_to_char("Nic nie widzisz, przecieï¿½ ï¿½pisz!" NL, ch);
 		return;
 	}
 
@@ -1702,7 +1698,7 @@ DEF_DO_FUN( examine )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Zajrzeæ do czego?" NL, ch);
+		send_to_char("Zajrzeï¿½ do czego?" NL, ch);
 		return;
 	}
 
@@ -1717,9 +1713,9 @@ DEF_DO_FUN( examine )
 		if ((board = get_board(obj)) != NULL)
 		{
 			if (board->num_posts)
-				ch_printf(ch, "Jest w nim oko³o %d pos³anych not. Wpisz 'note list' by zobaczyæ ich listê." NL, board->num_posts);
+				ch_printf(ch, "Jest w nim okoï¿½o %d posï¿½anych not. Wpisz 'note list' by zobaczyï¿½ ich listï¿½." NL, board->num_posts);
 			else
-				send_to_char("Nie zawiera ¿adnych not." NL, ch);
+				send_to_char("Nie zawiera ï¿½adnych not." NL, ch);
 		}
 
 		switch (obj->item_type)
@@ -1733,27 +1729,27 @@ DEF_DO_FUN( examine )
 			if (obj->value[1] == 0)
 				obj->value[1] = 1;
 			dam = (int) ((obj->value[0] * 10) / obj->value[1]);
-			strcpy(buf, "Kiedy przygl±dasz siê uwa¿niej, spostrzegasz, ¿e ");
+			strcpy(buf, "Kiedy przyglï¿½dasz siï¿½ uwaï¿½niej, spostrzegasz, ï¿½e ");
 			if (dam >= 10)
-				strcat(buf, "jest w doskona³ym stanie.");
+				strcat(buf, "jest w doskonaï¿½ym stanie.");
 			else if (dam == 9)
 				strcat(buf, "jest w bardzo dobrym stanie.");
 			else if (dam == 8)
 				strcat(buf, "jest w dobrym stanie.");
 			else if (dam == 7)
-				strcat(buf, "jest krótko u¿ywany.");
+				strcat(buf, "jest krï¿½tko uï¿½ywany.");
 			else if (dam == 6)
-				strcat(buf, "jest lekko zu¿yty.");
+				strcat(buf, "jest lekko zuï¿½yty.");
 			else if (dam == 5)
 				strcat(buf, "potrzebuje naprawy.");
 			else if (dam == 4)
 				strcat(buf, "bardzo potrzebuje naprawy.");
 			else if (dam == 3)
-				strcat(buf, "bez naprawy siê nie obejdzie.");
+				strcat(buf, "bez naprawy siï¿½ nie obejdzie.");
 			else if (dam == 2)
 				strcat(buf, "jest w okropnym stanie.");
 			else if (dam == 1)
-				strcat(buf, "jest praktycznie bezu¿yteczny.");
+				strcat(buf, "jest praktycznie bezuï¿½yteczny.");
 			else if (dam <= 0)
 				strcat(buf, "jest zepsuty.");
 			strcat(buf, NL);
@@ -1762,27 +1758,27 @@ DEF_DO_FUN( examine )
 
 		case ITEM_WEAPON:
 			dam = obj->value[0];
-			strcpy(buf, "Kiedy przygl±dasz siê uwa¿niej, spostrzegasz, ¿e ");
+			strcpy(buf, "Kiedy przyglï¿½dasz siï¿½ uwaï¿½niej, spostrzegasz, ï¿½e ");
 			if (dam >= 10)
-				strcat(buf, "jest w doskona³ym stanie.");
+				strcat(buf, "jest w doskonaï¿½ym stanie.");
 			else if (dam == 9)
 				strcat(buf, "jest w bardzo dobrym stanie.");
 			else if (dam == 8)
 				strcat(buf, "jest w dobrym stanie.");
 			else if (dam == 7)
-				strcat(buf, "jest krótko u¿ywany.");
+				strcat(buf, "jest krï¿½tko uï¿½ywany.");
 			else if (dam == 6)
-				strcat(buf, "jest lekko zu¿yty.");
+				strcat(buf, "jest lekko zuï¿½yty.");
 			else if (dam == 5)
 				strcat(buf, "potrzebuje naprawy.");
 			else if (dam == 4)
 				strcat(buf, "bardzo potrzebuje naprawy.");
 			else if (dam == 3)
-				strcat(buf, "bez naprawy rozsupie siê wkrótce.");
+				strcat(buf, "bez naprawy rozsupie siï¿½ wkrï¿½tce.");
 			else if (dam == 2)
 				strcat(buf, "jest w okropnym stanie.");
 			else if (dam == 1)
-				strcat(buf, "jest praktycznie bezu¿yteczny.");
+				strcat(buf, "jest praktycznie bezuï¿½yteczny.");
 			else if (dam <= 0)
 				strcat(buf, "jest zepsuty.");
 			strcat(buf, NL);
@@ -1790,22 +1786,22 @@ DEF_DO_FUN( examine )
 			if (obj->value[3] == WEAPON_BLASTER)
 			{
 				if (obj->blaster_setting == BLASTER_FULL)
-					ch_printf(ch, "Dysponuje PE£N¡ moc±." NL);
+					ch_printf(ch, "Dysponuje PEï¿½Nï¿½ mocï¿½." NL);
 				else if (obj->blaster_setting == BLASTER_HIGH)
-					ch_printf(ch, "Dysponuje DU¯¡ ILO¦CI¡ mocy." NL);
+					ch_printf(ch, "Dysponuje DUï¿½ï¿½ ILOï¿½CIï¿½ mocy." NL);
 				else if (obj->blaster_setting == BLASTER_NORMAL)
-					ch_printf(ch, "Dysponuje NORMALN¡ ILO¦CI¡ mocy." NL);
+					ch_printf(ch, "Dysponuje NORMALNï¿½ ILOï¿½CIï¿½ mocy." NL);
 				else if (obj->blaster_setting == BLASTER_HALF)
-					ch_printf(ch, "Dysponuje PO£OW¡ mocy." NL);
+					ch_printf(ch, "Dysponuje POï¿½OWï¿½ mocy." NL);
 				else if (obj->blaster_setting == BLASTER_LOW)
-					ch_printf(ch, "Dysponuje MA£¡ ILO¦CI¡ mocy." NL);
+					ch_printf(ch, "Dysponuje MAï¿½ï¿½ ILOï¿½CIï¿½ mocy." NL);
 				else if (obj->blaster_setting == BLASTER_STUN)
-					ch_printf(ch, "Jest ustawiony na OG£USZANIE." NL);
-				ch_printf(ch, "Zosta³o mu %d do %d strza³ów." NL, obj->value[4] / 5, obj->value[4]);
+					ch_printf(ch, "Jest ustawiony na OGï¿½USZANIE." NL);
+				ch_printf(ch, "Zostaï¿½o mu %d do %d strzaï¿½ï¿½w." NL, obj->value[4] / 5, obj->value[4]);
 			}
 			else if ((obj->value[3] == WEAPON_LIGHTSABER || obj->value[3] == WEAPON_VIBRO_BLADE || obj->value[3] == WEAPON_FORCE_PIKE))
 			{
-				ch_printf(ch, "Ma jeszcze %d/%d ³adunków." NL, obj->value[4], obj->value[5]);
+				ch_printf(ch, "Ma jeszcze %d/%d ï¿½adunkï¿½w." NL, obj->value[4], obj->value[5]);
 			}
 			break;
 
@@ -1814,29 +1810,29 @@ DEF_DO_FUN( examine )
 				dam = (obj->timer * 10) / obj->value[1];
 			else
 				dam = 10;
-			strcpy(buf, "Kiedy przygl±dasz siê uwa¿niej zauwa¿asz, ¿e ");
+			strcpy(buf, "Kiedy przyglï¿½dasz siï¿½ uwaï¿½niej zauwaï¿½asz, ï¿½e ");
 			if (dam >= 10)
-				strcat(buf, "jest ¶wie¿y.");
+				strcat(buf, "jest ï¿½wieï¿½y.");
 			else if (dam == 9)
-				strcat(buf, "jest prawie ¶wie¿y.");
+				strcat(buf, "jest prawie ï¿½wieï¿½y.");
 			else if (dam == 8)
-				strcat(buf, "wygl±da bardzo apetycznie.");
+				strcat(buf, "wyglï¿½da bardzo apetycznie.");
 			else if (dam == 7)
-				strcat(buf, "wygl±da dobrze.");
+				strcat(buf, "wyglï¿½da dobrze.");
 			else if (dam == 6)
-				strcat(buf, "wygl±da ok.");
+				strcat(buf, "wyglï¿½da ok.");
 			else if (dam == 5)
-				strcat(buf, "jest lekko nie¶wie¿y.");
+				strcat(buf, "jest lekko nieï¿½wieï¿½y.");
 			else if (dam == 4)
-				strcat(buf, "jest trochê nie¶wie¿y.");
+				strcat(buf, "jest trochï¿½ nieï¿½wieï¿½y.");
 			else if (dam == 3)
 				strcat(buf, "lekko zalatuje.");
 			else if (dam == 2)
-				strcat(buf, "trochê ¶mierdzi.");
+				strcat(buf, "trochï¿½ ï¿½mierdzi.");
 			else if (dam == 1)
-				strcat(buf, "¶mierdzi.");
+				strcat(buf, "ï¿½mierdzi.");
 			else if (dam <= 0)
-				strcat(buf, "jest pokryty drobinkami ple¶ni i mocno ¶mierdzi.");
+				strcat(buf, "jest pokryty drobinkami pleï¿½ni i mocno ï¿½mierdzi.");
 			strcat(buf, NL);
 			send_to_char(buf, ch);
 			break;
@@ -1845,15 +1841,15 @@ DEF_DO_FUN( examine )
 		case ITEM_LEVER:
 		case ITEM_PULLCHAIN:
 			if (IS_SET(obj->value[0], TRIG_UP))
-				send_to_char("Zauwa¿asz, ¿e jest wy³±czony." NL, ch);
+				send_to_char("Zauwaï¿½asz, ï¿½e jest wyï¿½ï¿½czony." NL, ch);
 			else
-				send_to_char("Zauwa¿asz, ¿e jest w³±czony." NL, ch);
+				send_to_char("Zauwaï¿½asz, ï¿½e jest wï¿½ï¿½czony." NL, ch);
 			break;
 		case ITEM_BUTTON:
 			if (IS_SET(obj->value[0], TRIG_UP))
-				send_to_char("Zauwa¿asz, ¿e jest wci¶niêty." NL, ch);
+				send_to_char("Zauwaï¿½asz, ï¿½e jest wciï¿½niï¿½ty." NL, ch);
 			else
-				send_to_char("Zauwa¿asz, ¿e jest wyci¶niêty." NL, ch);
+				send_to_char("Zauwaï¿½asz, ï¿½e jest wyciï¿½niï¿½ty." NL, ch);
 			break;
 
 		case ITEM_CORPSE_PC:
@@ -1866,26 +1862,26 @@ DEF_DO_FUN( examine )
 			switch (timerfrac)
 			{
 			default:
-				send_to_char("Cia³o jest jeszcze ciep³e." NL, ch);
+				send_to_char("Ciaï¿½o jest jeszcze ciepï¿½e." NL, ch);
 				break;
 			case 4:
-				send_to_char("Cia³o le¿y tu ju¿ od jakiego¶ czasu." NL, ch);
+				send_to_char("Ciaï¿½o leï¿½y tu juï¿½ od jakiegoï¿½ czasu." NL, ch);
 				break;
 			case 3:
-				send_to_char("Cia³o zalatuje stêchlizn±." NL, ch);
+				send_to_char("Ciaï¿½o zalatuje stï¿½chliznï¿½." NL, ch);
 				break;
 			case 2:
-				send_to_char("Cia³o jest ju¿ tak roz³o¿one, ¿e ciê¿ko bêdzie obok niego przej¶æ." NL, ch);
+				send_to_char("Ciaï¿½o jest juï¿½ tak rozï¿½oï¿½one, ï¿½e ciï¿½ko bï¿½dzie obok niego przejï¿½ï¿½." NL, ch);
 				break;
 			case 1:
 			case 0:
-				send_to_char("To ju¿ prawie same ko¶ci. I jeszcze ten smród!" NL, ch);
+				send_to_char("To juï¿½ prawie same koï¿½ci. I jeszcze ten smrï¿½d!" NL, ch);
 				break;
 			}
 		}
 			if (IS_OBJ_STAT(obj, ITEM_COVERING))
 				break;
-			send_to_char("Kiedy zagl±dasz do ¶rodka widzisz:" NL, ch);
+			send_to_char("Kiedy zaglï¿½dasz do ï¿½rodka widzisz:" NL, ch);
 			sprintf(buf, "in %s noprog", arg);
 			do_look(ch, buf);
 			break;
@@ -1897,20 +1893,20 @@ DEF_DO_FUN( examine )
 			switch (timerfrac)
 			{
 			default:
-				send_to_char("Te resztki jeszcze siê dymi±." NL, ch);
+				send_to_char("Te resztki jeszcze siï¿½ dymiï¿½." NL, ch);
 				break;
 			case 4:
-				send_to_char("Czê¶ci ju¿ ca³kowicie wystyg³y." NL, ch);
+				send_to_char("Czï¿½ci juï¿½ caï¿½kowicie wystygï¿½y." NL, ch);
 				break;
 			case 3:
-				send_to_char("Czê¶ci droida zacz±³ ju¿ okrywaæ kurz." NL, ch);
+				send_to_char("Czï¿½ci droida zaczï¿½ï¿½ juï¿½ okrywaï¿½ kurz." NL, ch);
 				break;
 			case 2:
-				send_to_char("Resztki sa ju¿ kompletnie zardzewia³e." NL, ch);
+				send_to_char("Resztki sa juï¿½ kompletnie zardzewiaï¿½e." NL, ch);
 				break;
 			case 1:
 			case 0:
-				send_to_char("Jedyne co pozosta³o to kupka rdzy." NL, ch);
+				send_to_char("Jedyne co pozostaï¿½o to kupka rdzy." NL, ch);
 				break;
 			}
 		}
@@ -1922,7 +1918,7 @@ DEF_DO_FUN( examine )
 				/* no break: to prawdopodobnie jest zle??? */
 
 		case ITEM_DRINK_CON:
-			send_to_char("Kiedy zagl±dasz do ¶rodka widzisz:" NL, ch);
+			send_to_char("Kiedy zaglï¿½dasz do ï¿½rodka widzisz:" NL, ch);
 			sprintf(buf, "in %s noprog", arg);
 			do_look(ch, buf);
 		}
@@ -1940,7 +1936,7 @@ DEF_DO_FUN( examine )
 	return;
 }
 
-//added by Thanos (upodobni³em wygl±d wyj¶æ przy AUTOEXIT do ciapkowego )
+//added by Thanos (upodobniï¿½em wyglï¿½d wyjï¿½ï¿½ przy AUTOEXIT do ciapkowego )
 DEF_DO_FUN( exits )
 {
 	char buf[MAX_STRING_LENGTH];
@@ -1957,13 +1953,13 @@ DEF_DO_FUN( exits )
 	if (!check_blind(ch))
 		return;
 
-	strcpy(buf, fAuto ? PLAIN "( " FG_CYAN "Wyj¶cia: " PLAIN : FB_CYAN "Dostêpne wyj¶cia:" EOL FG_CYAN);
+	strcpy(buf, fAuto ? PLAIN "( " FG_CYAN "Wyjï¿½cia: " PLAIN : FB_CYAN "Dostï¿½pne wyjï¿½cia:" EOL FG_CYAN);
 
 	for (int i = 0; i < 10; i++)
 		mapDir[i] = false;
 
 	found = false;
-	for (pexit = ch->in_room->first_exit; pexit; pexit = pexit->next)
+	for (auto* pexit : ch->in_room->exits)
 	{
 		if (pexit->to_room && CAN_ENTER(ch, pexit->to_room) && (!IS_SET(pexit->flags, EX_HIDDEN) || IS_IMMORTAL(ch)))
 		{
@@ -2009,7 +2005,7 @@ DEF_DO_FUN( exits )
 				if (IS_SET(pexit->flags, EX_CLOSED))
 				{
 					sprintf(buf + strlen(buf),
-					FG_CYAN "%-5s - (zamkniête)" EOL, capitalize(dir_name[pexit->vdir]));
+					FG_CYAN "%-5s - (zamkniï¿½te)" EOL, capitalize(dir_name[pexit->vdir]));
 				}
 				else if (IS_SET(pexit->flags, EX_WINDOW))
 				{
@@ -2055,8 +2051,8 @@ DEF_DO_FUN( exits )
 	{
 		sprintf(buf, "%s %s %s" EOL, mapDir[7] ? "\\" : " ", mapDir[0] ? "|" : " ", mapDir[6] ? "/" : " ");
 		sprintf(buf + strlen(buf), " %s%s%s      %s" EOL, mapDir[7] ? "\\" : " ", mapDir[0] ? "|" : " ", mapDir[6] ? "/" : " ",
-				mapDir[4] ? "/\\ (Góra)" : " ");
-		sprintf(buf + strlen(buf), "%so%s     %s" EOL, mapDir[3] ? "==" : "  ", mapDir[1] ? "==" : "  ", mapDir[5] ? "\\/ (Dó³)" : " ");
+				mapDir[4] ? "/\\ (Gï¿½ra)" : " ");
+		sprintf(buf + strlen(buf), "%so%s     %s" EOL, mapDir[3] ? "==" : "  ", mapDir[1] ? "==" : "  ", mapDir[5] ? "\\/ (Dï¿½)" : " ");
 		sprintf(buf + strlen(buf), " %s%s%s " EOL, mapDir[9] ? "/" : " ", mapDir[2] ? "|" : " ", mapDir[8] ? "\\" : " ");
 		sprintf(buf + strlen(buf), "%s %s %s" EOL, mapDir[9] ? "/" : " ", mapDir[2] ? "|" : " ", mapDir[8] ? "\\" : " ");
 	}
@@ -2066,11 +2062,11 @@ DEF_DO_FUN( exits )
 }
 
 const char *const day_name[] =
-{ "Ksiê¿yca", "Byka", "Wybuchów", "Wichru", "Wolno¶ci", "Wielkich Bogów", "S³oñca" };
+{ "Ksiï¿½yca", "Byka", "Wybuchï¿½w", "Wichru", "Wolnoï¿½ci", "Wielkich Bogï¿½w", "Sï¿½oï¿½ca" };
 
 const char *const month_name[] =
-{ "Zimy", "Zimowego Wilka", "Lodowego Giganta", "Starych Mocy", "Wielkich Wojen", "Wiosny", "Natury", "Nie Wiem Czego", "Smoka", "S³oñca",
-		"¯aru", "Bitew", "Ciemnych Cieni", "Cieni", "D³ugich Cieni", "Pradawnych Ciemno¶ci", "Wielkiego Z³a" };
+{ "Zimy", "Zimowego Wilka", "Lodowego Giganta", "Starych Mocy", "Wielkich Wojen", "Wiosny", "Natury", "Nie Wiem Czego", "Smoka", "Sï¿½oï¿½ca",
+		"ï¿½aru", "Bitew", "Ciemnych Cieni", "Cieni", "Dï¿½ugich Cieni", "Pradawnych Ciemnoï¿½ci", "Wielkiego Zï¿½a" };
 
 DEF_DO_FUN( time )
 {
@@ -2083,57 +2079,57 @@ DEF_DO_FUN( time )
 		switch (pPlanet->sunlight)
 		{
 		default:
-			sprintf(buf, "(ni to dzieñ ni noc)");
+			sprintf(buf, "(ni to dzieï¿½ ni noc)");
 			bug("unknown sunlight at %s", ch->name);
 			break;
 		case SUN_LIGHT:
-			sprintf(buf, "(dzieñ)");
+			sprintf(buf, "(dzieï¿½)");
 			break;
 		case SUN_RISE:
 			sprintf(buf, "(poranek)");
 			break;
 		case SUN_SET:
-			sprintf(buf, "(wieczór)");
+			sprintf(buf, "(wieczï¿½r)");
 			break;
 		case SUN_DARK:
 			sprintf(buf, "(noc)");
 			break;
 		}
 
-		if (pPlanet != first_planet)
+		if (pPlanet != planet_list.front())
 			ch_printf(ch, "Na %s jest godzina %d %s, %d %s czasu standardowego Coruscant." NL
-			"Mamy %d dzieñ miesi±ca %d, %s." NL, pPlanet->name, pPlanet->hour, buf,
-					(first_planet->hour % 12 == 0) ? 12 : first_planet->hour % 12,
-					first_planet->hour == 12 ? "w po³udnie" : first_planet->hour < 3 ? "w nocy" : first_planet->hour < 6 ? "nad ranem" :
-					first_planet->hour < 12 ? "rano" : first_planet->hour < 19 ? "po po³udniu" : "wieczorem", pPlanet->day, pPlanet->month,
+			"Mamy %d dzieï¿½ miesiï¿½ca %d, %s." NL, pPlanet->name, pPlanet->hour, buf,
+					(planet_list.front()->hour % 12 == 0) ? 12 : planet_list.front()->hour % 12,
+					planet_list.front()->hour == 12 ? "w poï¿½udnie" : planet_list.front()->hour < 3 ? "w nocy" : planet_list.front()->hour < 6 ? "nad ranem" :
+					planet_list.front()->hour < 12 ? "rano" : planet_list.front()->hour < 19 ? "po poï¿½udniu" : "wieczorem", pPlanet->day, pPlanet->month,
 					pPlanet->curr_season->name);
 		else
 			ch_printf(ch, "Na %s jest godzina %d %s czasu standardowego." NL
-			"Mamy %d dzieñ miesi±ca %d, %s." NL, pPlanet->name, (first_planet->hour % 12 == 0) ? 12 : first_planet->hour % 12,
-					first_planet->hour == 12 ? "w po³udnie" : first_planet->hour < 3 ? "w nocy" : first_planet->hour < 6 ? "nad ranem" :
-					first_planet->hour < 12 ? "rano" : first_planet->hour < 19 ? "po po³udniu" : "wieczorem", pPlanet->day, pPlanet->month,
+			"Mamy %d dzieï¿½ miesiï¿½ca %d, %s." NL, pPlanet->name, (planet_list.front()->hour % 12 == 0) ? 12 : planet_list.front()->hour % 12,
+					planet_list.front()->hour == 12 ? "w poï¿½udnie" : planet_list.front()->hour < 3 ? "w nocy" : planet_list.front()->hour < 6 ? "nad ranem" :
+					planet_list.front()->hour < 12 ? "rano" : planet_list.front()->hour < 19 ? "po poï¿½udniu" : "wieczorem", pPlanet->day, pPlanet->month,
 					pPlanet->curr_season->name);
 
-		ch_printf(ch, "O tej porze roku dzieñ trwa tu %d godzi%s, a noc %d." NL, pPlanet->curr_season->day_length,
-				NUMBER_SUFF(pPlanet->curr_season->day_length, "nê", "ny", "n"), pPlanet->curr_season->night_length);
+		ch_printf(ch, "O tej porze roku dzieï¿½ trwa tu %d godzi%s, a noc %d." NL, pPlanet->curr_season->day_length,
+				NUMBER_SUFF(pPlanet->curr_season->day_length, "nï¿½", "ny", "n"), pPlanet->curr_season->night_length);
 	}
 	else
-		ch_printf(ch, "Jest godzina %d czasu standardowego (Coruscant)." NL, first_planet->hour);
+		ch_printf(ch, "Jest godzina %d czasu standardowego (Coruscant)." NL, planet_list.front()->hour);
 
 	ch_printf(ch, NL);
 
 	SWDate *bootTime = IS_IMMORTAL(ch) ? new SWTimeStamp(boot_time) : new SWDate(boot_time);
-	ch_printf(ch, "SW-Mud wystartowa³:       %s" NL, bootTime->getDescriptive().c_str());
+	ch_printf(ch, "SW-Mud wystartowaï¿½:       %s" NL, bootTime->getDescriptive().c_str());
 	delete bootTime;
 	ch_printf(ch, "Czas systemowy (E.S.T.):  %s" NL, SWTimeStamp(current_time).getDescriptive().c_str());
 
 	bootTime = IS_IMMORTAL(ch) ? new SWTimeStamp(new_boot_time) : new SWDate(new_boot_time);
 	if (sysdata.reboot_type == REB_COPYOVER)
-		ch_printf(ch, "Gor±cy reboot bêdzie:     %s" NL, bootTime->getDescriptive().c_str());
+		ch_printf(ch, "Gorï¿½cy reboot bï¿½dzie:     %s" NL, bootTime->getDescriptive().c_str());
 	else if (sysdata.reboot_type == REB_SHUTDOWN)
-		ch_printf(ch, "Shutdown bêdzie:          %s" NL, bootTime->getDescriptive().c_str());
+		ch_printf(ch, "Shutdown bï¿½dzie:          %s" NL, bootTime->getDescriptive().c_str());
 	else
-		ch_printf(ch, "Reboot bêdzie:            %s" NL, bootTime->getDescriptive().c_str());
+		ch_printf(ch, "Reboot bï¿½dzie:            %s" NL, bootTime->getDescriptive().c_str());
 	delete bootTime;
 }
 
@@ -2141,23 +2137,23 @@ DEF_DO_FUN( weather )
 {
 	static const char *const sky_look[8] =
 	{
-	/* ciep³o */
+	/* ciepï¿½o */
 	"bezchmurne", /* SKY_CLOUDLESS */
 	"pochmurne", /* SKY_CLOUDY */
 	"deszczowe", /* SKY_RAINING */
-	"poprzecinane b³yskawicami", /* SKY_LIGHTNING */
+	"poprzecinane bï¿½yskawicami", /* SKY_LIGHTNING */
 	/* zimno */
 	"bezchmurne", /* SKY_CLOUDLESS */
-	"zapruszone p³atkami ¶niegu", /* SKY_CLOUDY */
-	"wype³nione ¶niegiem", /* SKY_RAINING */
-	"zakryte przez burzê snie¿n±" /* SKY_LIGHTNING */
+	"zapruszone pï¿½atkami ï¿½niegu", /* SKY_CLOUDY */
+	"wypeï¿½nione ï¿½niegiem", /* SKY_RAINING */
+	"zakryte przez burzï¿½ snieï¿½nï¿½" /* SKY_LIGHTNING */
 	};
 	int wind;
 	PLANET_DATA *pPlanet = ch->in_room->area->planet;
 
 	if (!IS_OUTSIDE(ch) || !pPlanet)
 	{
-		send_to_char("Nie mo¿esz sprawdziæ pogody tutaj." NL, ch);
+		send_to_char("Nie moï¿½esz sprawdziï¿½ pogody tutaj." NL, ch);
 		return;
 	}
 
@@ -2170,9 +2166,9 @@ DEF_DO_FUN( weather )
 
 	ch_printf(ch, "jest %s, %d stop%s",
 			(pPlanet->temperature < -20) ? "potwornie zimno" : (pPlanet->temperature < -10) ? "bardzo zimno" :
-			(pPlanet->temperature < 0) ? "zimno" : (pPlanet->temperature < 10) ? "ch³odno" : (pPlanet->temperature < 20) ? "ciep³o" :
-			(pPlanet->temperature < 30) ? "gor±co" : "piekielnie gor±co", pPlanet->temperature,
-			NUMBER_SUFF(pPlanet->temperature, "ieñ", "nie", "ni"));
+			(pPlanet->temperature < 0) ? "zimno" : (pPlanet->temperature < 10) ? "chï¿½odno" : (pPlanet->temperature < 20) ? "ciepï¿½o" :
+			(pPlanet->temperature < 30) ? "gorï¿½co" : "piekielnie gorï¿½co", pPlanet->temperature,
+			NUMBER_SUFF(pPlanet->temperature, "ieï¿½", "nie", "ni"));
 
 	if (wind)
 		ch_printf(ch, "." NL "%s wieje %s." NL, capitalize(dir_rev_name[abs(pPlanet->winddir) % 3]),
@@ -2222,8 +2218,8 @@ HELP_DATA* get_help(CHAR_DATA *ch, char *argument)
 		strcat(argall, argone);
 	}
 
-	FOREACH( fHelp, first_helps_file )
-		FOREACH( pHelp, fHelp->first_help )
+	for (auto* fHelp : helps_file_list)
+		for (auto* pHelp : fHelp->helps)
 		{
 			if (pHelp->level > get_trust(ch))
 				continue;
@@ -2303,10 +2299,10 @@ void similar_help_files(CHAR_DATA *ch, char *argument)
 	char *extension;
 	int count = 0;
 
-	send_to_pager_color("Oto lista s³ów, które mog± byæ tymi, których szukasz:" NL, ch);
+	send_to_pager_color("Oto lista sï¿½ï¿½w, ktï¿½re mogï¿½ byï¿½ tymi, ktï¿½rych szukasz:" NL, ch);
 
-	for (fHelp = first_helps_file; fHelp; fHelp = fHelp->next)
-		for (pHelp = fHelp->first_help; pHelp; pHelp = pHelp->next)
+	for (auto* fHelp : helps_file_list)
+		for (auto* pHelp : fHelp->helps)
 		{
 			buf[0] = '\0';
 			extension = pHelp->keyword;
@@ -2327,12 +2323,12 @@ void similar_help_files(CHAR_DATA *ch, char *argument)
 
 	if (lvl == 0)
 	{
-		send_to_pager_color("Nie znaleziono nic, co mog³oby pasowaæ." NL, ch);
+		send_to_pager_color("Nie znaleziono nic, co mogï¿½oby pasowaï¿½." NL, ch);
 		return;
 	}
 
-	for (fHelp = first_helps_file; fHelp; fHelp = fHelp->next)
-		for (pHelp = fHelp->first_help; pHelp; pHelp = pHelp->next)
+	for (auto* fHelp : helps_file_list)
+		for (auto* pHelp : fHelp->helps)
 		{
 			buf[0] = '\0';
 			extension = pHelp->keyword;
@@ -2352,7 +2348,7 @@ void similar_help_files(CHAR_DATA *ch, char *argument)
 	return;
 }
 
-//added by Thanos - nowy help, zwraca uwagê na powtarzaj±ce siê s³owa kluczowe
+//added by Thanos - nowy help, zwraca uwagï¿½ na powtarzajï¿½ce siï¿½ sï¿½owa kluczowe
 DEF_DO_FUN( help )
 {
 	HELPS_FILE *fHelp;
@@ -2369,15 +2365,15 @@ DEF_DO_FUN( help )
 	bufk[0] = '\0';
 	bufh[0] = '\0';
 
-	for (fHelp = first_helps_file; fHelp && search; fHelp = fHelp->next)
-		for (pHelp = fHelp->first_help; pHelp; pHelp = pHelp->next)
+	for (auto* fHelp : helps_file_list) { if (!search) break;
+		for (auto* pHelp : fHelp->helps)
 		{
 			if ((pHelp->level > get_trust(ch) && pHelp->type == HELP_PHELP)
 					|| (pHelp->type == HELP_OLCHELP && get_trust(ch) < 103 && !IS_OLCMAN(ch))
 					|| (pHelp->type == HELP_WIZHELP && !IS_IMMORTAL(ch)))
 				continue;
 
-			/* czy gracz poda³ precyzyjnie s³owo kluczowe */
+			/* czy gracz podaï¿½ precyzyjnie sï¿½owo kluczowe */
 			if (!str_cmp(argument, pHelp->keyword) || is_name(argument, pHelp->keyword))
 			{
 				count = 1;
@@ -2391,12 +2387,12 @@ DEF_DO_FUN( help )
 				break;
 			}
 
-			/* a mo¿e zna³ tylko pocz±tek wyra¿enia */
+			/* a moï¿½e znaï¿½ tylko poczï¿½tek wyraï¿½enia */
 			if ((is_name_prefix(argument, pHelp->keyword)))
 			{
 				count++;
 				if (pHelp->level >= 0)
-				{ //wszystkie s³owa kluczowe do bufora K
+				{ //wszystkie sï¿½owa kluczowe do bufora K
 					strcat(bufk, FG_CYAN);
 					strcat(bufk, itoa(count));
 					strcat(bufk, ". ");
@@ -2404,7 +2400,7 @@ DEF_DO_FUN( help )
 					strcat(bufk, EOL);
 				}
 
-				if (count == 1) //do bufora H tylko pierwsza pasuj±ca tre¶æ helpa
+				if (count == 1) //do bufora H tylko pierwsza pasujï¿½ca treï¿½ï¿½ helpa
 				{
 					level = pHelp->level;
 					if (pHelp->syntax[0] != '\0')
@@ -2416,30 +2412,31 @@ DEF_DO_FUN( help )
 				}
 			}
 		}
+	}
 
 	if (count)
-	{ /* okaza³o siê, ¿e temat jest obszerny */
+	{ /* okazaï¿½o siï¿½, ï¿½e temat jest obszerny */
 		if (count > 1)
 		{
-			send_to_pager("Do podanego s³owa kluczowego pasuje wiêcej ni¿ jedno wyra¿enie:" NL, ch);
+			send_to_pager("Do podanego sï¿½owa kluczowego pasuje wiï¿½cej niï¿½ jedno wyraï¿½enie:" NL, ch);
 			send_to_pager(bufk, ch);
 		}
-		else /* je¶li wyszukiwanie zakoñczy³o siê sukcesem... */
+		else /* jeï¿½li wyszukiwanie zakoï¿½czyï¿½o siï¿½ sukcesem... */
 		if (count == 1)
 		{
 			if (!IS_NPC(ch) && IS_SET(ch->act, PLR_SOUND))
 				send_to_pager("!!SOUND(help)", ch);
 
 			if (level < 0) /* <--  helpy specjalne , bo np.*/
-				send_to_char(bufh, ch); /* umieraj±cy gracz nie ma juz pagera.*/
+				send_to_char(bufh, ch); /* umierajï¿½cy gracz nie ma juz pagera.*/
 			else
-				/* <--  helpy pozosta³e */
+				/* <--  helpy pozostaï¿½e */
 				send_to_pager(bufh, ch);
 		}
 		return;
 	}
 	send_to_pager("Brak pomocy na ten temat." NL, ch);
-	/* mo¿e jeszcze jest jaka¶ nadzieja :P */
+	/* moï¿½e jeszcze jest jakaï¿½ nadzieja :P */
 	similar_help_files(ch, argument);
 	return;
 }
@@ -2483,7 +2480,7 @@ DEF_DO_FUN( hlist )
 			{
 				if (str_cmp(arg3, "all"))
 				{
-					FOREACH( fHelp, first_helps_file )
+					for (auto* fHelp : helps_file_list)
 						if (!str_cmp(arg3, fHelp->name))
 						{
 							by_file = true;
@@ -2514,7 +2511,7 @@ DEF_DO_FUN( hlist )
 
 			if (str_cmp(arg1, "all"))
 			{
-				FOREACH( fHelp, first_helps_file )
+				for (auto* fHelp : helps_file_list)
 					if (!str_cmp(arg1, fHelp->name))
 					{
 						by_file = true;
@@ -2551,7 +2548,7 @@ DEF_DO_FUN( hlist )
 	{
 		pager_printf(ch, MOD_BOLD "%s:" EOL, fHelp->name);
 		cnt = 0;
-		FOREACH( help, fHelp->first_help )
+		for (auto* help : fHelp->helps)
 			if (help->level >= min && help->level <= max
 					&& ((by_prefix && (np ? is_name_prefix(argument, help->keyword) : !str_prefix(argument, help->keyword))) || !by_prefix))
 			{
@@ -2560,10 +2557,10 @@ DEF_DO_FUN( hlist )
 			}
 	}
 	else
-		for (cnt = 0, fHelp = first_helps_file; fHelp; fHelp = fHelp->next)
+		{ cnt = 0; for (auto* fHelp : helps_file_list)
 		{
 			pager_printf(ch, MOD_BOLD "%s:" EOL, fHelp->name);
-			FOREACH( help, fHelp->first_help )
+			for (auto* help : fHelp->helps)
 				if (help->level >= min && help->level <= max
 						&& ((by_prefix && (np ? is_name_prefix(argument, help->keyword) : !str_prefix(argument, help->keyword)))
 								|| !by_prefix))
@@ -2571,6 +2568,7 @@ DEF_DO_FUN( hlist )
 					pager_printf(ch, FB_WHITE ".%3d" PLAIN " %s" NL, help->level, help->keyword);
 					++cnt;
 				}
+		}
 		}
 
 	if (cnt)
@@ -2590,8 +2588,8 @@ DEF_DO_FUN( remember )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char(NL " Niedawno Ci siê przedstawiali:" NL, ch);
-		for (_friend = ch->first_known; _friend; _friend = _friend->next)
+		send_to_char(NL " Niedawno Ci siï¿½ przedstawiali:" NL, ch);
+		for (auto* _friend : ch->known)
 			if (_friend->is_remembered < 0)
 			{
 				send_to_char(_friend->name, ch);
@@ -2600,26 +2598,26 @@ DEF_DO_FUN( remember )
 			}
 
 		if (count == 0)
-			send_to_char("Nikt Ci siê ostatnio nie przedstawia³" EOL, ch);
+			send_to_char("Nikt Ci siï¿½ ostatnio nie przedstawiaï¿½" EOL, ch);
 	}
 	else
 	{
 		if (ch->kins == MAX_KNOWN(ch))
 		{
-			send_to_char("Twój umys³ wiecej nie pomiesci" EOL NL, ch);
+			send_to_char("Twï¿½j umysï¿½ wiecej nie pomiesci" EOL NL, ch);
 			return;
 		}
-		for (_friend = ch->first_known; _friend; _friend = _friend->next)
+		for (auto* _friend : ch->known)
 			if (is_name_prefix(arg, _friend->name))
 			{
 				if (_friend->is_remembered < 0)
 				{
 					_friend->is_remembered = 1;
-					ch_printf(ch, "%s - ju¿ %s nie zapomnisz", _friend->name, _friend->sex == SEX_MALE ? "go " : "jej ");
+					ch_printf(ch, "%s - juï¿½ %s nie zapomnisz", _friend->name, _friend->sex == SEX_MALE ? "go " : "jej ");
 					ch->kins++;
 				}
 				else
-					send_to_char("Przecie¿ t± osobê ju¿ znasz." NL, ch);
+					send_to_char("Przecieï¿½ tï¿½ osobï¿½ juï¿½ znasz." NL, ch);
 				return;
 			}
 	}
@@ -2635,17 +2633,17 @@ DEF_DO_FUN( forget )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char(NL "Kogo chcesz zapomnieæ?" NL, ch);
+		send_to_char(NL "Kogo chcesz zapomnieï¿½?" NL, ch);
 		return;
 	}
 
-	for (_friend = ch->first_known; _friend; _friend = _friend->next)
+	for (auto* _friend : ch->known)
 		if (is_name_prefix(arg, _friend->name))
 		{
 			if (_friend->is_remembered == 1)
 			{
 				_friend->is_remembered = 0;
-				ch_printf(ch, "%s ? Istnia³ kto¶ taki?", _friend->name);
+				ch_printf(ch, "%s ? Istniaï¿½ ktoï¿½ taki?", _friend->name);
 				ch->kins--;
 			}
 			else
@@ -2662,7 +2660,7 @@ DEF_DO_FUN( kin )
 	KNOWN_CHAR_DATA *_friend;
 
 	send_to_char(NL " Oto lista Twoich znajomych" NL, ch);
-	for (_friend = ch->first_known; _friend; _friend = _friend->next)
+	for (auto* _friend : ch->known)
 		if (_friend->is_remembered > 0)
 		{
 			ch_printf(ch, " %s, %s" NL, _friend->name,
@@ -2682,12 +2680,12 @@ DEF_DO_FUN( introduce )
 		return;
 	//czy  w pomieszczeniu ktos jest?
 	room = ch->in_room;
-	if (!room->first_person)
+	if (room->people.empty())
 		return;
 	// w pomieszczeniu jest ktos poza toba
-	if (room->first_person == room->last_person)
+	if (room->people.size() == 1)
 	{
-		send_to_char("Nikogo poza Tob± tu nie ma" NL, ch);
+		send_to_char("Nikogo poza Tobï¿½ tu nie ma" NL, ch);
 		return;
 	}
 
@@ -2699,15 +2697,15 @@ DEF_DO_FUN( introduce )
 	//przedstawiamy sie wszystkim w lokacji
 	if (arg[0] == '\0')
 	{
-		send_to_char(COL_SAY "Przedstawiasz siê wszystkim w pomieszczeniu" NL, ch);
-		for (someone = room->first_person; someone; someone = someone->next_in_room)
+		send_to_char(COL_SAY "Przedstawiasz siï¿½ wszystkim w pomieszczeniu" NL, ch);
+		for (auto* someone : room->people)
 		{
 			//samemu sobie nie bedziemy sie przedstawia
 			if (someone == ch)
 				continue;
 			//czy someone nas juz nie zna ?
 			//if (does_knows(someone,ch) )
-			//	continue;                 Mimo ¿e Trog mnie zna, mogê mu powiedzieæ, ¿e jestem Pixel.
+			//	continue;                 Mimo ï¿½e Trog mnie zna, mogï¿½ mu powiedzieï¿½, ï¿½e jestem Pixel.
 
 			//zdejmujemy tutaj mask, hide i cala reszte
 			if (IS_AFFECTED(ch, AFF_HIDE))
@@ -2720,12 +2718,12 @@ DEF_DO_FUN( introduce )
 			_friend->race = ch->race;
 			_friend->is_remembered = -1;
 			_friend->sex = ch->sex;
-			LINK(_friend, someone->first_known, someone->last_known, next, prev);
+			someone->known.push_back(_friend);
 			//tutaj wypadaloby poinformowac gracza, ze 'ciemnowlosy, zielonooki
 			//ktos sie przedstawil jako 'name
 			const SWString &attrib = format_char_attribute(ch, 0);
 			ch_printf(someone,
-			COL_SAY "%s przedstawia siê wszystkim, jako %s." NL, fcapitalize(attrib.c_str()), ch->name);
+			COL_SAY "%s przedstawia siï¿½ wszystkim, jako %s." NL, fcapitalize(attrib.c_str()), ch->name);
 		}
 	}
 	else
@@ -2745,17 +2743,17 @@ DEF_DO_FUN( introduce )
 			_friend->race = ch->race;
 			_friend->is_remembered = -1;
 			_friend->sex = ch->sex;
-			LINK(_friend, someone->first_known, someone->last_known, next, prev);
+			someone->known.push_back(_friend);
 			//informujemy gracza, ze 'ciemnowlosy, zielonooki' sie przedstawil
 			const SWString &attrib = format_char_attribute(someone, 2);
-			ch_printf(ch, "Przedstawiasz siê %s." NL, does_knows(ch, someone) ? someone->przypadki[2] : attrib.c_str());
+			ch_printf(ch, "Przedstawiasz siï¿½ %s." NL, does_knows(ch, someone) ? someone->przypadki[2] : attrib.c_str());
 
 			const SWString &attrib2 = format_char_attribute(ch, 0);
-			ch_printf(someone, COL_SAY "%s przedstawia siê Tobie jako %s." NL, // Pixel: brakowa³o
+			ch_printf(someone, COL_SAY "%s przedstawia siï¿½ Tobie jako %s." NL, // Pixel: brakowaï¿½o
 					fcapitalize(attrib2.c_str()), ch->name);
 
 		}
-		for (someone1 = room->first_person; someone1; someone1 = someone1->next_in_room)
+		for (auto* someone1 : room->people)
 		{
 			//samemu sobie nie bedziemy sie przedstawia
 			if (someone1 == ch || someone1 == someone)
@@ -2788,14 +2786,14 @@ DEF_DO_FUN( changeattribute )
 	if (ch->race == NULL)
 		return;
 	pRace = ch->race;
-	//¿adnego argumentu - pokazujemy liste kategorii
+	//ï¿½adnego argumentu - pokazujemy liste kategorii
 	if (arg[0] == '\0')
 	{
 		if ((ch->attribute1 >= 0) || (ch->attribute2 >= 0))
-			send_to_char("Wybra³e¶ ju¿ jedn± z cech" EOL, ch);
+			send_to_char("Wybraï¿½eï¿½ juï¿½ jednï¿½ z cech" EOL, ch);
 		index1 = 0;
-		send_to_char("Oto lista kategorii na jakie podzielone s±" NL
-		"attrybuty opisujace wygl±d Twojej postaci" NL NL, ch);
+		send_to_char("Oto lista kategorii na jakie podzielone sï¿½" NL
+		"attrybuty opisujace wyglï¿½d Twojej postaci" NL NL, ch);
 		for (index = 0; index < MAX_DESC_TYPES; index++)
 		{
 			if (pRace->desc_restrictions[index] == 0)
@@ -2889,7 +2887,7 @@ DEF_DO_FUN( changeattribute )
 				//czyli zapamietac trzeba wybor
 				if (ch->attribute1 == finalIndex || ch->attribute2 == finalIndex)
 				{
-					send_to_char("Juz masz taka cechê - wybierz inna jako druga" NL, ch);
+					send_to_char("Juz masz taka cechï¿½ - wybierz inna jako druga" NL, ch);
 					return;
 				}
 				//najpierw sprawdzamy czy to jest futro
@@ -2921,7 +2919,7 @@ DEF_DO_FUN( changeattribute )
 
 				if (wybor)
 				{
-					send_to_char("Od teraz bêdziesz rozpoznawany jako :" NL, ch);
+					send_to_char("Od teraz bï¿½dziesz rozpoznawany jako :" NL, ch);
 					const SWString &attrib = format_char_attribute(ch, 0);
 					send_to_char(attrib.c_str(), ch);
 					send_to_char(NL, ch);
@@ -2929,10 +2927,10 @@ DEF_DO_FUN( changeattribute )
 				else
 				{
 					const SWString &attrib = char_attribute((desc_type) index, index1, ch->sex, 0);
-					sprintf(buf, "Czy chcesz byæ widziany jako :"
+					sprintf(buf, "Czy chcesz byï¿½ widziany jako :"
 					FG_YELLOW " %s %s" EOL, attrib.c_str(), CH_RACE(ch, 0)); // Pixel: przypadkiF
 					send_to_char(buf, ch);
-					send_to_char("By to potwierdziæ ponownie wydaj to samo polecenie" NL, ch);
+					send_to_char("By to potwierdziï¿½ ponownie wydaj to samo polecenie" NL, ch);
 				}
 			}
 		}
@@ -2973,9 +2971,7 @@ DEF_DO_FUN( who )
 	int nPlayersCount = 0;
 
 	WHO_DATA *who = NULL;
-	WHO_DATA *who_next = NULL;
-	WHO_DATA *first_who = NULL;
-	WHO_DATA *last_who = NULL;
+	std::list<WHO_DATA*> who_list;
 
 	/*
 	 * Set default arguments.
@@ -3007,7 +3003,7 @@ DEF_DO_FUN( who )
 				iLevelUpper = atoi(arg);
 				break;
 			default:
-				send_to_char("Tylko dwa numery s± wymagane." NL, ch);
+				send_to_char("Tylko dwa numery sï¿½ wymagane." NL, ch);
 				return;
 			}
 		}
@@ -3019,7 +3015,7 @@ DEF_DO_FUN( who )
 		{
 			if (strlen(arg) < 3)
 			{
-				send_to_char("Sprecyzuj proszê." NL, ch);
+				send_to_char("Sprecyzuj proszï¿½." NL, ch);
 				return;
 			}
 
@@ -3051,7 +3047,7 @@ DEF_DO_FUN( who )
 	nMatch = 0;
 	buf[0] = '\0';
 
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		CHAR_DATA *wch;
 		char const *race;
@@ -3072,7 +3068,7 @@ DEF_DO_FUN( who )
 			continue;
 		nMatch++;
 
-		sprintf(race_text, PLAIN "%-15s" PLAIN, !strcmp(wch->race->name, "Human") ? "Cz³owiek" : wch->race->przypadki[0]);
+		sprintf(race_text, PLAIN "%-15s" PLAIN, !strcmp(wch->race->name, "Human") ? "Czï¿½owiek" : wch->race->przypadki[0]);
 		race = race_text;
 
 		switch (wch->top_level)
@@ -3153,7 +3149,7 @@ DEF_DO_FUN( who )
 		STRDUP(who->text, buf);
 		// NIE get_trust() !
 		who->level = wch->top_level;
-		LINK(who, first_who, last_who, next, prev);
+		who_list.push_back(who);
 	}
 
 	/* Ok, now we have three separate linked lists and what remains is to
@@ -3166,7 +3162,7 @@ DEF_DO_FUN( who )
 		int i;
 		for (i = 0; i <= MAX_LEVEL; i++)
 		{
-			for (who = first_who; who; who = who->next)
+			for (auto* who : who_list)
 			{
 				if (who->level == i)
 					send_to_pager(who->text, ch);
@@ -3178,7 +3174,7 @@ DEF_DO_FUN( who )
 		int i;
 		for (i = MAX_LEVEL; i >= 1; i--)
 		{
-			for (who = first_who; who; who = who->next)
+			for (auto* who : who_list)
 			{
 				if (who->level == i)
 					send_to_pager(who->text, ch);
@@ -3186,17 +3182,16 @@ DEF_DO_FUN( who )
 		}
 	}
 	else
-		for (who = first_who; who; who = who->next)
+		for (auto* who : who_list)
 		{
 			send_to_pager(who->text, ch);
 		}
 
-	for (who = first_who; who; who = who_next)
+	for (auto* who : who_list)
 	{
-		who_next = who->next;
-		UNLINK(who, first_who, last_who, next, prev);
 		free_who(who);
 	}
+	who_list.clear();
 	return;
 }
 
@@ -3214,7 +3209,7 @@ DEF_DO_FUN( compare )
 	argument = one_argument(argument, arg2);
 	if (arg1[0] == '\0')
 	{
-		send_to_char("Porównaæ co z czym?" NL, ch);
+		send_to_char("Porï¿½wnaï¿½ co z czym?" NL, ch);
 		return;
 	}
 
@@ -3226,7 +3221,7 @@ DEF_DO_FUN( compare )
 
 	if (arg2[0] == '\0')
 	{
-		for (obj2 = ch->first_carrying; obj2; obj2 = obj2->next_content)
+		for (auto* obj2 : ch->carrying)
 		{
 			if (obj2->wear_loc != WEAR_NONE && can_see_obj(ch, obj2) && obj1->item_type == obj2->item_type
 					&& (obj1->wear_flags & obj2->wear_flags & ~ITEM_TAKE) != 0)
@@ -3235,7 +3230,7 @@ DEF_DO_FUN( compare )
 
 		if (!obj2)
 		{
-			send_to_char("Nie nosisz nic porównywalnego." NL, ch);
+			send_to_char("Nie nosisz nic porï¿½wnywalnego." NL, ch);
 			return;
 		}
 	}
@@ -3254,18 +3249,18 @@ DEF_DO_FUN( compare )
 
 	if (obj1 == obj2)
 	{
-		msg = "Porównujesz $p$3 z nim samym. Wygl±da tak samo :)";
+		msg = "Porï¿½wnujesz $p$3 z nim samym. Wyglï¿½da tak samo :)";
 	}
 	else if (obj1->item_type != obj2->item_type)
 	{
-		msg = "Nie mo¿esz porównaæ $p$3 z $P$4.";
+		msg = "Nie moï¿½esz porï¿½wnaï¿½ $p$3 z $P$4.";
 	}
 	else
 	{
 		switch (obj1->item_type)
 		{
 		default:
-			msg = "Nie mo¿esz porównaæ $p$3 z $P$4.";
+			msg = "Nie moï¿½esz porï¿½wnaï¿½ $p$3 z $P$4.";
 			break;
 
 		case ITEM_ARMOR:
@@ -3283,11 +3278,11 @@ DEF_DO_FUN( compare )
 	if (!msg)
 	{
 		if (value1 == value2)
-			msg = "$p i $P wygl±daj± podobnie.";
+			msg = "$p i $P wyglï¿½dajï¿½ podobnie.";
 		else if (value1 > value2)
-			msg = "$p wygl±da lepiej ni¿ $P.";
+			msg = "$p wyglï¿½da lepiej niï¿½ $P.";
 		else
-			msg = "$p wygl±da gorzej ni¿ $P.";
+			msg = "$p wyglï¿½da gorzej niï¿½ $P.";
 	}
 
 	act(PLAIN, msg, ch, obj1, obj2, TO_CHAR);
@@ -3303,7 +3298,7 @@ DEF_DO_FUN( where )
 
 	if (get_trust(ch) < LEVEL_HERO)
 	{
-		send_to_char("Gdyby tylko ¿ycie by³o tak proste..." NL, ch);
+		send_to_char("Gdyby tylko ï¿½ycie byï¿½o tak proste..." NL, ch);
 		return;
 	}
 
@@ -3314,9 +3309,9 @@ DEF_DO_FUN( where )
 		if (get_trust(ch) >= LEVEL_HERO)
 			send_to_pager("Zalogowani gracze:" NL, ch);
 		else
-			pager_printf(ch, "Gracze wokó³ ciebie w %s:" NL, ch->in_room->area->name);
+			pager_printf(ch, "Gracze wokï¿½ ciebie w %s:" NL, ch->in_room->area->name);
 		found = false;
-		for (d = first_descriptor; d; d = d->next)
+		for (auto* d : descriptor_list)
 			if ((d->connected >= CON_PLAYING) && (victim = d->character) != NULL && !IS_NPC(victim) && victim->in_room
 					&& (victim->in_room->area == ch->in_room->area || get_trust(ch) >= LEVEL_HERO) && can_see(ch, victim))
 			{
@@ -3334,7 +3329,7 @@ DEF_DO_FUN( where )
 	else
 	{
 		found = false;
-		for (victim = first_char; victim; victim = victim->next)
+		for (auto* victim : char_list)
 			if (victim->in_room && victim->in_room->area == ch->in_room->area && !IS_AFFECTED(victim, AFF_HIDE)
 					&& !IS_AFFECTED(victim, AFF_SNEAK) && can_see(ch, victim) && is_name(arg, victim->name))
 			{
@@ -3346,7 +3341,7 @@ DEF_DO_FUN( where )
 				break;
 			}
 		if (!found)
-			act(PLAIN, "Nie mo¿esz znale¼æ ¿adnego $T.", ch, NULL, arg, TO_CHAR);
+			act(PLAIN, "Nie moï¿½esz znaleï¿½ï¿½ ï¿½adnego $T.", ch, NULL, arg, TO_CHAR);
 	}
 
 	return;
@@ -3365,7 +3360,7 @@ DEF_DO_FUN( consider )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Porównaæ siê z kim?" NL, ch);
+		send_to_char("Porï¿½wnaï¿½ siï¿½ z kim?" NL, ch);
 		return;
 	}
 
@@ -3378,21 +3373,21 @@ DEF_DO_FUN( consider )
 	diff = fight_lev(victim) - fight_lev(ch);
 
 	if (diff <= -10)
-		msg = "Hej! A gdzie $E w³a¶ciwie jest?";
+		msg = "Hej! A gdzie $E wï¿½aï¿½ciwie jest?";
 	else if (diff <= -7)
 		msg = "Kaszka z mleczkiem, nawet nie marnuj czasu!";
 	else if (diff <= -5)
-		msg = "To bêdzie prostsze ni¿ ³apanie szczurów w dolinie ¿ebraków!";
+		msg = "To bï¿½dzie prostsze niï¿½ ï¿½apanie szczurï¿½w w dolinie ï¿½ebrakï¿½w!";
 	else if (diff <= -2)
 		msg = "$N to pionek. Zgnieciesz $I.";
 	else if (diff <= 1)
-		msg = "$N wygl±da jakby by³$O równ$Y z tob±.";
+		msg = "$N wyglï¿½da jakby byï¿½$O rï¿½wn$Y z tobï¿½.";
 	else if (diff <= 3)
-		msg = "Je¶li ci siê poszczê¶ci, byc mo¿e prze¿yjesz...";
+		msg = "Jeï¿½li ci siï¿½ poszczï¿½ci, byc moï¿½e przeï¿½yjesz...";
 	else if (diff <= 6)
-		msg = "Potrzebne bêdzie duuu¿o szczê¶cia i OGROMNIASTY blaster!";
+		msg = "Potrzebne bï¿½dzie duuuï¿½o szczï¿½cia i OGROMNIASTY blaster!";
 	else if (diff <= 9)
-		msg = "W³a¶nie, czemu nie zaatakowæ Gwiazdy ¦mierci wibroostrzem?";
+		msg = "Wï¿½aï¿½nie, czemu nie zaatakowï¿½ Gwiazdy ï¿½mierci wibroostrzem?";
 	else
 		msg = "$N jest ogromn$Y jak Jot!"; /* Trog: zamiast Jot bylo: AT-AT */
 	act(PLAIN, msg, ch, NULL, victim, TO_CHAR);
@@ -3405,25 +3400,25 @@ DEF_DO_FUN( consider )
 	}
 	else
 	{
-		send_to_char("Jednak¿e,", ch);
+		send_to_char("Jednakï¿½e,", ch);
 	}
 
 	if (hpdiff >= 101)
-		buf = " jeste¶ du¿o silniejsz$y ni¿ $E.";
+		buf = " jesteï¿½ duï¿½o silniejsz$y niï¿½ $E.";
 	if (hpdiff <= 100)
-		buf = " jeste¶ silniejsz$y ni¿ $E.";
+		buf = " jesteï¿½ silniejsz$y niï¿½ $E.";
 	if (hpdiff <= 50)
-		buf = " jeste¶ trochê silniejsz$y ni¿ $E.";
+		buf = " jesteï¿½ trochï¿½ silniejsz$y niï¿½ $E.";
 	if (hpdiff <= 25)
-		buf = " jeste¶ minimalnie silniejsz$y ni¿ $E.";
+		buf = " jesteï¿½ minimalnie silniejsz$y niï¿½ $E.";
 	if (hpdiff <= 0)
-		buf = " $E jest minimalnie silniejsz$Y ni¿ ty.";
+		buf = " $E jest minimalnie silniejsz$Y niï¿½ ty.";
 	if (hpdiff <= -25)
-		buf = " $E jest trochê silniejsz$Y ni¿ ty.";
+		buf = " $E jest trochï¿½ silniejsz$Y niï¿½ ty.";
 	if (hpdiff <= -50)
-		buf = " $E jest silniejsz$Y ni¿ ty.";
+		buf = " $E jest silniejsz$Y niï¿½ ty.";
 	if (hpdiff <= -100)
-		buf = " $E jest du¿o silniejsz$Y ni¿ ty.";
+		buf = " $E jest duï¿½o silniejsz$Y niï¿½ ty.";
 
 	act(PLAIN, buf, ch, NULL, victim, TO_CHAR);
 	return;
@@ -3504,10 +3499,10 @@ DEF_DO_FUN( practice )
 			send_to_pager(NL, ch);
 
 #if defined (ARMAGEDDON)
-		pager_printf( ch, "Koszt æwiczenia umiejêtno¶ci spoza twojej profesji: %d prakty%s." NL
+		pager_printf( ch, "Koszt ï¿½wiczenia umiejï¿½tnoï¿½ci spoza twojej profesji: %d prakty%s." NL
 				"Masz jeszcze " FB_WHITE "%d" PLAIN " prakty%s." NL,
-				NUM_PRACT_FOR_SKILL, NUMBER_SUFF( NUM_PRACT_FOR_SKILL, "kê", "ki", "k" ),
-				ch->pcdata->practices, NUMBER_SUFF( ch->pcdata->practices, "kê", "ki", "k" ) );
+				NUM_PRACT_FOR_SKILL, NUMBER_SUFF( NUM_PRACT_FOR_SKILL, "kï¿½", "ki", "k" ),
+				ch->pcdata->practices, NUMBER_SUFF( ch->pcdata->practices, "kï¿½", "ki", "k" ) );
 #endif
 	}
 	else
@@ -3518,17 +3513,17 @@ DEF_DO_FUN( practice )
 
 		if (!IS_AWAKE(ch))
 		{
-			send_to_char("Co ci siê ¶ni?" NL, ch);
+			send_to_char("Co ci siï¿½ ï¿½ni?" NL, ch);
 			return;
 		}
 
-		for (mob = ch->in_room->first_person; mob; mob = mob->next_in_room)
+		for (auto* mob : ch->in_room->people)
 			if (IS_NPC(mob) && IS_SET(mob->act, ACT_PRACTICE))
 				break;
 
 		if (!mob)
 		{
-			send_to_char("Nie ma tu nikogo, kto móg³by ciê czego¶ nauczyæ." NL, ch);
+			send_to_char("Nie ma tu nikogo, kto mï¿½gï¿½by ciï¿½ czegoï¿½ nauczyï¿½." NL, ch);
 			return;
 		}
 
@@ -3536,26 +3531,26 @@ DEF_DO_FUN( practice )
 
 		if (sn == -1)
 		{
-			ch_tell(mob, ch, (char*) "Nie znam takiej umiejêtno¶ci...");
+			ch_tell(mob, ch, (char*) "Nie znam takiej umiejï¿½tnoï¿½ci...");
 			return;
 		}
 
 		if (skill_table[sn]->guild < 0 || skill_table[sn]->guild >= MAX_ABILITY)
 		{
-			ch_tell(mob, ch, (char*) "Nie umiem uczyæ czego¶ takiego...");
+			ch_tell(mob, ch, (char*) "Nie umiem uczyï¿½ czegoï¿½ takiego...");
 			return;
 		}
 
 		if (can_prac && !IS_NPC(ch) && ch->skill_level[skill_table[sn]->guild] < skill_table[sn]->min_level)
 		{
-			sprintf(buf, "Nie jeste¶ jeszcze na to gotow%s...", SEX_SUFFIX_YAE(ch));
+			sprintf(buf, "Nie jesteï¿½ jeszcze na to gotow%s...", SEX_SUFFIX_YAE(ch));
 			ch_tell(mob, ch, buf);
 			return;
 		}
 
 		if (is_name(skill_tname[skill_table[sn]->type], CANT_PRAC))
 		{
-			ch_tell(mob, ch, (char*) "Nie umiem uczyc czego¶ takiego...");
+			ch_tell(mob, ch, (char*) "Nie umiem uczyc czegoï¿½ takiego...");
 			return;
 		}
 
@@ -3567,13 +3562,13 @@ DEF_DO_FUN( practice )
 			sprintf(buf, "%d", mob->pIndexData->vnum);
 			if (!is_name(buf, skill_table[sn]->teachers))
 			{
-				ch_tell(mob, ch, (char*) "Nie umiem uczyc czego¶ takiego...");
+				ch_tell(mob, ch, (char*) "Nie umiem uczyc czegoï¿½ takiego...");
 				return;
 			}
 		}
 		else
 		{
-			ch_tell(mob, ch, (char*) "Nie umiem uczyc czego¶ takiego...");
+			ch_tell(mob, ch, (char*) "Nie umiem uczyc czegoï¿½ takiego...");
 			return;
 		}
 
@@ -3584,7 +3579,7 @@ DEF_DO_FUN( practice )
 
 		if (ch->gold < skill_table[sn]->min_level * 10)
 		{
-			sprintf(buf, "Chcê %d kredytek za nauczenie ciê tego.", skill_table[sn]->min_level * 10);
+			sprintf(buf, "Chcï¿½ %d kredytek za nauczenie ciï¿½ tego.", skill_table[sn]->min_level * 10);
 			ch_tell(mob, ch, buf);
 			ch_tell(mob, ch, (char*) "Nie masz tyle.");
 			return;
@@ -3594,16 +3589,16 @@ DEF_DO_FUN( practice )
 		{
 			if( ch->pcdata->practices < NUM_PRACT_FOR_SKILL )
 			{
-				ch_tell( mob, ch, "Nie masz praktyk by wyæwiczyæ tê umiejêtno¶æ..." );
+				ch_tell( mob, ch, "Nie masz praktyk by wyï¿½wiczyï¿½ tï¿½ umiejï¿½tnoï¿½ï¿½..." );
 				return;
 			}
 		}
 #endif
 		if (ch->pcdata->learned[sn] >= adept)
 		{
-			sprintf(buf, "Nie umiem nauczyæ ciê niczego wiêcej na temat %s.", skill_table[sn]->name);
+			sprintf(buf, "Nie umiem nauczyï¿½ ciï¿½ niczego wiï¿½cej na temat %s.", skill_table[sn]->name);
 			ch_tell(mob, ch, buf);
-			sprintf(buf, "Resztê musisz wyæwiczyæ sam%s...", SEX_SUFFIX__AO(ch));
+			sprintf(buf, "Resztï¿½ musisz wyï¿½wiczyï¿½ sam%s...", SEX_SUFFIX__AO(ch));
 			ch_tell(mob, ch, buf);
 		}
 		else
@@ -3613,14 +3608,14 @@ DEF_DO_FUN( practice )
 			ch->pcdata->practices-=NUM_PRACT_FOR_SKILL;
 #endif
 			ch->pcdata->learned[sn] += int_app[get_curr_int(ch)].learn;
-			act(COL_ACTION, "Æwiczysz $T.", ch, NULL, skill_table[sn]->name,
+			act(COL_ACTION, "ï¿½wiczysz $T.", ch, NULL, skill_table[sn]->name,
 			TO_CHAR);
-			act(COL_ACTION, "$n æwiczy $T.", ch, NULL, skill_table[sn]->name,
+			act(COL_ACTION, "$n ï¿½wiczy $T.", ch, NULL, skill_table[sn]->name,
 			TO_ROOM);
 			if (ch->pcdata->learned[sn] >= adept)
 			{
 				ch->pcdata->learned[sn] = adept;
-				sprintf(buf, "Wiêcej na temat %s ciê ju¿ nie nauczê.", skill_table[sn]->name);
+				sprintf(buf, "Wiï¿½cej na temat %s ciï¿½ juï¿½ nie nauczï¿½.", skill_table[sn]->name);
 				ch_tell(mob, ch, buf);
 			}
 		}
@@ -3642,7 +3637,7 @@ DEF_DO_FUN( teach )
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Nauczyæ kogo, czego?" NL, ch);
+		send_to_char("Nauczyï¿½ kogo, czego?" NL, ch);
 		return;
 	}
 	else
@@ -3652,7 +3647,7 @@ DEF_DO_FUN( teach )
 
 		if (!IS_AWAKE(ch))
 		{
-			send_to_char("Co ci siê ¶ni?" NL, ch);
+			send_to_char("Co ci siï¿½ ï¿½ni?" NL, ch);
 			return;
 		}
 
@@ -3664,7 +3659,7 @@ DEF_DO_FUN( teach )
 
 		if (IS_NPC(victim))
 		{
-			ch_printf(ch, "%s nie nauczy siê od ciebie niczego..." NL, PERS(victim, ch, 0));
+			ch_printf(ch, "%s nie nauczy siï¿½ od ciebie niczego..." NL, PERS(victim, ch, 0));
 			return;
 		}
 
@@ -3672,7 +3667,7 @@ DEF_DO_FUN( teach )
 
 		if (sn == -1)
 		{
-			act(PLAIN, "Nawet ty nie masz pojêcia co to jest.", victim, NULL, ch, TO_VICT);
+			act(PLAIN, "Nawet ty nie masz pojï¿½cia co to jest.", victim, NULL, ch, TO_VICT);
 			return;
 		}
 
@@ -3688,20 +3683,20 @@ DEF_DO_FUN( teach )
 		// niz fachowe moby do tego stworzone, wiec sesje sa oporniejsze.
 		if( victim->pcdata->practices < NUM_PRACT_FOR_SKILL+1 )
 		{
-			act( COL_TELL, "$n nie ma wystarczaj±cej ilo¶ci praktyk.",
+			act( COL_TELL, "$n nie ma wystarczajï¿½cej iloï¿½ci praktyk.",
 					victim, NULL, ch, TO_VICT );
 			return;
 		}
 #endif
 		if (victim->skill_level[skill_table[sn]->guild] < skill_table[sn]->min_level)
 		{
-			act(COL_TELL, "$n nie jest jeszcze gotow$y by siê tego uczyæ.", victim, NULL, ch, TO_VICT);
+			act(COL_TELL, "$n nie jest jeszcze gotow$y by siï¿½ tego uczyï¿½.", victim, NULL, ch, TO_VICT);
 			return;
 		}
 
 		if (is_name(skill_tname[skill_table[sn]->type], CANT_PRAC))
 		{
-			act(COL_TELL, "Tej umiejêtno¶ci nie mo¿esz uczyæ.", victim, NULL, ch, TO_VICT);
+			act(COL_TELL, "Tej umiejï¿½tnoï¿½ci nie moï¿½esz uczyï¿½.", victim, NULL, ch, TO_VICT);
 			return;
 		}
 
@@ -3709,14 +3704,14 @@ DEF_DO_FUN( teach )
 
 		if (victim->pcdata->learned[sn] >= adept)
 		{
-			act(COL_TELL, "$n musi to wyæwiczyæ sam$x.", victim, NULL, ch,
+			act(COL_TELL, "$n musi to wyï¿½wiczyï¿½ sam$x.", victim, NULL, ch,
 			TO_VICT);
 			return;
 		}
 		if (ch->pcdata->learned[sn] < 100)
 		{
 			act(
-			COL_TELL, "Najpierw ty opanuj tê umiejêtno¶æ w ca³o¶ci, dopiero potem ucz innych.", victim, NULL, ch, TO_VICT);
+			COL_TELL, "Najpierw ty opanuj tï¿½ umiejï¿½tnoï¿½ï¿½ w caï¿½oï¿½ci, dopiero potem ucz innych.", victim, NULL, ch, TO_VICT);
 			return;
 		}
 		else
@@ -3750,18 +3745,18 @@ DEF_DO_FUN( wimpy )
 
 	if (wimpy < 0)
 	{
-		send_to_char("Twoja odwaga przewy¿sza nawet twoj± m±dro¶æ." NL, ch);
+		send_to_char("Twoja odwaga przewyï¿½sza nawet twojï¿½ mï¿½droï¿½ï¿½." NL, ch);
 		return;
 	}
 
 	if (wimpy > ch->max_hit)
 	{
-		send_to_char("No nie b±d¼ a¿ takim tchórzem." NL, ch);
+		send_to_char("No nie bï¿½dï¿½ aï¿½ takim tchï¿½rzem." NL, ch);
 		return;
 	}
 
 	ch->wimpy = wimpy;
-	ch_printf(ch, "Uciekasz z walki poni¿ej %d hp." NL, wimpy);
+	ch_printf(ch, "Uciekasz z walki poniï¿½ej %d hp." NL, wimpy);
 	return;
 }
 
@@ -3839,7 +3834,7 @@ DEF_DO_FUN( commands )
 		if (col % columns != 0)
 			send_to_pager(NL, ch);
 		if (!found)
-			ch_printf(ch, "Pod skrótem '%s' nie znaleziono komendy." NL, argument);
+			ch_printf(ch, "Pod skrï¿½tem '%s' nie znaleziono komendy." NL, argument);
 	}
 	return;
 }
@@ -3854,11 +3849,11 @@ DEF_DO_FUN( channels )
 	{
 		if (!IS_NPC(ch) && IS_SILENCED(ch))
 		{
-			send_to_char("Nie mo¿esz u¿ywaæ kana³ów." NL, ch);
+			send_to_char("Nie moï¿½esz uï¿½ywaï¿½ kanaï¿½ï¿½w." NL, ch);
 			return;
 		}
 
-		send_to_char("Kana³y:", ch);
+		send_to_char("Kanaï¿½y:", ch);
 
 		if (get_trust(ch) > 2 && !NOT_AUTHED(ch))
 		{
@@ -3944,7 +3939,7 @@ DEF_DO_FUN( channels )
 			fClear = false;
 		else
 		{
-			send_to_char("Sk³adnia: Channels +|- <kana³>" NL, ch);
+			send_to_char("Skï¿½adnia: Channels +|- <kanaï¿½>" NL, ch);
 			return;
 		}
 
@@ -4002,7 +3997,7 @@ DEF_DO_FUN( channels )
 			ClearAll = true;
 		else
 		{
-			send_to_char("Który kana³ ustawiæ?" NL, ch);
+			send_to_char("Ktï¿½ry kanaï¿½ ustawiï¿½?" NL, ch);
 			return;
 		}
 
@@ -4108,42 +4103,42 @@ DEF_DO_FUN( config )
 
 	const struct conf_type conf_act_table[] =
 	{
-	{ "flee", PLR_FLEE, false, "Automatycznie uciekasz, gdy kto¶ ciê zaatakuje.", "Gdy kto¶ ciê zaatakuje, walczysz." },
-	{ "autoexit", PLR_AUTOEXIT, false, "Automatycznie widzisz wyj¶cia z lokacji.", "Nie widzisz automatycznie wyj¶æ z lokacji." },
-	{ "autoloot", PLR_AUTOLOOT, false, "Automatycznie opró¿niasz cia³a po walce.", "Nie opró¿niasz cia³ automatycznie po walce." },
+	{ "flee", PLR_FLEE, false, "Automatycznie uciekasz, gdy ktoï¿½ ciï¿½ zaatakuje.", "Gdy ktoï¿½ ciï¿½ zaatakuje, walczysz." },
+	{ "autoexit", PLR_AUTOEXIT, false, "Automatycznie widzisz wyjï¿½cia z lokacji.", "Nie widzisz automatycznie wyjï¿½ï¿½ z lokacji." },
+	{ "autoloot", PLR_AUTOLOOT, false, "Automatycznie oprï¿½niasz ciaï¿½a po walce.", "Nie oprï¿½niasz ciaï¿½ automatycznie po walce." },
 	{ "autocred",
-	PLR_AUTOGOLD, false, "Automatycznie opró¿niasz cia³a przeciwników z kredytek.",
-			"Nie opró¿niasz automatycznie cia³ przeciwników z kredytek." },
-	{ "blank", PLR_BLANK, false, "Masz pust± liniê przed promptem.", "Nie masz pustej linii przed promptem." },
-	{ "combine", PLR_COMBINE, false, "Widzisz przedmioty w formie po³±czonej.", "Widzisz ka¿dy przedmiot osobno." },
-	{ "brief", PLR_BRIEF, false, "Widzisz skrócone opisy lokacji (fuj).", "Widzisz ca³e opisy lokacji." },
+	PLR_AUTOGOLD, false, "Automatycznie oprï¿½niasz ciaï¿½a przeciwnikï¿½w z kredytek.",
+			"Nie oprï¿½niasz automatycznie ciaï¿½ przeciwnikï¿½w z kredytek." },
+	{ "blank", PLR_BLANK, false, "Masz pustï¿½ liniï¿½ przed promptem.", "Nie masz pustej linii przed promptem." },
+	{ "combine", PLR_COMBINE, false, "Widzisz przedmioty w formie poï¿½ï¿½czonej.", "Widzisz kaï¿½dy przedmiot osobno." },
+	{ "brief", PLR_BRIEF, false, "Widzisz skrï¿½cone opisy lokacji (fuj).", "Widzisz caï¿½e opisy lokacji." },
 	{ "prompt", PLR_PROMPT, false, "Masz prompt.", "Nie masz promptu." },
-	{ "telnetga", PLR_TELNET_GA, false, "Dostajesz sekwencjê telnetu GO-AHEAD.", "Nie dostajesz sekwencji telnetu GO-AHEAD." },
-	{ "mapexits", PLR_MAPEXITS, false, "Widzisz graficznie przedstawione kierunki wyj¶cia z lokacji.",
-			"Nie widzisz graficznych kierunków wyj¶cia z lokacji." },
-	{ "longexits", PLR_LONGEXITS, false, "Widzisz d³ugie opisy wyj¶æ z lokacji.", "Nie widzisz d³ugich opisów wyj¶æ z lokacji." },
-	{ "ansi", PLR_ANSI, false, "Masz w³±czone kolory ANSI.", "Nie u¿ywasz kolorów ANSI." },
+	{ "telnetga", PLR_TELNET_GA, false, "Dostajesz sekwencjï¿½ telnetu GO-AHEAD.", "Nie dostajesz sekwencji telnetu GO-AHEAD." },
+	{ "mapexits", PLR_MAPEXITS, false, "Widzisz graficznie przedstawione kierunki wyjï¿½cia z lokacji.",
+			"Nie widzisz graficznych kierunkï¿½w wyjï¿½cia z lokacji." },
+	{ "longexits", PLR_LONGEXITS, false, "Widzisz dï¿½ugie opisy wyjï¿½ï¿½ z lokacji.", "Nie widzisz dï¿½ugich opisï¿½w wyjï¿½ï¿½ z lokacji." },
+	{ "ansi", PLR_ANSI, false, "Masz wï¿½ï¿½czone kolory ANSI.", "Nie uï¿½ywasz kolorï¿½w ANSI." },
 	{ "tick", PLR_TICK, false, "Widzisz kiedy mija godzina.", "Nie widzisz kiedy mija godzina." },
-	{ "sound", PLR_SOUND, false, "Dostajesz wsparcie d¼wiêkiem.", "Grasz w ciszy." },
-	{ "vnum", PLR_ROOMVNUM, true, "Widzisz vnumy lokacji, mobów i obj.", "Nie widzisz vnumów lokacji, mobów i obj." },
+	{ "sound", PLR_SOUND, false, "Dostajesz wsparcie dï¿½wiï¿½kiem.", "Grasz w ciszy." },
+	{ "vnum", PLR_ROOMVNUM, true, "Widzisz vnumy lokacji, mobï¿½w i obj.", "Nie widzisz vnumï¿½w lokacji, mobï¿½w i obj." },
 	//Tanglor - nowa flaga dla IMMO
 			{ "known4all", PLR_KNOWN4ALL, true, "Dla wszystkich jestes widziany jako znajomy.",
-					"Obowi±zuj± Cie te same ograniczenia jak innych znajomych." },
+					"Obowiï¿½zujï¿½ Cie te same ograniczenia jak innych znajomych." },
 			{ "", 0, true, "", "" } };
 
 	const struct conf_type conf_pcflag_table[] =
 	{
-	{ "gag", PCFLAG_GAG, false, "Widzisz skrócony opis walki.", "Widzisz ca³y opis walki." },
+	{ "gag", PCFLAG_GAG, false, "Widzisz skrï¿½cony opis walki.", "Widzisz caï¿½y opis walki." },
 	{ "pager", PCFLAG_PAGERON, false, "Masz pager.", "Nie masz pagera." },
-	{ "nointro", PCFLAG_NOINTRO, false, "Nie dostajesz dodatkowych informacji przy wej¶ciu do gry.",
-			"Dostajesz dodatkowe informacje przy wej¶ciu do gry." },
+	{ "nointro", PCFLAG_NOINTRO, false, "Nie dostajesz dodatkowych informacji przy wejï¿½ciu do gry.",
+			"Dostajesz dodatkowe informacje przy wejï¿½ciu do gry." },
 	{ "roomflags", PCFLAG_ROOM, true, "Widzisz flagi lokacji.", "Nie widzisz flag lokacji." },
-	{ "shipstat", PCFLAG_SHIPSTAT, false, "Widzisz dodatkowe informacje o swoim statku.", "Nie widzisz danych statku, który prowadzisz." },
+	{ "shipstat", PCFLAG_SHIPSTAT, false, "Widzisz dodatkowe informacje o swoim statku.", "Nie widzisz danych statku, ktï¿½ry prowadzisz." },
 	{ "", 0, true, "", "" } };
 
 	if (IS_NPC(ch))
 	{
-		send_to_char("Tak tak. Wszystko piêknie dzia³a." NL, ch);
+		send_to_char("Tak tak. Wszystko piï¿½knie dziaï¿½a." NL, ch);
 		return;
 	}
 
@@ -4174,8 +4169,8 @@ DEF_DO_FUN( config )
 				pager_printf(ch, FG_GREEN "[-%-9.9s]" PLAIN " %s" NL, conf_pcflag_table[x].name, conf_pcflag_table[x].text_off);
 		}
 		send_to_char(
-		IS_SILENCED( ch ) ? FB_GREEN "[+SILENCE  ]" PLAIN " Nie mo¿esz mówiæ." NL : "", ch);
-		send_to_char(!IS_SET(ch->act, PLR_LITTERBUG) ? "" : FG_GREEN "[-litter   ]" PLAIN " Nie wolno ci ¶mieciæ." NL, ch);
+		IS_SILENCED( ch ) ? FB_GREEN "[+SILENCE  ]" PLAIN " Nie moï¿½esz mï¿½wiï¿½." NL : "", ch);
+		send_to_char(!IS_SET(ch->act, PLR_LITTERBUG) ? "" : FG_GREEN "[-litter   ]" PLAIN " Nie wolno ci ï¿½mieciï¿½." NL, ch);
 	}
 	else
 	{
@@ -4190,7 +4185,7 @@ DEF_DO_FUN( config )
 			fSet = false;
 		else
 		{
-			send_to_char("Sk³adnia: Config +|- <opcja>" NL, ch);
+			send_to_char("Skï¿½adnia: Config +|- <opcja>" NL, ch);
 			return;
 		}
 
@@ -4226,8 +4221,8 @@ DEF_DO_FUN( config )
 				REMOVE_BIT(ch->act, bit);
 			}
 
-			ch_printf(ch, "Ok." NL FB_YELLOW "%s" PLAIN " zosta³o " FB_YELLOW "%s" EOL, all_capitalize(arg),
-					fSet ? "W£¡CZONE" : "WY£¡CZONE");
+			ch_printf(ch, "Ok." NL FB_YELLOW "%s" PLAIN " zostaï¿½o " FB_YELLOW "%s" EOL, all_capitalize(arg),
+					fSet ? "Wï¿½ï¿½CZONE" : "WYï¿½ï¿½CZONE");
 			ch_printf(ch, "Od teraz %s" NL, buf);
 
 			return;
@@ -4248,7 +4243,7 @@ DEF_DO_FUN( config )
 
 			if (!bit)
 			{
-				send_to_char("Któr± opcjê chcesz skonfigurowaæ?" NL, ch);
+				send_to_char("Ktï¿½rï¿½ opcjï¿½ chcesz skonfigurowaï¿½?" NL, ch);
 				return;
 			}
 
@@ -4264,8 +4259,8 @@ DEF_DO_FUN( config )
 				buf[0] = LOWER(buf[0]);
 				REMOVE_BIT(ch->pcdata->flags, bit);
 			}
-			ch_printf(ch, "Ok." NL FB_YELLOW "%s" PLAIN " zosta³o " FB_YELLOW "%s" EOL, all_capitalize(arg),
-					fSet ? "W£¡CZONE" : "WY£¡CZONE");
+			ch_printf(ch, "Ok." NL FB_YELLOW "%s" PLAIN " zostaï¿½o " FB_YELLOW "%s" EOL, all_capitalize(arg),
+					fSet ? "Wï¿½ï¿½CZONE" : "WYï¿½ï¿½CZONE");
 			ch_printf(ch, "Od teraz %s" NL, buf);
 			return;
 		}
@@ -4297,7 +4292,7 @@ DEF_DO_FUN( areas )
 	{
 		for (maxlev = (lev - 1); maxlev <= MAX_LEVEL; maxlev++)
 		{
-			for (pArea = first_area; pArea; pArea = pArea->next)
+			for (auto* pArea : area_list)
 			{
 				if (IS_SET( pArea->flags, AFLAG_HIDDEN ) && !IS_SET(ch->act, PLR_HOLYLIGHT))
 					continue;
@@ -4319,7 +4314,7 @@ DEF_DO_FUN( areas )
 	return;
 }
 
-//added by Thanos (doda³em powód AWAYa)
+//added by Thanos (dodaï¿½em powï¿½d AWAYa)
 DEF_DO_FUN( afk )
 {
 	if (IS_NPC(ch))
@@ -4331,9 +4326,9 @@ DEF_DO_FUN( afk )
 		send_to_char("Powracasz do klawiaturki." NL, ch);
 		act(PLAIN, "$n$R powraca do klawiaturki.", ch, NULL, NULL, TO_ROOM);
 		STRDUP(ch->pcdata->afk_reason, "");
-		if (ch->pcdata->first_last_tell)
-			send_to_char("Masz nagrane jakie¶ wiadomo¶ci do ciebie." NL
-			"Wpisz 'last tell' by je zobaczyæ." NL, ch);
+		if (!ch->pcdata->last_tells.empty())
+			send_to_char("Masz nagrane jakieï¿½ wiadomoï¿½ci do ciebie." NL
+			"Wpisz 'last tell' by je zobaczyï¿½." NL, ch);
 
 	}
 	else
@@ -4398,7 +4393,7 @@ DEF_DO_FUN( slist )
 	if (IS_NPC(vch))
 		return;
 
-	pager_printf(ch, "Oto dostêpne %s umiejêtno¶ci:" NL, ch == vch ? "ci" : FEMALE(vch) ? "jej" : "mu");
+	pager_printf(ch, "Oto dostï¿½pne %s umiejï¿½tnoï¿½ci:" NL, ch == vch ? "ci" : FEMALE(vch) ? "jej" : "mu");
 
 	for (ability = -1; ability < MAX_ABILITY; ability++)
 	{
@@ -4408,7 +4403,7 @@ DEF_DO_FUN( slist )
 		if (ability >= 0)
 			sprintf(skn, NL FB_WHITE "%s" EOL, class_table[ability].przypadki[0]);
 		else
-			sprintf(skn, NL FB_WHITE "Jêzyki:" EOL);
+			sprintf(skn, NL FB_WHITE "Jï¿½zyki:" EOL);
 		send_to_pager(skn, ch);
 
 		for (i = lowlev; i <= hilev; i++)
@@ -4424,8 +4419,8 @@ DEF_DO_FUN( slist )
 				if (vch->pcdata->learned[sn] == 0 && SPELL_FLAG(skill_table[sn], SF_SECRETSKILL))
 					continue;
 
-				/* ¯eby gracze nie widzieli wszystkich skilli, a tylko
-				 te, którymi powinni siê interesowaæ	    -- Thanos */
+				/* ï¿½eby gracze nie widzieli wszystkich skilli, a tylko
+				 te, ktï¿½rymi powinni siï¿½ interesowaï¿½	    -- Thanos */
 				if (!IS_HERO(ch) && max_level(ch, ability) < skill_table[sn]->min_level)
 					continue;
 
@@ -4469,14 +4464,14 @@ DEF_DO_FUN( whois )
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Musisz umie¶ciæ imiê gracza." NL, ch);
+		send_to_char("Musisz umieï¿½ciï¿½ imiï¿½ gracza." NL, ch);
 		return;
 	}
 
-	//added by Thanos (tajemniczy w³adcy ;) )
+	//added by Thanos (tajemniczy wï¿½adcy ;) )
 	if (IS_ADMIN( argument ) && !IS_ADMIN(ch->name))
 	{
-		ch_printf(ch, "%s jest jednym z W£ADCÓW TEGO ¦WIATA !!!" NL, capitalize(argument));
+		ch_printf(ch, "%s jest jednym z Wï¿½ADCï¿½W TEGO ï¿½WIATA !!!" NL, capitalize(argument));
 		return;
 	}
 
@@ -4489,10 +4484,10 @@ DEF_DO_FUN( whois )
 		return;
 	}
 
-	//added by Thanos (tajemniczy w³adcy ;) )
+	//added by Thanos (tajemniczy wï¿½adcy ;) )
 	if (IS_ADMIN( victim->name ) && !IS_ADMIN(ch->name))
 	{
-		ch_printf(ch, "%s jednym z W£ADCÓW TEGO ¦WIATA !!!" NL, capitalize(argument));
+		ch_printf(ch, "%s jednym z Wï¿½ADCï¿½W TEGO ï¿½WIATA !!!" NL, capitalize(argument));
 		return;
 	}
 
@@ -4510,7 +4505,7 @@ DEF_DO_FUN( whois )
 	}
 
 	ch_printf(ch, "%s jest %s rasy %s na poziomie %d." NL, victim->name,
-	MALE( victim ) ? "mê¿czyzn±" : FEMALE(victim) ? "kobiet±" : "czym¶ nieokre¶lonym",
+	MALE( victim ) ? "mï¿½czyznï¿½" : FEMALE(victim) ? "kobietï¿½" : "czymï¿½ nieokreï¿½lonym",
 			!strcmp(victim->race->name, "Human") ? "ludzkiej" : victim->race->name, victim->top_level);
 	if (victim->pcdata->clan)
 	{
@@ -4518,8 +4513,8 @@ DEF_DO_FUN( whois )
 		MEMBER_DATA *member;
 		int i = 0;
 
-		sprintf(buf, "Nale¿y do:" NL);
-		FOREACH( clan, first_clan )
+		sprintf(buf, "Naleï¿½y do:" NL);
+		for (auto* clan : clan_list)
 			if ((!IS_SET(clan->flags, CLAN_NOINFO) || get_member(clan, ch->name) || IS_IMMORTAL(ch))
 					&& (member = get_member(clan, victim->name)) && member->status >= CLAN_MEMBER)
 			{
@@ -4534,7 +4529,7 @@ DEF_DO_FUN( whois )
 
 	/*
 	 if(victim->pcdata->homepage)
-	 ch_printf(ch, "Strona domowa %s znajduje siê pod adresem %s.\n\r",
+	 ch_printf(ch, "Strona domowa %s znajduje siï¿½ pod adresem %s.\n\r",
 	 victim->przypadki[1],
 	 victim->pcdata->homepage);*/
 
@@ -4603,12 +4598,12 @@ DEF_DO_FUN( pager )
 	}
 	if (!is_number(arg))
 	{
-		send_to_char("Ustawiæ pager na ile linii?" NL, ch);
+		send_to_char("Ustawiï¿½ pager na ile linii?" NL, ch);
 		return;
 	}
 	ch->pcdata->pagerlen = atoi(arg);
 	if (ch->pcdata->pagerlen < 5)
 		ch->pcdata->pagerlen = 5;
-	ch_printf(ch, "Ekran zatrzymuje siê po wy¶wietleniu %d linii." NL, ch->pcdata->pagerlen);
+	ch_printf(ch, "Ekran zatrzymuje siï¿½ po wyï¿½wietleniu %d linii." NL, ch->pcdata->pagerlen);
 	return;
 }

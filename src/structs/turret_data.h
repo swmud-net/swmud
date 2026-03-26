@@ -23,8 +23,6 @@
 
 struct turret_data
 {
-	TURRET_DATA			* next;
-	TURRET_DATA			* prev;
 	SHIP_DATA			* target;
 	CHAR_DATA			* gunner;
 	int					vnum;

@@ -20,18 +20,14 @@
 #define CHAPTER_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct chapter_data
 {
-	CHAPTER_DATA		* prev;
-	CHAPTER_DATA		* next;
 	CHAPTER_INDEX_DATA	* pIndexData;
-	QUEST_CMND_DATA		* first_init_cmd;
-	QUEST_CMND_DATA		* last_init_cmd;
-	QUEST_ACTION_DATA	* first_action;
-	QUEST_ACTION_DATA	* last_action;
-	EVENT_DATA			* first_event;
-	EVENT_DATA			* last_event;
+	std::list<QUEST_CMND_DATA*> init_cmds;
+	std::list<QUEST_ACTION_DATA*> actions;
+	std::list<EVENT_DATA*> events;
 	int					nr;
 	bool				completed;
 };

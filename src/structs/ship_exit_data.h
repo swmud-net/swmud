@@ -23,8 +23,6 @@
 
 struct ship_exit_data
 {
-	SHIP_EXIT_DATA		* next;
-	SHIP_EXIT_DATA		* prev;
 	char				* keyword;	/* Keywords for exit or door	*/
 	char				* description;	/* Description of exit		*/
 	int					vnum;		/* Vnum of room exit leads to	*/

@@ -44,7 +44,7 @@ xmlDocPtr	xsd_validate	( const char *what, const char *xsd, const char *dir,
 #define	ILIST( path )\
 ilist_ok = TRUE;\
 if( (ilist_doc = xsd_validate( "list", SCHEMA_LIST, "", path )) )\
-	FOREACH( ilist_node, xmlDocGetRootElement( ilist_doc )->children )\
+	for( ilist_node = xmlDocGetRootElement( ilist_doc )->children; ilist_node; ilist_node = ilist_node->next )\
 		if( ilist_node->type == XML_ELEMENT_NODE\
 		&& !swXmlStrcmp( ilist_node->name, "entry" )\
 		&& swGetContent( &ilist_buf, ilist_node ) )\
@@ -58,32 +58,26 @@ ilist_doc = NULL;\
 ilist_buf = NULL;\
 ilist_ok = FALSE
 
-#define	ILD_CREATE( type, name, field, first_ild, last_ild )\
+#define	ILD_CREATE( type, name_list, field, ild_list )\
 do\
 {\
 	ILD		*ild;\
-	type	*ptr;\
 \
-	FOREACH( ptr, first_ ## name )\
+	for( auto* ptr : name_list )\
 	{\
 		ild = new_ild();\
 		STRDUP( ild->data, ptr->field );\
-		LINK( ild, (first_ild), (last_ild), next, prev );\
+		(ild_list).push_back( ild );\
 	}\
 \
 } while(0)
 
-#define	ILD_FREE( first_ild )\
+#define	ILD_FREE( ild_list )\
 do\
 {\
-	ILD	*ild;\
-	ILD	*ild_next;\
-\
-	for( ild = first_ild; ild; ild = ild_next )\
-	{\
-		ild_next = ild->next;\
+	for( auto* ild : (ild_list) )\
 		free_ild( ild );\
-	}\
+	(ild_list).clear();\
 } while(0)
 
 extern xmlDocPtr				ilist_doc;
@@ -126,7 +120,7 @@ void swGetContentInt64( int64 *dst, xmlNodePtr node );
 void swGetPropInt( int *dst, xmlNodePtr node, const char *name );
 void swGetPropInt64( int64 *dst, xmlNodePtr node, const char *name );
 
-void save_list( const char *path, ILD *first );
+void save_list( const char *path, std::list<ILD*>& ild_list );
 
 int swXmlStrcmp( const xmlChar *str1, const char *str2 );
 

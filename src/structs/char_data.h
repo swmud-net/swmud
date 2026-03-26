@@ -20,33 +20,26 @@
 #define CHAR_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct char_data
 {
-	CHAR_DATA			* next;
-	CHAR_DATA			* prev;
-	CHAR_DATA			* next_in_room;
-	CHAR_DATA			* prev_in_room;
 	CHAR_DATA			* master;
 	CHAR_DATA			* leader;
 	CHAR_DATA			* reply;
 	CHAR_DATA			* retell;			/* Thanos */
 	CHAR_DATA			* switched;
 	CHAR_DATA			* mount;
-	KNOWN_CHAR_DATA		* first_known;
-	KNOWN_CHAR_DATA		* last_known;		// Tanglor
+	std::list<KNOWN_CHAR_DATA*> known;
 	int					attribute1;		//oba inicjowane -2*MAX_CECH
 	int					attribute2;
 	int					kins;
-	AUCTION_DATA		* first_auction;		//pierwsza aukcja jakiej przewodzisz
-	AUCTION_DATA		* last_auction;
-	DIALOG_DATA			* first_dialog;
-	DIALOG_DATA			* last_dialog;
+	std::list<AUCTION_DATA*> auctions;
+	std::list<DIALOG_DATA*> dialogs;
 	HHF_DATA			* hunting;
 	HHF_DATA			* fearing;
 	HHF_DATA			* hating;
-	SUSPECT_DATA		* first_suspect;		/* pamiêæ policjanta */
-	SUSPECT_DATA		* last_suspect;		/* Thanos */
+	std::list<SUSPECT_DATA*> suspects;
 	SPEC_FUN			* spec_fun;
 	SPEC_FUN			* spec_2;
 	FIGHT_DATA			* fighting;
@@ -54,15 +47,13 @@ struct char_data
 	int					mpactnum;
 	ROOM_INDEX_DATA		* curr_room;		/* Thanos - dla supermoba */
 	OBJ_DATA			* curr_obj;		/* Thanos - dla supermoba */
-	int					mpscriptrun;		/* Thanos - latwiej szukaæ proga */
+	int					mpscriptrun;		/* Thanos - latwiej szukaï¿½ proga */
 	bool				locked; /*Trog dla tesow...*/
 	MOB_INDEX_DATA		* pIndexData;
 	DESCRIPTOR_DATA		* desc;
-	AFFECT_DATA			* first_affect;
-	AFFECT_DATA			* last_affect;
+	std::list<AFFECT_DATA*> affects;
 	NOTE_DATA			* pnote;
-	OBJ_DATA			* first_carrying;
-	OBJ_DATA			* last_carrying;
+	std::list<OBJ_DATA*> carrying;
 	ROOM_INDEX_DATA		* in_room;
 	ROOM_INDEX_DATA		* was_in_room;
 	ROOM_INDEX_DATA		* was_sentinel;
@@ -74,10 +65,8 @@ struct char_data
 	char				* dest_buf;
 	char				* dest_buf_2;
 	int					tempnum;
-	TIMER				* first_timer;
-	TIMER				* last_timer;
-	KNOWN_LANG			* first_klang; /* Trog & Ratm */
-	KNOWN_LANG			* last_klang;
+	std::list<TIMER*> timers;
+	std::list<KNOWN_LANG*> klangs;
 	LANG_DATA			* speaking;
 	char				* name;
 	char				* long_descr;
@@ -169,11 +158,10 @@ struct char_data
 	GUARD_DATA			* guard_data;
 	int					main_ability;
 	int					charset;
-	CRIME_DATA			* first_crime;	/* lista przestêpsw	--Thanos*/
-	CRIME_DATA			* last_crime;
-	OBJ_DATA			* deposit;	/* wska¼nik na depozyt - latwiej siê szuka */
-	QUEST_DATA			* inquest;	/* robiony quest(je¶li gracz),
-									a je¶li mob-to quest w którym jest*/
+	std::list<CRIME_DATA*> crimes;
+	OBJ_DATA			* deposit;	/* wskaï¿½nik na depozyt - latwiej siï¿½ szuka */
+	QUEST_DATA			* inquest;	/* robiony quest(jeï¿½li gracz),
+									a jeï¿½li mob-to quest w ktï¿½rym jest*/
 };
 
 #endif //CHAR_DATA_H_

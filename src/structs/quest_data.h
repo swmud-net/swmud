@@ -20,29 +20,23 @@
 #define QUEST_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	quest_data
 {
-	QUEST_DATA			* next;
-	QUEST_DATA			* prev;
 	QUEST_INDEX_DATA	* pIndexData;
-	CHAPTER_DATA		* first_chapter;
-	CHAPTER_DATA		* last_chapter;
+	std::list<CHAPTER_DATA*> chapters;
 	CHAPTER_DATA		* curr_chapter;
-	QUEST_MOB_DATA		* first_mob;
-	QUEST_MOB_DATA		* last_mob;
-	QUEST_OBJ_DATA		* first_obj;
-	QUEST_OBJ_DATA *	last_obj;
+	std::list<QUEST_MOB_DATA*> mobs;
+	std::list<QUEST_OBJ_DATA*> objs;
 	CHAR_DATA *			player;
 	bool				finished;
-	bool				failed;		/*czy siê nie skoñczy³ za czas*/
-	time_t				logon;		/*o której zosta³ odpalony/wznowiony*/
-	int					time_took;	/*ile zaj±³ przedtem czasu */
+	bool				failed;		/*czy siï¿½ nie skoï¿½czyï¿½ za czas*/
+	time_t				logon;		/*o ktï¿½rej zostaï¿½ odpalony/wznowiony*/
+	int					time_took;	/*ile zajï¿½ï¿½ przedtem czasu */
 	int					curr_qp;
-	QUEST_CMND_DATA		* first_init_cmd;
-	QUEST_CMND_DATA		* last_init_cmd;
-	QUEST_ACTION_DATA	* first_action;
-	QUEST_ACTION_DATA	* last_action;
+	std::list<QUEST_CMND_DATA*> init_cmds;
+	std::list<QUEST_ACTION_DATA*> actions;
 };
 
 #endif //QUEST_DATA_H_

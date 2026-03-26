@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <time.h>
+#include <ranges>
 #include "mud.h"
 
 void add_reinforcements args( ( CHAR_DATA *ch ) );
@@ -208,7 +209,7 @@ DEF_DO_FUN( makeblade )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_TOOLKIT)
 				checktool = true;
@@ -311,7 +312,7 @@ DEF_DO_FUN( makeblade )
 	checkbatt = false;
 	checkoven = false;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_TOOLKIT)
 			checktool = true;
@@ -391,8 +392,7 @@ DEF_DO_FUN( makeblade )
 	paf->location = flag_value(apply_types_list, "backstab");
 	paf->modifier = level / 3;
 	paf->bitvector = 0;
-	paf->next = NULL;
-	LINK(paf, obj->first_affect, obj->last_affect, next, prev);
+	obj->affects.push_back(paf);
 	++top_affect;
 	CREATE(paf2, AFFECT_DATA, 1);
 	paf2->type = -1;
@@ -400,8 +400,7 @@ DEF_DO_FUN( makeblade )
 	paf2->location = flag_value(apply_types_list, "hitroll");
 	paf2->modifier = -2;
 	paf2->bitvector = 0;
-	paf2->next = NULL;
-	LINK(paf2, obj->first_affect, obj->last_affect, next, prev);
+	obj->affects.push_back(paf2);
 	++top_affect;
 	obj->value[0] = INIT_WEAPON_CONDITION;
 	obj->value[1] = (int) (level / 20 + 10); /* min dmg  */
@@ -474,7 +473,7 @@ DEF_DO_FUN( makeblaster )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_TOOLKIT)
 				checktool = true;
@@ -600,7 +599,7 @@ DEF_DO_FUN( makeblaster )
 	scope = 0;
 	ammo = 0;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_TOOLKIT)
 			checktool = true;
@@ -713,8 +712,7 @@ DEF_DO_FUN( makeblaster )
 	paf->location = flag_value(apply_types_list, "hitroll");
 	paf->modifier = URANGE(0, 1 + scope, level / 30);
 	paf->bitvector = 0;
-	paf->next = NULL;
-	LINK(paf, obj->first_affect, obj->last_affect, next, prev);
+	obj->affects.push_back(paf);
 	++top_affect;
 	CREATE(paf2, AFFECT_DATA, 1);
 	paf2->type = -1;
@@ -722,8 +720,7 @@ DEF_DO_FUN( makeblaster )
 	paf2->location = flag_value(apply_types_list, "damroll");
 	paf2->modifier = URANGE(0, power, level / 30);
 	paf2->bitvector = 0;
-	paf2->next = NULL;
-	LINK(paf2, obj->first_affect, obj->last_affect, next, prev);
+	obj->affects.push_back(paf2);
 	++top_affect;
 	obj->value[0] = INIT_WEAPON_CONDITION; /* condition  */
 	obj->value[1] = (int) (level / 10 + 15); /* min dmg  */
@@ -799,7 +796,7 @@ DEF_DO_FUN( makelightsaber )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_TOOLKIT)
 				checktool = true;
@@ -937,7 +934,7 @@ DEF_DO_FUN( makelightsaber )
 	charge = 0;
 	gemtype = 0;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_TOOLKIT)
 			checktool = true;
@@ -1059,8 +1056,7 @@ DEF_DO_FUN( makelightsaber )
 	paf->location = flag_value(apply_types_list, "hitroll");
 	paf->modifier = URANGE(0, gems, level / 30);
 	paf->bitvector = 0;
-	paf->next = NULL;
-	LINK(paf, obj->first_affect, obj->last_affect, next, prev);
+	obj->affects.push_back(paf);
 	++top_affect;
 	CREATE(paf2, AFFECT_DATA, 1);
 	paf2->type = -1;
@@ -1068,8 +1064,7 @@ DEF_DO_FUN( makelightsaber )
 	paf2->location = flag_value(apply_types_list, "parry");
 	paf2->modifier = (level / 3);
 	paf2->bitvector = 0;
-	paf2->next = NULL;
-	LINK(paf2, obj->first_affect, obj->last_affect, next, prev);
+	obj->affects.push_back(paf2);
 	++top_affect;
 	obj->value[0] = INIT_WEAPON_CONDITION; /* condition  */
 	obj->value[1] = (int) (level / 10 + (gemtype + gems) * 2); /* min dmg  */
@@ -1263,7 +1258,7 @@ DEF_DO_FUN( makegrenade )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_TOOLKIT)
 				checktool = true;
@@ -1366,7 +1361,7 @@ DEF_DO_FUN( makegrenade )
 	checkchem = false;
 	checkcirc = false;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_TOOLKIT)
 			checktool = true;
@@ -1499,7 +1494,7 @@ DEF_DO_FUN( makelandmine )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_TOOLKIT)
 				checktool = true;
@@ -1603,7 +1598,7 @@ DEF_DO_FUN( makelandmine )
 	checkchem = false;
 	checkcirc = false;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_TOOLKIT)
 			checktool = true;
@@ -1733,7 +1728,7 @@ DEF_DO_FUN( makelight )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_TOOLKIT)
 				checktool = true;
@@ -1834,7 +1829,7 @@ DEF_DO_FUN( makelight )
 	checkchem = false;
 	checkcirc = false;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_TOOLKIT)
 			checktool = true;
@@ -1994,7 +1989,7 @@ DEF_DO_FUN( makejewelry )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_TOOLKIT)
 				checktool = true;
@@ -2081,7 +2076,7 @@ DEF_DO_FUN( makejewelry )
 	value = 0;
 	cost = 0;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_TOOLKIT)
 			checktool = true;
@@ -2237,7 +2232,7 @@ DEF_DO_FUN( makearmor )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_FABRIC)
 				checkfab = true;
@@ -2308,7 +2303,7 @@ DEF_DO_FUN( makearmor )
 	checksew = false;
 	checkfab = false;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_THREAD)
 			checksew = true;
@@ -2420,7 +2415,7 @@ DEF_DO_FUN( makecomlink )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_TOOLKIT)
 				checktool = true;
@@ -2510,7 +2505,7 @@ DEF_DO_FUN( makecomlink )
 	checkbatt = false;
 	checkcirc = false;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_TOOLKIT)
 			checktool = true;
@@ -2630,7 +2625,7 @@ DEF_DO_FUN( makeshield )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_TOOLKIT)
 				checktool = true;
@@ -2735,7 +2730,7 @@ DEF_DO_FUN( makeshield )
 	checkgems = false;
 	charge = 0;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_TOOLKIT)
 			checktool = true;
@@ -2910,7 +2905,7 @@ DEF_DO_FUN( makecontainer )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_FABRIC)
 				checkfab = true;
@@ -2979,7 +2974,7 @@ DEF_DO_FUN( makecontainer )
 	checksew = false;
 	checkfab = false;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_THREAD)
 			checksew = true;
@@ -3604,14 +3599,14 @@ DEF_DO_FUN( mine )
 		return;
 
 	shovel = false;
-	for (obj = ch->first_carrying; obj; obj = obj->next_content)
+	for (auto* obj : ch->carrying)
 		if (obj->item_type == ITEM_SHOVEL)
 		{
 			shovel = true;
 			break;
 		}
 
-	obj = get_obj_list_rev(ch, arg, ch->in_room->last_content);
+	obj = get_obj_list_rev(ch, arg, ch->in_room->contents);
 	if (!obj)
 	{
 		send_to_char("Nie widzisz tutaj niczego.\n\r", ch);
@@ -4573,7 +4568,7 @@ DEF_DO_FUN( hijack )
 		member->name = ch;
 		member->ship = ship;
 		member->rank = 1;
-		LINK(member, first_cmember, last_cmember, next, prev);
+		cmember_list.push_back(member);
 		learn_from_success(ch, gsn_hijack);
 		sprintf(buf, "%s porwa� %s!", ch->name, ship->name);
 		log_string(buf);
@@ -5457,7 +5452,7 @@ void hijack(CHAR_DATA *ch, SHIP_DATA *ship)
 		member->name = ch;
 		member->ship = ship;
 		member->rank = 0;
-		LINK(member, first_cmember, last_cmember, next, prev);
+		cmember_list.push_back(member);
 
 		return;
 	}
@@ -5514,7 +5509,7 @@ DEF_DO_FUN( makehackdev )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 		{
 			if (obj->item_type == ITEM_BATTERY)
 				checkbatt = true;
@@ -5583,7 +5578,7 @@ DEF_DO_FUN( makehackdev )
 			CD *tmp;
 			TIMER *t;
 
-			for (tmp = ch->in_room->first_person; tmp; tmp = tmp->next_in_room)
+			for (auto* tmp : ch->in_room->people)
 				if (tmp != ch && (t = get_timerptr(tmp, TIMER_DO_FUN))
 						&& t->count >= 1 && t->do_fun == do_makehackdev
 						&& tmp->dest_buf && !str_cmp(tmp->dest_buf, arg))
@@ -5591,8 +5586,7 @@ DEF_DO_FUN( makehackdev )
 
 			if (cnt >= skill->participants)
 			{
-				for (tmp = ch->in_room->first_person; tmp;
-						tmp = tmp->next_in_room)
+				for (auto* tmp : ch->in_room->people)
 					if (tmp != ch && (t = get_timerptr(tmp, TIMER_DO_FUN))
 							&& t->count >= 1 && t->do_fun == do_makehackdev
 							&& tmp->dest_buf && !str_cmp(tmp->dest_buf, arg))
@@ -5660,7 +5654,7 @@ DEF_DO_FUN( makehackdev )
 	checkcond = false;
 	checkcirc = false;
 
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto* obj : std::ranges::reverse_view(ch->carrying))
 	{
 		if (obj->item_type == ITEM_BATTERY && checkbatt == false)
 		{
@@ -5807,7 +5801,7 @@ DEF_DO_FUN( hackshiplock )
 			return;
 		}
 
-		for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : std::ranges::reverse_view(ch->carrying))
 			if (obj->item_type == ITEM_SHIPHCKDEV && obj->wear_loc == WEAR_HOLD)
 			{
 				found = true;

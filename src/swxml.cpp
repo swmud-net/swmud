@@ -279,11 +279,10 @@ void swGetPropInt64( int64 *dst, xmlNodePtr node, const char *name )
 	xmlFree( buf );
 }
 
-void save_list( const char *path, ILD *first_ild )
+void save_list( const char *path, std::list<ILD*>& ild_list )
 {
 	xmlDocPtr	doc;
 	xmlNodePtr	root;
-	ILD			*ild;
 	char		buf[MIL];
 
 
@@ -294,7 +293,7 @@ void save_list( const char *path, ILD *first_ild )
 	xmlNewNs( root, BC"http://www.w3.org/2001/XMLSchema-instance", BC"xsi" );
 	swNewProp( root, "xsi:schemaLocation", "http://swmud.pl/ns/swmud/1.0/list list.xsd" );
 	xmlDocSetRootElement( doc, root );
-	FOREACH( ild, first_ild )
+	for (auto* ild : ild_list)
 		swNewChildText( root, NULL, "entry", ild->data );
 
 	/* saving stuff */

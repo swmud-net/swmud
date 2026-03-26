@@ -73,37 +73,37 @@ bool check_pos(CHAR_DATA *ch, int position)
 		{
 		case POS_DEAD:
 			ch_printf(ch,
-					"To bêdzie trudne, zwa¿ywszy na to, ¿e jeste¶ MARTW%s..." NL,
+					"To bï¿½dzie trudne, zwaï¿½ywszy na to, ï¿½e jesteï¿½ MARTW%s..." NL,
 					capitalize(SEX_SUFFIX_YAE(ch)));
 			break;
 
 		case POS_MORTAL:
 		case POS_INCAP:
-			ch_printf(ch, "Jeste¶ zbyt ciêzko rann%s, by to zrobiæ..." NL,
+			ch_printf(ch, "Jesteï¿½ zbyt ciï¿½zko rann%s, by to zrobiï¿½..." NL,
 					SEX_SUFFIX_YAE(ch));
 			break;
 
 		case POS_STUNNED:
-			ch_printf(ch, "Jeste¶ zbyt mocno og³uszon%s, by to zrobiæ..." NL,
+			ch_printf(ch, "Jesteï¿½ zbyt mocno ogï¿½uszon%s, by to zrobiï¿½..." NL,
 					SEX_SUFFIX_YAE(ch));
 			break;
 
 		case POS_SLEEPING:
-			ch_printf(ch, "Co ci siê ¶ni?" NL);
+			ch_printf(ch, "Co ci siï¿½ ï¿½ni?" NL);
 			break;
 
 		case POS_RESTING:
 			ch_printf(ch,
-					"Niee. Jeste¶ zbyt odprê¿on%s, by zajmowaæ siê takimi drobnostkami." NL,
+					"Niee. Jesteï¿½ zbyt odprï¿½on%s, by zajmowaï¿½ siï¿½ takimi drobnostkami." NL,
 					SEX_SUFFIX_YAE(ch));
 			break;
 
 		case POS_SITTING:
-			send_to_char("Nie mo¿esz tego zrobiæ siedz±c." NL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½ siedzï¿½c." NL, ch);
 			break;
 
 		case POS_FIGHTING:
-			send_to_char("Nie ma mowy! W³a¶nie walczysz!" NL, ch);
+			send_to_char("Nie ma mowy! Wï¿½aï¿½nie walczysz!" NL, ch);
 			break;
 
 		}
@@ -115,9 +115,9 @@ bool check_pos(CHAR_DATA *ch, int position)
 extern char lastplayercmd[MAX_INPUT_LENGTH * 2];
 
 /*
- * Thanos: Teraz substitute..() zwraca wska¼nik na stringa, a nie tak jak
- * wtedy  - interpretuje komendê, komendy s± rozdzielane i wykonywane kolejno
- * w zale¿no¶ci od waitstate gracza w comm.c, a przechowuje je d->incomm.
+ * Thanos: Teraz substitute..() zwraca wskaï¿½nik na stringa, a nie tak jak
+ * wtedy  - interpretuje komendï¿½, komendy sï¿½ rozdzielane i wykonywane kolejno
+ * w zaleï¿½noï¿½ci od waitstate gracza w comm.c, a przechowuje je d->incomm.
  */
 char* substitute_alias(DESCRIPTOR_DATA *d, char *argument)
 {
@@ -135,10 +135,10 @@ char* substitute_alias(DESCRIPTOR_DATA *d, char *argument)
 //    sprintf( buf, argument );
 	strcpy(buf, argument);
 
-	if ( IS_NPC( ch ) || !ch->pcdata || !ch->pcdata->first_alias)
+	if ( IS_NPC( ch ) || !ch->pcdata || ch->pcdata->aliases.empty())
 		return (buf);
 
-	for (alias = ch->pcdata->first_alias; alias; alias = alias->next)
+	for (auto* alias : ch->pcdata->aliases)
 	{
 		if (!str_prefix(alias->name, argument))
 		{
@@ -148,7 +148,7 @@ char* substitute_alias(DESCRIPTOR_DATA *d, char *argument)
 				strcpy(arg, alias->sub);
 				buf[0] = '\0';
 
-				//Added by Ratm( aliasy na wzór SD )
+				//Added by Ratm( aliasy na wzï¿½r SD )
 				pntr = arg;
 				rest = buf;
 				while (*pntr != '\0')
@@ -161,9 +161,9 @@ char* substitute_alias(DESCRIPTOR_DATA *d, char *argument)
 						rest += strlen(point);
 					}
 					/*
-					 * Thanos: dziêki multikomendom nie musimy ju¿ interpretowaæ
-					 *         ca³ej grupy poleceñ. Wystarczy zakomunikowaæ, ¿e
-					 *         u¿ywamy multikomendy.
+					 * Thanos: dziï¿½ki multikomendom nie musimy juï¿½ interpretowaï¿½
+					 *         caï¿½ej grupy poleceï¿½. Wystarczy zakomunikowaï¿½, ï¿½e
+					 *         uï¿½ywamy multikomendy.
 					 */
 					else if (*pntr == ';')
 					{
@@ -178,7 +178,7 @@ char* substitute_alias(DESCRIPTOR_DATA *d, char *argument)
 
 			if (strlen(buf) > MAX_INPUT_LENGTH)
 			{
-				send_to_char("Alias za d³ugi, zostanie obciêty." NL, ch);
+				send_to_char("Alias za dï¿½ugi, zostanie obciï¿½ty." NL, ch);
 				buf[ MAX_INPUT_LENGTH - 1] = '\0';
 			}
 		}
@@ -304,7 +304,7 @@ void interpret(CHAR_DATA *ch, char *argument)
 		 */
 		if (!IS_NPC(ch) && IS_SET(ch->act, PLR_FREEZE))
 		{
-			ch_printf(ch, "Jeste¶ zamro¿on%s!" NL, SEX_SUFFIX_YAE(ch));
+			ch_printf(ch, "Jesteï¿½ zamroï¿½on%s!" NL, SEX_SUFFIX_YAE(ch));
 			return;
 		}
 
@@ -373,7 +373,7 @@ void interpret(CHAR_DATA *ch, char *argument)
 	if (found && !IS_NPC(ch) && ch->pcdata && ch->pcdata->forbidden_cmd
 			&& is_name(skill_name(cmd->do_fun), ch->pcdata->forbidden_cmd))
 	{
-		ch_printf(ch, "Niestety, komenda '%s' zosta³a ci odebrana." NL,
+		ch_printf(ch, "Niestety, komenda '%s' zostaï¿½a ci odebrana." NL,
 				cmd->name);
 		return;
 	}
@@ -467,11 +467,11 @@ void interpret(CHAR_DATA *ch, char *argument)
 								|| IS_SET(pexit->flags, EX_NOPASSDOOR)))
 				{
 					if (!IS_SET(pexit->flags, EX_SECRET))
-						act( PLAIN, "Te $d s± zamkniête.", ch, NULL,
+						act( PLAIN, "Te $d sï¿½ zamkniï¿½te.", ch, NULL,
 								pexit->keyword, TO_CHAR);
 					else
 						send_to_char(
-								"Niestety nie mo¿esz pój¶æ w tym kierunku." NL,
+								"Niestety nie moï¿½esz pï¿½jï¿½ï¿½ w tym kierunku." NL,
 								ch);
 					return;
 				}
@@ -532,7 +532,7 @@ CMDTYPE* find_command(const char *command)
 
 	/*
 	 * Thanos: bugfix
-	 * NIE MA KOMEND ZACZYNAJ¡CYCH SIÊ NA POLSK¡ LITERÊ !!!
+	 * NIE MA KOMEND ZACZYNAJï¿½CYCH SIï¿½ NA POLSKï¿½ LITERï¿½ !!!
 	 * (i w sumie dobrze - trzebaby bylo przewalac cale hashowanie komend)
 	 */
 	if (ispolchar(command[0]))
@@ -545,7 +545,7 @@ CMDTYPE* find_command(const char *command)
 			return cmd;
 	/*
 	 * Thanos: dodane aliasy komend (ich polskie odpowiedniki)
-	 * szuka siê tego 'trochê' d³u¿ej, ale i tak najpierw brane s±
+	 * szuka siï¿½ tego 'trochï¿½' dï¿½uï¿½ej, ale i tak najpierw brane sï¿½
 	 * oryginalne wersje komend
 	 */
 	for (hash = 0; hash < MAX_CMD_HASH; hash++)
@@ -565,31 +565,31 @@ SOCIALTYPE* find_social(const char *command)
 //added by Ratm
 		switch (command[0])
 		{
-		case '±':
+		case 'ï¿½':
 			hash = 1;
 			break;
-		case 'æ':
+		case 'ï¿½':
 			hash = 3;
 			break;
-		case 'ê':
+		case 'ï¿½':
 			hash = ('e' - 'a') + 1;
 			break;
-		case '³':
+		case 'ï¿½':
 			hash = ('l' - 'a') + 1;
 			break;
-		case 'ñ':
+		case 'ï¿½':
 			hash = ('n' - 'a') + 1;
 			break;
-		case 'ó':
+		case 'ï¿½':
 			hash = ('o' - 'a') + 1;
 			break;
-		case '¶':
+		case 'ï¿½':
 			hash = ('s' - 'a') + 1;
 			break;
-		case '¿':
+		case 'ï¿½':
 			hash = ('z' - 'a') + 1;
 			break;
-		case '¼':
+		case 'ï¿½':
 			hash = ('z' - 'a') + 1;
 			break;
 		default:
@@ -624,18 +624,18 @@ bool check_social(CHAR_DATA *ch, const char *command, const char *argument)
 	switch (ch->position)
 	{
 	case POS_DEAD:
-		ch_printf(ch, "Le¿ spokojnie. Jeste¶ MARTW%s!" NL,
+		ch_printf(ch, "Leï¿½ spokojnie. Jesteï¿½ MARTW%s!" NL,
 				capitalize(SEX_SUFFIX_YAE(ch)));
 		return true;
 
 	case POS_INCAP:
 	case POS_MORTAL:
-		ch_printf(ch, "Jeste¶ zbyt ciê¿ko rann%s, by to zrobiæ." NL,
+		ch_printf(ch, "Jesteï¿½ zbyt ciï¿½ko rann%s, by to zrobiï¿½." NL,
 				SEX_SUFFIX_YAE(ch));
 		return true;
 
 	case POS_STUNNED:
-		ch_printf(ch, "Jeste¶ zbyt mocno og³uszon%s, by to zrobiæ." NL,
+		ch_printf(ch, "Jesteï¿½ zbyt mocno ogï¿½uszon%s, by to zrobiï¿½." NL,
 				SEX_SUFFIX_YAE(ch));
 		return true;
 
@@ -646,7 +646,7 @@ bool check_social(CHAR_DATA *ch, const char *command, const char *argument)
 		 */
 		if (!str_cmp(social->name, "snore"))
 			break;
-		send_to_char("Co ci siê ¶ni ???" NL, ch);
+		send_to_char("Co ci siï¿½ ï¿½ni ???" NL, ch);
 		return true;
 
 	}
@@ -686,21 +686,21 @@ bool check_social(CHAR_DATA *ch, const char *command, const char *argument)
 					multi_hit(victim, ch, TYPE_UNDEFINED);
 				else if (IS_NEUTRAL(ch))
 				{
-					act( COL_ACTION, "$n klepie $N$3 w pupê.", victim, NULL, ch,
+					act( COL_ACTION, "$n klepie $N$3 w pupï¿½.", victim, NULL, ch,
 					TO_NOTVICT);
-					act( COL_ACTION, "Klepiesz $N$3 w pupê.", victim, NULL, ch,
+					act( COL_ACTION, "Klepiesz $N$3 w pupï¿½.", victim, NULL, ch,
 					TO_CHAR);
-					act( COL_ACTION, "$n klepie ciê w pupê.", victim, NULL, ch,
+					act( COL_ACTION, "$n klepie ciï¿½ w pupï¿½.", victim, NULL, ch,
 					TO_VICT);
 				}
 				else
 				{
 					act( COL_ACTION,
-							"$n zachowuje siê tak, jakby $N w ogóle nie istnia³$o.",
+							"$n zachowuje siï¿½ tak, jakby $N w ogï¿½le nie istniaï¿½$o.",
 							victim, NULL, ch, TO_NOTVICT);
 					act( COL_ACTION, "Po prostu ignorujesz $N$3.", victim, NULL,
 							ch, TO_CHAR);
-					act( COL_ACTION, "Wygl±da na to, ¿e $n ma ciê gdzie¶.",
+					act( COL_ACTION, "Wyglï¿½da na to, ï¿½e $n ma ciï¿½ gdzieï¿½.",
 							victim, NULL, ch, TO_VICT);
 				}
 				break;
@@ -723,11 +723,11 @@ bool check_social(CHAR_DATA *ch, const char *command, const char *argument)
 			case 10:
 			case 11:
 			case 12:
-				act( COL_ACTION, "$n klepie $N$3 w pupê.", victim, NULL, ch,
+				act( COL_ACTION, "$n klepie $N$3 w pupï¿½.", victim, NULL, ch,
 				TO_NOTVICT);
-				act( COL_ACTION, "Klepiesz $N$3 w pupê.", victim, NULL, ch,
+				act( COL_ACTION, "Klepiesz $N$3 w pupï¿½.", victim, NULL, ch,
 				TO_CHAR);
-				act( COL_ACTION, "$n klepie ciê w pupê.", victim, NULL, ch,
+				act( COL_ACTION, "$n klepie ciï¿½ w pupï¿½.", victim, NULL, ch,
 				TO_VICT);
 				break;
 			}

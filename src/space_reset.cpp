@@ -32,9 +32,7 @@ void reset_room args( ( ROOM_INDEX_DATA *pRoom ) );
 
 void reset_ship_rooms(SHIP_DATA *ship)
 {
-	ROOM_INDEX_DATA *room;
-
-	for (room = ship->first_location; room; room = room->next_on_ship)
+	for (auto* room : ship->locations)
 		reset_room(room);
 }
 
@@ -145,7 +143,6 @@ void create_ship_in_space(SHIP_INDEX_DATA *shrec, SPACE_DATA *starsystem,
 
 void display_space_resets(SPACE_DATA *pStarsystem, CHAR_DATA *ch)
 {
-	RESET_DATA *pReset;
 	SHIP_INDEX_DATA *shrec;
 	int i = 0;
 	const char *mname;
@@ -158,7 +155,7 @@ void display_space_resets(SPACE_DATA *pStarsystem, CHAR_DATA *ch)
 			FB_WHITE
 			"[NR] [Type] [Vnum ] [Description          ] [      X] [      Y] [      Z] [Max]" EOL);
 
-	for (pReset = pStarsystem->first_reset; pReset; pReset = pReset->next)
+	for (auto* pReset : pStarsystem->resets)
 	{
 		++i;
 		switch (pReset->command)
@@ -221,7 +218,7 @@ RESET_DATA* add_space_reset(SPACE_DATA *starsystem, char letter, int extra,
 	letter = UPPER(letter);
 	pReset = make_space_reset(letter, extra, arg1, arg2, arg3, arg4);
 
-	LINK(pReset, starsystem->first_reset, starsystem->last_reset, next, prev);
+	starsystem->resets.push_back(pReset);
 	return pReset;
 }
 
@@ -286,13 +283,11 @@ void fread_space_resets(SPACE_DATA *starsystem, FILE *fp)
 
 void save_space_resets(SPACE_DATA *starsystem, FILE *fp)
 {
-	RESET_DATA *reset;
-
-	if (!starsystem->first_reset)
+	if (starsystem->resets.empty())
 		return;
 
 	fprintf(fp, "#RESETS\n");
-	for (reset = starsystem->first_reset; reset; reset = reset->next)
+	for (auto* reset : starsystem->resets)
 	{
 		switch (reset->command)
 		/* extra arg1 arg2 arg3 arg4 */
@@ -311,42 +306,30 @@ void save_space_resets(SPACE_DATA *starsystem, FILE *fp)
 
 RESET_DATA* get_space_reset(SPACE_DATA *pStarsystem, int num)
 {
-	RESET_DATA *pReset;
 	int nr = 0;
 
-	for (pReset = pStarsystem->first_reset; pReset; pReset = pReset->next)
+	for (auto* pReset : pStarsystem->resets)
 		if (++nr == num)
 			return pReset;
 
 	return NULL;
 }
 
-#define DEL_SP_RESET(starsystem, reset, rprev) \
-do { \
-  rprev = reset->prev; \
-  delete_space_reset(starsystem, reset); \
-  reset = rprev; \
-  continue; \
-} while(0)
 void delete_space_reset(SPACE_DATA *pStarsystem, RESET_DATA *pReset)
 {
-	UNLINK(pReset, pStarsystem->first_reset, pStarsystem->last_reset, next,
-			prev);
+	pStarsystem->resets.remove(pReset);
 	free_reset(pReset);
 	return;
 }
-#undef DEL_SP_RESET
 
 void reset_starsystem(SPACE_DATA *starsystem)
 {
-	RESET_DATA *pReset;
 	SHIP_INDEX_DATA *shrec;
-	SHIP_DATA *ship;
 
 	if (!starsystem)
 		return;
 
-	for (pReset = starsystem->first_reset; pReset; pReset = pReset->next)
+	for (auto* pReset : starsystem->resets)
 	{
 		switch (pReset->command)
 		{
@@ -370,8 +353,7 @@ void reset_starsystem(SPACE_DATA *starsystem)
 
 			// limity
 			count = 0;
-			for (ship = starsystem->first_ship; ship;
-					ship = ship->next_in_starsystem)
+			for (auto* ship : starsystem->ships)
 				if (ship->pIndexData == shrec)
 					count++;
 			if (count >= pReset->arg2)
@@ -395,9 +377,7 @@ void reset_starsystem(SPACE_DATA *starsystem)
  */
 void starsystems_update(void)
 {
-	SPACE_DATA *pStarsystem;
-	for (pStarsystem = first_starsystem; pStarsystem;
-			pStarsystem = pStarsystem->next)
+	for (auto* pStarsystem : starsystem_list)
 	{
 		char buf[MSL];
 
@@ -419,10 +399,9 @@ void starsystems_update(void)
 				sprintf(buf, NL "%s" EOL, pStarsystem->resetmsg);
 			else
 				strcpy(buf,
-						NL "Widzisz jak powiew gwiezdnego py³u odbija promienie gwiazd..." NL);
+						NL "Widzisz jak powiew gwiezdnego pyï¿½u odbija promienie gwiazd..." NL);
 
-			for (target = pStarsystem->first_ship; target;
-					target = target->next_in_starsystem)
+			for (auto* target : pStarsystem->ships)
 				echo_to_cockpit(target, buf);
 
 			reset_starsystem(pStarsystem);

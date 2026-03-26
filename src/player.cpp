@@ -50,12 +50,12 @@ DEF_DO_FUN( gold )
 		vch = ch;
 
 	ch_printf(ch, PLAIN FG_RED
-	"Masz przy sobie " FB_RED "%d" FG_RED " kredyt%s." EOL, vch->gold, NUMBER_SUFF(vch->gold, "kê", "ki", "ek"));
+	"Masz przy sobie " FB_RED "%d" FG_RED " kredyt%s." EOL, vch->gold, NUMBER_SUFF(vch->gold, "kï¿½", "ki", "ek"));
 
 	if (vch->pcdata && vch->pcdata->bank)
 		ch_printf(ch, PLAIN FG_RED
 		"Na twoim koncie jest obecnie " FB_RED "%d" FG_RED " kredyt%s." EOL, vch->pcdata->bank,
-				NUMBER_SUFF(vch->pcdata->bank, "kê", "ki", "ek"));
+				NUMBER_SUFF(vch->pcdata->bank, "kï¿½", "ki", "ek"));
 
 	return;
 }
@@ -64,15 +64,15 @@ char* ac_info(CHAR_DATA *ch)
 {
 	static char b[MSL];
 
-	GET_AC(ch) > 50 ? sprintf(b, "GORZEJ ni¿ nag%s!", SEX_SUFFIX_IAE(ch)) :
+	GET_AC(ch) > 50 ? sprintf(b, "GORZEJ niï¿½ nag%s!", SEX_SUFFIX_IAE(ch)) :
 	GET_AC(ch) >= 40 ? sprintf(b, "Nag%s.", SEX_SUFFIX_IAE(ch)) :
 	GET_AC(ch) >= 30 ? sprintf(b, "Ubran%s.", SEX_SUFFIX_YAE(ch)) :
 	GET_AC(ch) >= 20 ? sprintf(b, "Nieco uzbrojon%s.", SEX_SUFFIX_YAE(ch)) :
-	GET_AC(ch) >= 10 ? sprintf(b, "Trochê uzbrojon%s.", SEX_SUFFIX_YAE(ch)) :
+	GET_AC(ch) >= 10 ? sprintf(b, "Trochï¿½ uzbrojon%s.", SEX_SUFFIX_YAE(ch)) :
 	GET_AC(ch) >= 0 ? sprintf(b, "Uzbrojon%s.", SEX_SUFFIX_YAE(ch)) :
 	GET_AC(ch) >= -40 ? sprintf(b, "Dobrze uzbrojon%s.", SEX_SUFFIX_YAE(ch)) :
 	GET_AC(ch) >= -80 ? sprintf(b, "Mocno uzbrojon%s.", SEX_SUFFIX_YAE(ch)) :
-	GET_AC(ch) >= -120 ? sprintf(b, "Ciê¿ko uzbrojon%s.", SEX_SUFFIX_YAE(ch)) :
+	GET_AC(ch) >= -120 ? sprintf(b, "Ciï¿½ko uzbrojon%s.", SEX_SUFFIX_YAE(ch)) :
 	GET_AC(ch) >= -160 ? sprintf(b, "Niesamowicie uzbrojon%s.", SEX_SUFFIX_YAE(ch)) :
 	GET_AC(ch) >= -200 ? sprintf(b, "Nie do zdarcia!") : sprintf(b, "NiEzNiSzCzAlN%s!", SEX_SUFFIX_YAE(ch));
 
@@ -87,10 +87,10 @@ char* align_info(CHAR_DATA *ch)
 	 ch->alignment >  900 ? "MISTRZA YODY!"		:
 	 ch->alignment >  700 ? "Dzieci Brzasku."		:
 	 ch->alignment >  350 ? "Dobry." 			:
-	 ch->alignment >  100 ? "Mi³y." 			:
+	 ch->alignment >  100 ? "Miï¿½y." 			:
 	 ch->alignment > -100 ? "Neutralny."			:
-	 ch->alignment > -350 ? "Handlarza niewolników." 	:
-	 ch->alignment > -700 ? "Z³y." 			:
+	 ch->alignment > -350 ? "Handlarza niewolnikï¿½w." 	:
+	 ch->alignment > -700 ? "Zï¿½y." 			:
 	 ch->alignment > -900 ? "Imperatora." 		:
 	 "SAMEGO EXAR KHUNA!" );
 	 return b;
@@ -126,52 +126,52 @@ char* mental_info(CHAR_DATA *ch)
 		sprintf(b, "Wyciszon%s.", SEX_SUFFIX_YAE(ch));
 		break;
 	case -5:
-		sprintf(b, "¦pi±c%s.", SEX_SUFFIX_YAE(ch));
+		sprintf(b, "ï¿½piï¿½c%s.", SEX_SUFFIX_YAE(ch));
 		break;
 	case -4:
-		sprintf(b, "Zmêczon%s.", SEX_SUFFIX_YAE(ch));
+		sprintf(b, "Zmï¿½czon%s.", SEX_SUFFIX_YAE(ch));
 		break;
 	case -3:
-		sprintf(b, "Przyda³aby siê drzemka.");
+		sprintf(b, "Przydaï¿½aby siï¿½ drzemka.");
 		break;
 	case -2:
-		sprintf(b, "Lekko przygnêbion%s.", SEX_SUFFIX_YAE(ch));
+		sprintf(b, "Lekko przygnï¿½bion%s.", SEX_SUFFIX_YAE(ch));
 		break;
 	case -1:
-		sprintf(b, "W porz±dku.");
+		sprintf(b, "W porzï¿½dku.");
 		break;
 	case 0:
-		sprintf(b, "Wspania³y.");
+		sprintf(b, "Wspaniaï¿½y.");
 		break;
 	case 1:
 		sprintf(b, "Podekscytowan%s.", SEX_SUFFIX_YAE(ch));
 		break;
 	case 2:
-		sprintf(b, "Lekko siê podgrza³.");
+		sprintf(b, "Lekko siï¿½ podgrzaï¿½.");
 		break;
 	case 3:
-		sprintf(b, "Nie mo¿esz zebraæ prostych my¶li.");
+		sprintf(b, "Nie moï¿½esz zebraï¿½ prostych myï¿½li.");
 		break;
 	case 4:
-		sprintf(b, "Umys³ pêdz±cy 100 mil na godzinê.");
+		sprintf(b, "Umysï¿½ pï¿½dzï¿½cy 100 mil na godzinï¿½.");
 		break;
 	case 5:
 		sprintf(b, "Latasz w przestworzach.");
 		break;
 	case 6:
-		sprintf(b, "Twój umys³ opuszcza twoje cia³o.");
+		sprintf(b, "Twï¿½j umysï¿½ opuszcza twoje ciaï¿½o.");
 		break;
 	case 7:
-		sprintf(b, "Rzeczywisto¶æ przestaje byæ wa¿na.");
+		sprintf(b, "Rzeczywistoï¿½ï¿½ przestaje byï¿½ waï¿½na.");
 		break;
 	case 8:
-		sprintf(b, "Nie masz pojêcia co jest prawdziwe, a co nie.");
+		sprintf(b, "Nie masz pojï¿½cia co jest prawdziwe, a co nie.");
 		break;
 	case 9:
-		sprintf(b, "Czujesz siê jak m³ody Bóg.");
+		sprintf(b, "Czujesz siï¿½ jak mï¿½ody Bï¿½g.");
 		break;
 	case 10:
-		sprintf(b, "Jeste¶ CeNtRuM WsZeCh¦wIaTa!.");
+		sprintf(b, "Jesteï¿½ CeNtRuM WsZeChï¿½wIaTa!.");
 		break;
 	}
 
@@ -201,7 +201,7 @@ void do_clonescore(CHAR_DATA *ch, char *argument)	//Trog
 	sprintf(buf, "%s%s", CLONE_DIR, capitalize(ch->name));
 	if (stat(buf, &fst) == -1)
 	{
-		send_to_char("Informacja o klonie niedostêpna." NL, ch);
+		send_to_char("Informacja o klonie niedostï¿½pna." NL, ch);
 		return;
 	}
 
@@ -218,8 +218,8 @@ void do_clonescore(CHAR_DATA *ch, char *argument)	//Trog
 	ch_printf(ch, COL_SCORE "*-----Informacja-o-klonie-----*" NL
 	"| Id: %23s |" NL
 	"| Modyfikacje genetyczne:  0%% |" NL
-	"| Strata w³a¶ciwo¶ci:      0%% |" NL
-	"| Zgodno¶æ z orygina³em: %3d%% |" NL
+	"| Strata wï¿½aï¿½ciwoï¿½ci:      0%% |" NL
+	"| Zgodnoï¿½ï¿½ z oryginaï¿½em: %3d%% |" NL
 	"| Data: %22s|" NL
 	"*-----------------------------*" NL RESET, buf, defectprcnt, static_cast<SWString>(SWTimeStamp(fst.st_mtime)).c_str());
 	return;
@@ -241,14 +241,14 @@ DEF_DO_FUN( oldscore )
 	if (ch->attribute1 >= 0 || ch->attribute2 >= 0)
 	{
 		const SWString &attrib = format_char_attribute(ch, 0);
-		ch_printf(ch, "\n\rJeste¶ postrzegan%s jako : %s" EOL, ch->sex == SEX_MALE ? "y" : "a", attrib.c_str());
+		ch_printf(ch, "\n\rJesteï¿½ postrzegan%s jako : %s" EOL, ch->sex == SEX_MALE ? "y" : "a", attrib.c_str());
 	}
 
 	if (get_trust(ch) != ch->top_level)
-		ch_printf(ch, "Jeste¶ zaufany na poziom %d.\n\r", get_trust(ch));
+		ch_printf(ch, "Jesteï¿½ zaufany na poziom %d.\n\r", get_trust(ch));
 
 	send_to_char("----------------------------------------------------------------------------\n\r", ch);
-	ch_printf(ch, "Zapisywa³e¶:  %s" NL, ch->save_time ? static_cast<SWString>(SWTimeStamp(ch->save_time)).c_str() : "nie." NL);
+	ch_printf(ch, "Zapisywaï¿½eï¿½:  %s" NL, ch->save_time ? static_cast<SWString>(SWTimeStamp(ch->save_time)).c_str() : "nie." NL);
 
 	ch_printf(ch, "Godzina:   %s" NL, static_cast<SWString>(SWTimeStamp(current_time)).c_str());
 	send_to_char("----------------------------------------------------------------------------\n\r", ch);
@@ -258,10 +258,10 @@ DEF_DO_FUN( oldscore )
 
 		for (ability = 0; ability < MAX_ABILITY; ability++)
 			if (ability != FORCE_ABILITY || ch->skill_level[FORCE_ABILITY] > 1)
-				ch_printf(ch, "%-15s  Poziom: %-3d   Max: %-3d Exp: %-10ld Nastêpny: %-10ld\n\r", class_table[ability].przypadki[0],
+				ch_printf(ch, "%-15s  Poziom: %-3d   Max: %-3d Exp: %-10ld Nastï¿½pny: %-10ld\n\r", class_table[ability].przypadki[0],
 						ch->skill_level[ability], max_level(ch, ability), ch->experience[ability], exp_level(ch->skill_level[ability] + 1));
 			else
-				ch_printf(ch, "%-15s Poziom: %-3d   Max: ???   Exp: ???  Nastêpny: ???\n\r", class_table[ability].przypadki[0],
+				ch_printf(ch, "%-15s Poziom: %-3d   Max: ???   Exp: ???  Nastï¿½pny: ???\n\r", class_table[ability].przypadki[0],
 						ch->skill_level[ability], ch->experience[ability]);
 	}
 
@@ -270,15 +270,15 @@ DEF_DO_FUN( oldscore )
 	ch_printf(ch, "Kredytki: %-10d  Konto: %-10d    Pkills: %-5.5d   Mkills: %-5.5d\n\r", ch->gold, ch->pcdata->bank, ch->pcdata->pkills,
 			ch->pcdata->mkills);
 
-	ch_printf(ch, "Ekwipunek: %5.5d (max %7.7d)   Przedmiotów: %5.5d (max %5.5d)\n\r", ch->carry_weight, can_carry_w(ch), ch->carry_number,
+	ch_printf(ch, "Ekwipunek: %5.5d (max %7.7d)   Przedmiotï¿½w: %5.5d (max %5.5d)\n\r", ch->carry_weight, can_carry_w(ch), ch->carry_number,
 			can_carry_n(ch));
 
 	if (!IS_NPC(ch) && ch->pcdata->condition[COND_DRUNK] > 10)
-		send_to_char("Jeste¶ pijany.\n\r", ch);
+		send_to_char("Jesteï¿½ pijany.\n\r", ch);
 	if (!IS_NPC(ch) && ch->pcdata->condition[COND_THIRST] == 0)
 		send_to_char("Grozi ci odwodnienie.\n\r", ch);
 	if (!IS_NPC(ch) && ch->pcdata->condition[COND_FULL] == 0)
-		send_to_char("Umierasz z g³odu.\n\r", ch);
+		send_to_char("Umierasz z gï¿½odu.\n\r", ch);
 	if (ch->position != POS_SLEEPING)
 		switch (ch->mental_state / 10)
 		{
@@ -363,8 +363,8 @@ DEF_DO_FUN( oldscore )
 		{
 			ch_printf(ch, "%s(%d/%d) ", spice_types_list[drug], ch->pcdata->drug_level[drug], ch->pcdata->addiction[drug]);
 		}
-	send_to_char(NL "Znasz jêzyki:", ch);
-	FOREACH( klang, ch->first_klang )
+	send_to_char(NL "Znasz jï¿½zyki:", ch);
+	for (auto* klang : ch->klangs)
 	{
 		if (klang->language == ch->speaking)
 		{
@@ -379,7 +379,7 @@ DEF_DO_FUN( oldscore )
 	send_to_char( NL, ch);
 
 	if (ch->pcdata->bestowments && ch->pcdata->bestowments[0] != '\0')
-		ch_printf(ch, "Jeste¶ obdarzony komendami: %s.\n\r", ch->pcdata->bestowments);
+		ch_printf(ch, "Jesteï¿½ obdarzony komendami: %s.\n\r", ch->pcdata->bestowments);
 
 	if (ch->pcdata->clan)
 	{
@@ -399,7 +399,7 @@ DEF_DO_FUN( oldscore )
 		ch_printf(ch, "Bamfout: %s\n\r", (ch->pcdata->bamfout[0] != '\0') ? ch->pcdata->bamfout : "%s leaves in a swirling mist.",
 				ch->name);
 	}
-	if (ch->first_affect)
+	if (!ch->affects.empty())
 	{
 		int i;
 		SKILLTYPE *sktmp;
@@ -407,7 +407,7 @@ DEF_DO_FUN( oldscore )
 		i = 0;
 		send_to_char("----------------------------------------------------------------------------\n\r", ch);
 		send_to_char("AFFECT DATA:                            ", ch);
-		for (paf = ch->first_affect; paf; paf = paf->next)
+		for (auto* paf : ch->affects)
 		{
 			if ((sktmp = get_skilltype(paf->type)) == NULL)
 				continue;
@@ -589,7 +589,7 @@ const char* tiny_affect_loc_name(int location)
 
  if ( IS_AFFECTED(ch, AFF_POSSESS) )
  {
- send_to_char("W twoim stanie umys³u to niemo¿liwe niestety." NL, ch);
+ send_to_char("W twoim stanie umysï¿½u to niemoï¿½liwe niestety." NL, ch);
  return;
  }
 
@@ -613,7 +613,7 @@ const char* tiny_affect_loc_name(int location)
  "         _____________________________________________________          "	EOL COL_SCORE
  "        |   Obywatel%s: %s"  COL_SCORE                      " \\        "	EOL COL_SCORE
  "  .----:|   Status:   %3d letni %-15s "         "(%4d godz. gry)|:----. "	EOL COL_SCORE
- " |      |   Jêzyk:    %-40s "                                 " |      |"	EOL,
+ " |      |   Jï¿½zyk:    %-40s "                                 " |      |"	EOL,
  FEMALE( ch ) ? "ka" : "",
  IS_NPC(ch) ?  (char *)strip_colors( ch->przypadki[0], 40 ) :
  (char *)strip_colors( titbuf, 40 ),
@@ -647,8 +647,8 @@ const char* tiny_affect_loc_name(int location)
  ch->pcdata->clan->pl_name,
  IS_LEADER( ch )   ? "Lider" 		:
  IS_DIPLOMAT( ch ) ? "Dyplomata"		:
- IS_FIRST( ch )	  ? "Pierwszy Mo¿ny"	:
- IS_SECOND( ch )	  ? "Drugi Mo¿ny"	: "Cz³onek" );
+ IS_FIRST( ch )	  ? "Pierwszy Moï¿½ny"	:
+ IS_SECOND( ch )	  ? "Drugi Moï¿½ny"	: "Czï¿½onek" );
  }
 
 
@@ -663,13 +663,13 @@ const char* tiny_affect_loc_name(int location)
  for( i=0; i<MAX_ABILITY; i++ )
  sprintf( b[i], show_exp_stars( ch, i ));
  ch_printf(ch, COL_SCORE
- " |  Si³a:           %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL COL_SCORE
- " |  M±dro¶æ:        %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL COL_SCORE
+ " |  Siï¿½a:           %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL COL_SCORE
+ " |  Mï¿½droï¿½ï¿½:        %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL COL_SCORE
  " |  Inteligencja:   %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL COL_SCORE
  " |  Kondycja:       %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL COL_SCORE
- " |  Zrêczno¶æ:      %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL COL_SCORE
+ " |  Zrï¿½cznoï¿½ï¿½:      %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL COL_SCORE
  " |  Charyzma:       %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL COL_SCORE
- " |  Sczê¶cie:       %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL,
+ " |  Sczï¿½cie:       %3d/%-3d   %-15s  %3d/%-3d   %s  |"	EOL,
  get_curr_str(ch), get_max_str(ch), class_table[0].przypadki[0], ch->skill_level[0],max_level( ch, 0 ),b[0],
  get_curr_wis(ch), get_max_wis(ch), class_table[1].przypadki[0],	ch->skill_level[1],max_level( ch, 1 ),b[1],
  get_curr_int(ch), get_max_int(ch), class_table[2].przypadki[0],	ch->skill_level[2],max_level( ch, 2 ),b[2],
@@ -694,7 +694,7 @@ const char* tiny_affect_loc_name(int location)
  ac_info(ch), ch->top_level >= 25 ? b[1] : " "	);
 
  ch_printf(ch, COL_SCORE
- " |  Stan umys³u:     %-45s     |" EOL, mental_info(ch) );
+ " |  Stan umysï¿½u:     %-45s     |" EOL, mental_info(ch) );
 
  ch_printf( ch, COL_SCORE
  " |  Ekwipunek:       %7d/%-7d  (%8d/%-8dkg)            |"	EOL,
@@ -714,19 +714,19 @@ DEF_DO_FUN( score )
 
 	if (IS_AFFECTED(ch, AFF_POSSESS))
 	{
-		send_to_char("W twoim stanie umys³u to niemo¿liwe niestety." NL, ch);
+		send_to_char("W twoim stanie umysï¿½u to niemoï¿½liwe niestety." NL, ch);
 		return;
 	}
 	sprintf(titbuf, "%s %s", ch->name, !IS_NPC(ch) ? ch->pcdata->title : "Cudowny mob.");
 
 	ch_printf(ch, COL_SCORE
 	" _____________________________________________________" NL
-	"| Imiê:  %s" COL_SCORE " )___________ " NL
+	"| Imiï¿½:  %s" COL_SCORE " )___________ " NL
 	"| Status: %3d letn%s %-15s (%4d godz. gry)/         " "   |" NL,
 	IS_NPC(ch) ? (char*) strip_colors(ch->przypadki[0], 44) : (char*) strip_colors(titbuf, 44), get_age(ch),
 			ch->sex == SEX_MALE ? "i " : "ia", ( IS_NPC( ch ) && IS_SET(ch->act, ACT_DROID)) ? "Droid" : CH_RACE(ch, 0), // Pixel: przypadkiF
 			((int) SEC_PLAYED(ch) / 3600));
-	ch_printf(ch, "| U¿ywany jêzyk: %-30s     /             |" NL, ch->speaking->name);
+	ch_printf(ch, "| Uï¿½ywany jï¿½zyk: %-30s     /             |" NL, ch->speaking->name);
 
 	ch_printf(ch, "`--------------------------------------------------'              |" NL);
 	ch_printf(ch, " |   Hp:          %6d/%-6d    Ucieczka z walki: %-6d       |" NL, ch->hit, ch->max_hit, ch->wimpy);
@@ -752,24 +752,24 @@ DEF_DO_FUN( score )
 			ch_printf(ch, "      Charakter %s|" NL, (char*) strip_colors(align_info(ch), 21));
 			break;
 		case 0:
-			ch_printf(ch, "      Si³a:             %-2d           |" NL, get_curr_str(ch));
+			ch_printf(ch, "      Siï¿½a:             %-2d           |" NL, get_curr_str(ch));
 			break;
 		case 1:
-			ch_printf(ch, "      M±dro¶æ:          %-2d           |" NL, get_curr_wis(ch));
+			ch_printf(ch, "      Mï¿½droï¿½ï¿½:          %-2d           |" NL, get_curr_wis(ch));
 			break;
 		case 2:
 			ch_printf(ch, "      Inteligencja:     %-2d           |" NL, get_curr_int(ch));
 			break;
 		case 3:
-			ch_printf(ch, "      Zrêczno¶æ:        %-2d           |" NL, get_curr_dex(ch));
+			ch_printf(ch, "      Zrï¿½cznoï¿½ï¿½:        %-2d           |" NL, get_curr_dex(ch));
 			break;
 		case 4:
 			ch_printf(ch, "      Kondycja:         %-2d           |" NL, get_curr_con(ch));
 			break;
 		case 5:
 			IS_IMMORTAL( ch ) ?
-					ch_printf(ch, "      Szczê¶cie:        %-2d           |" NL, get_curr_lck(ch)) :
-					ch_printf(ch, "      Szczê¶cie:        ??           |" NL);
+					ch_printf(ch, "      Szczï¿½cie:        %-2d           |" NL, get_curr_lck(ch)) :
+					ch_printf(ch, "      Szczï¿½cie:        ??           |" NL);
 			break;
 		case 6:
 			(IS_IMMORTAL( ch ) || IS_NPC(ch)) ?
@@ -783,7 +783,7 @@ DEF_DO_FUN( score )
 	if (ch->top_level >= 15)
 		ch_printf(ch, " |   Hitroll:            %-6d    Damroll:           %-6d      |" NL, GET_HITROLL(ch), GET_DAMROLL(ch));
 
-	ch_printf(ch, " |   Stan umys³u:   %-47s\\" NL, mental_info(ch));
+	ch_printf(ch, " |   Stan umysï¿½u:   %-47s\\" NL, mental_info(ch));
 
 	ch_printf(ch, " |   Pozycja: ");
 	switch (ch->position)
@@ -792,13 +792,13 @@ DEF_DO_FUN( score )
 		ch_printf(ch, "MARTW%s !!!  ", capitalize(SEX_SUFFIX_YAE(ch)));
 		break;
 	case POS_MORTAL:
-		ch_printf(ch, "Umieraj±c%s  ", SEX_SUFFIX_YAE(ch));
+		ch_printf(ch, "Umierajï¿½c%s  ", SEX_SUFFIX_YAE(ch));
 		break;
 	case POS_INCAP:
 		ch_printf(ch, "Nieprzytomn%s", SEX_SUFFIX_YAE(ch));
 		break;
 	case POS_STUNNED:
-		ch_printf(ch, "Og³uszon%s   ", SEX_SUFFIX_YAE(ch));
+		ch_printf(ch, "Ogï¿½uszon%s   ", SEX_SUFFIX_YAE(ch));
 		break;
 	case POS_SLEEPING:
 		ch_printf(ch, "Sen           ");
@@ -807,13 +807,13 @@ DEF_DO_FUN( score )
 		ch_printf(ch, "Odpoczynek    ");
 		break;
 	case POS_STANDING:
-		ch_printf(ch, "Stoj±ca       ");
+		ch_printf(ch, "Stojï¿½ca       ");
 		break;
 	case POS_SITTING:
-		ch_printf(ch, "Siedz±ca      ");
+		ch_printf(ch, "Siedzï¿½ca      ");
 		break;
 	case POS_FIGHTING:
-		ch_printf(ch, "Walcz±ca      ");
+		ch_printf(ch, "Walczï¿½ca      ");
 		break;
 	case POS_MOUNTED:
 		ch_printf(ch, "Dosiadan%s   ", SEX_SUFFIX_YAE(ch));
@@ -822,7 +822,7 @@ DEF_DO_FUN( score )
 		ch_printf(ch, "Pchan%s      ", SEX_SUFFIX_YAE(ch));
 		break;
 	case POS_DRAG:
-		ch_printf(ch, "Ci±gniêt%s   ", SEX_SUFFIX_YAE(ch));
+		ch_printf(ch, "Ciï¿½gniï¿½t%s   ", SEX_SUFFIX_YAE(ch));
 		break;
 	}
 	if (IS_IMMORTAL(ch))
@@ -843,7 +843,7 @@ DEF_DO_FUN( score )
 		ch_printf(ch, " |   %-12s %-30s", buf, ch->pcdata->clan->name);
 		ch_printf(ch, "                    |" NL);
 		if (iscrank)
-			ch_printf(ch, " |   %-12s %-15s                                   |" NL, "Stopieñ:", buf);
+			ch_printf(ch, " |   %-12s %-15s                                   |" NL, "Stopieï¿½:", buf);
 		ch_printf(ch, " |                                                                  |" NL);
 	}
 	ch_printf(ch, " `------------------------------------------------------------------'" NL);
@@ -856,13 +856,13 @@ DEF_DO_FUN( score )
 DEF_DO_FUN( experience )
 {
 	int ability;
-	send_to_char("Oto jak przedstawia siê twoja sytuacja:" NL, ch);
+	send_to_char("Oto jak przedstawia siï¿½ twoja sytuacja:" NL, ch);
 	for (ability = 0; ability < MAX_ABILITY; ability++)
 		if (ability != FORCE_ABILITY || ch->skill_level[FORCE_ABILITY] > 1)
-			ch_printf(ch, "%-15s   Poziom: %3d/%-3d       Postêp: %s" NL, capitalize(class_table[ability].przypadki[0]),
+			ch_printf(ch, "%-15s   Poziom: %3d/%-3d       Postï¿½p: %s" NL, capitalize(class_table[ability].przypadki[0]),
 					ch->skill_level[ability], max_level(ch, ability), show_exp_stars(ch, ability));
 		else
-			ch_printf(ch, "%-15s   Poziom: %3d/???       Postêp: [&c    ??    &w]\n\r", capitalize(class_table[ability].przypadki[0]),
+			ch_printf(ch, "%-15s   Poziom: %3d/???       Postï¿½p: [&c    ??    &w]\n\r", capitalize(class_table[ability].przypadki[0]),
 					ch->skill_level[ability], ch->experience[ability]);
 
 	return;
@@ -876,51 +876,51 @@ DEF_DO_FUN( affected )
 
 	if (IS_NPC(ch))
 	{
-		send_to_char("Eee tam, a co takiego moba jak ty mo¿e to obchodziæ?" NL, ch);
+		send_to_char("Eee tam, a co takiego moba jak ty moï¿½e to obchodziï¿½?" NL, ch);
 		return;
 	}
 
 	argument = one_argument(argument, arg);
 #if defined(ARMAGEDDON)
     if ( ch->top_level >= 25 )
-    	ch_printf( ch, "AC: " FB_CYAN "%d" PLAIN ", Jeste¶ " FB_CYAN "%s" EOL,
+    	ch_printf( ch, "AC: " FB_CYAN "%d" PLAIN ", Jesteï¿½ " FB_CYAN "%s" EOL,
 	    GET_AC( ch ), ac_info( ch ) );
     else
-	ch_printf( ch, "Jeste¶ " FB_CYAN "%s" EOL, ac_info( ch ));
+	ch_printf( ch, "Jesteï¿½ " FB_CYAN "%s" EOL, ac_info( ch ));
 #endif
 
 	if (!str_cmp(arg, "by"))
 	{
-		ch_printf(ch, FB_BLUE "Jeste¶ nasycon%s:" EOL, SEX_SUFFIX_YAE(ch));
+		ch_printf(ch, FB_BLUE "Jesteï¿½ nasycon%s:" EOL, SEX_SUFFIX_YAE(ch));
 		ch_printf(ch, COL_SCORE "%s" EOL, flag_string(aff_flags_list, ch->affected_by));
 		if (ch->top_level >= 20)
 		{
 			if (ch->resistant > 0)
 			{
-				send_to_char( FB_BLUE "Odporno¶æ:" EOL, ch);
+				send_to_char( FB_BLUE "Odpornoï¿½ï¿½:" EOL, ch);
 				ch_printf(ch, COL_SCORE "%s" EOL, flag_string(ris_flags_list, ch->resistant));
 			}
 			if (ch->immune > 0)
 			{
-				send_to_char( FB_BLUE "Nietykalno¶æ:" EOL, ch);
+				send_to_char( FB_BLUE "Nietykalnoï¿½ï¿½:" EOL, ch);
 				ch_printf(ch, COL_SCORE "%s" EOL, flag_string(ris_flags_list, ch->immune));
 			}
 			if (ch->susceptible > 0)
 			{
-				send_to_char( FB_BLUE "Podatno¶æ:" EOL, ch);
+				send_to_char( FB_BLUE "Podatnoï¿½ï¿½:" EOL, ch);
 				ch_printf(ch, COL_SCORE "%s" EOL, flag_string(ris_flags_list, ch->susceptible));
 			}
 		}
 		return;
 	}
 
-	if (!ch->first_affect)
-		send_to_char( COL_SCORE "Nic na ciebie nie wp³ywa." EOL, ch);
+	if (ch->affects.empty())
+		send_to_char( COL_SCORE "Nic na ciebie nie wpï¿½ywa." EOL, ch);
 	else
 	{
-		send_to_char( FB_BLUE "Znajdujesz siê pod wp³ywem:" EOL, ch);
+		send_to_char( FB_BLUE "Znajdujesz siï¿½ pod wpï¿½ywem:" EOL, ch);
 
-		for (paf = ch->first_affect; paf; paf = paf->next)
+		for (auto* paf : ch->affects)
 			if ((skill = get_skilltype(paf->type)) != NULL)
 			{
 
@@ -933,7 +933,7 @@ DEF_DO_FUN( affected )
 					ch_printf(ch, " o %d", paf->modifier);
 
 				if (ch->top_level >= 20)
-					ch_printf(ch, " przez oko³o %d godzi%s", paf->duration / 35, NUMBER_SUFF(paf->duration / 35, "nê", "ny", "n"));
+					ch_printf(ch, " przez okoï¿½o %d godzi%s", paf->duration / 35, NUMBER_SUFF(paf->duration / 35, "nï¿½", "ny", "n"));
 
 				send_to_char("." EOL, ch);
 			}
@@ -959,8 +959,8 @@ DEF_DO_FUN( inventory )
 
 	do_gold(ch, vch->name);
 
-	send_to_char( FB_RED "Nosisz ze sob±:" EOL, ch);
-	show_list_to_char(vch->first_carrying, ch, true, true);
+	send_to_char( FB_RED "Nosisz ze sobï¿½:" EOL, ch);
+	show_list_to_char(vch->carrying, ch, true, true);
 	return;
 }
 
@@ -976,16 +976,16 @@ DEF_DO_FUN( equipment )
 
 	for (iWear = 0; iWear < MAX_WEAR; iWear++)
 	{
-		for (obj = ch->first_carrying; obj; obj = obj->next_content)
+		for (auto* obj : ch->carrying)
 			if (obj->wear_loc == iWear)
 			{
-				/* by Ratm: Ugly haX00r, ale nie chce mi sie tego robiæ poprawnie
-				 bo bym musia³ zmieniaæ w pizdu rzeczy i potem godzinami
-				 testowaæ czy dzia³a, wybaczcie ;) */
+				/* by Ratm: Ugly haX00r, ale nie chce mi sie tego robiï¿½ poprawnie
+				 bo bym musiaï¿½ zmieniaï¿½ w pizdu rzeczy i potem godzinami
+				 testowaï¿½ czy dziaï¿½a, wybaczcie ;) */
 				if (iWear == WEAR_WIELD)
 				{
 					if (IS_SET(obj->wear_flags, ITEM_DUAL_WIELD))
-						send_to_char( FG_CYAN "<broñ dwurêczna>         " PLAIN, ch);
+						send_to_char( FG_CYAN "<broï¿½ dwurï¿½czna>         " PLAIN, ch);
 					else
 						send_to_char(where_name[iWear], ch);
 				}
@@ -1016,17 +1016,17 @@ DEF_DO_FUN( equipment )
 									obj->gender == GENDER_MALE ? " (dobry) " : obj->gender == GENDER_FEMALE ? " (dobra) " : " (dobre) ");
 						else if (dam >= 5)
 							strcat(buf,
-									obj->gender == GENDER_MALE ? " (u¿ywany) " :
-									obj->gender == GENDER_FEMALE ? " (u¿ywana) " : " (u¿ywane) ");
+									obj->gender == GENDER_MALE ? " (uï¿½ywany) " :
+									obj->gender == GENDER_FEMALE ? " (uï¿½ywana) " : " (uï¿½ywane) ");
 						else if (dam >= 3)
 							strcat(buf,
-									obj->gender == GENDER_MALE ? " (zu¿yty) " : obj->gender == GENDER_FEMALE ? " (zu¿yta) " : " (zu¿yte) ");
+									obj->gender == GENDER_MALE ? " (zuï¿½yty) " : obj->gender == GENDER_FEMALE ? " (zuï¿½yta) " : " (zuï¿½yte) ");
 						else if (dam >= 1)
 							strcat(buf,
 									obj->gender == GENDER_MALE ? " (okropny) " :
 									obj->gender == GENDER_FEMALE ? " (okropna) " : " (okropne) ");
 						else if (dam == 0)
-							strcat(buf, " (nieu¿ytek) ");
+							strcat(buf, " (nieuï¿½ytek) ");
 						send_to_char(buf, ch);
 						break;
 
@@ -1041,17 +1041,17 @@ DEF_DO_FUN( equipment )
 									obj->gender == GENDER_MALE ? " (dobry) " : obj->gender == GENDER_FEMALE ? " (dobra) " : " (dobry) ");
 						else if (dam < 7)
 							strcat(buf,
-									obj->gender == GENDER_MALE ? " (u¿ywany) " :
-									obj->gender == GENDER_FEMALE ? " (u¿ywana) " : " (u¿ywane) ");
+									obj->gender == GENDER_MALE ? " (uï¿½ywany) " :
+									obj->gender == GENDER_FEMALE ? " (uï¿½ywana) " : " (uï¿½ywane) ");
 						else if (dam < 10)
 							strcat(buf,
-									obj->gender == GENDER_MALE ? " (zu¿yty) " : obj->gender == GENDER_FEMALE ? " (zu¿yta) " : " (zu¿yte) ");
+									obj->gender == GENDER_MALE ? " (zuï¿½yty) " : obj->gender == GENDER_FEMALE ? " (zuï¿½yta) " : " (zuï¿½yte) ");
 						else if (dam < 12)
 							strcat(buf,
 									obj->gender == GENDER_MALE ? " (okropny) " :
 									obj->gender == GENDER_FEMALE ? " (okropna) " : " (okropne) ");
 						else if (dam == 12)
-							strcat(buf, " (nieu¿ytek) ");
+							strcat(buf, " (nieuï¿½ytek) ");
 						send_to_char(buf, ch);
 						if (obj->value[3] == WEAPON_BLASTER)
 						{
@@ -1085,7 +1085,7 @@ DEF_DO_FUN( equipment )
 					send_to_char( EOL, ch);
 				}
 				else
-					send_to_char("co¶." EOL, ch);
+					send_to_char("coï¿½." EOL, ch);
 				found = true;
 			}
 	}
@@ -1102,7 +1102,7 @@ void set_title(CHAR_DATA *ch, char *title)
 
 	if (IS_NPC(ch))
 	{
-		send_to_char("I niby jaki by mia³ byæ ten title? 'Mob nad Moby' ???" NL, ch);
+		send_to_char("I niby jaki by miaï¿½ byï¿½ ten title? 'Mob nad Moby' ???" NL, ch);
 		return;
 	}
 
@@ -1119,7 +1119,7 @@ DEF_DO_FUN( title )
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Zmieniæ title na jaki?" NL, ch);
+		send_to_char("Zmieniï¿½ title na jaki?" NL, ch);
 		return;
 	}
 
@@ -1171,7 +1171,7 @@ DEF_DO_FUN( description )
 {
 	if (IS_NPC(ch))
 	{
-		send_to_char("Mob nie mo¿e sam sobie wymy¶liæ opisu (szkoda)." NL, ch);
+		send_to_char("Mob nie moï¿½e sam sobie wymyï¿½liï¿½ opisu (szkoda)." NL, ch);
 		return;
 	}
 
@@ -1190,7 +1190,7 @@ DEF_DO_FUN( bio )
 {
 	if (IS_NPC(ch))
 	{
-		send_to_char("Mob nie mo¿e ustaliæ bio!" NL, ch);
+		send_to_char("Mob nie moï¿½e ustaliï¿½ bio!" NL, ch);
 		return;
 	}
 
@@ -1233,7 +1233,7 @@ DEF_DO_FUN( prompt )
 
 	if (!*arg)
 	{
-		send_to_char("Zmieniæ prompt na jaki? (spróbuj 'help prompt')" NL, ch);
+		send_to_char("Zmieniï¿½ prompt na jaki? (sprï¿½buj 'help prompt')" NL, ch);
 		return;
 	}
 
@@ -1252,7 +1252,7 @@ DEF_DO_FUN( prompt )
 	{
 		ch_printf(ch, NL PROMPT_COL_N "Aktualny prompt : ");
 		if (!str_cmp(ch->pcdata->prompt, ""))
-			ch_printf(ch, "domy¶lny");
+			ch_printf(ch, "domyï¿½lny");
 		else
 			write_to_buffer(ch->desc, ch->pcdata->prompt, 0);
 		ch_printf(ch, NL);

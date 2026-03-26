@@ -23,8 +23,6 @@
 
 struct moon_data
 {
-	MOON_DATA			* next;
-	MOON_DATA			* prev;
 	char				* name;
 	float				xpos;
 	float				ypos;

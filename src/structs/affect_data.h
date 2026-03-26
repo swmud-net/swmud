@@ -23,8 +23,6 @@
 
 struct	affect_data
 {
-	AFFECT_DATA			* next;
-	AFFECT_DATA			* prev;
 	int					type;
 	int					duration;
 	int					location;

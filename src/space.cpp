@@ -28,33 +28,25 @@
 #include <ctype.h>
 #include <time.h>
 #include "mud.h"
+#include <iterator>
 
-SHIP_DATA *first_ship;
-SHIP_DATA *last_ship;
+std::list<SHIP_DATA*> ship_list;
 
-MISSILE_DATA *first_missile;
-MISSILE_DATA *last_missile;
+std::list<MISSILE_DATA*> missile_list;
 
-SPACE_DATA *first_starsystem;
-SPACE_DATA *last_starsystem;
+std::list<SPACE_DATA*> starsystem_list;
 
-HANGAR_DATA *first_hangar;
-HANGAR_DATA *last_hangar;
+std::list<HANGAR_DATA*> hangar_list;
 
-TURRET_DATA *first_turret;
-TURRET_DATA *last_turret;
+std::list<TURRET_DATA*> turret_list;
 
-MODULE_DATA *first_module;
-MODULE_DATA *last_module;
+std::list<MODULE_DATA*> module_list;
 
-TURBOCAR *first_turbocar;
-TURBOCAR *last_turbocar;
+std::list<TURBOCAR*> turbocar_list;
 
-CREW_DATA *first_cmember;
-CREW_DATA *last_cmember;
+std::list<CREW_DATA*> cmember_list;
 
-ASTRO_DATA *first_astro;
-ASTRO_DATA *last_astro;
+std::list<ASTRO_DATA*> astro_list;
 
 char *pubshipname[MAX_SHIP];	//added by Thanos
 
@@ -160,7 +152,7 @@ bool land_bus(SHIP_DATA *ship, int destination)
 	}
 
 	echo_to_ship(ship,
-			FB_YELLOW "Czujesz delikatny wstrz±s. Statek osiada na l±dowisku.");
+			FB_YELLOW "Czujesz delikatny wstrzï¿½s. Statek osiada na lï¿½dowisku.");
 
 	ship->location = get_room_index(destination);
 	ship->lastdoc = ship->location;
@@ -169,11 +161,11 @@ bool land_bus(SHIP_DATA *ship, int destination)
 	if (ship->starsystem)
 		ship_from_starsystem(ship, ship->starsystem);
 
-	sprintf(buf, FB_YELLOW "%s l±duje na platformie.", ship->name);
+	sprintf(buf, FB_YELLOW "%s lï¿½duje na platformie.", ship->name);
 	echo_to_room(ship->location, buf);
-	sprintf(buf, FB_YELLOW "%s otwiera klapê.", ship->name);
+	sprintf(buf, FB_YELLOW "%s otwiera klapï¿½.", ship->name);
 	echo_to_room(ship->location, buf);
-	echo_to_room(ship->entrance, FB_YELLOW "Klapa otwiera siê.");
+	echo_to_room(ship->entrance, FB_YELLOW "Klapa otwiera siï¿½.");
 
 	ship->hatchopen = true;
 	return true;
@@ -183,15 +175,15 @@ void launch_bus(SHIP_DATA *ship)
 {
 	char buf[MAX_STRING_LENGTH];
 
-	sprintf(buf, FB_YELLOW "%s zamyka klapê i zaczyna startowaæ.", ship->name);
+	sprintf(buf, FB_YELLOW "%s zamyka klapï¿½ i zaczyna startowaï¿½.", ship->name);
 	echo_to_room(ship->location, buf);
-	echo_to_room(ship->entrance, FB_YELLOW "Klapa statku zamyka siê.");
+	echo_to_room(ship->entrance, FB_YELLOW "Klapa statku zamyka siï¿½.");
 
 	ship->hatchopen = false;
 
 	extract_ship(ship);
 	echo_to_ship(ship,
-			FB_YELLOW "Statek zaczyna startowaæ, s³yszysz jak silniki nabieraj± obrotów.");
+			FB_YELLOW "Statek zaczyna startowaï¿½, sï¿½yszysz jak silniki nabierajï¿½ obrotï¿½w.");
 
 	ship->lastdoc = ship->location;
 	ship->location = NULL;
@@ -200,9 +192,7 @@ void launch_bus(SHIP_DATA *ship)
 
 bool is_turbocar(int vnum)
 {
-	TURBOCAR *tc;
-
-	FOREACH(tc, first_turbocar)
+	for (auto* tc : turbocar_list)
 		if (tc->vnum == vnum)
 			return true;
 
@@ -214,7 +204,6 @@ void update_traffic()
 {
 	//SHIP_DATA  *shuttle,
 	//           *senate;
-	TURBOCAR *tc;
 	SHIP_DATA *turbocar;
 	RID *room;
 	char buf[MSL];
@@ -267,14 +256,14 @@ void update_traffic()
 	 corus_shuttle = 0;
 	 }*/
 
-	FOREACH(tc, first_turbocar)
+	for (auto* tc : turbocar_list)
 		if ((turbocar = ship_from_cockpit(get_room_index(tc->vnum))))
 		{
 			if (!tc->current_station)
-				tc->current_station = tc->first_station;
+				tc->current_station = tc->stations.empty() ? nullptr : tc->stations.front();
 			sprintf(buf,
 			FB_YELLOW
-			"Drzwi %s zamykaj± siê i odje¿d¿a w po¶piechu ze stacji.",
+			"Drzwi %s zamykajï¿½ siï¿½ i odjeï¿½dï¿½a w poï¿½piechu ze stacji.",
 					tc->name);
 			echo_to_room(turbocar->location, buf);
 			extract_ship(turbocar);
@@ -282,7 +271,7 @@ void update_traffic()
 			room = get_room_index(tc->current_station->vnum);
 			ship_to_room(turbocar, room);
 			sprintf(buf,
-			FB_YELLOW "%s pokonuje szybko trasê do nastêpnej stacji.",
+			FB_YELLOW "%s pokonuje szybko trasï¿½ do nastï¿½pnej stacji.",
 					tc->name);
 			echo_to_ship(turbocar, buf);
 			turbocar->location = room;
@@ -292,23 +281,25 @@ void update_traffic()
 				ship_from_starsystem(turbocar, turbocar->starsystem);
 			sprintf(buf,
 			FB_YELLOW
-			"%s wje¿dza na platformê i drzwi powoli siê otwieraj±.", tc->name);
+			"%s wjeï¿½dza na platformï¿½ i drzwi powoli siï¿½ otwierajï¿½.", tc->name);
 			echo_to_room(turbocar->location, buf);
 			sprintf(buf, FG_CYAN "Witamy w %s.", tc->current_station->name);
 			echo_to_ship(turbocar, buf);
 			turbocar->hatchopen = true;
 
-			if (tc->current_station == tc->last_station)
-				tc->current_station = tc->first_station;
-			else
-				tc->current_station = tc->current_station->next;
+			{
+				auto st_it = std::find(tc->stations.begin(), tc->stations.end(), tc->current_station);
+				if (st_it != tc->stations.end())
+					++st_it;
+				tc->current_station = (st_it != tc->stations.end()) ? *st_it : tc->stations.front();
+			}
 		}
 
 }
 
 void change_bus_planet(SHIP_DATA *bus)
 {
-	if (!bus->first_stop)
+	if (bus->stops.empty())
 	{
 		bug("Ship has no stops! Making it not public!");
 		bus->ship_public = false;
@@ -318,10 +309,12 @@ void change_bus_planet(SHIP_DATA *bus)
 	if (!bus->curr_stop)
 	{
 		bug("Ship has no curr_stop! Resetting course.");
-		bus->curr_stop = bus->first_stop;
+		bus->curr_stop = bus->stops.front();
 	}
-	bus->curr_stop =
-			bus->curr_stop->next ? bus->curr_stop->next : bus->first_stop;
+	auto it = std::find(bus->stops.begin(), bus->stops.end(), bus->curr_stop);
+	if (it != bus->stops.end())
+		++it;
+	bus->curr_stop = (it != bus->stops.end()) ? *it : bus->stops.front();
 	return;
 }
 
@@ -332,11 +325,11 @@ void update_bus()
 	int destination;
 	char buf[MAX_STRING_LENGTH];
 
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
 		if (ship->ship_public)
 		{
-			if (!ship->first_stop)
+			if (ship->stops.empty())
 			{
 				bug("Update bus: Ship: %s - is public but no course set.",
 						ship->name);
@@ -344,7 +337,7 @@ void update_bus()
 			}
 
 			if (!ship->curr_stop)
-				ship->curr_stop = ship->first_stop;
+				ship->curr_stop = ship->stops.front();
 
 			switch (ship->bus_pos)
 			{
@@ -354,8 +347,8 @@ void update_bus()
 				if (target != NULL && !target->starsystem)
 				{
 					sprintf(buf, FG_CYAN
-					"Elektroniczny g³os nadaje 'Nie mo¿emy wyl±dowaæ na %s ..."
-					" Proszê o spokój, ale to miejsce chyba zniknê³o.'",
+					"Elektroniczny gï¿½os nadaje 'Nie moï¿½emy wylï¿½dowaï¿½ na %s ..."
+					" Proszï¿½ o spokï¿½j, ale to miejsce chyba zniknï¿½o.'",
 							ship->curr_stop->stop_name);
 					echo_to_ship(ship, buf);
 					bug("Update_bus: %s cannot land!", ship->name);
@@ -372,20 +365,20 @@ void update_bus()
 				{
 					echo_to_ship(ship,
 							FB_YELLOW
-							"Statek unosi siê ponad l±dowisko i skrêca gwa³townie przyspieszaj±c.");
+							"Statek unosi siï¿½ ponad lï¿½dowisko i skrï¿½ca gwaï¿½townie przyspieszajï¿½c.");
 				}
 				else if (ship->public_subclass == 2)
 				{
 					echo_to_ship(ship, FB_YELLOW
-					"Czujesz wibracje ca³ego kad³uba" NL
-					"Statek podkrêca obroty silników i oddala siê od portu.");
+					"Czujesz wibracje caï¿½ego kadï¿½uba" NL
+					"Statek podkrï¿½ca obroty silnikï¿½w i oddala siï¿½ od portu.");
 				}
 				else
 				{
 					echo_to_ship(ship,
 							FB_YELLOW
-							"S³yszysz potworny huk!" NL
-							"Statek podkrêca obroty turbonapêdów i robi skok w hiperprzestrzeñ.");
+							"Sï¿½yszysz potworny huk!" NL
+							"Statek podkrï¿½ca obroty turbonapï¿½dï¿½w i robi skok w hiperprzestrzeï¿½.");
 				}
 
 				ship->bus_pos++;
@@ -395,21 +388,21 @@ void update_bus()
 				{
 					echo_to_ship(ship,
 							FB_YELLOW
-							"Statek gwa³townie zwalnia i delikatnie podchodzi do l±dowania.");
+							"Statek gwaï¿½townie zwalnia i delikatnie podchodzi do lï¿½dowania.");
 				}
 				else if (ship->public_subclass == 2)
 				{
 					echo_to_ship(ship, FB_YELLOW
-					"Ponownie czujesz wibracje ca³ego kad³uba"
+					"Ponownie czujesz wibracje caï¿½ego kadï¿½uba"
 					NL
-					"Statek gwa³townie zwalnia zbli¿aj±c siê do portu.");
+					"Statek gwaï¿½townie zwalnia zbliï¿½ajï¿½c siï¿½ do portu.");
 				}
 				else
 				{
 					echo_to_ship(ship,
 							FB_YELLOW
-							"Co za ha³as!" NL
-							"Czujesz jak statek gwa³townie zwalnia wychodz±c z hiperprzestrzeni.");
+							"Co za haï¿½as!" NL
+							"Czujesz jak statek gwaï¿½townie zwalnia wychodzï¿½c z hiperprzestrzeni.");
 				}
 
 				ship->bus_pos++;
@@ -419,38 +412,44 @@ void update_bus()
 				if (!land_bus(ship, destination))
 				{
 					sprintf(buf, FG_CYAN
-					"Elektroniczny g³os nadaje 'Ojej, %s chyba nie istnieje.'",
+					"Elektroniczny gï¿½os nadaje 'Ojej, %s chyba nie istnieje.'",
 							ship->curr_stop->stop_name);
 					echo_to_ship(ship, buf);
 					echo_to_ship(ship,
 							FG_CYAN
-							"Elektroniczny g³os nadaje 'Mam nadziejê, ¿e to nie superlaser, proszê o spokój. L±dowanie odwo³ane.'");
+							"Elektroniczny gï¿½os nadaje 'Mam nadziejï¿½, ï¿½e to nie superlaser, proszï¿½ o spokï¿½j. Lï¿½dowanie odwoï¿½ane.'");
 					bug("Update_bus: %s cannot land!", ship->name);
 				}
 				else
 				{
 					sprintf(buf, FG_CYAN
-					"Elektroniczny g³os nadaje 'Witamy w porcie %s'",
+					"Elektroniczny gï¿½os nadaje 'Witamy w porcie %s'",
 							ship->curr_stop->stop_name);
 					echo_to_ship(ship, buf);
 					echo_to_ship(ship,
 							FG_CYAN
-							"Elektroniczny g³os nadaje 'Proszê wychodzic przez g³ówn± rampê. Mi³ego pobytu.'");
+							"Elektroniczny gï¿½os nadaje 'Proszï¿½ wychodzic przez gï¿½ï¿½wnï¿½ rampï¿½. Miï¿½ego pobytu.'");
 				}
 				ship->bus_pos++;
 				break;
 			case 5: /*PREP_TO_LAUNCH */
+			{
+				auto stop_it = std::find(ship->stops.begin(), ship->stops.end(), ship->curr_stop);
+				const char *next_stop_name;
+				if (stop_it != ship->stops.end() && std::next(stop_it) != ship->stops.end())
+					next_stop_name = (*std::next(stop_it))->stop_name;
+				else
+					next_stop_name = ship->stops.front()->stop_name;
 				sprintf(buf,
 				FG_CYAN
-				"Elektroniczny g³os nadaje 'Nastêpna stacja, %s'",
-						ship->curr_stop->next ?
-								ship->curr_stop->next->stop_name :
-								ship->first_stop->stop_name);
+				"Elektroniczny gï¿½os nadaje 'Nastï¿½pna stacja, %s'",
+						next_stop_name);
 				echo_to_ship(ship,
 				FG_CYAN
-				"Elektroniczny g³os nadaje 'Proszê zapi±æ pasy, startujemy.'");
+				"Elektroniczny gï¿½os nadaje 'Proszï¿½ zapiï¿½ï¿½ pasy, startujemy.'");
 				echo_to_ship(ship, buf);
 				ship->bus_pos++;
+			}
 				break;
 			default:
 				/* dodajmy nieco dynamiki ;)        -- Thanos */
@@ -459,7 +458,7 @@ void update_bus()
 				break;
 			}
 
-			/* zmieniamy polo¿enie statq */
+			/* zmieniamy poloï¿½enie statq */
 			if (ship->bus_pos >= 10)
 			{
 				ship->bus_pos = 0;
@@ -479,9 +478,7 @@ float srange(float x, float y, float z)
 void move_ships()
 {
 	SHIP_DATA *ship;
-	SHIP_DATA *ship_next;
 	MISSILE_DATA *missile;
-	MISSILE_DATA *m_next;
 	SHIP_DATA *target;
 	float dx, dy, dz, change;
 	char buf[MAX_STRING_LENGTH];
@@ -494,9 +491,9 @@ void move_ships()
 	MOON_DATA *moon;
 	ASTRO_DATA *astro;
 
-	for (missile = first_missile; missile; missile = m_next)
+	auto missile_snapshot = missile_list;
+	for (auto* missile : missile_snapshot)
 	{
-		m_next = missile->next;
 		ship = missile->fired_from;
 		target = missile->target;
 
@@ -535,18 +532,18 @@ void move_ships()
 					if (target->chaff_released <= 0)
 					{
 						echo_to_room(ship->gunseat, FB_YELLOW
-						"Twój pocisk trafia prosto w cel!");
+						"Twï¿½j pocisk trafia prosto w cel!");
 						echo_to_cockpit(target,
-						FG_RED "Statek zosta³ trafiony.");
+						FG_RED "Statek zostaï¿½ trafiony.");
 						echo_to_ship_nospam(target,
-								"Potê¿na eksplozja wstrz±sa statkiem!");
+								"Potï¿½na eksplozja wstrzï¿½sa statkiem!");
 						sprintf(buf,
 								FG_YELLOW
-								"Widzisz ma³± chmurê ognia. %s zosta³ trafiony pociskiem.",
+								"Widzisz maï¿½ï¿½ chmurï¿½ ognia. %s zostaï¿½ trafiony pociskiem.",
 								target->sslook);
 						echo_to_system(target, buf, ship);
 
-						for (ch = first_char; ch; ch = ch->next)
+						for (auto* ch : char_list)
 							if (!IS_NPC(ch)
 									&& nifty_is_name(missile->fired_by,
 											ch->name))
@@ -564,7 +561,7 @@ void move_ships()
 					else
 					{
 						echo_to_room(ship->gunseat, FB_YELLOW
-						"Twój pocisk eksploduje w ¶rodku dzia³a!");
+						"Twï¿½j pocisk eksploduje w ï¿½rodku dziaï¿½a!");
 						echo_to_cockpit(target,
 						FB_YELLOW
 						"Pocisk eksploduje w dziale.");
@@ -600,16 +597,16 @@ void move_ships()
 							damage = 10;
 
 						echo_to_cockpit(target,
-						FG_RED "Statek zosta³ trafiony.");
+						FG_RED "Statek zostaï¿½ trafiony.");
 						echo_to_ship_nospam(target,
 						FB_RED
-						"Potê¿na eksplozja wstrz±sa statkiem!");
+						"Potï¿½na eksplozja wstrzï¿½sa statkiem!");
 						echo_to_cockpit(target,
 						FB_GREEN
-						"Tra³ przejmuje wieksz± czê¶æ wybuchu!");
+						"Traï¿½ przejmuje wiekszï¿½ czï¿½ï¿½ wybuchu!");
 						sprintf(buf,
 								FG_YELLOW
-								"Widzisz ma³± chmurê ognia. %s zosta³ trafiony pociskiem.",
+								"Widzisz maï¿½ï¿½ chmurï¿½ ognia. %s zostaï¿½ trafiony pociskiem.",
 								target->sslook);
 						echo_to_system(target, buf, ship);
 						damage_ship(target, damage, damage * 2);
@@ -643,9 +640,9 @@ void move_ships()
 
 // KURWAAA JAKIE TO JEST LAMERSKIE !!! -- Thanos
 // NO QRWA NIEZLE LAMERSKIE -- Aldegard
-	for (ship = first_ship; ship; ship = ship_next)
+	auto ship_snapshot = ship_list;
+	for (auto* ship : ship_snapshot)
 	{
-		ship_next = ship->next;
 
 		if (!ship->starsystem)
 			continue;
@@ -675,14 +672,14 @@ void move_ships()
 		if (ship->currspeed > 0)
 		{
 			system = ship->starsystem;
-			for (star = system->first_star; star; star = star->next)
+			for (auto* star : system->stars)
 			{
 				if (srange((ship->vx - star->xpos), (ship->vy - star->ypos),
 						(ship->vz - star->zpos))
 						< star->radius + star->gravity * 2)
 				{
 					echo_to_cockpit(ship,
-					FG_RED MOD_BLINK "Wpadasz w s³oñce."
+					FG_RED MOD_BLINK "Wpadasz w sï¿½oï¿½ce."
 					RESET);
 					sprintf(buf, FG_YELLOW "%s wpada wprost na %s!",
 							ship->sslook, star->name);
@@ -697,8 +694,7 @@ void move_ships()
 			if (!ship)
 				continue;
 
-			for (planet = system->first_planet; planet;
-					planet = planet->next_in_system)
+			for (auto* planet : system->planets)
 			{
 				if (srange((ship->vx - planet->xpos), (ship->vy - planet->ypos),
 						(ship->vz - planet->zpos)) < planet->radius)
@@ -706,7 +702,7 @@ void move_ships()
 					sprintf(buf, FB_YELLOW "Rozbijasz statek o %s.",
 							planet->name);
 					echo_to_cockpit(ship, buf);
-					sprintf(buf, FG_YELLOW "%s rozbija siê o %s.", ship->sslook,
+					sprintf(buf, FG_YELLOW "%s rozbija siï¿½ o %s.", ship->sslook,
 							planet->name);
 					echo_to_system(ship, buf, NULL);
 					purge_ship(ship, NULL);
@@ -717,10 +713,10 @@ void move_ships()
 						&& ship->currspeed < 50)
 				{
 					// Dorobic tu kiedys prawdziwe orbity
-					sprintf(buf, FB_YELLOW "Orbitujesz doko³a %s.",
+					sprintf(buf, FB_YELLOW "Orbitujesz dokoï¿½a %s.",
 							planet->name);
 					echo_to_cockpit(ship, buf);
-					sprintf(buf, FG_YELLOW "%s zaczyna orbitowaæ doko³a %s.",
+					sprintf(buf, FG_YELLOW "%s zaczyna orbitowaï¿½ dokoï¿½a %s.",
 							ship->sslook, planet->name);
 					echo_to_system(ship, buf, NULL);
 					ship->currspeed = 0;
@@ -733,38 +729,37 @@ void move_ships()
 			if (!ship)
 				continue;
 
-			for (moon = system->first_moon; moon; moon = moon->next)
+			for (auto* moon : system->moons)
 			{
 				if ((srange((ship->vx - moon->xpos), (ship->vy - moon->ypos),
 						(ship->vz - moon->zpos)) < moon->radius + moon->gravity)
 						&& ship->currspeed < 50)
 				{
-					sprintf(buf, FB_YELLOW "Orbitujesz doko³a %s." RESET,
+					sprintf(buf, FB_YELLOW "Orbitujesz dokoï¿½a %s." RESET,
 							moon->name);
 					echo_to_cockpit(ship, buf);
-					sprintf(buf, FG_YELLOW "%s zaczyna orbitowaæ doko³a %s.",
+					sprintf(buf, FG_YELLOW "%s zaczyna orbitowaï¿½ dokoï¿½a %s.",
 							ship->sslook, moon->name);
 					echo_to_system(ship, buf, NULL);
 					ship->currspeed = 0;
 				}
 			}
 
-			for (astro = system->first_astro; astro;
-					astro = astro->next_in_starsystem)
+			for (auto* astro : system->astros)
 			{
 			}
 		}
 	}
 
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
 		if (ship->collision)
 		{
 			echo_to_cockpit(ship,
-			FB_WHITE MOD_BLINK "Uderzasz burt± w inny statek!"
+			FB_WHITE MOD_BLINK "Uderzasz burtï¿½ w inny statek!"
 			RESET);
 			echo_to_ship_nospam(ship,
-					FB_RED "Potê¿na eksplozja wstrz±sa statkiem!");
+					FB_RED "Potï¿½na eksplozja wstrzï¿½sa statkiem!");
 			damage_ship(ship, ship->collision, ship->collision);
 
 			if (!ship)
@@ -782,7 +777,7 @@ void recharge_ships()
 	char buf[MAX_STRING_LENGTH];
 	TURRET_DATA *turret;
 
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
 
 		if (ship->statet0 > 0)
@@ -791,7 +786,7 @@ void recharge_ships()
 			ship->statet0 = 0;
 		}
 
-		for (turret = ship->first_turret; turret; turret = turret->next)
+		for (auto* turret : ship->turrets)
 		{
 			if (turret->statet0 > 0)
 			{
@@ -807,7 +802,7 @@ void recharge_ships()
 
 					if (turret->statet0 <= 0)
 						echo_to_room(get_room_index(turret->vnum),
-								FB_GREEN "Superlaser prze³adowany!");
+								FB_GREEN "Superlaser przeï¿½adowany!");
 				}
 				else						// Baterie Turbolaserowe
 				{
@@ -825,7 +820,7 @@ void recharge_ships()
 		{
 			ship->missilestate = MISSILE_READY;
 			echo_to_room(ship->gunseat,
-					FB_YELLOW "Wyrzutnia pocisków prze³adowana.");
+					FB_YELLOW "Wyrzutnia pociskï¿½w przeï¿½adowana.");
 		}
 
 		if (ship->missilestate == MISSILE_RELOAD)
@@ -921,18 +916,18 @@ void recharge_ships()
 								shots_wystrzelone == 3 ? "trzykrotnie" :
 								shots_wystrzelone == 4 ? "czterokrotnie" :
 								shots_wystrzelone == 5 ?
-										"piêciokrotnie" : "wielokrotnie");
+										"piï¿½ciokrotnie" : "wielokrotnie");
 						echo_to_cockpit(target, buf);
 
 						sprintf(buf,
 								FG_GREEN "%s z " FB_RED "%s " FG_GREEN "chybia " FB_RED "%s" FG_GREEN ".",
-								shots_wystrzelone == 1 ? "Wi±zka laserowa" :
+								shots_wystrzelone == 1 ? "Wiï¿½zka laserowa" :
 								shots_wystrzelone == 2 ?
-										"Podwójna wi±zka laserowa" :
+										"Podwï¿½jna wiï¿½zka laserowa" :
 								shots_wystrzelone == 3 ?
-										"Potrójna wi±zka laserowa" :
+										"Potrï¿½jna wiï¿½zka laserowa" :
 								shots_wystrzelone == 4 ?
-										"Poczwórna wi±zka laserowa" :
+										"Poczwï¿½rna wiï¿½zka laserowa" :
 										"Kanonada laserowa", ship->sslook,
 								target->sslook);
 						echo_to_system(target, buf, NULL);
@@ -948,7 +943,7 @@ void recharge_ships()
 								shots_wystrzelone == 3 ? "trzykrotnie" :
 								shots_wystrzelone == 4 ? "czterokrotnie" :
 								shots_wystrzelone == 5 ?
-										"piêciokrotnie" : "wielokrotnie",
+										"piï¿½ciokrotnie" : "wielokrotnie",
 
 								shots_trafione == shots_wystrzelone ?
 										"TRAFIA!" :
@@ -957,21 +952,21 @@ void recharge_ships()
 								shots_trafione == 3 ? "trzy trafienia" :
 								shots_trafione == 4 ? "cztery trafienia" :
 								shots_trafione == 5 ?
-										"piêæ trafieñ" : "wielokrotnie trafia");
+										"piï¿½ï¿½ trafieï¿½" : "wielokrotnie trafia");
 						echo_to_cockpit(target, buf);
 
 						sprintf(buf,
-								FG_GREEN "Promieñ lasera z " FB_RED "%s " FG_GREEN "trafia " FB_RED "%s " FG_GREEN "%s",
+								FG_GREEN "Promieï¿½ lasera z " FB_RED "%s " FG_GREEN "trafia " FB_RED "%s " FG_GREEN "%s",
 								ship->sslook, target->sslook,
 								shots_trafione == 1 ? "" :
 								shots_trafione == 2 ? "dwukrotnie." :
 								shots_trafione == 3 ? "trzykrotnie" :
 								shots_trafione == 4 ? "czterokrotnie" :
 								shots_trafione == 5 ?
-										"piêciokrotnie" : "wielokrotnie");
+										"piï¿½ciokrotnie" : "wielokrotnie");
 						echo_to_system(target, buf, NULL);
 						echo_to_ship_nospam(target,
-								FG_RED "Lekka eksplozja powoduje wibracje na pok³adzie.");
+								FG_RED "Lekka eksplozja powoduje wibracje na pokï¿½adzie.");
 
 						for (; shots_trafione > 0; shots_trafione--)
 							damage_ship(target, MIN_LASER_DAMAGE,
@@ -1027,7 +1022,7 @@ void recharge_ships()
 		 echo_to_cockpit(target, buf);
 		 sprintf(buf,
 		 FG_YELLOW
-		 "Promieñ lasera z %s chybia %s.",
+		 "Promieï¿½ lasera z %s chybia %s.",
 		 ship->sslook, target->sslook);
 		 echo_to_system(target, buf, NULL);
 		 }
@@ -1035,16 +1030,16 @@ void recharge_ships()
 		 {
 		 sprintf(buf,
 		 FG_YELLOW
-		 "Promieñ lasera z %s trafia %s.",
+		 "Promieï¿½ lasera z %s trafia %s.",
 		 ship->sslook, target->sslook);
 		 echo_to_system(target, buf, NULL);
 		 sprintf(buf,
-		 FG_RED "%s trafia ciê laserem!",
+		 FG_RED "%s trafia ciï¿½ laserem!",
 		 ship->sslook);
 		 echo_to_cockpit(target, buf);
 		 echo_to_ship(target,
 		 FG_RED
-		 "Lekka eksplozja powoduje wibracje na pok³adzie.");
+		 "Lekka eksplozja powoduje wibracje na pokï¿½adzie.");
 		 damage_ship(target, 5, 10);
 		 }
 		 ship->statet0++;
@@ -1071,7 +1066,7 @@ void update_space()
 	PLANET_DATA *planet;
 	MOON_DATA *moon;
 
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
 		if (ship->calctimer >= 1 && ship->starsystem)
 		{
@@ -1096,12 +1091,12 @@ void update_space()
 			ship->autotrack = false;
 			ship->currjump = NULL;
 			ship->target0 = NULL;
-			for (turret = ship->first_turret; turret; turret = turret->next)
+			for (auto* turret : ship->turrets)
 				turret->target = NULL;
 
 			ship->vXpos = 0;
 			ship->vYpos = 0;
-			echo_to_cockpit(ship, FB_RED "Pe³na jonizacja systemów.");
+			echo_to_cockpit(ship, FB_RED "Peï¿½na jonizacja systemï¿½w.");
 
 			if (ship->currspeed > 0)
 				--ship->currspeed;
@@ -1113,7 +1108,7 @@ void update_space()
 				STRDUP(ship->sYpos, "");
 
 			if (--ship->shipstate1 == 0)
-				echo_to_cockpit(ship, FB_GREEN "Kontrola systemów odzyskana.");
+				echo_to_cockpit(ship, FB_GREEN "Kontrola systemï¿½w odzyskana.");
 		}
 
 		if (ship->timer > -1)
@@ -1124,7 +1119,7 @@ void update_space()
 				continue;
 			}
 			echo_to_ship(ship, MOD_BLINK FB_RED
-			"ALARM: Proszê SPOKOJNIE udaæ siê do kapsu³ ratunkowych."
+			"ALARM: Proszï¿½ SPOKOJNIE udaï¿½ siï¿½ do kapsuï¿½ ratunkowych."
 			RESET EOL);
 		}
 
@@ -1152,7 +1147,7 @@ void update_space()
 			{
 				if (number_range(1, 1000) == 666)
 				{
-					echo_to_ship(ship, FB_RED "£adunek ulega uszkodzeniu." NL);
+					echo_to_ship(ship, FB_RED "ï¿½adunek ulega uszkodzeniu." NL);
 					ship->cargo = number_range(85, 100) * ship->cargo / 100;
 
 				}
@@ -1163,8 +1158,7 @@ void update_space()
 			{
 				if (ship->vXpos != 0 || ship->vYpos != 0)
 				{
-					for (star_system = first_starsystem; star_system;
-							star_system = star_system->next)
+					for (auto* star_system : starsystem_list)
 					{
 						if (same_star_pos(star_system->xpos, star_system->ypos,
 								ship->vXpos, ship->vYpos, 50, 50))
@@ -1191,15 +1185,15 @@ void update_space()
 				{
 					echo_to_cockpit(ship,
 							FB_RED
-							"Statek zagin±³ w hiperprzestrzeni. Wylicz nowe wspó³rzêdne.");
+							"Statek zaginï¿½ï¿½ w hiperprzestrzeni. Wylicz nowe wspï¿½rzï¿½dne.");
 				}
 				else
 				{
 					echo_to_room(ship->pilotseat,
-					FB_YELLOW "Hiperskok zakoñczony.");
+					FB_YELLOW "Hiperskok zakoï¿½czony.");
 					echo_to_ship(ship,
 					FB_YELLOW
-					"Statek g³o¶no piszczy wychodz±c z hiperprzestrzeni.");
+					"Statek gï¿½oï¿½no piszczy wychodzï¿½c z hiperprzestrzeni.");
 					sprintf(descbuf, FB_GREEN "%s",
 							ship->starsystem->description);
 					echo_to_cockpit(ship, descbuf);
@@ -1207,7 +1201,7 @@ void update_space()
 					{
 						echo_to_cockpit(ship,
 								FB_RED
-								"W systemie panuje burza elektromagnetyczna, systemy zaczynaj± 'siadaæ'");
+								"W systemie panuje burza elektromagnetyczna, systemy zaczynajï¿½ 'siadaï¿½'");
 						ship->cloack = 0;
 						ship->interdict = 0;
 						ship->shield = 0;
@@ -1241,7 +1235,7 @@ void update_space()
 			else
 			{
 				sprintf(buf,
-				FB_YELLOW "Szacowany dystans do koñca skoku: "
+				FB_YELLOW "Szacowany dystans do koï¿½ca skoku: "
 				FB_WHITE "%.0f" PLAIN, ship->hyperdistance);
 				echo_to_room(ship->pilotseat, buf);
 			}
@@ -1331,15 +1325,15 @@ void update_space()
 				ship->interdict = 0;
 				echo_to_cockpit(ship,
 				FB_RED
-				"Spiêcie w generatorze studni grawitacyjnej"
-				NL "Pole wstrzymuj±ce deaktywuje siê!");
+				"Spiï¿½cie w generatorze studni grawitacyjnej"
+				NL "Pole wstrzymujï¿½ce deaktywuje siï¿½!");
 			}
 			if (ship->energy < 100 + ship->size / 10)
 			{
 				ship->interdict = 0;
 				echo_to_cockpit(ship,
 				FB_RED
-				"BRAK ENERGII!! Pole wstrzymuj±ce deaktywuje siê!");
+				"BRAK ENERGII!! Pole wstrzymujï¿½ce deaktywuje siï¿½!");
 			}
 		}
 
@@ -1350,7 +1344,7 @@ void update_space()
 				ship->cloack = 0;
 				echo_to_cockpit(ship,
 				FB_RED
-				"Spiêcie w generatorze pola maskuj±cego" NL
+				"Spiï¿½cie w generatorze pola maskujï¿½cego" NL
 				"System maskujacy deaktywuje sie!");
 			}
 			if (ship->energy < 50 + ship->size / 5)
@@ -1369,7 +1363,7 @@ void update_space()
 				ship->shield = 0;
 				echo_to_cockpit(ship,
 				FB_RED
-				"Tarcze statku gasn± wydaj±c z siebie cichy ¶wist.");
+				"Tarcze statku gasnï¿½ wydajï¿½c z siebie cichy ï¿½wist.");
 				ship->autorecharge = false;
 			}
 		}
@@ -1416,7 +1410,7 @@ void update_space()
 				{
 					echo_to_cockpit(ship,
 					FB_RED
-					"Chmura zjonizowanych gazów omiata statek.");
+					"Chmura zjonizowanych gazï¿½w omiata statek.");
 				}
 			}
 
@@ -1439,7 +1433,7 @@ void update_space()
 				&& ship->shipstate != SHIP_HYPERSPACE)
 		{
 			sprintf(buf,
-			FB_BLUE "Prêdko¶æ: " FB_CYAN "%.0f" FB_BLUE
+			FB_BLUE "Prï¿½dkoï¿½ï¿½: " FB_CYAN "%.0f" FB_BLUE
 			"   Koordynaty solarne: " FB_CYAN "%.0f %.0f %.0f", ship->currspeed,
 					ship->vx, ship->vy, ship->vz);
 			echo_to_cockpit(ship, buf);
@@ -1447,7 +1441,7 @@ void update_space()
 			/*          if ( ship->vPilot == NULL && ship->vHijacker == NULL && ship->type != MOB_SHIP && !is_linked(ship,NULL) )
 			 {
 			 ship->currspeed=0;
-			 sprintf( buf, FB_RED "Statek utraci³ pilota." NL " AUTOPILOT: Silniki stop!");
+			 sprintf( buf, FB_RED "Statek utraciï¿½ pilota." NL " AUTOPILOT: Silniki stop!");
 			 echo_to_ship ( ship, buf);
 			 }
 			 */}
@@ -1462,8 +1456,7 @@ void update_space()
 		if (ship->starsystem && ship->shipstate1 == 0)
 		{
 			too_close = ship->currspeed + ship->size + 50;
-			for (target = ship->starsystem->first_ship; target;
-					target = target->next_in_starsystem)
+			for (auto* target : ship->starsystem->ships)
 			{
 				target_too_close = too_close + target->currspeed + target->size;
 				if (target != ship
@@ -1475,7 +1468,7 @@ void update_space()
 				{
 					sprintf(buf,
 					FB_RED
-					"Alarm o zbli¿eniu: %s  %.0f %.0f %-10.0f %.0f",
+					"Alarm o zbliï¿½eniu: %s  %.0f %.0f %-10.0f %.0f",
 							know_trans(ship, target) ?
 									SHIPNAME(target) : target->transponder,
 							target->vx - ship->vx, target->vy - ship->vy,
@@ -1488,7 +1481,7 @@ void update_space()
 			}
 
 			too_close = ship->currspeed + ship->size + 300;
-			for (moon = ship->starsystem->first_moon; moon; moon = moon->next)
+			for (auto* moon : ship->starsystem->moons)
 			{
 				if ((srange((ship->vx - moon->xpos), (ship->vy - moon->ypos),
 						(ship->vz - moon->zpos)) < too_close + moon->gravity * 2)
@@ -1496,7 +1489,7 @@ void update_space()
 				{
 					sprintf(buf,
 					FB_RED
-					"Alarm o zbli¿eniu: %s  %.0f %.0f %-10.0f %.0f", moon->name,
+					"Alarm o zbliï¿½eniu: %s  %.0f %.0f %-10.0f %.0f", moon->name,
 							moon->xpos - ship->vx, moon->ypos - ship->vy,
 							moon->zpos - ship->vz,
 							srange((ship->vx - moon->xpos),
@@ -1506,8 +1499,7 @@ void update_space()
 				}
 			}
 
-			for (planet = ship->starsystem->first_planet; planet; planet =
-					planet->next_in_system)
+			for (auto* planet : ship->starsystem->planets)
 			{
 				if ((srange((ship->vx - planet->xpos),
 						(ship->vy - planet->ypos), (ship->vz - planet->zpos))
@@ -1517,7 +1509,7 @@ void update_space()
 				{
 					sprintf(buf,
 					FB_RED
-					"Alarm o zbli¿eniu: %s  %.0f %.0f %-10.0f %.0f",
+					"Alarm o zbliï¿½eniu: %s  %.0f %.0f %-10.0f %.0f",
 							planet->name, planet->xpos - ship->vx,
 							planet->ypos - ship->vy, planet->zpos - ship->vz,
 							(srange((planet->xpos - ship->vx),
@@ -1527,7 +1519,7 @@ void update_space()
 				}
 			}
 
-			for (star = ship->starsystem->first_star; star; star = star->next)
+			for (auto* star : ship->starsystem->stars)
 			{
 				if ((srange((ship->vx - star->xpos), (ship->vy - star->ypos),
 						(ship->vz - star->zpos))
@@ -1536,7 +1528,7 @@ void update_space()
 				{
 					sprintf(buf,
 					FB_RED
-					"Alarm o zbli¿eniu: %s  %.0f %.0f %-10.0f %.0f", star->name,
+					"Alarm o zbliï¿½eniu: %s  %.0f %.0f %-10.0f %.0f", star->name,
 							star->xpos - ship->vx, star->ypos - ship->vy,
 							star->zpos - ship->vz,
 							srange((ship->vx - star->xpos),
@@ -1564,7 +1556,7 @@ void update_space()
 				ship->target0 = NULL;
 		}
 
-		for (turret = ship->first_turret; turret; turret = turret->next)
+		for (auto* turret : ship->turrets)
 		{
 			if (turret->target)
 			{
@@ -1587,11 +1579,11 @@ void update_space()
 		}
 
 		if (ship->energy < 100 && ship->starsystem && ship->shipstate1 == 0)
-			echo_to_cockpit(ship, FB_RED "Ostrze¿enie: Niski poziom paliwa.");
+			echo_to_cockpit(ship, FB_RED "Ostrzeï¿½enie: Niski poziom paliwa.");
 
 	}
 
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
 
 		if (ship->autotrack && ship->target0
@@ -1611,7 +1603,7 @@ void update_space()
 			 ship->hz = 0 - (ship->target0->vz - ship->vz);
 			 ship->energy -= (ship->currspeed * ship->size)/100;
 			 echo_to_room(ship->pilotseat, FB_RED
-			 "Autonaprowadzanie: Wykonanie uniku w celu unikniêcia kolizji!"
+			 "Autonaprowadzanie: Wykonanie uniku w celu unikniï¿½cia kolizji!"
 			 EOL);
 
 			 if(ship->manuever >= 100)
@@ -1682,8 +1674,7 @@ void update_space()
 
 					/* auto assist ships */
 
-					for (target = ship->starsystem->first_ship; target; target =
-							target->next_in_starsystem)
+					for (auto* target : ship->starsystem->ships)
 					{
 						if (autofly(target))
 							if (!str_cmp(target->owner, ship->owner)
@@ -1692,7 +1683,7 @@ void update_space()
 										&& ship->target0 != target)
 								{
 									target->target0 = ship->target0;
-									sprintf(buf, FG_RED "%s namierza ciê.",
+									sprintf(buf, FG_RED "%s namierza ciï¿½.",
 											know_trans(ship, target) ?
 													SHIPNAME(target) :
 													target->transponder);
@@ -1767,11 +1758,11 @@ void update_space()
 					ship->currspeed = 0;
 //pixprac
 					if (IS_SET(ship->flags, SHIP_METAAGGRESSIVE))
-						for (target = first_ship; target; target = target->next)
+						for (auto* target : ship_list)
 							if (is_metaaggressive_to(ship, target))
 							{
 								ship->target0 = target;
-								sprintf(buf, FG_RED "%s namierzy³ ciê.",
+								sprintf(buf, FG_RED "%s namierzyï¿½ ciï¿½.",
 										know_trans(target, ship) ?
 												SHIPNAME(ship) :
 												ship->transponder);
@@ -1781,11 +1772,11 @@ void update_space()
 
 					if (IS_SET(ship->flags,
 							SHIP_AGGRESSIVE) || IS_SET(ship->flags, SHIP_METAAGGRESSIVE))
-						for (target = first_ship; target; target = target->next)
+						for (auto* target : ship_list)
 							if (is_aggressive_to(ship, target))
 							{
 								ship->target0 = target;
-								sprintf(buf, FG_RED "%s namierzy³ ciê.",
+								sprintf(buf, FG_RED "%s namierzyï¿½ ciï¿½.",
 										know_trans(target, ship) ?
 												SHIPNAME(ship) :
 												ship->transponder);
@@ -1826,14 +1817,13 @@ void update_space()
 	}
 	{
 		CHAR_DATA *rch;
-		CHAR_DATA *rnext;
 		int dam;
 		ROOM_INDEX_DATA *room;
 		SHIPDOCK_DATA *dock;
 
-		for (ship = first_ship; ship; ship = ship->next)
+		for (auto* ship : ship_list)
 		{
-			for (dock = ship->first_dock; dock; dock = dock->next)
+			for (auto* dock : ship->docks)
 			{
 				if (dock != NULL)
 				{
@@ -1871,13 +1861,12 @@ void update_space()
 				echo_to_ship(ship,
 				FB_RED
 				"ALARM!!!      Naruszona struktura poszycia." NL
-				"Tracimy atmosferê.");
-				for (room = ship->first_location; room;
-						room = room->next_on_ship)
+				"Tracimy atmosferï¿½.");
+				for (auto* room : ship->locations)
 				{
-					for (rch = room->first_person; rch; rch = rnext)
+					auto people_snapshot = room->people;
+					for (auto* rch : people_snapshot)
 					{
-						rnext = rch->next_in_room;
 						dam = number_range(ship->efflux, 2 * ship->efflux);
 						if (!IS_RACE(rch, "DUINUOGWUIN"))
 							damage(rch, rch, dam, TYPE_UNDEFINED);
@@ -1900,8 +1889,7 @@ void write_starsystem_list()
 		bug("FATAL: cannot open starsystem.lst for writing!" NL, 0);
 		return;
 	}
-	for (tstarsystem = first_starsystem; tstarsystem;
-			tstarsystem = tstarsystem->next)
+	for (auto* tstarsystem : starsystem_list)
 		fprintf(fpout, "%s\n", tstarsystem->filename);
 	fprintf(fpout, "$\n");
 	fclose(fpout);
@@ -1914,13 +1902,11 @@ SPACE_DATA* starsystem_from_name(char *name)
 {
 	SPACE_DATA *starsystem;
 
-	for (starsystem = first_starsystem; starsystem;
-			starsystem = starsystem->next)
+	for (auto* starsystem : starsystem_list)
 		if (!str_cmp(name, starsystem->name))
 			return starsystem;
 
-	for (starsystem = first_starsystem; starsystem;
-			starsystem = starsystem->next)
+	for (auto* starsystem : starsystem_list)
 		if (!str_prefix(name, starsystem->name))
 			return starsystem;
 
@@ -1939,21 +1925,19 @@ SPACE_DATA* starsystem_from_vnum(int vnum)
 	DOCK_DATA *dock;
 	MOON_DATA *moon;
 
-	for (starsystem = first_starsystem; starsystem;
-			starsystem = starsystem->next)
+	for (auto* starsystem : starsystem_list)
 	{
-		for (planet = starsystem->first_planet; planet;
-				planet = planet->next_in_system)
-			for (dock = planet->first_dock; dock; dock = dock->next)
+		for (auto* planet : starsystem->planets)
+			for (auto* dock : planet->docks)
 				if (vnum == dock->vnum)
 					return starsystem;
-		for (moon = starsystem->first_moon; moon; moon = moon->next)
+		for (auto* moon : starsystem->moons)
 			if (vnum == moon->vnum)
 				return starsystem;
 	}
 
-	for (ship = first_ship; ship; ship = ship->next)
-		for (hangar = ship->first_hangar; hangar; hangar = hangar->next)
+	for (auto* ship : ship_list)
+		for (auto* hangar : ship->hangars)
 			if (vnum == hangar->vnum)
 				return ship->starsystem;
 
@@ -2003,14 +1987,14 @@ void save_starsystem(SPACE_DATA *starsystem)
 		fprintf(fp, "Version	      %d\n", starsystem->version);
 		fprintf(fp, "ResetFreq	      %d\n", starsystem->reset_frequency);
 		fprintf(fp, "ResetMsg	      %s~\n", starsystem->resetmsg);
-		for (star = starsystem->first_star; star; star = star->next)
+		for (auto* star : starsystem->stars)
 		{
 			fprintf(fp, "Star %.0f %.0f %.0f %.0f %d %s~ %.0f %.0f %.0f\n",
 					star->gravity, star->xpos, star->ypos, star->zpos,
 					star->type, star->name, star->radius, star->star_radius,
 					star->star_radius2);
 		}
-		for (moon = starsystem->first_moon; moon; moon = moon->next)
+		for (auto* moon : starsystem->moons)
 		{
 			fprintf(fp,
 					"Moon %.0f %.0f %.0f %.0f %d %d %.0f %s~ %.0f %.0f %.0f\n",
@@ -2096,7 +2080,7 @@ void fread_starsystem(SPACE_DATA *starsystem, FILE *fp)
 					STAR_DATA *star;
 					MOON_DATA *moon;
 
-					for (star = starsystem->first_star; star; star = star->next)
+					for (auto* star : starsystem->stars)
 					{
 						if (star->radius == 0)
 							star->radius = 1000;
@@ -2108,7 +2092,7 @@ void fread_starsystem(SPACE_DATA *starsystem, FILE *fp)
 								(star->xpos * star->xpos)
 										+ (star->ypos * star->ypos));
 					}
-					for (moon = starsystem->first_moon; moon; moon = moon->next)
+					for (auto* moon : starsystem->moons)
 					{
 						if (moon->radius == 0)
 							moon->radius = 60;
@@ -2155,8 +2139,7 @@ void fread_starsystem(SPACE_DATA *starsystem, FILE *fp)
 //              moon->radius    = fread_number( fp );
 //              moon->star_radius       = fread_number( fp );
 //              moon->star_radius2      = fread_number( fp );
-				LINK(moon, starsystem->first_moon, starsystem->last_moon, next,
-						prev);
+				starsystem->moons.push_back(moon);
 
 				fread_to_eol(fp);
 				fMatch = true;
@@ -2190,8 +2173,7 @@ void fread_starsystem(SPACE_DATA *starsystem, FILE *fp)
 				star->radius = fread_number(fp);
 				star->star_radius = fread_number(fp);
 				star->star_radius2 = fread_number(fp);
-				LINK(star, starsystem->first_star, starsystem->last_star, next,
-						prev);
+				starsystem->stars.push_back(star);
 
 				fread_to_eol(fp);
 				fMatch = true;
@@ -2243,7 +2225,7 @@ bool load_starsystem(const char *starsystemfile)
 	{
 
 		found = true;
-		LINK(starsystem, first_starsystem, last_starsystem, next, prev);
+		starsystem_list.push_back(starsystem);
 		for (;;)
 		{
 			char letter;
@@ -2296,8 +2278,7 @@ void load_space()
 	FILE *fpList;
 	const char *filename;
 
-	first_starsystem = NULL;
-	last_starsystem = NULL;
+	starsystem_list.clear();
 
 	/*    log_string( "Loading space..." );*/
 
@@ -2422,25 +2403,22 @@ DEF_DO_FUN( setstarsystem )
 		if (str_cmp(argument, "yes"))
 		{
 			send_to_char(
-					"Napisz 'yes' na koñcu je¶li jeste¶ pewien swego dzialania!"
+					"Napisz 'yes' na koï¿½cu jeï¿½li jesteï¿½ pewien swego dzialania!"
 					NL, ch);
 			return;
 		}
 		if (!IS_SET(starsystem->flags, STARS_FLAG_TEMP))
 		{
 			send_to_char(
-					"Tego systemu nie mozna usun±æ. - nie jest systemem 'TEMP'"
+					"Tego systemu nie mozna usunï¿½ï¿½. - nie jest systemem 'TEMP'"
 					NL, ch);
 			return;
 		}
-		for (count = 0, ship = starsystem->first_ship; ship;
-				ship = ship->next_in_starsystem, count++)
-		{
-		}
+		count = starsystem->ships.size();
 		if (count != 0)
 		{
 			send_to_char(
-					"Tego systemu nie mozna usun±æ. - s± w nim zaparkowane statki"
+					"Tego systemu nie mozna usunï¿½ï¿½. - sï¿½ w nim zaparkowane statki"
 					NL, ch);
 			return;
 		}
@@ -2496,8 +2474,7 @@ DEF_DO_FUN( setstarsystem )
 			star->radius = 1000;
 			star->star_radius = sqrtf(
 					(star->xpos * star->xpos) + (star->ypos * star->ypos));
-			LINK(star, starsystem->first_star, starsystem->last_star, next,
-					prev);
+			starsystem->stars.push_back(star);
 		}
 		else if (!str_cmp(arg3, "edit"))
 		{
@@ -2561,8 +2538,7 @@ DEF_DO_FUN( setstarsystem )
 				return;
 			}
 
-			UNLINK(star, starsystem->first_star, starsystem->last_star, next,
-					prev);
+			starsystem->stars.remove(star);
 			free_star(star);
 		}
 		else
@@ -2597,8 +2573,7 @@ DEF_DO_FUN( setstarsystem )
 			moon->radius = 30;
 			moon->star_radius = sqrtf(
 					(moon->xpos * moon->xpos) + (moon->ypos * moon->ypos));
-			LINK(moon, starsystem->first_moon, starsystem->last_moon, next,
-					prev);
+			starsystem->moons.push_back(moon);
 		}
 		else if (!str_cmp(arg3, "edit"))
 		{
@@ -2678,8 +2653,7 @@ DEF_DO_FUN( setstarsystem )
 				return;
 			}
 
-			UNLINK(moon, starsystem->first_moon, starsystem->last_moon, next,
-					prev);
+			starsystem->moons.remove(moon);
 			free_moon(moon);
 		}
 		else
@@ -2748,35 +2722,44 @@ void showstarsystem(CHAR_DATA *ch, SPACE_DATA *starsystem)
 				STARS_FLAG_EMP) ? " EMP_field" : "");
 	}
 	ch_printf(ch, "Stars:" NL);
-	for (i = 0, star = starsystem->first_star; star; star = star->next, i++)
+	i = 0;
+	for (auto* star : starsystem->stars)
 	{
 		ch_printf(ch,
 				"%d  %-20s  Pos: %-7.0f %-7.0f %-8.0f Grav: %-4.0f rad: %.0f"
 				NL, i, star->name, star->xpos, star->ypos, star->zpos,
 				star->gravity, star->radius);
+		i++;
 	}
 	ch_printf(ch, "Planets:" NL);
-	for (i = 0, planet = starsystem->first_planet; planet;
-			planet = planet->next_in_system, i++)
+	i = 0;
+	for (auto* planet : starsystem->planets)
 	{
 		ch_printf(ch,
 				"%d  %-20s  Pos: %-7.0f %-7.0f %-8.0f Grav: %-4.0f rad: %.0f"
 				NL, i, planet->name, planet->xpos, planet->ypos, planet->zpos,
 				planet->gravity, planet->radius);
-		for (j = 0, dock = planet->first_dock; dock; dock = dock->next, j++)
+		j = 0;
+		for (auto* dock : planet->docks)
 		{
 			ch_printf(ch, "   %d %d (%s) %s" NL, j, dock->vnum, dock->name,
 					dock->hidden != 0 ? "{Hidden}" : "");
+			j++;
 		}
+		i++;
 	}
 	ch_printf(ch, "Moons:" NL);
 	ch_printf(ch, "Nr  name xpos ypos zpos grav vnum capacity type Grav" NL);
-	for (i = 0, moon = starsystem->first_moon; moon; moon = moon->next, i++)
+	i = 0;
+	for (auto* moon : starsystem->moons)
+	{
 		ch_printf(ch,
 				"%-2d %-20s %-8.0f %-8.0f %-8.0f %-4.0f %-7d %.0f/%-5.0f %-2d %.0f"
 				NL, i, moon->name, moon->xpos, moon->ypos, moon->zpos,
 				moon->gravity, moon->vnum, check_capacity(moon->vnum),
 				moon->capacity, moon->type, moon->gravity);
+		i++;
+	}
 	if (starsystem->hidden != 0)
 	{
 		ch_printf(ch, NL "!!!  Invisible to players  !!! v0=1 v1=%d" NL,
@@ -2832,7 +2815,7 @@ DEF_DO_FUN( makestarsystem )
 
 	CREATE(starsystem, SPACE_DATA, 1);
 	STRDUP(starsystem->resetmsg, "");
-	LINK(starsystem, first_starsystem, last_starsystem, next, prev);
+	starsystem_list.push_back(starsystem);
 
 	STRDUP(starsystem->name, argument);
 
@@ -2907,7 +2890,7 @@ void echo_to_ship(SHIP_DATA *ship, const char *argument)
 //         echo_to_room( get_room_index(room) , argument );
 //     }
 //Thanos:
-	for (room = ship->first_location; room; room = room->next_on_ship)
+	for (auto* room : ship->locations)
 		echo_to_room(room, argument);
 }
 
@@ -2915,7 +2898,7 @@ void echo_to_ship_nospam(SHIP_DATA *ship, const char *argument)
 {
 	ROOM_INDEX_DATA *room;
 
-	for (room = ship->first_location; room; room = room->next_on_ship)
+	for (auto* room : ship->locations)
 	{
 		if (!(room == ship->cockpit) || !(room == ship->navseat)
 				|| !(room == ship->pilotseat) || !(room == ship->coseat)
@@ -2929,9 +2912,9 @@ void sound_to_ship(SHIP_DATA *ship, const char *argument)
 	ROOM_INDEX_DATA *room;
 	CHAR_DATA *vic;
 
-	for (room = ship->first_location; room; room = room->next_on_ship)
+	for (auto* room : ship->locations)
 	{
-		for (vic = room->first_person; vic; vic = vic->next_in_room)
+		for (auto* vic : room->people)
 		{
 			if (!IS_NPC(vic) && IS_SET(vic->act, PLR_SOUND))
 				send_to_char(argument, vic);
@@ -2946,7 +2929,7 @@ void echo_to_cockpit(SHIP_DATA *ship, const char *argument)
 	HANGAR_DATA *hangar;
 	ROOM_INDEX_DATA *room;
 
-	for (room = ship->first_location; room; room = room->next_on_ship)
+	for (auto* room : ship->locations)
 	{
 		if (room == ship->cockpit || room == ship->navseat
 				|| room == ship->pilotseat || room == ship->coseat
@@ -2954,10 +2937,10 @@ void echo_to_cockpit(SHIP_DATA *ship, const char *argument)
 			echo_to_room(room, argument);
 	}
 
-	for (turret = ship->first_turret; turret; turret = turret->next)
+	for (auto* turret : ship->turrets)
 		echo_to_room(get_sroom(ship, turret->vnum), argument);
 
-	for (hangar = ship->first_hangar; hangar; hangar = hangar->next)
+	for (auto* hangar : ship->hangars)
 		echo_to_room(get_sroom(ship, hangar->vnum), argument);
 }
 
@@ -2968,8 +2951,7 @@ void echo_to_system(SHIP_DATA *ship, const char *argument, SHIP_DATA *ignore)
 	if (!ship->starsystem)
 		return;
 
-	for (target = ship->starsystem->first_ship; target;
-			target = target->next_in_starsystem)
+	for (auto* target : ship->starsystem->ships)
 	{
 		if (target == ship || target == ignore)
 			continue;
@@ -3120,7 +3102,7 @@ long int get_ship_value(SHIP_DATA *ship)
 	 else if (ship->rockets )
 	 price += ( 1000 * ship->rockets );
 	 */
-	for (turret = ship->first_turret; turret; turret = turret->next)
+	for (auto* turret : ship->turrets)
 	{
 		price += 20000;
 
@@ -3137,10 +3119,10 @@ long int get_ship_value(SHIP_DATA *ship)
 	if (ship->hyperspeed)
 		price += (1000 + ship->hyperspeed * 10);
 
-	for (hangar = ship->first_hangar; hangar; hangar = hangar->next)
+	for (auto* hangar : ship->hangars)
 		price += 100000;
 
-	for (module = ship->first_module; module; module = module->next)
+	for (auto* module : ship->modules)
 		price += module->cost * module->status / module->crs;
 //     price *= ship->maxhull/ship->hull
 //     price *= 1.5;
@@ -3159,7 +3141,7 @@ void write_ship_list()
 		bug("FATAL: cannot open ship.lst for writing!" NL, 0);
 		return;
 	}
-	for (tship = first_ship; tship; tship = tship->next)
+	for (auto* tship : ship_list)
 		fprintf(fpout, "%s\n", tship->filename);
 	fprintf(fpout, "$\n");
 	fclose(fpout);
@@ -3178,7 +3160,7 @@ void remove_ship_from_list(const char *shipfile)
 		bug("FATAL: cannot open ship.lst for writing!" NL, 0);
 		return;
 	}
-	FOREACH( tship, first_ship )
+	for (auto* tship : ship_list)
 	{
 		if (!str_cmp(filename, tship->filename))
 			continue;
@@ -3191,7 +3173,7 @@ void remove_ship_from_list(const char *shipfile)
 SHIP_DATA* ship_from_room(ROOM_INDEX_DATA *room)
 {
 // SHIP_DATA *ship;
-//  for ( ship = first_ship; ship; ship = ship->next )
+//  for (auto* ship : ship_list)
 //  if ( vnum >= ship->firstroom && vnum <= ship->lastroom )
 //    return ship;
 
@@ -3199,7 +3181,7 @@ SHIP_DATA* ship_from_room(ROOM_INDEX_DATA *room)
 }
 
 /*
- * Totally rebuild by Thanos. Teraz ta f-cja pozwala na wybór o który
+ * Totally rebuild by Thanos. Teraz ta f-cja pozwala na wybï¿½r o ktï¿½ry
  * statek nam chodzi. Np. 'openhatch 3.tie' znajduje i otwiera trzeciego
  * tie-fightera w lokacji
  */
@@ -3215,7 +3197,7 @@ SHIP_DATA* ship_in_room(ROOM_INDEX_DATA *room, char *argument)
 	number = number_argument(argument, arg);
 
 	count = 0;
-	for (ship = room->first_ship; ship; ship = ship->next_in_room)
+	for (auto* ship : room->ships)
 	{
 		if (!nifty_is_name(arg, ship->name))
 			continue;
@@ -3224,7 +3206,7 @@ SHIP_DATA* ship_in_room(ROOM_INDEX_DATA *room, char *argument)
 			return ship;
 	}
 	count = 0;
-	for (ship = room->first_ship; ship; ship = ship->next_in_room)
+	for (auto* ship : room->ships)
 	{
 		if (!nifty_is_name(arg, ship->ship_title))
 			continue;
@@ -3235,7 +3217,7 @@ SHIP_DATA* ship_in_room(ROOM_INDEX_DATA *room, char *argument)
 
 	// teraz po prefixach
 	count = 0;
-	for (ship = room->first_ship; ship; ship = ship->next_in_room)
+	for (auto* ship : room->ships)
 	{
 		if (!nifty_is_name_prefix(arg, ship->name))
 			continue;
@@ -3244,7 +3226,7 @@ SHIP_DATA* ship_in_room(ROOM_INDEX_DATA *room, char *argument)
 			return ship;
 	}
 	count = 0;
-	for (ship = room->first_ship; ship; ship = ship->next_in_room)
+	for (auto* ship : room->ships)
 	{
 		if (!nifty_is_name_prefix(arg, ship->ship_title))
 			continue;
@@ -3267,37 +3249,37 @@ SHIP_DATA* get_ship(char *argument)
 	int number = number_argument(argument, name);
 
 	count = 0;
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 		if (!str_cmp(name, ship->filename))
 			if ((++count) >= number)
 				return ship;
 
 	count = 0;
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 		if (!str_cmp(name, ship->name))
 			if ((++count) >= number)
 				return ship;
 
 	count = 0;
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 		if (!str_cmp(name, ship->transponder))
 			if ((++count) >= number)
 				return ship;
 
 	count = 0;
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 		if (!str_cmp(name, ship->ship_title))
 			if ((++count) >= number)
 				return ship;
 
 	count = 0;
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 		if (nifty_is_name_prefix(name, ship->name))
 			if ((++count) >= number)
 				return ship;
 
 	count = 0;
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 		if (nifty_is_name_prefix(name, ship->ship_title))
 			if ((++count) >= number)
 				return ship;
@@ -3315,31 +3297,31 @@ SHIP_DATA* get_ship_here(char *name, SPACE_DATA *starsystem)
 	if (starsystem == NULL)
 		return NULL;
 
-	for (ship = starsystem->first_ship; ship; ship = ship->next_in_starsystem)
+	for (auto* ship : starsystem->ships)
 		if (!str_cmp(name, ship->sslook))
 			return ship;
 
-	for (ship = starsystem->first_ship; ship; ship = ship->next_in_starsystem)
+	for (auto* ship : starsystem->ships)
 		if (!str_cmp(name, ship->transponder))
 			return ship;
 
-	for (ship = starsystem->first_ship; ship; ship = ship->next_in_starsystem)
+	for (auto* ship : starsystem->ships)
 		if (!str_cmp(name, ship->name))
 			return ship;
 
-	for (ship = starsystem->first_ship; ship; ship = ship->next_in_starsystem)
+	for (auto* ship : starsystem->ships)
 		if (!str_cmp(name, ship->ship_title))
 			return ship;
 
-	for (ship = starsystem->first_ship; ship; ship = ship->next_in_starsystem)
+	for (auto* ship : starsystem->ships)
 		if (nifty_is_name_prefix(name, ship->sslook))
 			return ship;
 
-	for (ship = starsystem->first_ship; ship; ship = ship->next_in_starsystem)
+	for (auto* ship : starsystem->ships)
 		if (nifty_is_name_prefix(name, ship->name))
 			return ship;
 
-	for (ship = starsystem->first_ship; ship; ship = ship->next_in_starsystem)
+	for (auto* ship : starsystem->ships)
 		if (nifty_is_name_prefix(name, ship->ship_title))
 			return ship;
 
@@ -3357,7 +3339,7 @@ SHIP_DATA* ship_from_pilot(char *name)
 {
 	SHIP_DATA *ship;
 
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 		if (!str_cmp(name, ship->pilot))
 			return ship;
 	if (!str_cmp(name, ship->copilot))
@@ -3386,7 +3368,7 @@ SHIP_DATA* ship_from_cockpit(ROOM_INDEX_DATA *room)
 			|| room == ship->engineroom)
 		return ship;
 
-	for (turret = ship->first_turret; turret; turret = turret->next)
+	for (auto* turret : ship->turrets)
 		if (VNUM(room) == turret->vnum)
 			return ship;
 
@@ -3477,7 +3459,7 @@ SHIP_DATA* ship_from_turret(ROOM_INDEX_DATA *room)
 	if (room == ship->gunseat)
 		return ship;
 
-	for (turret = ship->first_turret; turret; turret = turret->next)
+	for (auto* turret : ship->turrets)
 		if (VNUM(room) == turret->vnum)
 			return ship;
 
@@ -3507,8 +3489,8 @@ SHIP_DATA* ship_from_hangar(ROOM_INDEX_DATA *room)
 
 	if (room->vnum)
 	{
-		for (ship = first_ship; ship; ship = ship->next)
-			for (hangar = ship->first_hangar; hangar; hangar = hangar->next)
+		for (auto* ship : ship_list)
+			for (auto* hangar : ship->hangars)
 				if (room->vnum == hangar->vnum)
 					return ship;
 	}
@@ -3517,7 +3499,7 @@ SHIP_DATA* ship_from_hangar(ROOM_INDEX_DATA *room)
 		if ((ship = room->ship) == NULL)
 			return NULL;
 
-		for (hangar = ship->first_hangar; hangar; hangar = hangar->next)
+		for (auto* hangar : ship->hangars)
 			if (room->svnum == hangar->vnum)
 				return ship;
 	}
@@ -3537,7 +3519,7 @@ void save_ship(SHIP_DATA *ship)
 	IF_BUG(ship == NULL, "")
 		return;
 
-	/* Thanos - nowe statki zapisuj± tylko swój stan */
+	/* Thanos - nowe statki zapisujï¿½ tylko swï¿½j stan */
 	if (ship->vnum)
 	{
 		save_ship_state(ship);
@@ -3616,17 +3598,16 @@ void save_ship(SHIP_DATA *ship)
 		fprintf(fp, "Interdict    %d\n", ship->interdict);
 		fprintf(fp, "Maxinterdict %d\n", ship->maxinterdict);
 		fprintf(fp, "Home         %s~\n", ship->home);
-		for (hangar = ship->first_hangar; hangar; hangar = hangar->next)
+		for (auto* hangar : ship->hangars)
 			fprintf(fp, "Hangar       %d %.0f %d %d\n", hangar->vnum,
 					hangar->capacity, hangar->status, hangar->type);
-		for (turret = ship->first_turret; turret; turret = turret->next)
+		for (auto* turret : ship->turrets)
 			fprintf(fp, "Turret       %d %d %d\n", turret->vnum, turret->type,
 					turret->status);
-		for (transponder = ship->first_trans; transponder; transponder =
-				transponder->next)
+		for (auto* transponder : ship->transponders)
 			fprintf(fp, "Trans        %s~ %d %s~\n", transponder->number,
 					transponder->shipclas, transponder->shipname);
-		for (dock = ship->first_dock; dock; dock = dock->next)
+		for (auto* dock : ship->docks)
 			fprintf(fp, "Dock         %d %d %d\n", dock->type, dock->vnum,
 					dock->status);
 
@@ -3735,7 +3716,7 @@ void fread_ship(SHIP_DATA *ship, FILE *fp)
 				dock->target = NULL;
 				dock->targetvnum = 0;
 				dock->master_slave = -1;
-				LINK(dock, ship->first_dock, ship->last_dock, next, prev);
+				ship->docks.push_back(dock);
 
 				fMatch = true;
 			}
@@ -3801,9 +3782,7 @@ void fread_ship(SHIP_DATA *ship, FILE *fp)
 				ship->energy = ship->maxenergy;
 				ship->hull = ship->maxhull;
 				ship->in_room = NULL;
-				ship->next_in_room = NULL;
-				ship->prev_in_room = NULL;
-				for (module = ship->first_module; module; module = module->next)
+				for (auto* module : ship->modules)
 				{
 					module->timer = -1;
 					if (!module->spyname)
@@ -3847,7 +3826,7 @@ void fread_ship(SHIP_DATA *ship, FILE *fp)
 				hangar->capacity = atof(fread_word(fp));
 				hangar->status = fread_number(fp);
 				hangar->type = fread_number(fp);
-				LINK(hangar, ship->first_hangar, ship->last_hangar, next, prev);
+				ship->hangars.push_back(hangar);
 
 				fMatch = true;
 			}
@@ -3925,7 +3904,7 @@ void fread_ship(SHIP_DATA *ship, FILE *fp)
 				module->cost = fread_number(fp);
 				module->vnum = fread_number(fp);
 				module->spyname = fread_string(fp);
-				LINK(module, ship->first_module, ship->last_module, next, prev);
+				ship->modules.push_back(module);
 
 				fread_to_eol(fp);
 				fMatch = true;
@@ -4010,8 +3989,7 @@ void fread_ship(SHIP_DATA *ship, FILE *fp)
 				transponder->number = fread_string(fp);
 				transponder->shipclas = fread_number(fp);
 				transponder->shipname = fread_string(fp);
-				LINK(transponder, ship->first_trans, ship->last_trans, next,
-						prev);
+				ship->transponders.push_back(transponder);
 
 				fMatch = true;
 			}
@@ -4023,7 +4001,7 @@ void fread_ship(SHIP_DATA *ship, FILE *fp)
 				turret->vnum = fread_number(fp);
 				turret->type = fread_number(fp);
 				turret->status = fread_number(fp);
-				LINK(turret, ship->first_turret, ship->last_turret, next, prev);
+				ship->turrets.push_back(turret);
 
 				fMatch = true;
 			}
@@ -4041,7 +4019,7 @@ void fread_ship(SHIP_DATA *ship, FILE *fp)
 	}
 }
 
-//added by Thanos (do ³adowania kursu statku publicznego)
+//added by Thanos (do ï¿½adowania kursu statku publicznego)
 bool load_course(SHIP_DATA *ship)
 {
 	FILE *fp;
@@ -4072,7 +4050,7 @@ bool load_course(SHIP_DATA *ship)
 		crsnum++;
 		course->stop_vnum = vnum;
 		course->stop_name = fread_string(fp);
-		LINK(course, ship->first_stop, ship->last_stop, next, prev);
+		ship->stops.push_back(course);
 	}
 
 	fclose(fp);
@@ -4080,11 +4058,11 @@ bool load_course(SHIP_DATA *ship)
 	if (crsnum)
 	{
 		nr = number_range(1, crsnum);
-
-		for (crsnum = 0, course = ship->first_stop; course; crsnum++, course =
-				course->next)
-			if (crsnum == nr)
-				break;
+		{
+			auto stop_it = ship->stops.begin();
+			std::advance(stop_it, nr < (int)ship->stops.size() ? nr : 0);
+			course = (stop_it != ship->stops.end()) ? *stop_it : ship->stops.front();
+		}
 		/* ustalamy miejsce startu (losowo co reboot) */
 		ship->curr_stop = course;
 		ship->bus_pos = number_range(1, 10);
@@ -4126,7 +4104,7 @@ void prepare_ship(SHIP_DATA *ship)
 			module->cost = 3000;
 			module->vnum = 0;
 			STRDUP(module->spyname, "");
-			LINK(module, ship->first_module, ship->last_module, next, prev);
+			ship->modules.push_back(module);
 		}
 //          ship->lasers = 0;
 	}
@@ -4146,7 +4124,7 @@ void prepare_ship(SHIP_DATA *ship)
 			module->cost = 3000;
 			module->vnum = 0;
 			STRDUP(module->spyname, "");
-			LINK(module, ship->first_module, ship->last_module, next, prev);
+			ship->modules.push_back(module);
 		}
 //          ship->ioncannons = 0;
 	}
@@ -4170,7 +4148,7 @@ void prepare_ship(SHIP_DATA *ship)
 		{
 			module->vnum = VNUM(ship->pilotseat);
 		}
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->maxshield = 0;
 	}
 
@@ -4187,7 +4165,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 3750;
 		module->vnum = 0;
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 
 		CREATE(module, MODULE_DATA, 1);
 		module->type = 30;	//zasobnik
@@ -4200,7 +4178,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 1000 * ship->maxmissiles;
 		module->vnum = VNUM(ship->gunseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->maxmissiles = 0;
 //          ship->missiles = 0;
 	}
@@ -4218,7 +4196,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 3500;
 		module->vnum = 0;
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 
 		CREATE(module, MODULE_DATA, 1);
 		module->type = 31;	//zasobnik
@@ -4231,7 +4209,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 900 * ship->maxtorpedos;
 		module->vnum = VNUM(ship->gunseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->maxtorpedos = 0;
 //          ship->torpedos = 0;
 	}
@@ -4249,7 +4227,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 3500;
 		module->vnum = 0;
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 
 		CREATE(module, MODULE_DATA, 1);
 		module->type = 32;	//zasobnik
@@ -4262,7 +4240,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 500 * ship->maxrockets;
 		module->vnum = VNUM(ship->gunseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->maxrockets = 0;
 //          ship->rockets = 0;
 	}
@@ -4280,7 +4258,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 100 * ship->maxchaff;
 		module->vnum = 0;
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->maxchaff = 0;
 //          ship->chaff = 0;
 	}
@@ -4305,7 +4283,7 @@ void prepare_ship(SHIP_DATA *ship)
 		{
 			module->vnum = VNUM(ship->pilotseat);
 		}
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->maxenergy = 0;
 	}
 
@@ -4322,7 +4300,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 8000 * ship->tractorbeam;
 		module->vnum = VNUM(ship->coseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->tractorbeam = 0;
 	}
 
@@ -4339,7 +4317,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 50000 * ship->maxcloack;
 		module->vnum = VNUM(ship->coseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->maxcloack = 0;
 	}
 
@@ -4356,7 +4334,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 100000 * ship->maxinterdict;
 		module->vnum = VNUM(ship->coseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->maxinterdict = 0;
 	}
 
@@ -4373,7 +4351,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 10000 * ship->trawler;
 		module->vnum = VNUM(ship->gunseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->trawler = 0;
 	}
 
@@ -4397,7 +4375,7 @@ void prepare_ship(SHIP_DATA *ship)
 		{
 			module->vnum = VNUM(ship->pilotseat);
 		}
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->realspeed = 0;
 	}
 
@@ -4421,7 +4399,7 @@ void prepare_ship(SHIP_DATA *ship)
 		{
 			module->vnum = VNUM(ship->pilotseat);
 		}
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->manuever = 0;
 	}
 
@@ -4445,7 +4423,7 @@ void prepare_ship(SHIP_DATA *ship)
 		{
 			module->vnum = VNUM(ship->pilotseat);
 		}
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->hyperspeed = 0;
 	}
 
@@ -4462,7 +4440,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 1000 * ship->sensor;
 		module->vnum = VNUM(ship->pilotseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->sensor = 0;
 	}
 
@@ -4479,7 +4457,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 1000 * ship->target_array;
 		module->vnum = VNUM(ship->gunseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->target_array = 0;
 	}
 
@@ -4496,7 +4474,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 1000 * ship->astro_array;
 		module->vnum = VNUM(ship->navseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->astro_array = 0;
 	}
 
@@ -4513,7 +4491,7 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 1000 * ship->comm;
 		module->vnum = VNUM(ship->navseat);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 //          ship->comm = 0;
 	}
 
@@ -4537,7 +4515,7 @@ void prepare_ship(SHIP_DATA *ship)
 		{
 			module->vnum = VNUM(ship->pilotseat);
 		}
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 
 		CREATE(module, MODULE_DATA, 1);
 		module->type = 6;
@@ -4550,11 +4528,11 @@ void prepare_ship(SHIP_DATA *ship)
 		module->cost = 1000;
 		module->vnum = VNUM(ship->cockpit);
 		STRDUP(module->spyname, "");
-		LINK(module, ship->first_module, ship->last_module, next, prev);
+		ship->modules.push_back(module);
 	}
 
 	a = 0;
-	for (module = ship->first_module; module; module = module->next)
+	for (auto* module : ship->modules)
 		a += module->size;
 	ship->maxmodule = a;
 
@@ -4612,13 +4590,13 @@ void prepare_ship(SHIP_DATA *ship)
 		ship->hyperready = -1;
 		ship->calctimer = 0;
 
-		for (turret = ship->first_turret; turret; turret = turret->next)
+		for (auto* turret : ship->turrets)
 		{
 			turret->gunner = NULL;
 			turret->target = NULL;
 		}
 
-		for (hangar = ship->first_hangar; hangar; hangar = hangar->next)
+		for (auto* hangar : ship->hangars)
 		{
 			hangar->status = -1;
 		}
@@ -4661,17 +4639,16 @@ void prepare_ship(SHIP_DATA *ship)
 	else if (ship->cockpit->vnum == ROOM_SENATE_SHUTTLE
 			|| is_turbocar(ship->cockpit->vnum)
 			|| ship->cockpit->vnum == ROOM_CORUSCANT_SHUTTLE
-			|| (ship->ship_public && ship->first_stop))
+			|| (ship->ship_public && !ship->stops.empty()))
 	{
-		/* BUGFIX by Thanos  PubShipy powinny startowaæ w kosmosie */
+		/* BUGFIX by Thanos  PubShipy powinny startowaï¿½ w kosmosie */
 		extract_ship(ship);
 	}
 	else if ((pRoomIndex = ship->lastdoc) != NULL && !is_capital(ship)
 			&& !is_platform(ship) && !is_huge(ship) && ship->type != MOB_SHIP
 			&& ship->type != SHIP_PIRATE)
 	{
-		LINK(ship, pRoomIndex->first_ship, pRoomIndex->last_ship, next_in_room,
-				prev_in_room);
+		pRoomIndex->ships.push_back(ship);
 		ship->in_room = pRoomIndex;
 		ship->location = ship->lastdoc;
 	}
@@ -4778,12 +4755,12 @@ bool load_ship_file(const char *shipfile)
 	}
 	else
 	{
-		LINK(ship, first_ship, last_ship, next, prev);
+		ship_list.push_back(ship);
 		prepare_ship(ship);
 	}
 
 	//added by Thanos (statki publiczne)
-	//sprawdzamy, czy statek jest publiczny (znajduje siê na li¶cie w pliku
+	//sprawdzamy, czy statek jest publiczny (znajduje siï¿½ na liï¿½cie w pliku
 	// bus.lst)
 	ship->ship_public = false;
 	for (i = 0; i < MAX_SHIP; i++)
@@ -4814,14 +4791,12 @@ void load_ships()
 	int i;
 	FILE *fpub;
 
-	first_ship = NULL;
-	last_ship = NULL;
-	first_missile = NULL;
-	last_missile = NULL;
+	ship_list.clear();
+	missile_list.clear();
 
 	RESERVE_CLOSE;
 
-	//added by Thanos - ³aduje listê statków publicznych
+	//added by Thanos - ï¿½aduje listï¿½ statkï¿½w publicznych
 	log_string("Reading public ships list");
 	if ((fpub = fopen(BUS_LIST, "r")) == NULL)
 		log_string("No public ships list or cannot open BUS_LIST file");
@@ -4868,7 +4843,7 @@ void load_ships()
 
 	// Thanos -- narazie tutaj
 	log_string("Setting ship room pointers");
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
 		ship->vnum = 0;
 		for (i = ship->firstroom; i <= ship->lastroom; i++)
@@ -4879,8 +4854,7 @@ void load_ships()
 				continue;
 
 			room->ship = ship;
-			LINK(room, ship->first_location, ship->last_location, next_on_ship,
-					prev_on_ship);
+			ship->locations.push_back(room);
 		}
 		ship->roomcount = ship->lastroom - ship->firstroom + 1;
 	}
@@ -4976,17 +4950,17 @@ void resetship(SHIP_DATA *ship)
 
 	STRDUP(ship->ship_title, ship->name);
 
-	for (turret = ship->first_turret; turret; turret = turret->next)
+	for (auto* turret : ship->turrets)
 	{
 		turret->gunner = NULL;
 		turret->target = NULL;
 		turret->status = 0;
 	}
-	for (hangar = ship->first_hangar; hangar; hangar = hangar->next)
+	for (auto* hangar : ship->hangars)
 	{
 		hangar->status = -1;
 	}
-	for (dock = ship->first_dock; dock; dock = dock->next)
+	for (auto* dock : ship->docks)
 	{
 		if (dock->master_slave == 0)
 		{
@@ -5063,18 +5037,18 @@ void do_describe_ship(CHAR_DATA *ch, char *argument)	//byTrog 4 Arian
 
 	if (arg[0] == '\0')
 	{
-		ch_printf(ch, "Sk³adnia: describeship | dsh <akcja> <statek>" NL
+		ch_printf(ch, "Skï¿½adnia: describeship | dsh <akcja> <statek>" NL
 		NL "Akcje: clear save set show" NL
-		NL "clear - czy¶ci opis statku,"
+		NL "clear - czyï¿½ci opis statku,"
 		NL "save  - zapisuje opis statku,"
-		NL "set   - ustawia opis statku (w³±cza edytor),"
-		NL "show  - wy¶wietla opis statku.," NL, ch);
+		NL "set   - ustawia opis statku (wï¿½ï¿½cza edytor),"
+		NL "show  - wyï¿½wietla opis statku.," NL, ch);
 		return;
 	}
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Musisz podaæ nazwê statku." NL, ch);
+		send_to_char("Musisz podaï¿½ nazwï¿½ statku." NL, ch);
 		return;
 	}
 
@@ -5143,8 +5117,8 @@ DEF_DO_FUN( setship )
 
 	if (arg1[0] == '\0' || arg2[0] == '\0' || arg1[0] == '\0')
 	{
-		send_to_char("Sk³adnia: setship <statek> <pole> <warto¶ci>" NL, ch);
-		send_to_char(NL "Gdzie polem mo¿e byæ:" NL, ch);
+		send_to_char("Skï¿½adnia: setship <statek> <pole> <wartoï¿½ci>" NL, ch);
+		send_to_char(NL "Gdzie polem moï¿½e byï¿½:" NL, ch);
 		send_to_char(FG_CYAN "filename name title desc size" NL, ch);
 		send_to_char(PLAIN "owner pilot copilot engineer" NL, ch);
 		send_to_char(FG_CYAN "home shipyard type class classname flags" NL, ch);
@@ -5220,7 +5194,7 @@ DEF_DO_FUN( setship )
 		if (farg[0] == '\0')
 		{
 			send_to_char(
-					"Mo¿liwe flagi: metaaggressive aggressive nowander wimpy hidden descless done"
+					"Moï¿½liwe flagi: metaaggressive aggressive nowander wimpy hidden descless done"
 					NL, ch);
 			return;
 		}
@@ -5334,7 +5308,7 @@ DEF_DO_FUN( setship )
 		if (str_cmp(argument, "yes"))
 		{
 			send_to_char(FB_RED
-			"Chcesz skasowaæ ten statek - wpisz 'yes' na koñcu."
+			"Chcesz skasowaï¿½ ten statek - wpisz 'yes' na koï¿½cu."
 			NL, ch);
 			return;
 		}
@@ -5507,7 +5481,7 @@ DEF_DO_FUN( setship )
 			dock->target = NULL;
 			dock->targetvnum = 0;
 			dock->master_slave = -1;
-			LINK(dock, ship->first_dock, ship->last_dock, next, prev);
+			ship->docks.push_back(dock);
 		}
 		else if (!str_cmp(arg3, "edit"))
 		{
@@ -5556,7 +5530,7 @@ DEF_DO_FUN( setship )
 				return;
 			}
 
-			UNLINK(dock, ship->first_dock, ship->last_dock, next, prev);
+			UNship->docks.push_back(dock);
 			DISPOSE(dock);
 		}
 		else
@@ -5611,7 +5585,7 @@ DEF_DO_FUN( setship )
 			turret->vnum = atoi(arg4);
 			turret->type = val;
 			turret->status = 0;
-			LINK(turret, ship->first_turret, ship->last_turret, next, prev);
+			ship->turrets.push_back(turret);
 		}
 		else if (!str_cmp(arg3, "edit"))
 		{
@@ -5692,7 +5666,7 @@ DEF_DO_FUN( setship )
 				return;
 			}
 
-			UNLINK(turret, ship->first_turret, ship->last_turret, next, prev);
+			UNship->turrets.push_back(turret);
 			DISPOSE(turret);
 		}
 		else
@@ -5709,7 +5683,7 @@ DEF_DO_FUN( setship )
 		return;
 	}
 
-	/*nowy zapis hangarów Aldegard*/
+	/*nowy zapis hangarï¿½w Aldegard*/
 	if (!str_cmp(arg2, "hangar"))
 	{
 		argument = one_argument(argument, arg3);
@@ -5733,7 +5707,7 @@ DEF_DO_FUN( setship )
 			hangar->vnum = atoi(arg4);
 			hangar->capacity = 10;
 			hangar->status = 0;
-			LINK(hangar, ship->first_hangar, ship->last_hangar, next, prev);
+			ship->hangars.push_back(hangar);
 		}
 		else if (!str_cmp(arg3, "edit"))
 		{
@@ -5781,7 +5755,7 @@ DEF_DO_FUN( setship )
 				return;
 			}
 
-			UNLINK(hangar, ship->first_hangar, ship->last_hangar, next, prev);
+			UNship->hangars.push_back(hangar);
 			DISPOSE(hangar);
 		}
 		else
@@ -6044,7 +6018,7 @@ DEF_DO_FUN( setship )
 
 	if (!str_cmp(arg2, "filename"))
 	{
-		for (target = first_ship; target; target = target->next)
+		for (auto* target : ship_list)
 		{
 			if (!str_cmp(target->filename, argument))
 			{
@@ -6434,7 +6408,9 @@ DEF_DO_FUN( showship )
 			ship->missilestate == MISSILE_DAMAGED ? "Damaged" : "Good");
 	pager_printf(ch, FB_RED "Turrets:" EOL);
 	pager_printf(ch, FB_CYAN "Num Vnum     Type    Status  Gunner" EOL);
-	for (a = 0, turret = ship->first_turret; turret; turret = turret->next, a++)
+	a = 0;
+	for (auto* turret : ship->turrets)
+	{
 		pager_printf(ch, FB_CYAN "%-3d " FB_YELLOW "%-8d %s %-7d %s" EOL, a,
 				turret->vnum,
 				turret->type == 1 ? "laser  " : turret->type == 2 ? "double " :
@@ -6442,16 +6418,24 @@ DEF_DO_FUN( showship )
 				turret->type == 5 ? "turbo  " : turret->type == 6 ? "hturbo " :
 				turret->type == 7 ? "super  " : "bug!!! ", turret->status,
 				turret->gunner ? turret->gunner->name : "-");
+		a++;
+	}
 	pager_printf(ch, FB_RED "Hangars:" EOL);
 	pager_printf(ch, FB_CYAN "Num Vnum           Status  Capacity  Type" EOL);
-	for (a = 0, hangar = ship->first_hangar; hangar; hangar = hangar->next, a++)
+	a = 0;
+	for (auto* hangar : ship->hangars)
+	{
 		pager_printf(ch,
 		FB_CYAN "%-3d " FB_YELLOW "%-14d %-7d %.0f/%-6.0f %d"
 		EOL, a, hangar->vnum, hangar->status, check_capacity(hangar->vnum),
 				hangar->capacity, hangar->type);
+		a++;
+	}
 	pager_printf(ch, FB_RED "Docks:		[efflux: %d]" EOL, ship->efflux);
 	pager_printf(ch, FB_CYAN "Num Type           Vnum" EOL);
-	for (a = 0, dock = ship->first_dock; dock; dock = dock->next, a++)
+	a = 0;
+	for (auto* dock : ship->docks)
+	{
 		pager_printf(ch,
 		FB_CYAN "%-3d " FB_YELLOW
 		"%-14d %-7d %s %-9d %s stat: %d" EOL, a, dock->type, dock->vnum,
@@ -6460,8 +6444,10 @@ DEF_DO_FUN( showship )
 				dock->master_slave == -1 ?
 						"" : (dock->master_slave == 0 ? "Slave" : "Master"),
 				dock->status);
+		a++;
+	}
 	a = 0;
-	for (module = ship->first_module; module; module = module->next)
+	for (auto* module : ship->modules)
 		a += module->size;
 
 	/*    pager_printf( ch, FB_RED "Modules:  " FB_YELLOW "%d/%d" EOL,a,ship->maxmodule ); //Narazie tylko flooduje ekran
@@ -6519,19 +6505,18 @@ DEF_DO_FUN( showship )
 			get_ship_value(ship), ship->trawler);
 	/*Aldegard, a Pixel maczal palce */
 
-	if (ship->ship_public && ship->first_stop)
+	if (ship->ship_public && !ship->stops.empty())
 	{
-		int i;
-		COURSE_DATA *course;
+		int i = 0;
 
 		pager_printf(ch, FG_GREEN "Course:" EOL);
 
-		for (i = 0, course = ship->first_stop; course;
-				course = course->next, i++)
+		for (auto* course : ship->stops)
 		{
 			pager_printf(ch, "%d) %s  %8d - %s" EOL, i,
 					course == ship->curr_stop ? FB_WHITE : PLAIN,
 					course->stop_vnum, course->stop_name);
+			i++;
 		}
 	}
 
@@ -6558,7 +6543,7 @@ DEF_DO_FUN( makeship )
 		return;
 	}
 
-	for (target = first_ship; target; target = target->next)
+	for (auto* target : ship_list)
 	{
 		if (!str_cmp(target->filename, arg1))
 		{
@@ -6593,8 +6578,6 @@ DEF_DO_FUN( makeship )
 	ship->energy = ship->maxenergy;
 	ship->hull = ship->maxhull;
 	ship->in_room = NULL;
-	ship->next_in_room = NULL;
-	ship->prev_in_room = NULL;
 	ship->shipyard = get_room_index(198);
 	ship->currjump = NULL;
 	ship->target0 = NULL;
@@ -6624,7 +6607,7 @@ DEF_DO_FUN( makeship )
 	ship->engineroom = location;
 	ship->entrance = location;
 
-	LINK(ship, first_ship, last_ship, next, prev);
+	ship_list.push_back(ship);
 	save_ship(ship);
 	write_ship_list();
 
@@ -6654,7 +6637,7 @@ DEF_DO_FUN( copyship )
 		send_to_char("Thats not a ship!" NL, ch);
 		return;
 	}
-	for (target = first_ship; target; target = target->next)
+	for (auto* target : ship_list)
 	{
 		if (!str_cmp(target->filename, arg2))
 		{
@@ -6697,8 +6680,6 @@ DEF_DO_FUN( copyship )
 	ship->target_array = old->target_array;
 	ship->astro_array = old->astro_array;
 	ship->in_room = NULL;
-	ship->next_in_room = NULL;
-	ship->prev_in_room = NULL;
 	ship->currjump = NULL;
 	ship->target0 = NULL;
 	ship->last_dock_with = NULL;
@@ -6709,7 +6690,7 @@ DEF_DO_FUN( copyship )
 	STRDUP(ship->sslook, "");
 	STRDUP(ship->transponder, "");
 	generate_transponder(ship);
-	LINK(ship, first_ship, last_ship, next, prev);
+	ship_list.push_back(ship);
 
 	save_ship(ship);
 	write_ship_list();
@@ -6773,8 +6754,6 @@ DEF_DO_FUN( copystats )
 	ship->target_array = old->target_array;
 	ship->astro_array = old->astro_array;
 	//ship->in_room = NULL;
-	//ship->next_in_room = NULL;
-	//ship->prev_in_room = NULL;
 	//ship->currjump = NULL;
 	//ship->target0 = NULL;
 	//ship->last_dock_with = NULL;
@@ -6820,7 +6799,7 @@ DEF_DO_FUN( add_ship_title )
 		arg[i] = argument[i];
 		if ((arg[i] == __FGMOD[0]) || (arg[i] == __BGMOD[0]))
 		{
-			send_to_char("Tytu³ statku nie mo¿e zawieraæ kolorów!" NL, ch);
+			send_to_char("Tytuï¿½ statku nie moï¿½e zawieraï¿½ kolorï¿½w!" NL, ch);
 			return;
 		}
 		i++;
@@ -6834,31 +6813,31 @@ DEF_DO_FUN( add_ship_title )
 		if ((ship = ship_from_pilotseat(ch->in_room)) == NULL)
 		{
 			send_to_char(FB_RED
-			"Musisz byæ w kokpicie statku, aby to zrobiæ!"
+			"Musisz byï¿½ w kokpicie statku, aby to zrobiï¿½!"
 			EOL, ch);
 			return;
 		}
 
 		if (!str_cmp(ship->owner, "Public"))
 		{
-			send_to_char("Statkom publicznym nazwy zmieniaj± w³adze!" NL, ch);
+			send_to_char("Statkom publicznym nazwy zmieniajï¿½ wï¿½adze!" NL, ch);
 			return;
 		}
 
 		if (!shiptitleowner(ch, ship))
 		{
-			send_to_char("Nie jeste¶ w³a¶cicielem tego statku!" NL, ch);
+			send_to_char("Nie jesteï¿½ wï¿½aï¿½cicielem tego statku!" NL, ch);
 			return;
 		}
 
 		if (argument[0] == '\0')
 		{
-			send_to_char("Jaki tytu³ chcesz nadaæ temu statkowi?" NL, ch);
+			send_to_char("Jaki tytuï¿½ chcesz nadaï¿½ temu statkowi?" NL, ch);
 			return;
 		}
 
-		send_to_char(FB_GREEN "£±czysz siê z g³ówn± baz± danych..." EOL, ch);
-		act(PLAIN, "$n manipuluje komputerem pok³adowym.", ch, NULL, NULL,
+		send_to_char(FB_GREEN "ï¿½ï¿½czysz siï¿½ z gï¿½ï¿½wnï¿½ bazï¿½ danych..." EOL, ch);
+		act(PLAIN, "$n manipuluje komputerem pokï¿½adowym.", ch, NULL, NULL,
 		TO_ROOM);
 		add_timer(ch, TIMER_DO_FUN, 7, do_add_ship_title, 1);
 		STRDUP(ch->dest_buf, argument);
@@ -6872,33 +6851,33 @@ DEF_DO_FUN( add_ship_title )
 		break;
 
 	case SUB_TIMER_DO_ABORT:
-		break_skill(FB_RED "Przerywasz po³±czenie..." EOL, ch);
+		break_skill(FB_RED "Przerywasz poï¿½ï¿½czenie..." EOL, ch);
 		return;
 	}
 	ch->substate = SUB_NONE;
 
 	if ((ship = ship_from_pilotseat(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku, aby to zrobiæ!"
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku, aby to zrobiï¿½!"
 		EOL, ch);
 		return;
 	}
 
 	if (!shiptitleowner(ch, ship))
 	{
-		send_to_char("Nie jeste¶ w³a¶cicielem tego statku!" NL, ch);
+		send_to_char("Nie jesteï¿½ wï¿½aï¿½cicielem tego statku!" NL, ch);
 		return;
 	}
 
 	if (!str_cmp(ship->owner, "Public"))
 	{
-		send_to_char("Statkom publicznym nazwy zmieniaj± w³adze!" NL, ch);
+		send_to_char("Statkom publicznym nazwy zmieniajï¿½ wï¿½adze!" NL, ch);
 		return;
 	}
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Jaki tytu³ chcesz nadaæ temu statkowi?" NL, ch);
+		send_to_char("Jaki tytuï¿½ chcesz nadaï¿½ temu statkowi?" NL, ch);
 		return;
 	}
 
@@ -6911,10 +6890,10 @@ DEF_DO_FUN( add_ship_title )
 
 	if (ch->gold < price)
 	{
-		ch_printf(ch, MOD_BLINK FB_WHITE "G³ówna baza danych:^x" EOL
-		"Nadanie tytu³u temu statkowi kosztuje oko³o %d kredyt%s."
+		ch_printf(ch, MOD_BLINK FB_WHITE "Gï¿½ï¿½wna baza danych:^x" EOL
+		"Nadanie tytuï¿½u temu statkowi kosztuje okoï¿½o %d kredyt%s."
 		NL "Niestety nie masz tyle." NL, price,
-				NUMBER_SUFF(price, "kê", "ki", "ek"));
+				NUMBER_SUFF(price, "kï¿½", "ki", "ek"));
 		return;
 	}
 	else
@@ -6923,11 +6902,11 @@ DEF_DO_FUN( add_ship_title )
 		STRDUP(ship->ship_title, spsv);
 		save_ship(ship);
 		ch->gold -= price;
-		ch_printf(ch, MOD_BLINK FB_WHITE "G³ówna baza danych:^x" EOL
+		ch_printf(ch, MOD_BLINK FB_WHITE "Gï¿½ï¿½wna baza danych:^x" EOL
 		"Statek: %s" NL
-		"Zmieniono tytu³. Zap³acono: %d kredyt%s." NL
-		"Obecny tytu³ statku przypisany jako:" NL
-		"%s" NL, ship->name, price, NUMBER_SUFF(price, "kê", "ki", "ek"),
+		"Zmieniono tytuï¿½. Zapï¿½acono: %d kredyt%s." NL
+		"Obecny tytuï¿½ statku przypisany jako:" NL
+		"%s" NL, ship->name, price, NUMBER_SUFF(price, "kï¿½", "ki", "ek"),
 				ship->ship_title);
 	}
 	return;
@@ -6946,12 +6925,12 @@ DEF_DO_FUN( ships )
 	{
 		count = 0;
 		send_to_pager(
-				"Oto lista statków posiadanych przez ciebie lub twoj± organiacjê:"
+				"Oto lista statkï¿½w posiadanych przez ciebie lub twojï¿½ organiacjï¿½:"
 				NL, ch);
 		send_to_pager(FB_WHITE
-		"Statek                              W³a¶ciciel" NL, ch);
+		"Statek                              Wï¿½aï¿½ciciel" NL, ch);
 
-		for (ship = first_ship; ship; ship = ship->next)
+		for (auto* ship : ship_list)
 		{
 			if (str_cmp(ship->owner, ch->name))
 			{
@@ -6984,17 +6963,17 @@ DEF_DO_FUN( ships )
 
 		if (!count)
 		{
-			send_to_pager("Nie posiadasz ¿adnego statku." NL, ch);
+			send_to_pager("Nie posiadasz ï¿½adnego statku." NL, ch);
 		}
 	}
 
 	count = 0;
-	send_to_pager(EOL "Lista statków zadokowanych tutaj:" NL, ch);
+	send_to_pager(EOL "Lista statkï¿½w zadokowanych tutaj:" NL, ch);
 
 	send_to_pager(FB_WHITE
-	"Statek                              W³a¶ciciel     Cena wynajmu"
+	"Statek                              Wï¿½aï¿½ciciel     Cena wynajmu"
 	EOL, ch);
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
 		if (ship->location != ch->in_room || !is_ship(ship))
 			continue;
@@ -7038,20 +7017,20 @@ DEF_DO_FUN( ships )
 					|| (IS_ADMIN(ch->name) && IS_SET(ch->act, PLR_HOLYLIGHT)))
 					&& is_scout(ship))
 				price /= 10;
-			pager_printf(ch, "%ld do wynajêcia." EOL, price);
+			pager_printf(ch, "%ld do wynajï¿½cia." EOL, price);
 		}
 		else if (str_cmp(ship->owner, ""))
 			pager_printf(ch, EOL);
 		else
 		{
-			pager_printf(ch, "%ld na sprzeda¿." EOL, get_ship_value(ship));
+			pager_printf(ch, "%ld na sprzedaï¿½." EOL, get_ship_value(ship));
 		}
 		count++;
 	}
 
 	if (!count)
 	{
-		send_to_pager("  Nie ma tu zadokowanych statków." NL, ch);
+		send_to_pager("  Nie ma tu zadokowanych statkï¿½w." NL, ch);
 	}
 }
 
@@ -7064,11 +7043,11 @@ DEF_DO_FUN( speeders )
 	{
 		count = 0;
 		send_to_char(
-				"Lista pojazdów posiadanych przez ciebie lub twoj± organizacjê:"
+				"Lista pojazdï¿½w posiadanych przez ciebie lub twojï¿½ organizacjï¿½:"
 				NL, ch);
 		send_to_char(NL FB_WHITE
-		"Pojazd                             W³a¶ciciel" NL, ch);
-		for (ship = first_ship; ship; ship = ship->next)
+		"Pojazd                             Wï¿½aï¿½ciciel" NL, ch);
+		for (auto* ship : ship_list)
 		{
 			if (str_cmp(ship->owner, ch->name))
 			{
@@ -7096,18 +7075,18 @@ DEF_DO_FUN( speeders )
 
 		if (!count)
 		{
-			send_to_char(FB_WHITE "  Nie posiadasz ¿adnych pojazdów." NL, ch);
+			send_to_char(FB_WHITE "  Nie posiadasz ï¿½adnych pojazdï¿½w." NL, ch);
 		}
 
 	}
 
 	count = 0;
-	send_to_char(FB_WHITE NL "Lista pojazdów zaparkowanych tutaj:" NL, ch);
+	send_to_char(FB_WHITE NL "Lista pojazdï¿½w zaparkowanych tutaj:" NL, ch);
 
 	send_to_char(FB_WHITE
-	"Pojazd                             W³a¶ciciel     Cena wynajmu"
+	"Pojazd                             Wï¿½aï¿½ciciel     Cena wynajmu"
 	NL, ch);
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
 		if (ship->location != ch->in_room || is_ship(ship))
 			continue;
@@ -7126,19 +7105,19 @@ DEF_DO_FUN( speeders )
 
 		if (!str_cmp(ship->owner, "Public"))
 		{
-			ch_printf(ch, "%ld do wynajêcia." NL, get_ship_value(ship) / 1000);
+			ch_printf(ch, "%ld do wynajï¿½cia." NL, get_ship_value(ship) / 1000);
 		}
 		else if (str_cmp(ship->owner, ""))
 			ch_printf(ch, "%s", "" NL);
 		else
-			ch_printf(ch, "%ld na sprzeda¿." NL, get_ship_value(ship));
+			ch_printf(ch, "%ld na sprzedaï¿½." NL, get_ship_value(ship));
 
 		count++;
 	}
 
 	if (!count)
 	{
-		send_to_char(FB_WHITE "  Nie ma tu ¿adnych pojazdów." NL, ch);
+		send_to_char(FB_WHITE "  Nie ma tu ï¿½adnych pojazdï¿½w." NL, ch);
 	}
 }
 
@@ -7153,7 +7132,7 @@ DEF_DO_FUN( allspeeders )
 	NL, ch);
 
 	send_to_char(NL FB_WHITE "Vehicle                            Owner" NL, ch);
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
 		if (is_ship(ship))
 			continue;
@@ -7201,13 +7180,13 @@ DEF_DO_FUN( allships )
 	int rep, imp, mob, plat, civ, des;
 	rep = imp = mob = plat = civ = des = 0;
 	count = 0;
-	sprintf(buf, "Lista wszystkich aktualnie dzia³aj±cych statków:" NL);
+	sprintf(buf, "Lista wszystkich aktualnie dziaï¿½ajï¿½cych statkï¿½w:" NL);
 
 	if (IS_IMMORTAL(ch))
 	{
 		if (!str_cmp(argument, "saveall"))
 		{
-			for (ship = first_ship; ship; ship = ship->next)
+			for (auto* ship : ship_list)
 			{
 				save_ship(ship);
 			}
@@ -7222,7 +7201,7 @@ DEF_DO_FUN( allships )
 					FB_WHITE
 					"Statek                                             Cena                 Desc"
 					NL);
-			for (ship = first_ship; ship; ship = ship->next)
+			for (auto* ship : ship_list)
 				if (!str_cmp(argument, ship->owner))
 					pager_printf(ch,
 							!IS_SET(ship->flags, SHIP_DONE) ?
@@ -7238,7 +7217,7 @@ DEF_DO_FUN( allships )
 					FB_WHITE
 					"Statek                                             Cena                 Desc"
 					NL);
-			for (ship = first_ship; ship; ship = ship->next)
+			for (auto* ship : ship_list)
 				if (atoi(argument) == ship->clazz)
 					pager_printf(ch,
 							!IS_SET(ship->flags, SHIP_DONE) ?
@@ -7254,7 +7233,7 @@ DEF_DO_FUN( allships )
 					FB_WHITE
 					"Statek                                             Cena                 Desc"
 					NL);
-			for (ship = first_ship; ship; ship = ship->next)
+			for (auto* ship : ship_list)
 				if (!str_cmp(argument,
 						bit_name(ship_classes_list, ship->clazz)))
 					pager_printf(ch,
@@ -7272,7 +7251,7 @@ DEF_DO_FUN( allships )
 					FB_WHITE
 					"Statek                                             Cena                 Desc"
 					NL);
-			for (ship = first_ship; ship; ship = ship->next)
+			for (auto* ship : ship_list)
 				if (ship->firstroom == atoi(argument))
 					pager_printf(ch,
 							!IS_SET(ship->flags, SHIP_DONE) ?
@@ -7291,10 +7270,9 @@ DEF_DO_FUN( allships )
 			}
 			pager_printf(ch,
 					FB_WHITE
-					"Statek                                  W³a¶ciciel          Cena        Desc"
+					"Statek                                  Wï¿½aï¿½ciciel          Cena        Desc"
 					NL);
-			for (ship = starsystem->first_ship; ship;
-					ship = ship->next_in_starsystem)
+			for (auto* ship : starsystem->ships)
 				pager_printf(ch,
 						!IS_SET(ship->flags, SHIP_DONE) ?
 								FG_CYAN "%-40s %-20s %-12d %s" EOL :
@@ -7305,8 +7283,8 @@ DEF_DO_FUN( allships )
 		}
 
 		strcat(buf, FB_WHITE "Mob-Ships:" FG_WHITE NL
-		FB_WHITE "Statek                              W³a¶ciciel      Desc" NL);
-		for (ship = first_ship; ship; ship = ship->next)
+		FB_WHITE "Statek                              Wï¿½aï¿½ciciel      Desc" NL);
+		for (auto* ship : ship_list)
 			if (ship->type == MOB_SHIP && ship->shipstate != SHIP_REPOSITORY)
 			{
 				sprintf(mbuf,
@@ -7322,8 +7300,8 @@ DEF_DO_FUN( allships )
 				mob++;
 			}
 		strcat(buf, FB_WHITE "Platforms:" FG_WHITE NL
-		FB_WHITE "Statek                              W³a¶ciciel      Desc" NL);
-		for (ship = first_ship; ship; ship = ship->next)
+		FB_WHITE "Statek                              Wï¿½aï¿½ciciel      Desc" NL);
+		for (auto* ship : ship_list)
 			if (is_platform(ship) && ship->shipstate != SHIP_REPOSITORY)
 			{
 				sprintf(mbuf,
@@ -7344,8 +7322,8 @@ DEF_DO_FUN( allships )
 	sprintf(buf,
 			FB_WHITE "Republika:" EOL
 			FB_WHITE
-			"Statek                              W³a¶ciciel      Desc           Cena" EOL);
-	for (ship = first_ship; ship; ship = ship->next)
+			"Statek                              Wï¿½aï¿½ciciel      Desc           Cena" EOL);
+	for (auto* ship : ship_list)
 		if (ship->type == SHIP_REPUBLIC && ship->shipstate != SHIP_REPOSITORY)
 		{
 			rep++;
@@ -7363,12 +7341,12 @@ DEF_DO_FUN( allships )
 				continue;
 			}
 			if (!str_cmp(ship->owner, "Public"))
-				sprintf(minbuf, FG_CYAN "%ld do wynajêcia." EOL,
+				sprintf(minbuf, FG_CYAN "%ld do wynajï¿½cia." EOL,
 						get_ship_value(ship) / 1000);
 			else if (str_cmp(ship->owner, ""))
 				sprintf(minbuf, EOL);
 			else
-				sprintf(minbuf, FG_CYAN "%ld na sprzeda¿." EOL,
+				sprintf(minbuf, FG_CYAN "%ld na sprzedaï¿½." EOL,
 						get_ship_value(ship));
 			strcat(mbuf, minbuf);
 			strcat(buf, mbuf);
@@ -7377,8 +7355,8 @@ DEF_DO_FUN( allships )
 	sprintf(buf,
 			FB_WHITE "Imperium:" EOL
 			FB_WHITE
-			"Statek                              W³a¶ciciel      Desc           Cena" EOL);
-	for (ship = first_ship; ship; ship = ship->next)
+			"Statek                              Wï¿½aï¿½ciciel      Desc           Cena" EOL);
+	for (auto* ship : ship_list)
 		if (ship->type == SHIP_IMPERIAL && ship->shipstate != SHIP_REPOSITORY)
 		{
 			imp++;
@@ -7396,12 +7374,12 @@ DEF_DO_FUN( allships )
 				continue;
 			}
 			if (!str_cmp(ship->owner, "Public"))
-				sprintf(minbuf, FG_CYAN "%ld do wynajêcia." EOL,
+				sprintf(minbuf, FG_CYAN "%ld do wynajï¿½cia." EOL,
 						get_ship_value(ship) / 1000);
 			else if (str_cmp(ship->owner, ""))
 				sprintf(minbuf, EOL);
 			else
-				sprintf(minbuf, FG_CYAN "%ld na sprzeda¿." EOL,
+				sprintf(minbuf, FG_CYAN "%ld na sprzedaï¿½." EOL,
 						get_ship_value(ship));
 			strcat(mbuf, minbuf);
 			strcat(buf, mbuf);
@@ -7410,8 +7388,8 @@ DEF_DO_FUN( allships )
 	sprintf(buf,
 			FB_WHITE "Piraci:" EOL
 			FB_WHITE
-			"Statek                              W³a¶ciciel      Desc           Cena" EOL);
-	for (ship = first_ship; ship; ship = ship->next)
+			"Statek                              Wï¿½aï¿½ciciel      Desc           Cena" EOL);
+	for (auto* ship : ship_list)
 		if (ship->type == SHIP_PIRATE && ship->shipstate != SHIP_REPOSITORY)
 		{
 			imp++;
@@ -7429,12 +7407,12 @@ DEF_DO_FUN( allships )
 				continue;
 			}
 			if (!str_cmp(ship->owner, "Public"))
-				sprintf(minbuf, FG_CYAN "%ld do wynajêcia." EOL,
+				sprintf(minbuf, FG_CYAN "%ld do wynajï¿½cia." EOL,
 						get_ship_value(ship) / 1000);
 			else if (str_cmp(ship->owner, ""))
 				sprintf(minbuf, EOL);
 			else
-				sprintf(minbuf, FG_CYAN "%ld na sprzeda¿." EOL,
+				sprintf(minbuf, FG_CYAN "%ld na sprzedaï¿½." EOL,
 						get_ship_value(ship));
 			strcat(mbuf, minbuf);
 			strcat(buf, mbuf);
@@ -7443,8 +7421,8 @@ DEF_DO_FUN( allships )
 	sprintf(buf,
 			FB_WHITE "Yuuzhanie:" EOL
 			FB_WHITE
-			"Statek                              W³a¶ciciel      Desc           Cena" EOL);
-	for (ship = first_ship; ship; ship = ship->next)
+			"Statek                              Wï¿½aï¿½ciciel      Desc           Cena" EOL);
+	for (auto* ship : ship_list)
 		if (ship->type == SHIP_YUUZHAN && ship->shipstate != SHIP_REPOSITORY)
 		{
 			imp++;
@@ -7462,12 +7440,12 @@ DEF_DO_FUN( allships )
 				continue;
 			}
 			if (!str_cmp(ship->owner, "Public"))
-				sprintf(minbuf, FG_CYAN "%ld do wynajêcia." EOL,
+				sprintf(minbuf, FG_CYAN "%ld do wynajï¿½cia." EOL,
 						get_ship_value(ship) / 1000);
 			else if (str_cmp(ship->owner, ""))
 				sprintf(minbuf, EOL);
 			else
-				sprintf(minbuf, FG_CYAN "%ld na sprzeda¿." EOL,
+				sprintf(minbuf, FG_CYAN "%ld na sprzedaï¿½." EOL,
 						get_ship_value(ship));
 			strcat(mbuf, minbuf);
 			strcat(buf, mbuf);
@@ -7476,8 +7454,8 @@ DEF_DO_FUN( allships )
 	sprintf(buf,
 			FB_WHITE "Cywilne:" EOL
 			FB_WHITE
-			"Statek                              W³a¶ciciel      Desc           Cena" EOL);
-	for (ship = first_ship; ship; ship = ship->next)
+			"Statek                              Wï¿½aï¿½ciciel      Desc           Cena" EOL);
+	for (auto* ship : ship_list)
 		if (ship->type == SHIP_CIVILIAN && ship->shipstate != SHIP_REPOSITORY)
 		{
 			civ++;
@@ -7495,12 +7473,12 @@ DEF_DO_FUN( allships )
 				continue;
 			}
 			if (!str_cmp(ship->owner, "Public"))
-				sprintf(minbuf, FG_CYAN "%ld do wynajêcia." EOL,
+				sprintf(minbuf, FG_CYAN "%ld do wynajï¿½cia." EOL,
 						get_ship_value(ship) / 1000);
 			else if (str_cmp(ship->owner, ""))
 				sprintf(minbuf, EOL);
 			else
-				sprintf(minbuf, FG_CYAN "%ld na sprzeda¿." EOL,
+				sprintf(minbuf, FG_CYAN "%ld na sprzedaï¿½." EOL,
 						get_ship_value(ship));
 			strcat(mbuf, minbuf);
 			strcat(buf, mbuf);
@@ -7510,8 +7488,8 @@ DEF_DO_FUN( allships )
 	sprintf(buf,
 			FB_WHITE "Zniszczone:" EOL
 			FB_WHITE
-			"Statek                              W³a¶ciciel      Desc           Cena" EOL);
-	for (ship = first_ship; ship; ship = ship->next)
+			"Statek                              Wï¿½aï¿½ciciel      Desc           Cena" EOL);
+	for (auto* ship : ship_list)
 		if (ship->shipstate == SHIP_REPOSITORY)
 		{
 			des++;
@@ -7530,12 +7508,12 @@ DEF_DO_FUN( allships )
 			 continue;
 			 }
 			 */if (!str_cmp(ship->owner, "Public"))
-				sprintf(minbuf, FG_CYAN "%ld do wynajêcia." EOL,
+				sprintf(minbuf, FG_CYAN "%ld do wynajï¿½cia." EOL,
 						get_ship_value(ship) / 1000);
 			else if (str_cmp(ship->owner, ""))
 				sprintf(minbuf, EOL);
 			else
-				sprintf(minbuf, FG_CYAN "%ld na sprzeda¿." EOL,
+				sprintf(minbuf, FG_CYAN "%ld na sprzedaï¿½." EOL,
 						get_ship_value(ship));
 			strcat(mbuf, minbuf);
 			strcat(buf, mbuf);
@@ -7543,9 +7521,9 @@ DEF_DO_FUN( allships )
 	send_to_pager(buf, ch);
 
 	if ((count = mob + plat + rep + imp + civ + des) == 0)
-		ch_printf(ch, "Nie ma aktualnie ¿adnych statków." NL);
+		ch_printf(ch, "Nie ma aktualnie ï¿½adnych statkï¿½w." NL);
 	else
-		ch_printf(ch, FB_WHITE "£±cznie: %d." EOL, count);
+		ch_printf(ch, FB_WHITE "ï¿½ï¿½cznie: %d." EOL, count);
 
 	return;
 }
@@ -7555,8 +7533,7 @@ void ship_to_starsystem(SHIP_DATA *ship, SPACE_DATA *starsystem)
 	if (!starsystem || !ship)
 		return;
 
-	LINK(ship, starsystem->first_ship, starsystem->last_ship,
-			next_in_starsystem, prev_in_starsystem);
+	starsystem->ships.push_back(ship);
 	ship->starsystem = starsystem;
 }
 
@@ -7576,7 +7553,7 @@ void new_missile(SHIP_DATA *ship, SHIP_DATA *target, CHAR_DATA *ch,
 		return;
 
 	CREATE(missile, MISSILE_DATA, 1);
-	LINK(missile, first_missile, last_missile, next, prev);
+	missile_list.push_back(missile);
 
 	missile->target = target;
 	missile->fired_from = ship;
@@ -7599,17 +7576,7 @@ void new_missile(SHIP_DATA *ship, SHIP_DATA *target, CHAR_DATA *ch,
 	missile->my = ship->vy;
 	missile->mz = ship->vz;
 
-	if (starsystem->first_missile == NULL)
-		starsystem->first_missile = missile;
-
-	if (starsystem->last_missile)
-	{
-		starsystem->last_missile->next_in_starsystem = missile;
-		missile->prev_in_starsystem = starsystem->last_missile;
-	}
-
-	starsystem->last_missile = missile;
-
+	starsystem->missiles.push_back(missile);
 	missile->starsystem = starsystem;
 
 }
@@ -7619,8 +7586,7 @@ void ship_from_starsystem(SHIP_DATA *ship, SPACE_DATA *starsystem)
 	if (!starsystem || !ship)
 		return;
 
-	UNLINK(ship, starsystem->first_ship, starsystem->last_ship,
-			next_in_starsystem, prev_in_starsystem);
+	starsystem->ships.remove(ship);
 	ship->starsystem = NULL;
 }
 
@@ -7633,28 +7599,11 @@ void extract_missile(MISSILE_DATA *missile)
 
 	if ((starsystem = missile->starsystem) != NULL)
 	{
-
-		if (starsystem->last_missile == missile)
-			starsystem->last_missile = missile->prev_in_starsystem;
-
-		if (starsystem->first_missile == missile)
-			starsystem->first_missile = missile->next_in_starsystem;
-
-		if (missile->prev_in_starsystem)
-			missile->prev_in_starsystem->next_in_starsystem =
-					missile->next_in_starsystem;
-
-		if (missile->next_in_starsystem)
-			missile->next_in_starsystem->prev_in_starsystem =
-					missile->prev_in_starsystem;
-
+		starsystem->missiles.remove(missile);
 		missile->starsystem = NULL;
-		missile->next_in_starsystem = NULL;
-		missile->prev_in_starsystem = NULL;
-
 	}
 
-	UNLINK(missile, first_missile, last_missile, next, prev);
+	missile_list.remove(missile);
 
 	missile->target = NULL;
 	missile->fired_from = NULL;
@@ -7694,8 +7643,7 @@ bool extract_ship(SHIP_DATA *ship)
 
 	if ((room = ship->in_room) != NULL)
 	{
-		UNLINK(ship, room->first_ship, room->last_ship, next_in_room,
-				prev_in_room);
+		room->ships.remove(ship);
 		ship->in_room = NULL;
 	}
 	return true;
@@ -7732,13 +7680,13 @@ void damage_ship_ch(SHIP_DATA *ship, int min, int max, CHAR_DATA *ch)
 		if (number_range(1, 100) <= 5 && ship->shipstate != SHIP_DISABLED)
 		{
 			echo_to_cockpit(ship,
-			FG_RED MOD_BLINK "Napêd statku USZKODZONY!" RESET);
+			FG_RED MOD_BLINK "Napï¿½d statku USZKODZONY!" RESET);
 			ship->shipstate = SHIP_DISABLED;
 		}
 
 		if (number_range(1, 100) <= 5)
 		{
-			for (turret = ship->first_turret; turret; turret = turret->next)
+			for (auto* turret : ship->turrets)
 				if (turret)
 					if (number_range(1, 10) <= 3)
 						turret->status = TURRET_DAMAGED; //dodac niszczenie -- Pixel
@@ -7748,7 +7696,7 @@ void damage_ship_ch(SHIP_DATA *ship, int min, int max, CHAR_DATA *ch)
 				&& ship->maxmissiles > 0)
 		{
 			echo_to_room(ship->gunseat,
-			FG_RED MOD_BLINK "Wyrzutnia pocisków USZKODZONA!"
+			FG_RED MOD_BLINK "Wyrzutnia pociskï¿½w USZKODZONA!"
 			RESET);
 			ship->missilestate = MISSILE_DAMAGED;
 		}
@@ -7772,7 +7720,7 @@ void damage_ship_ch(SHIP_DATA *ship, int min, int max, CHAR_DATA *ch)
 			gain_exp(ch, xp, PILOTING_ABILITY);
 			ch_printf(ch,
 			FB_WHITE
-			"Zdobywasz %ld punktów do¶wiadczenia w pilotowaniu!" NL, xp);
+			"Zdobywasz %ld punktï¿½w doï¿½wiadczenia w pilotowaniu!" NL, xp);
 		}
 		destroy_ship(ship, ch);
 
@@ -7782,7 +7730,7 @@ void damage_ship_ch(SHIP_DATA *ship, int min, int max, CHAR_DATA *ch)
 	if (ship->hull <= ship->maxhull / 10)
 		echo_to_cockpit(ship,
 		FG_RED MOD_BLINK
-		"OSTRZE¯ENIE! Kad³ub statku powa¿nie uszkodzony!"
+		"OSTRZEï¿½ENIE! Kadï¿½ub statku powaï¿½nie uszkodzony!"
 		RESET);
 
 }
@@ -7811,7 +7759,7 @@ void damage_ship(SHIP_DATA *ship, int min, int max)
 		if (number_range(1, 100) <= 5 && ship->shipstate != SHIP_DISABLED)
 		{
 			echo_to_cockpit(ship,
-			FG_RED MOD_BLINK "Napêd statku USZKODZONY!" RESET);
+			FG_RED MOD_BLINK "Napï¿½d statku USZKODZONY!" RESET);
 			ship->shipstate = SHIP_DISABLED;
 		}
 
@@ -7819,7 +7767,7 @@ void damage_ship(SHIP_DATA *ship, int min, int max)
 				&& ship->maxmissiles > 0)
 		{
 			echo_to_room(ship->gunseat,
-			FG_RED MOD_BLINK "Wyrzutnia pocisków USZKODZONA!"
+			FG_RED MOD_BLINK "Wyrzutnia pociskï¿½w USZKODZONA!"
 			RESET);
 			ship->missilestate = MISSILE_DAMAGED;
 		}
@@ -7837,7 +7785,7 @@ void damage_ship(SHIP_DATA *ship, int min, int max)
 	if (ship->hull <= ship->maxhull / 10)
 		echo_to_cockpit(ship,
 		FG_RED MOD_BLINK
-		"OSTRZE¯ENIE! Kad³ub statku powa¿nie uszkodzony!"
+		"OSTRZEï¿½ENIE! Kadï¿½ub statku powaï¿½nie uszkodzony!"
 		RESET);
 
 }
@@ -7848,18 +7796,18 @@ void purge_ship(SHIP_DATA *ship, CHAR_DATA *ch)
 	ROOM_INDEX_DATA *room;
 	OBJ_DATA *robj;
 	CHAR_DATA *rch;
-	SHIP_DATA *target, *target_next;
+	SHIP_DATA *target;
 	SHIPDOCK_DATA *dock, *targetdock;
 
 	sprintf(buf, FB_WHITE MOD_BLINK
-	"%s eksploduje w o¶lepiaj±cym b³ysku!" RESET, ship->sslook);
+	"%s eksploduje w oï¿½lepiajï¿½cym bï¿½ysku!" RESET, ship->sslook);
 	echo_to_system(ship, buf, ship);
 
-	echo_to_ship(ship, FB_WHITE MOD_BLINK "Olbrzymi b³ysk o¶lepia ciê!" RESET);
+	echo_to_ship(ship, FB_WHITE MOD_BLINK "Olbrzymi bï¿½ysk oï¿½lepia ciï¿½!" RESET);
 	echo_to_ship(ship,
 	FB_WHITE
-	"Ale zanim jeszcze nabierzesz powietrza by krzykn±æ..." EOL
-	FB_WHITE "Zamieniasz siê w py³ razem ze swoim statkiem...");
+	"Ale zanim jeszcze nabierzesz powietrza by krzyknï¿½ï¿½..." EOL
+	FB_WHITE "Zamieniasz siï¿½ w pyï¿½ razem ze swoim statkiem...");
 
 	if (!ship->vnum)	// statek starego typu
 	{
@@ -7876,7 +7824,7 @@ void purge_ship(SHIP_DATA *ship, CHAR_DATA *ch)
 		}
 	}
 
-	for (dock = ship->first_dock; dock; dock = dock->next)
+	for (auto* dock : ship->docks)
 	{
 		if (dock->master_slave == 0)
 		{
@@ -7902,21 +7850,21 @@ void purge_ship(SHIP_DATA *ship, CHAR_DATA *ch)
 		}
 	}
 
-	for (room = ship->first_location; room; room = room->next_on_ship)
+	for (auto* room : ship->locations)
 	{
 		// wszystkie statki wewnatrz: spadowa
-		for (target = room->first_ship; target; target = target_next)
+		auto ships_snapshot = room->ships;
+		for (auto* target : ships_snapshot)
 		{
-			target_next = target->next_in_room;
 			purge_ship(target, ch);
 		}
 
 		// wszystkie postaci wewnatrz: spadowa
 		if (room != NULL)
 		{
-			rch = room->first_person;
-			while (rch)
+			while (!room->people.empty())
 			{
+				rch = room->people.front();
 				int homeVnum;
 				if (IS_IMMORTAL(rch)
 						&& (homeVnum = wherehome(rch)) != rch->in_room->vnum)
@@ -7931,11 +7879,11 @@ void purge_ship(SHIP_DATA *ship, CHAR_DATA *ch)
 					else
 						raw_kill(rch, rch, 0);
 				}
-				rch = room->first_person;
 			}
 
 			// wszystkie przedmioty wewnatrz: spadowa
-			for (robj = room->first_content; robj; robj = robj->next_content)
+			auto contents_snapshot = room->contents;
+			for (auto* robj : contents_snapshot)
 			{
 				separate_obj(robj);
 				extract_obj(robj);
@@ -7950,16 +7898,16 @@ void purge_ship(SHIP_DATA *ship, CHAR_DATA *ch)
 		OBJ_DATA *scraps;
 
 		sprintf(buf,
-		FB_WHITE "Potê¿na eksplozja rozrywa statek %s na strzêpy!", ship->name);
+		FB_WHITE "Potï¿½na eksplozja rozrywa statek %s na strzï¿½py!", ship->name);
 		echo_to_room(ship->in_room, buf);
 		scraps = create_object(get_obj_index(OBJ_VNUM_SCRAPS), 0);
-		sprintf(buf, "szcz±tki statku %s ", SHIPNAME(ship));
+		sprintf(buf, "szczï¿½tki statku %s ", SHIPNAME(ship));
 		STRDUP(scraps->name, buf);
-		sprintf(buf, "Le¿± tu szcz±tki statku %s.", SHIPNAME(ship));
+		sprintf(buf, "Leï¿½ï¿½ tu szczï¿½tki statku %s.", SHIPNAME(ship));
 		STRDUP(scraps->description, buf);
 		for (i = 0; i < 6; i++)
 		{
-			sprintf(buf, "Szcz±tki statku %s", SHIPNAME(ship));
+			sprintf(buf, "Szczï¿½tki statku %s", SHIPNAME(ship));
 			STRDUP(scraps->przypadki[i], buf);
 		}
 		scraps->timer = 5;
@@ -7994,7 +7942,7 @@ void destroy_ship(SHIP_DATA *ship, CHAR_DATA *ch)
 		return;
 	}
 
-	sprintf(buf, FB_RED "%s staje w p³omieniach!" EOL, ship->sslook);
+	sprintf(buf, FB_RED "%s staje w pï¿½omieniach!" EOL, ship->sslook);
 	echo_to_system(ship, buf, NULL);
 	ship->timer = UMIN(6, ship->roomcount);
 
@@ -8025,7 +7973,7 @@ bool ship_to_room(SHIP_DATA *ship, ROOM_INDEX_DATA *room)
 	if (room == NULL)
 		return false;
 
-	LINK(ship, room->first_ship, room->last_ship, next_in_room, prev_in_room);
+	room->ships.push_back(ship);
 	ship->in_room = room;
 	return true;
 }
@@ -8038,27 +7986,27 @@ DEF_DO_FUN( board )
 
 	if (*argument == '\0')
 	{
-		send_to_char("Wsi±¶æ na co?" NL, ch);
+		send_to_char("Wsiï¿½ï¿½ï¿½ na co?" NL, ch);
 		return;
 	}
 
 	if ((ship = ship_in_room(ch->in_room, argument)) == NULL)
 	{
-		act(PLAIN, "Nie widzê tutaj ¿adnego $T.", ch, NULL, argument, TO_CHAR);
+		act(PLAIN, "Nie widzï¿½ tutaj ï¿½adnego $T.", ch, NULL, argument, TO_CHAR);
 		return;
 	}
 
-	/* Thanos: bugfix (wcze¶niej sprawdza³ ch->act nawet u gracza, a
-	 ten bit u¿ywany by³ do PLR_LOG */
+	/* Thanos: bugfix (wczeï¿½niej sprawdzaï¿½ ch->act nawet u gracza, a
+	 ten bit uï¿½ywany byï¿½ do PLR_LOG */
 	if (ch->mount)
 	{
-		act(PLAIN, "Zejd¼ najpierw ze swojego wierzchowca.", ch, NULL, argument,
+		act(PLAIN, "Zejdï¿½ najpierw ze swojego wierzchowca.", ch, NULL, argument,
 				TO_CHAR);
 		return;
 	}
 	if (IS_NPC(ch) && IS_SET(ch->act, ACT_MOUNTED))
 	{
-		act(PLAIN, "Nie mo¿esz wej¶æ do ¶rodka z obci±¿eniem na grzbiecie.", ch,
+		act(PLAIN, "Nie moï¿½esz wejï¿½ï¿½ do ï¿½rodka z obciï¿½ï¿½eniem na grzbiecie.", ch,
 				NULL, argument, TO_CHAR);
 		return;
 	}
@@ -8069,7 +8017,7 @@ DEF_DO_FUN( board )
 	{
 		if (!ship->hatchopen)
 		{
-			send_to_char(FB_RED "Klapa jest zamkniêta!" NL, ch);
+			send_to_char(FB_RED "Klapa jest zamkniï¿½ta!" NL, ch);
 			return;
 		}
 
@@ -8078,7 +8026,7 @@ DEF_DO_FUN( board )
 			CHAR_DATA *ctmp;
 			int count = 0;
 
-			for (ctmp = toroom->first_person; ctmp; ctmp = ctmp->next_in_room)
+			for (auto* ctmp : toroom->people)
 			{
 				if (!IS_IMMORTAL(ctmp))
 					++count;
@@ -8092,23 +8040,23 @@ DEF_DO_FUN( board )
 
 		if (ship->shipstate == SHIP_LAUNCH || ship->shipstate == SHIP_LAUNCH_2)
 		{
-			send_to_char(FB_RED "Ten statek w³a¶nie odlatuje!" NL, ch);
+			send_to_char(FB_RED "Ten statek wï¿½aï¿½nie odlatuje!" NL, ch);
 			return;
 		}
 
 		uncrew(ship_from_room(fromroom), ch);
-		act(PLAIN, "$n wsiada na pok³ad $T.", ch, NULL, SHIPNAME(ship),
+		act(PLAIN, "$n wsiada na pokï¿½ad $T.", ch, NULL, SHIPNAME(ship),
 		TO_ROOM);
-		act(PLAIN, "Wsiadasz na pok³ad $T.", ch, NULL, SHIPNAME(ship),
+		act(PLAIN, "Wsiadasz na pokï¿½ad $T.", ch, NULL, SHIPNAME(ship),
 		TO_CHAR);
 		char_from_room(ch);
 		char_to_room(ch, toroom);
-		act(PLAIN, "$n wchodzi na pok³ad.", ch, NULL, argument, TO_ROOM);
+		act(PLAIN, "$n wchodzi na pokï¿½ad.", ch, NULL, argument, TO_ROOM);
 		do_look(ch, (char*) "auto");
 		fevent_trigger(ch, FE_ENTER_SHIP);
 	}
 	else
-		send_to_char("Ten statek nie ma wej¶cia!" NL, ch);
+		send_to_char("Ten statek nie ma wejï¿½cia!" NL, ch);
 }
 
 bool rent_ship(CHAR_DATA *ch, SHIP_DATA *ship)
@@ -8128,13 +8076,13 @@ bool rent_ship(CHAR_DATA *ch, SHIP_DATA *ship)
 	{
 		ch_printf(ch,
 				FB_RED
-				"Wynajêcie tego statku bêdzie ciê kosztowaæ %ld kredytek. Nie masz tyle!"
+				"Wynajï¿½cie tego statku bï¿½dzie ciï¿½ kosztowaï¿½ %ld kredytek. Nie masz tyle!"
 				NL, price);
 		return false;
 	}
 
 	ch->gold -= price;
-	ch_printf(ch, "&GP³acisz %ld kredytek za wynajêcie statku." NL, price);
+	ch_printf(ch, "&GPï¿½acisz %ld kredytek za wynajï¿½cie statku." NL, price);
 	return true;
 
 }
@@ -8156,33 +8104,33 @@ DEF_DO_FUN( leaveship )
 		}
 		else
 		{
-			send_to_char("Nie widzê tu ¿adnego wyj¶cia." NL, ch);
+			send_to_char("Nie widzï¿½ tu ï¿½adnego wyjï¿½cia." NL, ch);
 			return;
 		}
 	}
 
 	if (is_platform(ship))
 	{
-		send_to_char("Nie mo¿esz zrobiæ tego tutaj." NL, ch);
+		send_to_char("Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch);
 		return;
 	}
 
 	if (ship->lastdoc != ship->location)
 	{
-		send_to_char(FB_RED "Proponujê poczekaæ a¿ statek wyl±duje." NL, ch);
+		send_to_char(FB_RED "Proponujï¿½ poczekaï¿½ aï¿½ statek wylï¿½duje." NL, ch);
 		return;
 	}
 
 	if (ship->shipstate != SHIP_DOCKED && ship->shipstate != SHIP_DISABLED)
 	{
 		send_to_char(FB_RED
-		"Poczekaj a¿ statek porz±dnie osi±dzie i zadokuje." NL, ch);
+		"Poczekaj aï¿½ statek porzï¿½dnie osiï¿½dzie i zadokuje." NL, ch);
 		return;
 	}
 
 	if (!ship->hatchopen)
 	{
-		send_to_char(FB_RED "Najpierw otwórz klapê." NL, ch);
+		send_to_char(FB_RED "Najpierw otwï¿½rz klapï¿½." NL, ch);
 		return;
 	}
 
@@ -8193,7 +8141,7 @@ DEF_DO_FUN( leaveship )
 			CHAR_DATA *ctmp;
 			int count = 0;
 
-			for (ctmp = toroom->first_person; ctmp; ctmp = ctmp->next_in_room)
+			for (auto* ctmp : toroom->people)
 			{
 				if (!IS_IMMORTAL(ctmp))
 					++count;
@@ -8213,7 +8161,7 @@ DEF_DO_FUN( leaveship )
 		do_look(ch, (char*) "auto");
 	}
 	else
-		send_to_char("Hmm.. Wyj¶cie chyba nie dzia³a." NL, ch);
+		send_to_char("Hmm.. Wyjï¿½cie chyba nie dziaï¿½a." NL, ch);
 }
 
 DEF_DO_FUN( launch )
@@ -8225,21 +8173,21 @@ DEF_DO_FUN( launch )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku by to zrobiæ!" NL,
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku by to zrobiï¿½!" NL,
 				ch);
 		return;
 	}
 
 	if (!is_ship(ship))
 	{
-		send_to_char(FB_RED "Nie jeste¶ na statku kosmicznym!" NL, ch);
+		send_to_char(FB_RED "Nie jesteï¿½ na statku kosmicznym!" NL, ch);
 		return;
 	}
 
 	if (ship->clazz == ESCAPE_POD_SHIP)
 	{
 		send_to_char(FB_RED
-		"To jest kapsu³a ratunkowa, jej silnik nie pokona grawitacji!"
+		"To jest kapsuï¿½a ratunkowa, jej silnik nie pokona grawitacji!"
 		NL, ch);
 		return;
 	}
@@ -8247,7 +8195,7 @@ DEF_DO_FUN( launch )
 	if ((ship = ship_from_pilotseat(ch->in_room)) == NULL)
 	{
 		ch_printf(ch, FB_RED
-		"Nie wygl±da na to, ¿eby¶ by³%s w kabinie pilota!" EOL,
+		"Nie wyglï¿½da na to, ï¿½ebyï¿½ byï¿½%s w kabinie pilota!" EOL,
 				SEX_SUFFIX__AO(ch));
 		return;
 	}
@@ -8268,21 +8216,21 @@ DEF_DO_FUN( launch )
 	if (autofly(ship))
 	{
 		send_to_char(FB_RED
-		"Statek ma w³±czonego autopilota. Mo¿e najpierw go wy³±cz."
+		"Statek ma wï¿½ï¿½czonego autopilota. Moï¿½e najpierw go wyï¿½ï¿½cz."
 		EOL, ch);
 		return;
 	}
 
 	if (is_platform(ship))
 	{
-		send_to_char("Nie mo¿esz zrobiæ tego tutaj." NL, ch);
+		send_to_char("Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch);
 		return;
 	}
 
 	if (ship->lastdoc != ship->location)
 	{
 		send_to_char(FB_RED
-		"Nie wygl±da na to, ¿eby statek by³ zadokowany." EOL, ch);
+		"Nie wyglï¿½da na to, ï¿½eby statek byï¿½ zadokowany." EOL, ch);
 		return;
 	}
 
@@ -8339,14 +8287,14 @@ DEF_DO_FUN( launch )
 			{
 				ch_printf(ch,
 						FB_RED
-						"%s nie ma wystarczaj±cej ilo¶ci funduszy, by przygotowac ten statek do startu."
+						"%s nie ma wystarczajï¿½cej iloï¿½ci funduszy, by przygotowac ten statek do startu."
 						NL, ch->pcdata->clan->name);
 				return;
 			}
 
 			ch->pcdata->clan->funds -= price;
 			ch_printf(ch,
-					"&GPrzygotowanie do startu tego statku bêdzie kosztowa³o %s %ld kredytek."
+					"&GPrzygotowanie do startu tego statku bï¿½dzie kosztowaï¿½o %s %ld kredytek."
 					NL, ch->pcdata->clan->name, price);
 		}
 		else if (str_cmp(ship->owner, "Public"))
@@ -8355,14 +8303,14 @@ DEF_DO_FUN( launch )
 			{
 				ch_printf(ch,
 						FB_RED
-						"Nie masz wystarczaj±cych funduszy by przygotowac ten statek do startu."
+						"Nie masz wystarczajï¿½cych funduszy by przygotowac ten statek do startu."
 						NL);
 				return;
 			}
 
 			ch->gold -= price;
 			ch_printf(ch,
-					"&GP³acisz %ld kredytek by przygotowaæ statek do startu."
+					"&GPï¿½acisz %ld kredytek by przygotowaï¿½ statek do startu."
 					NL, price);
 		}
 
@@ -8384,20 +8332,20 @@ DEF_DO_FUN( launch )
 		if (ship->hatchopen)
 		{
 			ship->hatchopen = false;
-			sprintf(buf, FB_YELLOW "Klapa na %s zamyka siê.", SHIPNAME(ship));
+			sprintf(buf, FB_YELLOW "Klapa na %s zamyka siï¿½.", SHIPNAME(ship));
 			echo_to_room(ship->location, buf);
 			echo_to_room(ship->entrance,
-			FB_YELLOW "Klapa zamyka siê z trzaskiem.");
+			FB_YELLOW "Klapa zamyka siï¿½ z trzaskiem.");
 			sound_to_room(ship->entrance, "!!SOUND(door)");
 			sound_to_room(ship->location, "!!SOUND(door)");
 		}
 		send_to_char(FB_GREEN, ch);
-		send_to_char("Sekwencja startuj±ca zainicjowana." NL, ch);
+		send_to_char("Sekwencja startujï¿½ca zainicjowana." NL, ch);
 		act(PLAIN,
-				"$n uruchamia silniki statku i rozpoczyna podej¶cie do startu.",
+				"$n uruchamia silniki statku i rozpoczyna podejï¿½cie do startu.",
 				ch, NULL, argument, TO_ROOM);
 		echo_to_ship(ship,
-		FB_YELLOW "Statek buczy powoli odrywaj±c siê od ziemi.");
+		FB_YELLOW "Statek buczy powoli odrywajï¿½c siï¿½ od ziemi.");
 		sprintf(buf, FB_YELLOW "%s startuje.", SHIPNAME(ship));
 		echo_to_room(ship->location, buf);
 		ship->shipstate = SHIP_LAUNCH;
@@ -8417,7 +8365,7 @@ DEF_DO_FUN( launch )
 		return;
 	}
 	send_to_char(FB_RED, ch);
-	send_to_char("Nie uda³o ci siê poprawnie obs³u¿yæ urz±dzeñ!" NL, ch);
+	send_to_char("Nie udaï¿½o ci siï¿½ poprawnie obsï¿½uï¿½yï¿½ urzï¿½dzeï¿½!" NL, ch);
 	learn_from_failure_space(ship, ch);
 
 	return;
@@ -8441,11 +8389,11 @@ void launchship(SHIP_DATA *ship)
 	if ((starsystem = ship->starsystem) == NULL)
 	{
 		echo_to_room(ship->pilotseat, FB_YELLOW
-		"Droga startowa zablokowana .. Start odwo³any.");
+		"Droga startowa zablokowana .. Start odwoï¿½any.");
 		echo_to_ship(ship,
 		FB_YELLOW
-		"Statek z g³o¶nym hukiem znów opada na l±dowisku.");
-		sprintf(buf, FB_YELLOW "%s powoli siada na l±dowisku.", SHIPNAME(ship));
+		"Statek z gï¿½oï¿½nym hukiem znï¿½w opada na lï¿½dowisku.");
+		sprintf(buf, FB_YELLOW "%s powoli siada na lï¿½dowisku.", SHIPNAME(ship));
 		echo_to_room(ship->location, buf);
 		ship->shipstate = SHIP_DOCKED;
 		return;
@@ -8492,10 +8440,9 @@ void launchship(SHIP_DATA *ship)
 	else
 		plusminus = -1;
 
-	for (planet = starsystem->first_planet; planet;
-			planet = planet->next_in_system)
+	for (auto* planet : starsystem->planets)
 	{
-		for (dock = planet->first_dock; dock; dock = dock->next)
+		for (auto* dock : planet->docks)
 		{
 			if (dock->vnum == VNUM(ship->lastdoc)) // Start z planety
 			{
@@ -8531,7 +8478,7 @@ void launchship(SHIP_DATA *ship)
 			}
 		}
 	}
-	for (moon = starsystem->first_moon; moon; moon = moon->next)
+	for (auto* moon : starsystem->moons)
 	{
 		if (moon->vnum == VNUM(ship->lastdoc)) // Start z ksiezyca
 		{
@@ -8567,10 +8514,9 @@ void launchship(SHIP_DATA *ship)
 
 		}
 	}
-	for (target = ship->starsystem->first_ship; target;
-			target = target->next_in_starsystem)
+	for (auto* target : ship->starsystem->ships)
 	{
-		for (hangar = target->first_hangar; hangar; hangar = hangar->next)
+		for (auto* hangar : target->hangars)
 		{
 			if (VNUM(ship->lastdoc) == hangar->vnum)
 			{
@@ -8593,10 +8539,10 @@ void launchship(SHIP_DATA *ship)
 	ship->energy -= (100 + 10 * (ship->size / 10));
 
 	echo_to_room(ship->location,
-	FB_GREEN "Sekwencja startowa zakoñczona." EOL);
+	FB_GREEN "Sekwencja startowa zakoï¿½czona." EOL);
 	echo_to_ship(ship,
 	FB_YELLOW
-	"Statek opuszcza teren platformy wzbijaj±c siê w stronê przestworzy.");
+	"Statek opuszcza teren platformy wzbijajï¿½c siï¿½ w stronï¿½ przestworzy.");
 	sprintf(buf, FB_YELLOW "%s startuje z platformy", ship->sslook);
 	echo_to_system(ship, buf, NULL);
 	sprintf(buf, FB_YELLOW "%s znika w przestrzeni.", SHIPNAME(ship));
@@ -8605,7 +8551,7 @@ void launchship(SHIP_DATA *ship)
 	{
 		echo_to_cockpit(ship,
 				FB_RED
-				"W systemie panuje burza elektromagnetyczna, systemy zaczynaj± 'siadaæ'");
+				"W systemie panuje burza elektromagnetyczna, systemy zaczynajï¿½ 'siadaï¿½'");
 		ship->cloack = 0;
 		ship->interdict = 0;
 		ship->shield = 0;
@@ -8636,20 +8582,20 @@ DEF_DO_FUN( land )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku by to zrobiæ!" EOL,
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku by to zrobiï¿½!" EOL,
 				ch);
 		return;
 	}
 
 	if (!is_ship(ship))
 	{
-		send_to_char(FB_RED "Nie jeste¶ na statku kosmicznym!" EOL, ch);
+		send_to_char(FB_RED "Nie jesteï¿½ na statku kosmicznym!" EOL, ch);
 		return;
 	}
 
 	if ((ship = ship_from_pilotseat(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz siedzieæ w fotelu pilota by to zrobiæ!"
+		send_to_char(FB_RED "Musisz siedzieï¿½ w fotelu pilota by to zrobiï¿½!"
 		EOL, ch);
 		return;
 	}
@@ -8674,7 +8620,7 @@ DEF_DO_FUN( land )
 	if (ship->shipstate == SHIP_TRACTORED && arg[0] != '\0')
 	{
 		send_to_char(FB_RED
-		"Statek jest unieruchomiony promieiami ¶ci±gaj±cymi."
+		"Statek jest unieruchomiony promieiami ï¿½ciï¿½gajï¿½cymi."
 		EOL, ch);
 		return;
 	}
@@ -8682,19 +8628,19 @@ DEF_DO_FUN( land )
 	if (autofly(ship) && arg[0] != '\0')
 	{
 		send_to_char(FB_GREEN "[Autopilot]: " FB_CYAN
-		"Procedura l±dowania zainicjowana...." EOL, ch);
+		"Procedura lï¿½dowania zainicjowana...." EOL, ch);
 	}
 
 	if (is_platform(ship) && arg[0] != '\0')
 	{
-		send_to_char(FB_RED "Nie mo¿esz wyl±dowaæ platform±!" EOL, ch);
+		send_to_char(FB_RED "Nie moï¿½esz wylï¿½dowaï¿½ platformï¿½!" EOL, ch);
 		return;
 	}
 
 	if (is_huge(ship) && arg[0] != '\0')
 	{
 		send_to_char(FB_RED
-		"Ten statek jest zbyt du¿y by wyl±dowaæ. We¼ lepiej szalupê."
+		"Ten statek jest zbyt duï¿½y by wylï¿½dowaï¿½. Weï¿½ lepiej szalupï¿½."
 		EOL, ch);
 		return;
 	}
@@ -8702,7 +8648,7 @@ DEF_DO_FUN( land )
 	if (ship->size > 160)
 	{
 		send_to_char(FB_RED
-		"Ten statek jest zbyt du¿y by wyl±dowaæ. We¼ lepiej szalupê."
+		"Ten statek jest zbyt duï¿½y by wylï¿½dowaï¿½. Weï¿½ lepiej szalupï¿½."
 		EOL, ch);
 		return;
 	}
@@ -8710,20 +8656,20 @@ DEF_DO_FUN( land )
 	if (ship->shipstate == SHIP_DISABLED && arg[0] != '\0')
 	{
 		send_to_char(FB_RED
-		"Napêd statku jest uszkodzony. L±dowanie niemo¿liwe."
+		"Napï¿½d statku jest uszkodzony. Lï¿½dowanie niemoï¿½liwe."
 		EOL, ch);
 		return;
 	}
 
 	if (ship->shipstate == SHIP_DOCKED)
 	{
-		send_to_char(FB_RED "Ten statek jest ju¿ chyba zadokowany!" EOL, ch);
+		send_to_char(FB_RED "Ten statek jest juï¿½ chyba zadokowany!" EOL, ch);
 		return;
 	}
 
 	if (ship->shipstate == SHIP_HYPERSPACE)
 	{
-		send_to_char(FB_RED "Nie mo¿esz zrobic tego w hiperprzestrzeni!" EOL,
+		send_to_char(FB_RED "Nie moï¿½esz zrobic tego w hiperprzestrzeni!" EOL,
 				ch);
 		return;
 	}
@@ -8731,19 +8677,19 @@ DEF_DO_FUN( land )
 	if (ship->shipstate != SHIP_READY && arg[0] != '\0')
 	{
 		send_to_char(FB_RED
-		"Poczekaj, a¿ statek zakoñczy swój aktualny manewr." EOL, ch);
+		"Poczekaj, aï¿½ statek zakoï¿½czy swï¿½j aktualny manewr." EOL, ch);
 		return;
 	}
 
 	if ((starsystem = ship->starsystem) == NULL)
 	{
-		send_to_char(FB_RED "Ale tu nie ma gdzie l±dowaæ!" EOL, ch);
+		send_to_char(FB_RED "Ale tu nie ma gdzie lï¿½dowaï¿½!" EOL, ch);
 		return;
 	}
 
 	if (ship->energy < (25 + 2 * (ship->size / 10)))
 	{
-		send_to_char(FB_RED "Za ma³o paliwa!" EOL, ch);
+		send_to_char(FB_RED "Za maï¿½o paliwa!" EOL, ch);
 		return;
 	}
 
@@ -8753,11 +8699,10 @@ DEF_DO_FUN( land )
 
 	if (arg1[0] == '\0')
 	{
-		pager_printf(ch, "Wyl±dowaæ gdzie?" NL NL "Oto dostêpne l±dowiska:" NL);
+		pager_printf(ch, "Wylï¿½dowaï¿½ gdzie?" NL NL "Oto dostï¿½pne lï¿½dowiska:" NL);
 
-		for (planet = starsystem->first_planet; planet;
-				planet = planet->next_in_system)
-			for (dock = planet->first_dock; dock; dock = dock->next)
+		for (auto* planet : starsystem->planets)
+			for (auto* dock : planet->docks)
 			{
 				if (IS_SET(ch->act, PLR_HOLYLIGHT)
 						|| (srange((ship->vx - planet->xpos),
@@ -8780,7 +8725,7 @@ DEF_DO_FUN( land )
 						&& dock->hidden == 0)
 				{
 					pager_printf(ch,
-							"     Planetarny sygna³ ILS:  %.0f %.0f %.0f" NL,
+							"     Planetarny sygnaï¿½ ILS:  %.0f %.0f %.0f" NL,
 							planet->xpos - ship->vx
 									+ number_range(-20, 20) * 10,
 							planet->ypos - ship->vy
@@ -8792,7 +8737,7 @@ DEF_DO_FUN( land )
 					pager_printf(ch, " \r");
 			}
 
-		for (moon = starsystem->first_moon; moon; moon = moon->next)
+		for (auto* moon : starsystem->moons)
 			if (moon->vnum != 0)
 			{
 				if (IS_SET(ch->act, PLR_HOLYLIGHT)
@@ -8813,7 +8758,7 @@ DEF_DO_FUN( land )
 						< ship->comm * 7000 / emp)
 				{
 					pager_printf(ch,
-							"     Planetarny sygna³ ILS:  %.0f %.0f %.0f" NL,
+							"     Planetarny sygnaï¿½ ILS:  %.0f %.0f %.0f" NL,
 							moon->xpos - ship->vx + number_range(-20, 20) * 10,
 							moon->ypos - ship->vy + number_range(-20, 20) * 10,
 							moon->zpos - ship->vz + number_range(-20, 20) * 10);
@@ -8822,8 +8767,7 @@ DEF_DO_FUN( land )
 					pager_printf(ch, " \r");
 			}
 
-		for (target = ship->starsystem->first_ship; target;
-				target = target->next_in_starsystem)
+		for (auto* target : ship->starsystem->ships)
 		{
 			if (target->cloack != 0
 					|| (!has_hangar(target) && !has_dock(target))
@@ -8835,7 +8779,7 @@ DEF_DO_FUN( land )
 					(target->vz - ship->vz)) > ship->comm * 1500 / emp)
 			{
 				if (has_hangar(target) && target != ship)
-					pager_printf(ch, "     Sygna³ ILS:   %.0f %.0f %.0f" NL,
+					pager_printf(ch, "     Sygnaï¿½ ILS:   %.0f %.0f %.0f" NL,
 							target->vx - ship->vx + number_range(-20, 20) * 10,
 							target->vy - ship->vy + number_range(-20, 20) * 10,
 							target->vz - ship->vz + number_range(-20, 20) * 10);
@@ -8851,8 +8795,7 @@ DEF_DO_FUN( land )
 						target->vz - ship->vz);
 				count = 0;
 
-				for (hangar = target->first_hangar; hangar;
-						hangar = hangar->next)
+				for (auto* hangar : target->hangars)
 				{
 					pager_printf(ch,
 							" " FB_GREEN "*" PLAIN "%s%s    hangar nr " FB_YELLOW "%d" EOL,
@@ -8868,7 +8811,7 @@ DEF_DO_FUN( land )
 
 				count = 0;
 
-				for (shdock = target->first_dock; shdock; shdock = shdock->next)
+				for (auto* shdock : target->docks)
 				{
 					pager_printf(ch,
 							" " PLAIN "%s    cuma   nr " FB_YELLOW "%d" PLAIN "   typu: %s" EOL,
@@ -8880,7 +8823,7 @@ DEF_DO_FUN( land )
 				}
 			}
 		}
-		pager_printf(ch, NL "B - zajêty, F - brak miejsc, C - zamkniêty" NL);
+		pager_printf(ch, NL "B - zajï¿½ty, F - brak miejsc, C - zamkniï¿½ty" NL);
 		return;
 	}
 
@@ -8889,7 +8832,7 @@ DEF_DO_FUN( land )
 		if (target == ship)
 		{
 			send_to_char(
-					FB_RED "Nie mo¿esz wyl±dowaæ na statku, w którym jeste¶!" EOL,
+					FB_RED "Nie moï¿½esz wylï¿½dowaï¿½ na statku, w ktï¿½rym jesteï¿½!" EOL,
 					ch);
 			return;
 		}
@@ -8897,7 +8840,7 @@ DEF_DO_FUN( land )
 		if (target->cloack != 0)
 		{
 			send_to_char(
-					FB_RED "Nie ma tu takiej stacji. Wpisz 'land' by zobaczyæ dostêpne l±dowiska!" EOL,
+					FB_RED "Nie ma tu takiej stacji. Wpisz 'land' by zobaczyï¿½ dostï¿½pne lï¿½dowiska!" EOL,
 					ch);
 			return;
 		}
@@ -8917,7 +8860,7 @@ DEF_DO_FUN( land )
 		/* Pixel: z zasady nie, ale to powinno byc ograniczone wylaczenie rozmiarem hangaru i statku
 		 if(ship->clazz == target->clazz)
 		 {
-		 send_to_char(FB_RED "Niestety statki podobnej klasy nie mieszcz± siê w sobie nawzajem!" EOL, ch);
+		 send_to_char(FB_RED "Niestety statki podobnej klasy nie mieszczï¿½ siï¿½ w sobie nawzajem!" EOL, ch);
 		 return;
 		 }*/
 
@@ -8925,7 +8868,7 @@ DEF_DO_FUN( land )
 				(target->vz - ship->vz)) > ship->comm * 1500 / emp)
 		{
 			send_to_char(
-					FB_RED "Komputer nie mo¿e poprawnie namierzyæ sygna³u ILS" EOL,
+					FB_RED "Komputer nie moï¿½e poprawnie namierzyï¿½ sygnaï¿½u ILS" EOL,
 					ch);
 			return;
 		}
@@ -8935,7 +8878,7 @@ DEF_DO_FUN( land )
 				> (200 + (ship->size + target->size) / 10) / emp)
 		{
 			send_to_char(
-					FB_RED "To za daleko! Musisz podlecieæ nieco bli¿ej." EOL,
+					FB_RED "To za daleko! Musisz podlecieï¿½ nieco bliï¿½ej." EOL,
 					ch);
 			return;
 		}
@@ -8948,14 +8891,14 @@ DEF_DO_FUN( land )
 
 		if (hangar->status == -1)
 		{
-			send_to_char(FB_RED "Hangar jest zamkniêty" EOL, ch);
+			send_to_char(FB_RED "Hangar jest zamkniï¿½ty" EOL, ch);
 			return;
 		}
 
 		if (check_capacity(hangar->vnum) + ship->size / 10 > hangar->capacity)
 		{
 			sprintf(buf,
-					FB_RED "Navigator" FB_CYAN " og³asza przez komunikator 'Brak wolnych miejsc.'" EOL);
+					FB_RED "Navigator" FB_CYAN " ogï¿½asza przez komunikator 'Brak wolnych miejsc.'" EOL);
 			send_to_char(buf, ch);
 			return;
 		}
@@ -8970,7 +8913,7 @@ DEF_DO_FUN( land )
 					> (ship->comm * 3500 + planet->radius) / emp)
 			{
 				send_to_char(
-						FB_RED "Komputer nie mo¿e poprawnie namierzyæ sygna³u ILS" EOL,
+						FB_RED "Komputer nie moï¿½e poprawnie namierzyï¿½ sygnaï¿½u ILS" EOL,
 						ch);
 				return;
 			}
@@ -8981,7 +8924,7 @@ DEF_DO_FUN( land )
 							/ emp) //Pixel: 300+
 			{
 				send_to_char(
-						FB_RED "To za daleko! Musisz podlecieæ nieco bli¿ej." EOL,
+						FB_RED "To za daleko! Musisz podlecieï¿½ nieco bliï¿½ej." EOL,
 						ch);
 				return;
 			}
@@ -8989,7 +8932,7 @@ DEF_DO_FUN( land )
 			if (check_capacity(dock->vnum) + ship->size / 10 > dock->capacity)
 			{
 				sprintf(buf,
-						FB_CYAN "[Kontrola lotów %s] :" FB_RED " Przykro nam nie mamy wolnych miejsc." EOL,
+						FB_CYAN "[Kontrola lotï¿½w %s] :" FB_RED " Przykro nam nie mamy wolnych miejsc." EOL,
 						planet->name);
 				send_to_char(buf, ch);
 				return;
@@ -8998,7 +8941,7 @@ DEF_DO_FUN( land )
 			if (dock->capacity <= 0 || dock->vnum == 0)
 			{
 				sprintf(buf,
-						FB_CYAN "[Komputer pok³adowy] :" FB_RED "BzzzBzZyp" EOL);
+						FB_CYAN "[Komputer pokï¿½adowy] :" FB_RED "BzzzBzZyp" EOL);
 				send_to_char(buf, ch);
 				return;
 			}
@@ -9010,7 +8953,7 @@ DEF_DO_FUN( land )
 				(moon->zpos - ship->vz)) > ship->comm * 3500 / emp)
 		{
 			send_to_char(
-					FB_RED "Komputer nie mo¿e poprawnie namierzyæ sygna³u ILS" EOL,
+					FB_RED "Komputer nie moï¿½e poprawnie namierzyï¿½ sygnaï¿½u ILS" EOL,
 					ch);
 			return;
 		}
@@ -9020,7 +8963,7 @@ DEF_DO_FUN( land )
 				> (300 + moon->gravity + ship->size / 10) / emp)
 		{
 			send_to_char(
-					FB_RED "To za daleko! Musisz podlecieæ nieco bli¿ej." EOL,
+					FB_RED "To za daleko! Musisz podlecieï¿½ nieco bliï¿½ej." EOL,
 					ch);
 			return;
 		}
@@ -9028,7 +8971,7 @@ DEF_DO_FUN( land )
 		if (check_capacity(moon->vnum) + ship->size / 10 > moon->capacity)
 		{
 			sprintf(buf,
-					FB_CYAN "[Kontrola lotów %s] :" FB_RED " Przykro nam nie mamy wolnych miejsc." EOL,
+					FB_CYAN "[Kontrola lotï¿½w %s] :" FB_RED " Przykro nam nie mamy wolnych miejsc." EOL,
 					moon->name);
 			send_to_char(buf, ch);
 			return;
@@ -9037,7 +8980,7 @@ DEF_DO_FUN( land )
 		if (moon->capacity <= 0 || moon->vnum == 0)
 		{
 			sprintf(buf,
-					FB_CYAN "[Komputer pok³adowy] :" FB_RED "BzzzBzZyp" EOL);
+					FB_CYAN "[Komputer pokï¿½adowy] :" FB_RED "BzzzBzZyp" EOL);
 			send_to_char(buf, ch);
 			return;
 		}
@@ -9045,7 +8988,7 @@ DEF_DO_FUN( land )
 	else
 	{
 		send_to_char(
-				FB_RED "Nie ma tu takiego l±dowiska." NL "   Wpisz 'LAND' a uzyskasz spis dostêpnych l±dowisk" NL,
+				FB_RED "Nie ma tu takiego lï¿½dowiska." NL "   Wpisz 'LAND' a uzyskasz spis dostï¿½pnych lï¿½dowisk" NL,
 				ch);
 		return;
 	}
@@ -9054,10 +8997,10 @@ DEF_DO_FUN( land )
 	if (number_percent() < chance)
 	{
 		send_to_char(FB_GREEN, ch);
-		send_to_char("Procedura l±dowania zainicjowana." NL, ch);
-		act(PLAIN, "$n kieruje statek do l±dowania.", ch, NULL, argument,
+		send_to_char("Procedura lï¿½dowania zainicjowana." NL, ch);
+		act(PLAIN, "$n kieruje statek do lï¿½dowania.", ch, NULL, argument,
 				TO_ROOM);
-		echo_to_ship(ship, FB_YELLOW "Statek powoli podchodzi do l±dowania.");
+		echo_to_ship(ship, FB_YELLOW "Statek powoli podchodzi do lï¿½dowania.");
 
 		STRDUP(ship->dest, arg);
 		ship->shipstate = SHIP_LAND;
@@ -9073,13 +9016,13 @@ DEF_DO_FUN( land )
 			gain_exp(ch, xp, PILOTING_ABILITY);
 
 			ch_printf(ch,
-					FB_WHITE "Zdobywasz %ld punktów do¶wiadczenia w pilotowaniu!" NL,
+					FB_WHITE "Zdobywasz %ld punktï¿½w doï¿½wiadczenia w pilotowaniu!" NL,
 					UMIN(get_ship_value(ship), xp));
 		}
 		fevent_trigger(ch, FE_LAND_SHIP, ship);
 		return;
 	}
-	send_to_char("Jako¶ nie uda³o ci siê poprawnie obs³u¿yæ urz±dzeñ." NL, ch);
+	send_to_char("Jakoï¿½ nie udaï¿½o ci siï¿½ poprawnie obsï¿½uï¿½yï¿½ urzï¿½dzeï¿½." NL, ch);
 	learn_from_failure_space(ship, ch);
 	return;
 }
@@ -9123,23 +9066,23 @@ void landship(SHIP_DATA *ship, char *argument)
 	{
 		echo_to_room(ship->pilotseat,
 		FB_YELLOW
-		"Nie mo¿na wyl±dowaæ! Sekwencja l±dowania przerwana.");
+		"Nie moï¿½na wylï¿½dowaï¿½! Sekwencja lï¿½dowania przerwana.");
 		echo_to_ship(ship,
 		FB_YELLOW
-		"Statek wzbija siê do góry przerywaj±c l±dowanie.");
+		"Statek wzbija siï¿½ do gï¿½ry przerywajï¿½c lï¿½dowanie.");
 		if (ship->shipstate != SHIP_DISABLED)
 			ship->shipstate = SHIP_READY;
 		return;
 	}
 
-	echo_to_room(ship->pilotseat, FB_YELLOW "Procedura l±dowania zakoñczona.");
+	echo_to_room(ship->pilotseat, FB_YELLOW "Procedura lï¿½dowania zakoï¿½czona.");
 	echo_to_ship(ship,
 	FB_YELLOW
-	"Czujesz delikatny wstrz±s, gdy statek osiada na powierzchni.");
+	"Czujesz delikatny wstrzï¿½s, gdy statek osiada na powierzchni.");
 	ship->last_dock_with = NULL;
 	if (ship->cloack == 0)
 	{
-		sprintf(buf, FB_YELLOW "%s l±duje na l±dowisku.", ship->sslook);
+		sprintf(buf, FB_YELLOW "%s lï¿½duje na lï¿½dowisku.", ship->sslook);
 		echo_to_system(ship, buf, NULL);
 	}
 	if (ship->cloack != 0)
@@ -9163,7 +9106,7 @@ void landship(SHIP_DATA *ship, char *argument)
 		ship->shipstate = SHIP_DOCKED;
 	ship_from_starsystem(ship, ship->starsystem);
 
-	sprintf(buf, FB_YELLOW "%s l±duje na platformie.", SHIPNAME(ship));
+	sprintf(buf, FB_YELLOW "%s lï¿½duje na platformie.", SHIPNAME(ship));
 	echo_to_room(ship->location, buf);
 
 	ship->energy = ship->energy - 25 - 2 * (ship->size / 10);
@@ -9204,7 +9147,7 @@ DEF_DO_FUN( accelerate )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku by to zrobiæ!" NL,
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku by to zrobiï¿½!" NL,
 				ch);
 		return;
 	}
@@ -9212,13 +9155,13 @@ DEF_DO_FUN( accelerate )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	if ((ship = ship_from_pilotseat(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz siedzieæ w fotelu pilota..." NL, ch);
+		send_to_char(FB_RED "Musisz siedzieï¿½ w fotelu pilota..." NL, ch);
 		return;
 	}
 
@@ -9233,13 +9176,13 @@ DEF_DO_FUN( accelerate )
 			(atoi(argument) - abs(ship->currspeed)) * ship->size / 100);
 	if (ship->energy < energychange)
 	{
-		send_to_char(FB_RED "Za ma³o paliwa!" NL, ch);
+		send_to_char(FB_RED "Za maï¿½o paliwa!" NL, ch);
 		return;
 	}
 	chance = get_space_chance(ship, ch);
 	if (number_percent() >= chance)
 	{
-		send_to_char(FB_RED "Nie uda³o ci siê poprawnie obs³u¿yæ urz±dzeñ."
+		send_to_char(FB_RED "Nie udaï¿½o ci siï¿½ poprawnie obsï¿½uï¿½yï¿½ urzï¿½dzeï¿½."
 		NL, ch);
 		learn_from_failure_space(ship, ch);
 		return;
@@ -9247,7 +9190,7 @@ DEF_DO_FUN( accelerate )
 
 	change = atoi(argument);
 
-	act(PLAIN, "$n wciska jakie¶ przyciski na panelu sterowania.", ch, NULL,
+	act(PLAIN, "$n wciska jakieï¿½ przyciski na panelu sterowania.", ch, NULL,
 			argument, TO_ROOM);
 
 	if (autofly(ship))
@@ -9255,7 +9198,7 @@ DEF_DO_FUN( accelerate )
 	if (change > ship->currspeed)
 	{
 		send_to_char("&GPrzyspieszanie" NL, ch);
-		echo_to_cockpit(ship, FB_YELLOW "Statek zaczyna przyspieszaæ.");
+		echo_to_cockpit(ship, FB_YELLOW "Statek zaczyna przyspieszaï¿½.");
 		if (ship->cloack == 0)
 		{
 			sprintf(buf, FG_YELLOW "%s przyspiesza.", ship->sslook);
@@ -9266,7 +9209,7 @@ DEF_DO_FUN( accelerate )
 	if (change < ship->currspeed)
 	{
 		send_to_char("&GZwolnienie" NL, ch);
-		echo_to_cockpit(ship, FB_YELLOW "Statek zaczyna zwalniaæ.");
+		echo_to_cockpit(ship, FB_YELLOW "Statek zaczyna zwalniaï¿½.");
 		if (ship->cloack == 0)
 		{
 			sprintf(buf, FG_YELLOW "%s zwalnia.", ship->sslook);
@@ -9276,18 +9219,18 @@ DEF_DO_FUN( accelerate )
 
 	if (autofly(ship))
 	{
-		send_to_char(FB_RED "    wy³±czam siê..." EOL, ch);
+		send_to_char(FB_RED "    wyï¿½ï¿½czam siï¿½..." EOL, ch);
 		ship->autopilot = false;
 	}
 	ship->energy -= URANGE(1, energychange, 300);
 
 	ship->currspeed = URANGE(0, change, ship->realspeed);
 
-	for (dock = ship->first_dock; dock; dock = dock->next)
+	for (auto* dock : ship->docks)
 	{
 		if ((target = dock->target) != NULL)
 		{
-			echo_to_cockpit(target, FB_YELLOW "Zmiana prêdko¶ci." NL);
+			echo_to_cockpit(target, FB_YELLOW "Zmiana prï¿½dkoï¿½ci." NL);
 			target->currspeed = ship->currspeed;
 			ship->energy -= target->size / 100;
 		}
@@ -9308,7 +9251,7 @@ DEF_DO_FUN( trajectory )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku by to zrobiæ!" NL,
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku by to zrobiï¿½!" NL,
 				ch);
 		return;
 	}
@@ -9316,7 +9259,7 @@ DEF_DO_FUN( trajectory )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
@@ -9335,20 +9278,20 @@ DEF_DO_FUN( trajectory )
 
 	if (ship->shipstate != SHIP_READY)
 	{
-		send_to_char(FB_RED "Poczekaj a¿ statek zakoñczy aktualny manewr." NL,
+		send_to_char(FB_RED "Poczekaj aï¿½ statek zakoï¿½czy aktualny manewr." NL,
 				ch);
 		return;
 	}
 	if (ship->energy < (ship->currspeed * ship->size) / 100)
 	{
-		send_to_char(FB_RED "Masz za ma³o paliwa!" NL, ch);
+		send_to_char(FB_RED "Masz za maï¿½o paliwa!" NL, ch);
 		return;
 	}
 
 	chance = get_space_chance(ship, ch);
 	if (number_percent() > chance)
 	{
-		send_to_char(FB_RED "Nie uda³o ci siê poprawnie obs³u¿yæ urz±dzeñ."
+		send_to_char(FB_RED "Nie udaï¿½o ci siï¿½ poprawnie obsï¿½uï¿½yï¿½ urzï¿½dzeï¿½."
 		NL, ch);
 		learn_from_failure_space(ship, ch);
 		return;
@@ -9356,7 +9299,7 @@ DEF_DO_FUN( trajectory )
 
 	argument = one_argument(argument, arg2);
 	argument = one_argument(argument, arg3);
-	if (!str_cmp(arg2, "back") || !str_cmp(arg2, "ty³"))
+	if (!str_cmp(arg2, "back") || !str_cmp(arg2, "tyï¿½"))
 	{
 		vx = -ship->hx + ship->vx;
 		vy = -ship->hy + ship->vy;
@@ -9393,7 +9336,7 @@ DEF_DO_FUN( trajectory )
 		else
 		{
 			ch_printf(ch,
-			FB_RED "W kierunku czego chcesz obróciæ swój statek?"
+			FB_RED "W kierunku czego chcesz obrï¿½ciï¿½ swï¿½j statek?"
 			NL);
 			return;
 		}
@@ -9402,7 +9345,7 @@ DEF_DO_FUN( trajectory )
 		return;
 	if (vx == ship->vx && vy == ship->vy && vz == ship->vz)
 	{
-		ch_printf(ch, "Statek jest ju¿ w pozycji solarnej %.0f %.0f %.0f !" NL,
+		ch_printf(ch, "Statek jest juï¿½ w pozycji solarnej %.0f %.0f %.0f !" NL,
 				vx, vy, vz);
 	}
 
@@ -9412,7 +9355,7 @@ DEF_DO_FUN( trajectory )
 
 	ship->energy -= ((ship->currspeed * ship->size) / 100);
 
-	for (dock = ship->first_dock; dock; dock = dock->next)
+	for (auto* dock : ship->docks)
 	{
 		if ((target = dock->target) != NULL)
 		{
@@ -9427,13 +9370,13 @@ DEF_DO_FUN( trajectory )
 		ch_printf(ch, FB_YELLOW "[Autopilot]: ");
 
 	ch_printf(ch, FB_GREEN "Nowy kurs ustalony. Zwrot na: %.0f %.0f %.0f ." NL
-	"Solarne wspó³rzêdne docelowe: %.0f %.0f %.0f ." NL, vx - ship->vx,
+	"Solarne wspï¿½rzï¿½dne docelowe: %.0f %.0f %.0f ." NL, vx - ship->vx,
 			vy - ship->vy, vz - ship->vz, vx, vy, vz);
 
-	act(PLAIN, "$n manipuluje d¼wigniami sterowania.", ch, NULL, argument,
+	act(PLAIN, "$n manipuluje dï¿½wigniami sterowania.", ch, NULL, argument,
 	TO_ROOM);
 
-	echo_to_cockpit(ship, FB_YELLOW "Statek zaczyna zmieniaæ kurs." NL);
+	echo_to_cockpit(ship, FB_YELLOW "Statek zaczyna zmieniaï¿½ kurs." NL);
 	if (ship->cloack == 0)
 	{
 		sprintf(buf, FG_YELLOW "%s zmienia obecny kurs.", ship->sslook);
@@ -9485,14 +9428,14 @@ DEF_DO_FUN( buyship )
 
 		if (!ship)
 		{
-			act(PLAIN, "Nie ma tu ¿adnego $T.", ch, NULL, argument, TO_CHAR);
+			act(PLAIN, "Nie ma tu ï¿½adnego $T.", ch, NULL, argument, TO_CHAR);
 			return;
 		}
 	}
 
 	if (str_cmp(ship->owner, "") || ship->type == MOB_SHIP)
 	{
-		send_to_char(FB_RED "Ten statek nie jest na sprzeda¿." EOL, ch);
+		send_to_char(FB_RED "Ten statek nie jest na sprzedaï¿½." EOL, ch);
 		return;
 	}
 
@@ -9507,7 +9450,7 @@ DEF_DO_FUN( buyship )
 	}
 
 	ch->gold -= price;
-	ch_printf(ch, FB_GREEN "P³acisz %ld kredytek za nabycie statku." EOL,
+	ch_printf(ch, FB_GREEN "Pï¿½acisz %ld kredytek za nabycie statku." EOL,
 			price);
 
 	act(PLAIN, "$n podchodzi do terminala i dokonuje transakcji finansowej.",
@@ -9550,14 +9493,14 @@ DEF_DO_FUN( clanbuyship )
 
 		if (!ship)
 		{
-			act(PLAIN, "Nie widzê tu $T.", ch, NULL, argument, TO_CHAR);
+			act(PLAIN, "Nie widzï¿½ tu $T.", ch, NULL, argument, TO_CHAR);
 			return;
 		}
 	}
 
 	if (str_cmp(ship->owner, "") || ship->type == MOB_SHIP)
 	{
-		send_to_char(FB_RED "Ten statek nie jest na sprzeda¿." NL, ch);
+		send_to_char(FB_RED "Ten statek nie jest na sprzedaï¿½." NL, ch);
 		return;
 	}
 
@@ -9566,15 +9509,15 @@ DEF_DO_FUN( clanbuyship )
 	if (ch->pcdata->clan->funds < price)
 	{
 		ch_printf(ch, FB_RED "Ten statek kosztuje %ld kredytek." EOL
-		FB_RED " Twój klan nie dysponuje tak± sum±!" EOL, price);
+		FB_RED " Twï¿½j klan nie dysponuje takï¿½ sumï¿½!" EOL, price);
 		return;
 	}
 
 	clan->funds -= price;
-	ch_printf(ch, FB_GREEN "%s p³aci %ld kredytek za zakup statku." EOL,
+	ch_printf(ch, FB_GREEN "%s pï¿½aci %ld kredytek za zakup statku." EOL,
 			clan->name, price);
 
-	act(PLAIN, "$n podchodzi do terminala i wykonuje transakcje finansow±.", ch,
+	act(PLAIN, "$n podchodzi do terminala i wykonuje transakcje finansowï¿½.", ch,
 			NULL, argument, TO_ROOM);
 
 	STRDUP(ship->owner, clan->name);
@@ -9601,7 +9544,7 @@ DEF_DO_FUN( sellship )
 	ship = ship_in_room(ch->in_room, argument);
 	if (!ship)
 	{
-		act(PLAIN, "Nie widzê tu ¿adnego $T.", ch, NULL, argument, TO_CHAR);
+		act(PLAIN, "Nie widzï¿½ tu ï¿½adnego $T.", ch, NULL, argument, TO_CHAR);
 		return;
 	}
 
@@ -9617,14 +9560,14 @@ DEF_DO_FUN( sellship )
 
 	if (!owner)
 	{
-		send_to_char(FB_RED "To nie twój statek!" EOL, ch);
+		send_to_char(FB_RED "To nie twï¿½j statek!" EOL, ch);
 		return;
 	}
 
 	price = get_ship_value(ship);
 
 	ch->gold += (price - price / 10);
-	ch_printf(ch, FB_GREEN "Otrzymujesz %ld kredytek za sprzeda¿ statku." EOL,
+	ch_printf(ch, FB_GREEN "Otrzymujesz %ld kredytek za sprzedaï¿½ statku." EOL,
 			price - price / 10);
 
 	act(PLAIN, "$n podchodzi do terminala i dokonuje transakcji finansowej.",
@@ -9648,14 +9591,14 @@ DEF_DO_FUN( info )
 	{
 		if (argument[0] == '\0')
 		{
-			act(PLAIN, "Informacje na temat jekiego statku chcesz otrzymaæ?",
+			act(PLAIN, "Informacje na temat jekiego statku chcesz otrzymaï¿½?",
 					ch, NULL, NULL, TO_CHAR);
 			return;
 		}
 
 		if (!get_comlink(ch))
 		{
-			act(PLAIN, "By to zrobiæ potrzebujesz urz±dzenia komunikacyjnego!",
+			act(PLAIN, "By to zrobiï¿½ potrzebujesz urzï¿½dzenia komunikacyjnego!",
 					ch, NULL, NULL, TO_CHAR);
 			return;
 		}
@@ -9663,8 +9606,8 @@ DEF_DO_FUN( info )
 		ship = ship_in_room(ch->in_room, argument);
 		if (!ship)
 		{
-			ch_printf(ch, "Nie widzisz tu ¿adnego %s." EOL
-			"Spróbuj 'radar'." NL, argument);
+			ch_printf(ch, "Nie widzisz tu ï¿½adnego %s." EOL
+			"Sprï¿½buj 'radar'." NL, argument);
 			return;
 		}
 
@@ -9679,7 +9622,7 @@ DEF_DO_FUN( info )
 	{
 		send_to_char(
 				FB_RED
-				"Jeste¶ wewn±trz wytworu obcej biotechnologi, niestety nie masz o niej zielonego pojêcia."
+				"Jesteï¿½ wewnï¿½trz wytworu obcej biotechnologi, niestety nie masz o niej zielonego pojï¿½cia."
 				EOL, ch);
 		return;
 	}
@@ -9702,7 +9645,7 @@ DEF_DO_FUN( info )
 			(target->vz - ship->vz)) * emp
 			> ship->target_array * 800 + target->size * 10)
 	{
-		send_to_char("Ten statek jest zbyt daleko, by siê dowiedzieæ." NL, ch);
+		send_to_char("Ten statek jest zbyt daleko, by siï¿½ dowiedzieï¿½." NL, ch);
 		return;
 	}
 
@@ -9718,7 +9661,7 @@ DEF_DO_FUN( info )
 //      {
 			sprintf(buf,
 					target->type == SHIP_REPUBLIC ?
-							"NowoRepublikañski" :
+							"NowoRepublikaï¿½ski" :
 							(target->type == SHIP_IMPERIAL ?
 									"Imperialny" :
 									(target->type == SHIP_PIRATE ?
@@ -9727,9 +9670,9 @@ DEF_DO_FUN( info )
 			/*	}
 			 else
 			 {
-			 sprintf( buf, target->type == SHIP_REPUBLIC	? "NowoRepublikañsk±" :
-			 (target->type == SHIP_IMPERIAL	? "Imperialn±" :
-			 "Cywiln±" ) );
+			 sprintf( buf, target->type == SHIP_REPUBLIC	? "NowoRepublikaï¿½skï¿½" :
+			 (target->type == SHIP_IMPERIAL	? "Imperialnï¿½" :
+			 "Cywilnï¿½" ) );
 			 }
 			 */
 			pager_printf(ch, "Patrzysz na " FB_WHITE "%s" PLAIN " statek klasy:"
@@ -9742,44 +9685,44 @@ DEF_DO_FUN( info )
 				is_scout(target) ?
 						"szkoleniowy" :
 						(is_fighter(target) ?
-								"my¶liwiec" :
+								"myï¿½liwiec" :
 								(is_midship(target) ?
-										"¶rednia" :
+										"ï¿½rednia" :
 										(is_freighter(target) ?
 												"frachtowiec" :
 												(is_capital(target) ?
-														"okrêt" :
+														"okrï¿½t" :
 														(is_huge(target) ?
 																"supership" :
 																(is_platform(
 																		target) ?
 																		"stacja kosmiczna" :
-																		"Hmm jaki¶ b³±d albo speeder")))))));
+																		"Hmm jakiï¿½ bï¿½ï¿½d albo speeder")))))));
 
 		if (*target->description) /* I tutaj ja -- Than */
 			pager_printf(ch, "%s" EOL, target->description);
-		pager_printf(ch, "Dzia³ka Laserowe:    %d    Dzia³ka Jonowe:    %d" NL,
+		pager_printf(ch, "Dziaï¿½ka Laserowe:    %d    Dziaï¿½ka Jonowe:    %d" NL,
 				target->lasers, target->ioncannons);
-		pager_printf(ch, "Max. Ilo¶æ pocisków: %d / %d / %d   %s" NL,
+		pager_printf(ch, "Max. Iloï¿½ï¿½ pociskï¿½w: %d / %d / %d   %s" NL,
 				target->maxmissiles, target->torpedos, target->rockets,
 				target->trawler == 0 ? "" : "Zbieracz Min");
-		pager_printf(ch, "Max. Ilo¶æ Flar:     %d" NL, target->maxchaff);
-		pager_printf(ch, "Max. Wytrzyma³o¶æ Kad³ubu: %d" NL, target->maxhull);
+		pager_printf(ch, "Max. Iloï¿½ï¿½ Flar:     %d" NL, target->maxchaff);
+		pager_printf(ch, "Max. Wytrzymaï¿½oï¿½ï¿½ Kadï¿½ubu: %d" NL, target->maxhull);
 		pager_printf(ch, "Max. Moc Tarczy: %d   Max. Energia(paliwo): %d" NL,
 				target->maxshield, target->maxenergy);
 		pager_printf(ch,
-				"Max. Prêdko¶æ:   %.0f    Hiperprêdko¶æ:        %.0f" NL,
+				"Max. Prï¿½dkoï¿½ï¿½:   %.0f    Hiperprï¿½dkoï¿½ï¿½:        %.0f" NL,
 				target->realspeed, target->hyperspeed);
 		pager_printf(ch, "Radar:           Mk%d  System rozpoznawczy:  Mk%d" NL,
 				target->sensor, target->target_array);
-		pager_printf(ch, "£adowno¶æ %d" NL, target->maxcargo);
+		pager_printf(ch, "ï¿½adownoï¿½ï¿½ %d" NL, target->maxcargo);
 	}
 	else
 	{
 		yuuzhan_info(target, ch);
 	}
 	act(PLAIN,
-			"$n sprawdza wska¼niki kontrolek i stan monitorów na panelu sterowania.",
+			"$n sprawdza wskaï¿½niki kontrolek i stan monitorï¿½w na panelu sterowania.",
 			ch, NULL, argument, TO_ROOM);
 }
 
@@ -9791,7 +9734,7 @@ DEF_DO_FUN( autorecharge )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku by to zrobiæ." EOL,
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku by to zrobiï¿½." EOL,
 				ch);
 		return;
 	}
@@ -9799,20 +9742,20 @@ DEF_DO_FUN( autorecharge )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	if ((ship = ship_from_coseat(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz siedzieæ w fotelu drugiego pilota." EOL,
+		send_to_char(FB_RED "Musisz siedzieï¿½ w fotelu drugiego pilota." EOL,
 				ch);
 		return;
 	}
 
 	if (autofly(ship))
 	{
-		send_to_char(FB_RED "Musisz wy³±czyæ najpierw autopilota." EOL, ch);
+		send_to_char(FB_RED "Musisz wyï¿½ï¿½czyï¿½ najpierw autopilota." EOL, ch);
 		return;
 	}
 
@@ -9823,19 +9766,19 @@ DEF_DO_FUN( autorecharge )
 
 	if (number_percent() > chance)
 	{
-		send_to_char(FB_RED "Nie uda³o ci siê poprawnie obs³u¿yæ urz±dzeñ."
+		send_to_char(FB_RED "Nie udaï¿½o ci siï¿½ poprawnie obsï¿½uï¿½yï¿½ urzï¿½dzeï¿½."
 		EOL, ch);
 		learn_from_failure(ch, gsn_shipsystems);
 		return;
 	}
 
-	act(PLAIN, "$n przestawia jak±¶ d¼wigniê na panelu sterowania.", ch, NULL,
+	act(PLAIN, "$n przestawia jakï¿½ï¿½ dï¿½wigniï¿½ na panelu sterowania.", ch, NULL,
 			argument, TO_ROOM);
 
 	if (IS_SET(ship->starsystem->flags, STARS_FLAG_EMP))
 	{
 		send_to_char(FB_RED
-		"W systemie panuje burza elektromagnetyczna, tarcze s± sparali¿owane!"
+		"W systemie panuje burza elektromagnetyczna, tarcze sï¿½ sparaliï¿½owane!"
 		NL, ch);
 		return;
 	}
@@ -9843,18 +9786,18 @@ DEF_DO_FUN( autorecharge )
 	if (!str_cmp(argument, "on"))
 	{
 		ship->autorecharge = true;
-		send_to_char(FB_GREEN "W³±czasz tarcze." EOL, ch);
+		send_to_char(FB_GREEN "Wï¿½ï¿½czasz tarcze." EOL, ch);
 		echo_to_cockpit(ship,
-		FB_YELLOW "Tarcze W£¡CZONE. Auto³adowanie W£¡CZONE.");
+		FB_YELLOW "Tarcze Wï¿½ï¿½CZONE. Autoï¿½adowanie Wï¿½ï¿½CZONE.");
 	}
 	else if (!str_cmp(argument, "off"))
 	{
 		ship->autorecharge = false;
-		send_to_char(FB_GREEN "Wy³±czasz tarcze." EOL, ch);
+		send_to_char(FB_GREEN "Wyï¿½ï¿½czasz tarcze." EOL, ch);
 		echo_to_cockpit(ship,
 		FB_YELLOW
-		"Tarcze WY£¡CZONE. Si³a pola 0. Energia przekazana do zasobów"
-		NL "Auto³adowanie WY£¡CZONE.");
+		"Tarcze WYï¿½ï¿½CZONE. Siï¿½a pola 0. Energia przekazana do zasobï¿½w"
+		NL "Autoï¿½adowanie WYï¿½ï¿½CZONE.");
 		ship->energy += ship->shield / 2;
 		ship->shield = 0;
 		if (ship->energy > ship->maxenergy)
@@ -9863,28 +9806,28 @@ DEF_DO_FUN( autorecharge )
 	else if (!str_cmp(argument, "idle"))
 	{
 		ship->autorecharge = false;
-		send_to_char(FB_GREEN "Wy³±czasz auto³adowanie." EOL, ch);
+		send_to_char(FB_GREEN "Wyï¿½ï¿½czasz autoï¿½adowanie." EOL, ch);
 		echo_to_cockpit(ship,
 		FB_YELLOW
-		"Auto³adowanie WY£¡CZONE. Tarcze podtrzymane.");
+		"Autoï¿½adowanie WYï¿½ï¿½CZONE. Tarcze podtrzymane.");
 	}
 	else
 	{
 		if (ship->autorecharge == true)
 		{
 			ship->autorecharge = false;
-			send_to_char(FB_GREEN "Prze³±czasz tarcze." EOL, ch);
+			send_to_char(FB_GREEN "Przeï¿½ï¿½czasz tarcze." EOL, ch);
 			echo_to_cockpit(ship,
 			FB_YELLOW
-			"Auto³adowanie WY£¡CZONE. Tarcze podtrzymane.");
+			"Autoï¿½adowanie WYï¿½ï¿½CZONE. Tarcze podtrzymane.");
 		}
 		else
 		{
 			ship->autorecharge = true;
-			send_to_char(FB_GREEN "Prze³±czasz tarcze." EOL, ch);
+			send_to_char(FB_GREEN "Przeï¿½ï¿½czasz tarcze." EOL, ch);
 			echo_to_cockpit(ship,
 			FB_YELLOW
-			"Tarcze W£¡CZONE. Auto³adowanie W£¡CZONE.");
+			"Tarcze Wï¿½ï¿½CZONE. Autoï¿½adowanie Wï¿½ï¿½CZONE.");
 		}
 	}
 
@@ -9911,14 +9854,14 @@ DEF_DO_FUN( interdict )
 
 	if ((ship = ship_from_coseat(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz siedzieæ w fotelu drugiego pilota." EOL,
+		send_to_char(FB_RED "Musisz siedzieï¿½ w fotelu drugiego pilota." EOL,
 				ch);
 		return;
 	}
 
 	if (!check_pilot(ch, ship))
 	{
-		send_to_char(FB_RED "Hej! To nie twój statek!" EOL, ch);
+		send_to_char(FB_RED "Hej! To nie twï¿½j statek!" EOL, ch);
 		return;
 	}
 
@@ -9931,18 +9874,18 @@ DEF_DO_FUN( interdict )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	if (IS_SET(ship->starsystem->flags, STARS_FLAG_EMP))
 	{
 		send_to_char(FB_RED "W systemie panuje burza elektromagnetyczna," NL
-		"generator studni grawitacyjnej jest sparali¿owany!" NL, ch);
+		"generator studni grawitacyjnej jest sparaliï¿½owany!" NL, ch);
 		return;
 	}
 
-	act(PLAIN, "$n wciska pare prze³aczników na panelu sterowania.", ch, NULL,
+	act(PLAIN, "$n wciska pare przeï¿½acznikï¿½w na panelu sterowania.", ch, NULL,
 			argument, TO_ROOM);
 
 	chance =
@@ -9955,18 +9898,18 @@ DEF_DO_FUN( interdict )
 		if (ship->interdict != 0)
 		{
 			ship->interdict = false;
-			send_to_char(FB_GREEN "Wy³aczasz pole wstrzymuj±ce." EOL, ch);
-			echo_to_ship(ship, FB_YELLOW "Pole wsztrzymuj±ce WY£¡CZONE.");
+			send_to_char(FB_GREEN "Wyï¿½aczasz pole wstrzymujï¿½ce." EOL, ch);
+			echo_to_ship(ship, FB_YELLOW "Pole wsztrzymujï¿½ce WYï¿½ï¿½CZONE.");
 			sprintf(buf,
 			FG_YELLOW
-			"Nienaturalne wibracje calego kadluba zanikaj±.");
+			"Nienaturalne wibracje calego kadluba zanikajï¿½.");
 			echo_to_system(ship, buf, NULL);
 		}
 		else
 		{
 			ship->interdict = ship->maxinterdict;
-			send_to_char(FB_GREEN "W³±czasz pole wstrzymuj±ce." EOL, ch);
-			echo_to_ship(ship, FB_YELLOW "Pole wstrzymuj±ce W£¡CZONE.");
+			send_to_char(FB_GREEN "Wï¿½ï¿½czasz pole wstrzymujï¿½ce." EOL, ch);
+			echo_to_ship(ship, FB_YELLOW "Pole wstrzymujï¿½ce Wï¿½ï¿½CZONE.");
 			learn_from_success(ch, gsn_advancedsystems);
 
 			if (ship->cloack == true)
@@ -9980,7 +9923,7 @@ DEF_DO_FUN( interdict )
 			{
 				sprintf(buf,
 						FG_YELLOW
-						"Czujesz wibracje calego kadluba. Ich ¼ród³o znajduje siê w podli¿u %s.",
+						"Czujesz wibracje calego kadluba. Ich ï¿½rï¿½dï¿½o znajduje siï¿½ w podliï¿½u %s.",
 						ship->sslook);
 				echo_to_system(ship, buf, NULL);
 			}
@@ -9989,7 +9932,7 @@ DEF_DO_FUN( interdict )
 	else
 	{
 		send_to_char(FB_GREEN
-		"Manipulujesz przy pulpicie pola wstrzymuj±cego." EOL, ch);
+		"Manipulujesz przy pulpicie pola wstrzymujï¿½cego." EOL, ch);
 		send_to_char(FB_RED "Nieskutecznie!!!." EOL, ch);
 
 		ship->energy -= 1000;
@@ -10015,7 +9958,7 @@ DEF_DO_FUN( camuflage )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku by to zrobiæ." EOL,
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku by to zrobiï¿½." EOL,
 				ch);
 		return;
 	}
@@ -10023,13 +9966,13 @@ DEF_DO_FUN( camuflage )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	if (!check_pilot(ch, ship))
 	{
-		send_to_char(FB_RED "Hej! To nie twój statek!" EOL, ch);
+		send_to_char(FB_RED "Hej! To nie twï¿½j statek!" EOL, ch);
 		return;
 	}
 
@@ -10041,7 +9984,7 @@ DEF_DO_FUN( camuflage )
 
 	if (ship->maxcloack != 1)
 	{
-		send_to_char(FB_RED "Ten statek nie ma urz±dzenia maskuj±cego!" EOL,
+		send_to_char(FB_RED "Ten statek nie ma urzï¿½dzenia maskujï¿½cego!" EOL,
 				ch);
 		return;
 	}
@@ -10050,12 +9993,12 @@ DEF_DO_FUN( camuflage )
 	{
 		send_to_char(
 				FB_RED
-				"W systemie panuje burza elektromagnetyczna, system maskuj±cy jest sparali¿owany!"
+				"W systemie panuje burza elektromagnetyczna, system maskujï¿½cy jest sparaliï¿½owany!"
 				NL, ch);
 		return;
 	}
 
-	act(PLAIN, "$n poci±ga za d¼wigniê na przystawce do panelu sterowania.", ch,
+	act(PLAIN, "$n pociï¿½ga za dï¿½wigniï¿½ na przystawce do panelu sterowania.", ch,
 			NULL, argument, TO_ROOM);
 
 	chance =
@@ -10068,11 +10011,11 @@ DEF_DO_FUN( camuflage )
 		if (ship->cloack == true)
 		{
 			ship->cloack = false;
-			send_to_char(FB_GREEN "Wy³aczasz system maskuj±cy." EOL, ch);
-			echo_to_ship(ship, FB_YELLOW "System maskujacy WY£¡CZONY.");
+			send_to_char(FB_GREEN "Wyï¿½aczasz system maskujï¿½cy." EOL, ch);
+			echo_to_ship(ship, FB_YELLOW "System maskujacy WYï¿½ï¿½CZONY.");
 			sprintf(buf,
 			FB_YELLOW
-			"%s powoli wy³ania siê z pod os³on systemów maskuj±cych.",
+			"%s powoli wyï¿½ania siï¿½ z pod osï¿½on systemï¿½w maskujï¿½cych.",
 					ship->sslook);
 			echo_to_system(ship, buf, NULL);
 		}
@@ -10080,14 +10023,14 @@ DEF_DO_FUN( camuflage )
 		{
 			if (ship->energy < 50 * (ship->size / 10))
 			{
-				send_to_char(FB_RED "Za ma³o energi!" EOL, ch);
+				send_to_char(FB_RED "Za maï¿½o energi!" EOL, ch);
 				return;
 			}
 			ship->cloack = true;
-			send_to_char(FB_GREEN "W³±czasz system maskuj±cy." EOL, ch);
-			echo_to_ship(ship, FB_YELLOW "System maskujacy W£¡CZONY.");
+			send_to_char(FB_GREEN "Wï¿½ï¿½czasz system maskujï¿½cy." EOL, ch);
+			echo_to_ship(ship, FB_YELLOW "System maskujacy Wï¿½ï¿½CZONY.");
 			echo_to_ship(ship,
-			FB_RED "Wstrzymaæ OGIEÑ. PE£NA CISZA NA POK£ADZIE");
+			FB_RED "Wstrzymaï¿½ OGIEï¿½. PEï¿½NA CISZA NA POKï¿½ADZIE");
 			sprintf(buf, FB_YELLOW "%s powoli zanika.", ship->sslook);
 			echo_to_system(ship, buf, NULL);
 			learn_from_success(ch, gsn_advancedsystems);
@@ -10095,7 +10038,7 @@ DEF_DO_FUN( camuflage )
 	}
 	else
 	{
-		send_to_char(FB_GREEN "Manipulujesz przy sytemie maskuj±cym." EOL, ch);
+		send_to_char(FB_GREEN "Manipulujesz przy sytemie maskujï¿½cym." EOL, ch);
 		send_to_char(FB_RED "Nieskutecznie!!!." EOL, ch);
 		ship->energy -= (ship->size / 10);
 		if (ship->energy < 0)
@@ -10117,7 +10060,7 @@ DEF_DO_FUN( autopilot )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku by to zrobiæ." NL,
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku by to zrobiï¿½." NL,
 				ch);
 		return;
 	}
@@ -10130,33 +10073,33 @@ DEF_DO_FUN( autopilot )
 
 	if (!check_pilot(ch, ship))
 	{
-		send_to_char(FB_RED "Hej! To nie twój statek!" NL, ch);
+		send_to_char(FB_RED "Hej! To nie twï¿½j statek!" NL, ch);
 		return;
 	}
 
 	if (ship->autopilot == false && is_ship_fight(ship))
 	{
 		ch_printf(ch, FB_RED
-		"Dopóki statek jest otoczony przez wroga musisz radziæ sobie sam%s!"
+		"Dopï¿½ki statek jest otoczony przez wroga musisz radziï¿½ sobie sam%s!"
 		EOL, SEX_SUFFIX__AO(ch));
 		return;
 	}
 
-	act(PLAIN, "$n poci±ga za d¼wigniê na panelu sterowania.", ch, NULL,
+	act(PLAIN, "$n pociï¿½ga za dï¿½wigniï¿½ na panelu sterowania.", ch, NULL,
 			argument, TO_ROOM);
 
 	if (ship->autopilot == true)
 	{
 		ship->autopilot = false;
-		send_to_char("&GPrze³±czasz autopilota." NL, ch);
-		echo_to_cockpit(ship, FB_YELLOW "Autopilot WY£¡CZONY.");
+		send_to_char("&GPrzeï¿½ï¿½czasz autopilota." NL, ch);
+		echo_to_cockpit(ship, FB_YELLOW "Autopilot WYï¿½ï¿½CZONY.");
 	}
 	else
 	{
 		ship->autopilot = true;
 		ship->autorecharge = true;
-		send_to_char("&GPrze³±czasz autopilota." NL, ch);
-		echo_to_cockpit(ship, FB_YELLOW "Autopilot W£¡CZONY.");
+		send_to_char("&GPrzeï¿½ï¿½czasz autopilota." NL, ch);
+		echo_to_cockpit(ship, FB_YELLOW "Autopilot Wï¿½ï¿½CZONY.");
 		if (ship->sx != ship->vx || ship->sy != ship->vy
 				|| ship->sz != ship->vz)
 		{
@@ -10180,8 +10123,8 @@ DEF_DO_FUN( openhatch )
 	{
 		if ((dock = shipdock_from_room(ship, ch->in_room->vnum)) != NULL)
 		{
-			if (!str_cmp(argument, "dock") || !str_cmp(argument, "¶luza")
-					|| !str_cmp(argument, "¶luzê"))
+			if (!str_cmp(argument, "dock") || !str_cmp(argument, "ï¿½luza")
+					|| !str_cmp(argument, "ï¿½luzï¿½"))
 				;
 			{
 				do_openshipdock(ch, argument);
@@ -10196,7 +10139,7 @@ DEF_DO_FUN( openhatch )
 		ship = ship_from_entrance(ch->in_room);
 		if (ship == NULL)
 		{
-			send_to_char(FB_RED "Otworzyæ co?" NL, ch);
+			send_to_char(FB_RED "Otworzyï¿½ co?" NL, ch);
 			return;
 		}
 		else
@@ -10205,7 +10148,7 @@ DEF_DO_FUN( openhatch )
 			{
 				if (is_platform(ship))
 				{
-					send_to_char(FB_RED "Spróbuj otworzyæ te w dokach!" EOL,
+					send_to_char(FB_RED "Sprï¿½buj otworzyï¿½ te w dokach!" EOL,
 							ch);
 					return;
 				}
@@ -10214,7 +10157,7 @@ DEF_DO_FUN( openhatch )
 						|| (ship->shipstate != SHIP_DOCKED
 								&& ship->shipstate != SHIP_DISABLED))
 				{
-					send_to_char(FB_RED "A nie poczekasz a¿ statek wyl±duje?"
+					send_to_char(FB_RED "A nie poczekasz aï¿½ statek wylï¿½duje?"
 					EOL, ch);
 					return;
 				}
@@ -10223,15 +10166,15 @@ DEF_DO_FUN( openhatch )
 				{
 					ch_printf(ch,
 							FB_RED
-							"To jest wytwór obcej biotechnologi, niestety nie masz o niej zielonego pojêcia."
+							"To jest wytwï¿½r obcej biotechnologi, niestety nie masz o niej zielonego pojï¿½cia."
 							EOL);
 					return;
 				}
 
 				ship->hatchopen = true;
-				send_to_char(FB_GREEN "Otwierasz klapê." EOL, ch);
-				act(PLAIN, "$n otwiera klapê.", ch, NULL, arg, TO_ROOM);
-				sprintf(buf, FB_YELLOW "Klapa na %s otwiera siê.",
+				send_to_char(FB_GREEN "Otwierasz klapï¿½." EOL, ch);
+				act(PLAIN, "$n otwiera klapï¿½.", ch, NULL, arg, TO_ROOM);
+				sprintf(buf, FB_YELLOW "Klapa na %s otwiera siï¿½.",
 						SHIPNAME(ship));
 				echo_to_room(ship->location, buf);
 				sound_to_room(ship->entrance, "!!SOUND(door)");
@@ -10240,7 +10183,7 @@ DEF_DO_FUN( openhatch )
 			}
 			else
 			{
-				send_to_char(FB_RED "Klapa jest ju¿ otwarta." EOL, ch);
+				send_to_char(FB_RED "Klapa jest juï¿½ otwarta." EOL, ch);
 				return;
 			}
 		}
@@ -10249,13 +10192,13 @@ DEF_DO_FUN( openhatch )
 	ship = ship_in_room(ch->in_room, arg);
 	if (!ship)
 	{
-		act(PLAIN, "Nie ma tu ¿adnego $T.", ch, NULL, arg, TO_CHAR);
+		act(PLAIN, "Nie ma tu ï¿½adnego $T.", ch, NULL, arg, TO_CHAR);
 		return;
 	}
 
 	if (ship->shipstate != SHIP_DOCKED && ship->shipstate != SHIP_DISABLED)
 	{
-		send_to_char(FB_RED "Ten statek zacz±³ ju¿ startowaæ." EOL, ch);
+		send_to_char(FB_RED "Ten statek zaczï¿½ï¿½ juï¿½ startowaï¿½." EOL, ch);
 		return;
 	}
 
@@ -10263,14 +10206,14 @@ DEF_DO_FUN( openhatch )
 	{
 		ch_printf(ch,
 				FB_RED
-				"To jest wytwór obcej biotechnologi, niestety nie masz o niej zielonego pojêcia."
+				"To jest wytwï¿½r obcej biotechnologi, niestety nie masz o niej zielonego pojï¿½cia."
 				EOL);
 		return;
 	}
 
 	if (!check_pilot(ch, ship))
 	{
-		send_to_char(FB_RED "Hej! To nie twój statek!" NL, ch);
+		send_to_char(FB_RED "Hej! To nie twï¿½j statek!" NL, ch);
 		return;
 	}
 
@@ -10279,12 +10222,12 @@ DEF_DO_FUN( openhatch )
 		if (!str_cmp(ship->lock_key, "0000"))
 		{
 			ship->hatchopen = true;
-			act(PLAIN, "Otwierasz klapê $T.", ch, NULL, SHIPNAME(ship),
+			act(PLAIN, "Otwierasz klapï¿½ $T.", ch, NULL, SHIPNAME(ship),
 			TO_CHAR);
-			act(PLAIN, "$n otwiera klapê $T.", ch, NULL, SHIPNAME(ship),
+			act(PLAIN, "$n otwiera klapï¿½ $T.", ch, NULL, SHIPNAME(ship),
 			TO_ROOM);
 			echo_to_room(ship->entrance,
-			FB_YELLOW "Klapa otwiera siê od zewn±trz.");
+			FB_YELLOW "Klapa otwiera siï¿½ od zewnï¿½trz.");
 			sound_to_room(ship->entrance, "!!SOUND(door)");
 			sound_to_room(ship->location, "!!SOUND(door)");
 			return;
@@ -10294,28 +10237,28 @@ DEF_DO_FUN( openhatch )
 			if (str_cmp(ship->lock_key, argument))
 			{
 				act(PLAIN,
-						"Wej¶cie jest zabezpieczone. Wpisz poprawny kod po nazwie.",
+						"Wejï¿½cie jest zabezpieczone. Wpisz poprawny kod po nazwie.",
 						ch, NULL, SHIPNAME(ship), TO_CHAR);
-				act(PLAIN, "$n próbuje otworzyæ $T, ale klapa nie ustêpuje.",
+				act(PLAIN, "$n prï¿½buje otworzyï¿½ $T, ale klapa nie ustï¿½puje.",
 						ch, NULL, SHIPNAME(ship), TO_ROOM);
 				return;
 			}
 			else
 			{
 				ship->hatchopen = true;
-				act(PLAIN, "Otwierasz klapê $T.", ch, NULL, SHIPNAME(ship),
+				act(PLAIN, "Otwierasz klapï¿½ $T.", ch, NULL, SHIPNAME(ship),
 				TO_CHAR);
-				act(PLAIN, "$n otwiera klapê $T.", ch, NULL, SHIPNAME(ship),
+				act(PLAIN, "$n otwiera klapï¿½ $T.", ch, NULL, SHIPNAME(ship),
 				TO_ROOM);
 				echo_to_room(ship->entrance,
-				FB_YELLOW "Klapa otwiera siê od zewn±trz.");
+				FB_YELLOW "Klapa otwiera siï¿½ od zewnï¿½trz.");
 				sound_to_room(ship->entrance, "!!SOUND(door)");
 				sound_to_room(ship->location, "!!SOUND(door)");
 				return;
 			}
 		}
 	}
-	send_to_char(FB_GREEN "Klapa jest ju¿ otwarta." EOL, ch);
+	send_to_char(FB_GREEN "Klapa jest juï¿½ otwarta." EOL, ch);
 	return;
 }
 
@@ -10329,8 +10272,8 @@ DEF_DO_FUN( closehatch )
 	{
 		if ((dock = shipdock_from_room(ship, ch->in_room->vnum)) != NULL)
 		{
-			if (!str_cmp(argument, "dock") || !str_cmp(argument, "¶luza")
-					|| !str_cmp(argument, "¶luzê"))
+			if (!str_cmp(argument, "dock") || !str_cmp(argument, "ï¿½luza")
+					|| !str_cmp(argument, "ï¿½luzï¿½"))
 				;
 			{
 				do_closeshipdock(ch, argument);
@@ -10344,14 +10287,14 @@ DEF_DO_FUN( closehatch )
 		ship = ship_from_entrance(ch->in_room);
 		if (ship == NULL)
 		{
-			send_to_char(FB_RED "Zamkn±æ co?" NL, ch);
+			send_to_char(FB_RED "Zamknï¿½ï¿½ co?" NL, ch);
 			return;
 		}
 		else
 		{
 			if (is_platform(ship))
 			{
-				send_to_char(FB_RED "Spróbuj te w dokach!" NL, ch);
+				send_to_char(FB_RED "Sprï¿½buj te w dokach!" NL, ch);
 				return;
 			}
 			if (ship->hatchopen)
@@ -10360,14 +10303,14 @@ DEF_DO_FUN( closehatch )
 				{
 					ch_printf(ch,
 							FB_RED
-							"To jest wytwór obcej biotechnologi, niestety nie masz o niej zielonego pojêcia."
+							"To jest wytwï¿½r obcej biotechnologi, niestety nie masz o niej zielonego pojï¿½cia."
 							EOL);
 					return;
 				}
 				ship->hatchopen = false;
-				send_to_char("&GZamykasz klapê." NL, ch);
-				act(PLAIN, "$n zamyka klapê.", ch, NULL, argument, TO_ROOM);
-				sprintf(buf, FB_YELLOW "Klapa %s zamyka siê.", SHIPNAME(ship));
+				send_to_char("&GZamykasz klapï¿½." NL, ch);
+				act(PLAIN, "$n zamyka klapï¿½.", ch, NULL, argument, TO_ROOM);
+				sprintf(buf, FB_YELLOW "Klapa %s zamyka siï¿½.", SHIPNAME(ship));
 				echo_to_room(ship->location, buf);
 				sound_to_room(ship->entrance, "!!SOUND(door)");
 				sound_to_room(ship->location, "!!SOUND(door)");
@@ -10375,7 +10318,7 @@ DEF_DO_FUN( closehatch )
 			}
 			else
 			{
-				send_to_char(FB_RED "Klapa jest ju¿ zamkniêta." NL, ch);
+				send_to_char(FB_RED "Klapa jest juï¿½ zamkniï¿½ta." NL, ch);
 				return;
 			}
 		}
@@ -10383,12 +10326,12 @@ DEF_DO_FUN( closehatch )
 	ship = ship_in_room(ch->in_room, argument);
 	if (!ship)
 	{
-		act(PLAIN, "Nie ma tu ¿adnego $T.", ch, NULL, argument, TO_CHAR);
+		act(PLAIN, "Nie ma tu ï¿½adnego $T.", ch, NULL, argument, TO_CHAR);
 		return;
 	}
 	if (ship->shipstate != SHIP_DOCKED && ship->shipstate != SHIP_DISABLED)
 	{
-		send_to_char(FB_RED "Ten statek ju¿ wystartowa³.", ch);
+		send_to_char(FB_RED "Ten statek juï¿½ wystartowaï¿½.", ch);
 		return;
 	}
 	else
@@ -10397,26 +10340,26 @@ DEF_DO_FUN( closehatch )
 		{
 			ch_printf(ch,
 					FB_RED
-					"To jest wytwór obcej biotechnologi, niestety nie masz o niej zielonego pojêcia."
+					"To jest wytwï¿½r obcej biotechnologi, niestety nie masz o niej zielonego pojï¿½cia."
 					EOL);
 			return;
 		}
 		if (ship->hatchopen)
 		{
 			ship->hatchopen = false;
-			act(PLAIN, "Zamykasz klapê statku $T.", ch, NULL, SHIPNAME(ship),
+			act(PLAIN, "Zamykasz klapï¿½ statku $T.", ch, NULL, SHIPNAME(ship),
 			TO_CHAR);
 			act(PLAIN, "$n zamyka klape statku $T.", ch, NULL, SHIPNAME(ship),
 					TO_ROOM);
 			echo_to_room(ship->entrance,
-			FB_YELLOW "Klapa zamyka siê od zewn±trz.");
+			FB_YELLOW "Klapa zamyka siï¿½ od zewnï¿½trz.");
 			sound_to_room(ship->entrance, "!!SOUND(door)");
 			sound_to_room(ship->location, "!!SOUND(door)");
 			return;
 		}
 		else
 		{
-			send_to_char(FB_RED "Klapa jest ju¿ zamkniêta." NL, ch);
+			send_to_char(FB_RED "Klapa jest juï¿½ zamkniï¿½ta." NL, ch);
 			return;
 		}
 	}
@@ -10433,7 +10376,7 @@ DEF_DO_FUN( hyperspace )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku by to zrobiæ!" NL,
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku by to zrobiï¿½!" NL,
 				ch);
 		return;
 	}
@@ -10441,7 +10384,7 @@ DEF_DO_FUN( hyperspace )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
@@ -10460,49 +10403,48 @@ DEF_DO_FUN( hyperspace )
 
 	if (ship->hyperspeed == 0)
 	{
-		send_to_char(FB_RED "Ten statek nie ma hipernapêdu!" NL, ch);
+		send_to_char(FB_RED "Ten statek nie ma hipernapï¿½du!" NL, ch);
 		return;
 	}
 	if (is_linked(NULL, ship))
 	{
 		send_to_char(FB_RED
-		"Nie zrobisz tego dopóki nie pozbedziesz siê statków dokuj±cych"
+		"Nie zrobisz tego dopï¿½ki nie pozbedziesz siï¿½ statkï¿½w dokujï¿½cych"
 		EOL, ch);
 		return;
 	}
 	if (ship->shipstate != SHIP_READY)
 	{
-		send_to_char(FB_RED "Poczekaj, a¿ statek wykona aktualny manewr." NL,
+		send_to_char(FB_RED "Poczekaj, aï¿½ statek wykona aktualny manewr." NL,
 				ch);
 		return;
 	}
 	if (!ship->currjump && !ship->vXpos && !ship->vYpos)
 	{
-		send_to_char(FB_RED "Musisz najpierw wyliczyæ swój skok!" NL, ch);
+		send_to_char(FB_RED "Musisz najpierw wyliczyï¿½ swï¿½j skok!" NL, ch);
 		return;
 	}
 
 	if (ship->calctimer >= 1)
 	{
-		send_to_char(FB_RED "Poczekaj do zakoñczenia wyliczania kursu!" EOL,
+		send_to_char(FB_RED "Poczekaj do zakoï¿½czenia wyliczania kursu!" EOL,
 				ch);
 		return;
 	}
 
 	if (ship->energy < ((200 + ship->hyperdistance + (ship->size / 10)) / 6))
 	{
-		send_to_char(FB_RED "Za ma³o paliwa!" NL, ch);
+		send_to_char(FB_RED "Za maï¿½o paliwa!" NL, ch);
 		return;
 	}
 
 	if (ship->currspeed <= 0)
 	{
-		send_to_char(FB_RED "Musisz najpierw troszkê przyspieszyæ!" NL, ch);
+		send_to_char(FB_RED "Musisz najpierw troszkï¿½ przyspieszyï¿½!" NL, ch);
 		return;
 	}
 
-	for (eShip = ship->starsystem->first_ship; eShip;
-			eShip = eShip->next_in_starsystem)
+	for (auto* eShip : ship->starsystem->ships)
 	{
 		if (eShip == ship)
 			continue;
@@ -10514,7 +10456,7 @@ DEF_DO_FUN( hyperspace )
 			{
 				ch_printf(ch,
 				FB_RED
-				"Pole wstrzymuj±ce z %s uniemo¿liwia dokonanie skoku."
+				"Pole wstrzymujï¿½ce z %s uniemoï¿½liwia dokonanie skoku."
 				NL,
 						know_trans(ship, eShip) ?
 								SHIPNAME(eShip) : eShip->transponder);
@@ -10524,20 +10466,20 @@ DEF_DO_FUN( hyperspace )
 			{
 				ch_printf(ch,
 				FB_RED
-				"Nieznane pole grawitacyjne uniemo¿liwia dokonanie skoku."
+				"Nieznane pole grawitacyjne uniemoï¿½liwia dokonanie skoku."
 				NL);
 				return;
 			}
 		}
 
-		/*poprawka na wielko¶æ przeszkadzacza -Aldegard */
+		/*poprawka na wielkoï¿½ï¿½ przeszkadzacza -Aldegard */
 		if (srange((eShip->vx - ship->vx), (eShip->vy - ship->vy),
 				(eShip->vz - ship->vz)) < 12 * (eShip->size + ship->size) / 10)
 		{
 			if (eShip->cloack == 0)
 			{
 				ch_printf(ch,
-				FB_RED "Jeste¶ zbyt blisko %s by wykonaæ skok." NL,
+				FB_RED "Jesteï¿½ zbyt blisko %s by wykonaï¿½ skok." NL,
 						know_trans(ship, eShip) ?
 								SHIPNAME(eShip) : eShip->transponder);
 				return;
@@ -10546,7 +10488,7 @@ DEF_DO_FUN( hyperspace )
 			{
 				ch_printf(ch,
 				FB_RED
-				"Dokonanie skoku niemo¿liwe. Interferencja grawitomotoryczna."
+				"Dokonanie skoku niemoï¿½liwe. Interferencja grawitomotoryczna."
 				NL);
 				return;
 			}
@@ -10562,7 +10504,7 @@ DEF_DO_FUN( hyperspace )
 	chance = get_space_chance(ship, ch);
 	if (number_percent() > chance)
 	{
-		send_to_char(FB_RED "Nie za bardzo wiesz, któr± d¼wigniê poci±gn±æ."
+		send_to_char(FB_RED "Nie za bardzo wiesz, ktï¿½rï¿½ dï¿½wigniï¿½ pociï¿½gnï¿½ï¿½."
 		NL, ch);
 		learn_from_failure_space(ship, ch);
 		return;
@@ -10576,15 +10518,15 @@ DEF_DO_FUN( hyperspace )
 	ship->shipstate = SHIP_HYPERSPACE;
 	ship->interdict = 0;
 
-	send_to_char("&GWciskasz d¼wigniê hipernapêdu." NL, ch);
-	act(PLAIN, "$n wciska d¼wigniê na panelu sterowania.", ch, NULL, argument,
+	send_to_char("&GWciskasz dï¿½wigniï¿½ hipernapï¿½du." NL, ch);
+	act(PLAIN, "$n wciska dï¿½wigniï¿½ na panelu sterowania.", ch, NULL, argument,
 			TO_ROOM);
 	echo_to_ship(ship,
 			FB_YELLOW
-			"Statek trzêsie siê na moment i z olbrzymim hukiem wchodzi w hiperprzestrzeñ.");
+			"Statek trzï¿½sie siï¿½ na moment i z olbrzymim hukiem wchodzi w hiperprzestrzeï¿½.");
 	echo_to_cockpit(ship,
 	FB_YELLOW
-	"Gwiazdy zamieniaj± siê w s³upki ¶wiat³a w jednej chwili.");
+	"Gwiazdy zamieniajï¿½ siï¿½ w sï¿½upki ï¿½wiatï¿½a w jednej chwili.");
 
 	ship->energy -= ((100 + ship->hyperdistance + (ship->size / 10)) / 6);
 
@@ -10621,14 +10563,14 @@ DEF_DO_FUN( target )
 		if ((ship = ship_from_turret(ch->in_room)) == NULL)
 		{
 			send_to_char(FB_RED
-			"Musisz siedzieæ w fotelu strzelca lub na wie¿yczce by to zrobiæ!"
+			"Musisz siedzieï¿½ w fotelu strzelca lub na wieï¿½yczce by to zrobiï¿½!"
 			NL, ch);
 			return;
 		}
 
 		if (!is_ship(ship))
 		{
-			send_to_char(FB_RED "Nie jeste¶ na statku kosmicznym!" NL, ch);
+			send_to_char(FB_RED "Nie jesteï¿½ na statku kosmicznym!" NL, ch);
 			return;
 		}
 
@@ -10638,13 +10580,13 @@ DEF_DO_FUN( target )
 			pager_printf(ch, "Aktualne cele:" NL);
 			if (ship->target0)
 			{
-				pager_printf(ch, "G³ówne stanowisko ogniowe: %s" NL,
+				pager_printf(ch, "Gï¿½ï¿½wne stanowisko ogniowe: %s" NL,
 						know_trans(ship, ship->target0) ?
 								SHIPNAME(ship->target0) :
 								ship->target0->transponder);
 				++licznik1;
 			}
-			for (turret = ship->first_turret; turret; turret = turret->next)
+			for (auto* turret : ship->turrets)
 			{
 				if (turret->target)
 				{
@@ -10664,14 +10606,14 @@ DEF_DO_FUN( target )
 		if (!check_crew(ship, ch, "gunner"))
 		{
 			send_to_char(FB_RED
-			"Musisz byæ strzelcem pok³adowym aby to zrobiæ."
+			"Musisz byï¿½ strzelcem pokï¿½adowym aby to zrobiï¿½."
 			NL, ch);
 			return;
 		}
 		if (isnt_in_realspace(ship))
 		{
 			send_to_char(FB_RED
-			"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!"
+			"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!"
 			NL, ch);
 			return;
 		}
@@ -10680,20 +10622,20 @@ DEF_DO_FUN( target )
 		{
 			send_to_char(
 					FB_RED
-					"Taka zabawa mo¿e siê ¼le skoñczyæ. Nie masz zielonego pojêcia o uzbrojeniu."
+					"Taka zabawa moï¿½e siï¿½ ï¿½le skoï¿½czyï¿½. Nie masz zielonego pojï¿½cia o uzbrojeniu."
 					NL, ch);
 			return;
 		}
 		if (autofly(ship) && !IS_IMMORTAL(ch))
 		{
-			send_to_char(FB_RED "Musisz najpierw wy³±czyæ autopilota."
+			send_to_char(FB_RED "Musisz najpierw wyï¿½ï¿½czyï¿½ autopilota."
 			NL, ch);
 			return;
 		}
 		if (ship->lasers <= 0 && ship->ioncannons <= 0 && ship->missiles <= 0
 				&& ship->torpedos <= 0 && ship->rockets <= 0)
 		{
-			send_to_char(FB_RED "Twój statek nie ma systemów bojowych!"
+			send_to_char(FB_RED "Twï¿½j statek nie ma systemï¿½w bojowych!"
 			NL, ch);
 			return;
 		}
@@ -10701,7 +10643,7 @@ DEF_DO_FUN( target )
 		if (!str_cmp(arg, "none") || !str_cmp(arg, "nic")
 				|| !str_cmp(arg, "off"))
 		{
-			send_to_char("&GAutocelowanie uniewa¿nione." NL, ch);
+			send_to_char("&GAutocelowanie uniewaï¿½nione." NL, ch);
 			if ((turret = get_turret_here(ship, ch->in_room)) != NULL)
 				turret->target = NULL;
 			if (ch->in_room == ship->gunseat)
@@ -10724,7 +10666,7 @@ DEF_DO_FUN( target )
 
 		if (target == ship)
 		{
-			send_to_char(FB_RED "Nie mo¿esz namierzyæ swojego statku!" NL, ch);
+			send_to_char(FB_RED "Nie moï¿½esz namierzyï¿½ swojego statku!" NL, ch);
 			return;
 		}
 
@@ -10733,7 +10675,7 @@ DEF_DO_FUN( target )
 		{
 			send_to_char(
 					FB_RED
-					"Ten statek ma identycznego w³a¶ciciela! Mo¿e spróbujesz namierzyæ statek wroga?"
+					"Ten statek ma identycznego wï¿½aï¿½ciciela! Moï¿½e sprï¿½bujesz namierzyï¿½ statek wroga?"
 					NL, ch);
 			return;
 		}
@@ -10745,7 +10687,7 @@ DEF_DO_FUN( target )
 				> 2000 + ship->target_array * 500)
 		{
 			send_to_char(FB_RED
-			"Ten statek jest za daleko by go namierzyæ." NL, ch);
+			"Ten statek jest za daleko by go namierzyï¿½." NL, ch);
 			return;
 		}
 		if ((turret = get_turret_here(ship, ch->in_room)) != NULL)
@@ -10782,12 +10724,12 @@ DEF_DO_FUN( target )
 		if ((turret = get_turret_here(ship, ch->in_room)) != NULL)
 		{
 			send_to_char(FB_RED
-			"Wie¿yczka obraca siê w zupe³nie inn± strone ni¿ wymagana."
+			"Wieï¿½yczka obraca siï¿½ w zupeï¿½nie innï¿½ strone niï¿½ wymagana."
 			NL, ch);
 			learn_from_failure(ch, gsn_shipturrets);
 			return;
 		}
-		send_to_char(FB_RED "Komputer celowniczy odmawia pos³uszeñstwa."
+		send_to_char(FB_RED "Komputer celowniczy odmawia posï¿½uszeï¿½stwa."
 		NL, ch);
 		learn_from_failure(ch, gsn_weaponsystems);
 		return;
@@ -10805,7 +10747,7 @@ DEF_DO_FUN( target )
 		if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 			return;
 		send_to_char(FB_RED
-		"Nie mo¿esz namierzyæ celu. Twoje skanery s± uszkodzone."
+		"Nie moï¿½esz namierzyï¿½ celu. Twoje skanery sï¿½ uszkodzone."
 		NL, ch);
 		return;
 	}
@@ -10821,7 +10763,7 @@ DEF_DO_FUN( target )
 	if (target == NULL || target == ship)
 	{
 		send_to_char(FB_RED
-		"Statek opu¶ci³ uk³ad gwiezdny. Namierzanie przerwane."
+		"Statek opuï¿½ciï¿½ ukï¿½ad gwiezdny. Namierzanie przerwane."
 		NL, ch);
 		return;
 	}
@@ -10833,8 +10775,8 @@ DEF_DO_FUN( target )
 
 	if ((turret = get_turret_here(ship, ch->in_room)) != NULL)
 	{
-		send_to_char("&GWie¿yczka ustawiona." NL, ch);
-		sprintf(buf, "Wie¿yczka z %s namierza ciê.",
+		send_to_char("&GWieï¿½yczka ustawiona." NL, ch);
+		sprintf(buf, "Wieï¿½yczka z %s namierza ciï¿½.",
 				know_trans(target, ship) ? SHIPNAME(ship) : ship->transponder);
 		echo_to_cockpit(target, buf);
 
@@ -10844,7 +10786,7 @@ DEF_DO_FUN( target )
 	else
 	{
 		send_to_char("&GCel namierzony." NL, ch);
-		sprintf(buf, "%s namierza ciê.",
+		sprintf(buf, "%s namierza ciï¿½.",
 				know_trans(target, ship) ? SHIPNAME(ship) : ship->transponder);
 		echo_to_cockpit(target, buf);
 
@@ -10853,7 +10795,7 @@ DEF_DO_FUN( target )
 	}
 	if (autofly(target) && !target->target0)
 	{
-		sprintf(buf, FG_RED "%s namierzy³ ciê.",
+		sprintf(buf, FG_RED "%s namierzyï¿½ ciï¿½.",
 				know_trans(ship, target) ?
 						SHIPNAME(target) : target->transponder);
 		echo_to_cockpit(ship, buf);
@@ -10873,7 +10815,7 @@ DEF_DO_FUN( fire )	//pix0
 	if ((ship = ship_from_turret(ch->in_room)) == NULL)
 	{
 		send_to_char(FB_RED
-		"Musisz siedzieæ w fotelu strzelca lub w wie¿yczce by to zrobiæ!"
+		"Musisz siedzieï¿½ w fotelu strzelca lub w wieï¿½yczce by to zrobiï¿½!"
 		NL, ch);
 		return;
 	}
@@ -10881,19 +10823,19 @@ DEF_DO_FUN( fire )	//pix0
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	if (ship->energy < 5)
 	{
-		send_to_char(FB_RED "Nie starczy ci energii na strza³!" NL, ch);
+		send_to_char(FB_RED "Nie starczy ci energii na strzaï¿½!" NL, ch);
 		return;
 	}
 
 	if (autofly(ship))
 	{
-		send_to_char(FB_RED "Musisz najpierw wy³±czyæ autopilota." NL, ch);
+		send_to_char(FB_RED "Musisz najpierw wyï¿½ï¿½czyï¿½ autopilota." NL, ch);
 		return;
 	}
 	if (ship->cloack == true)
@@ -10901,7 +10843,7 @@ DEF_DO_FUN( fire )	//pix0
 		ship->cloack = false;
 		echo_to_ship(ship,
 		FB_YELLOW
-		"Manipulowanie uzbrojeniem statku zdradza twoj± pozycje.");
+		"Manipulowanie uzbrojeniem statku zdradza twojï¿½ pozycje.");
 		sprintf(buf, FB_YELLOW "%s pojawia sie w %.0f %.0f %.0f.", ship->sslook,
 				ship->vx, ship->vy, ship->vz);
 		echo_to_system(ship, buf, NULL);
@@ -10927,12 +10869,12 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->statet0 == LASER_DAMAGED)
 		{
-			send_to_char(FB_RED "G³ówny laser statku jest uszkodzony." NL, ch);
+			send_to_char(FB_RED "Gï¿½ï¿½wny laser statku jest uszkodzony." NL, ch);
 			return;
 		}
 		if (ship->statet0 >= ship->lasers)
 		{
-			send_to_char(FB_RED "Lasery wci±¿ siê jeszcze ³aduj±." NL, ch);
+			send_to_char(FB_RED "Lasery wciï¿½ï¿½ siï¿½ jeszcze ï¿½adujï¿½." NL, ch);
 			return;
 		}
 		if (ship->target0 == NULL)
@@ -10949,14 +10891,14 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->target0->starsystem != ship->starsystem)
 		{
-			send_to_char(FB_RED "Twój cel jako¶ znikn±³." NL, ch);
+			send_to_char(FB_RED "Twï¿½j cel jakoï¿½ zniknï¿½ï¿½." NL, ch);
 			ship->target0 = NULL;
 			return;
 		}
 		if (srange((target->vx - ship->vx), (target->vy - ship->vy),
 				(target->vz - ship->vz)) > 1000)
 		{
-			send_to_char(FB_RED "Ten statek jest poza zasiêgiem laserów." NL,
+			send_to_char(FB_RED "Ten statek jest poza zasiï¿½giem laserï¿½w." NL,
 					ch);
 			return;
 		}
@@ -10965,7 +10907,7 @@ DEF_DO_FUN( fire )	//pix0
 				&& !is_facing(ship, target))
 		{
 			send_to_char(FB_RED
-			"G³ówny laser mo¿e strzelaæ tylko do przodu. Musisz obróciæ statek!"
+			"Gï¿½ï¿½wny laser moï¿½e strzelaï¿½ tylko do przodu. Musisz obrï¿½ciï¿½ statek!"
 			NL, ch);
 			return;
 		}
@@ -10987,7 +10929,7 @@ DEF_DO_FUN( fire )	//pix0
 		chance = URANGE(3, chance, 90);
 		if (ch->position != POS_SITTING)
 			chance /= 3;
-		act(PLAIN, "$n naciska przycisk na dr±¿ku.", ch, NULL, argument,
+		act(PLAIN, "$n naciska przycisk na drï¿½ï¿½ku.", ch, NULL, argument,
 		TO_ROOM);
 		if (number_percent() > chance)
 		{
@@ -11012,10 +10954,10 @@ DEF_DO_FUN( fire )	//pix0
 				ship->sslook, target->sslook);
 		echo_to_system(ship, buf, target);
 		sprintf(buf,
-				FG_YELLOW "Lasery z " FB_RED "%s " FG_YELLOW "trafiaj± ciê!",
+				FG_YELLOW "Lasery z " FB_RED "%s " FG_YELLOW "trafiajï¿½ ciï¿½!",
 				know_trans(target, ship) ? SHIPNAME(ship) : ship->transponder);
 		echo_to_cockpit(target, buf);
-		sprintf(buf, "Twój laser trafia w %s!.",
+		sprintf(buf, "Twï¿½j laser trafia w %s!.",
 				know_trans(ship, target) ?
 						SHIPNAME(target) : target->transponder);
 		echo_to_cockpit(ship, buf);
@@ -11024,7 +10966,7 @@ DEF_DO_FUN( fire )	//pix0
 		learn_from_success(ch, gsn_spacecombat3);
 		if (!IS_IMMORTAL(ch))
 			ch->mental_state += number_range(0, 1);
-		echo_to_ship(target, "Ma³a eksplozja lekko wstrz±sa statkiem.");// Lasery
+		echo_to_ship(target, "Maï¿½a eksplozja lekko wstrzï¿½sa statkiem.");// Lasery
 		damage_ship_ch(target, MIN_LASER_DAMAGE, MAX_LASER_DAMAGE, ch);
 
 		if (autofly(target) && target->target0 != ship
@@ -11033,7 +10975,7 @@ DEF_DO_FUN( fire )	//pix0
 						<= 2000 + target->target_array * 500))
 		{
 			target->target0 = ship;
-			sprintf(buf, "%s namierza ciê.",
+			sprintf(buf, "%s namierza ciï¿½.",
 					know_trans(ship, target) ?
 							SHIPNAME(target) : target->transponder);
 			echo_to_cockpit(ship, buf);
@@ -11056,17 +10998,17 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->ioncannons == 0)
 		{
-			send_to_char(FB_RED "Ten statek nie ma dzia³ek jonowych." NL, ch);
+			send_to_char(FB_RED "Ten statek nie ma dziaï¿½ek jonowych." NL, ch);
 			return;
 		}
 		if (ship->statet0 == LASER_DAMAGED)
 		{
-			send_to_char(FB_RED "Dzia³ko jonowe jest uszkodzone." NL, ch);
+			send_to_char(FB_RED "Dziaï¿½ko jonowe jest uszkodzone." NL, ch);
 			return;
 		}
 		if (ship->statet0 >= ship->ioncannons)
 		{
-			send_to_char(FB_RED "Dzia³ko jonowe wci±¿ siê jeszcze ³aduje." NL,
+			send_to_char(FB_RED "Dziaï¿½ko jonowe wciï¿½ï¿½ siï¿½ jeszcze ï¿½aduje." NL,
 					ch);
 			return;
 		}
@@ -11084,14 +11026,14 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->target0->starsystem != ship->starsystem)
 		{
-			send_to_char(FB_RED "Twój cel jako¶ znikn±³." NL, ch);
+			send_to_char(FB_RED "Twï¿½j cel jakoï¿½ zniknï¿½ï¿½." NL, ch);
 			ship->target0 = NULL;
 			return;
 		}
 		if (srange((target->vx - ship->vx), (target->vy - ship->vy),
 				(target->vz - ship->vz)) > 1500)
 		{
-			send_to_char(FB_RED "Ten statek jest poza zasiêgiem." NL, ch);
+			send_to_char(FB_RED "Ten statek jest poza zasiï¿½giem." NL, ch);
 			return;
 		}
 		if ((is_scout(ship) || is_fighter(ship) || is_midship(ship)
@@ -11100,7 +11042,7 @@ DEF_DO_FUN( fire )	//pix0
 		{
 			send_to_char(
 					FB_RED
-					"Przednie dzia³ko jonowe mo¿e strzelaæ tylko do przodu. Musisz obróciæ statek!"
+					"Przednie dziaï¿½ko jonowe moï¿½e strzelaï¿½ tylko do przodu. Musisz obrï¿½ciï¿½ statek!"
 					NL, ch);
 			return;
 		}
@@ -11120,33 +11062,33 @@ DEF_DO_FUN( fire )	//pix0
 		chance -= srange((target->vx - ship->vx), (target->vy - ship->vy),
 				(target->vz - ship->vz)) / 70;
 		chance = URANGE(3, chance, 90);
-		act(PLAIN, "$n naciska przycisk strza³u na dr±¿ku.", ch, NULL, argument,
+		act(PLAIN, "$n naciska przycisk strzaï¿½u na drï¿½ï¿½ku.", ch, NULL, argument,
 				TO_ROOM);
 		if (number_percent() > chance)
 		{
-			sprintf(buf, "%s strzela do ciebie wi±zk± jonizuj±c±, ale chybia.",
+			sprintf(buf, "%s strzela do ciebie wiï¿½zkï¿½ jonizujï¿½cï¿½, ale chybia.",
 					know_trans(target, ship) ?
 							SHIPNAME(ship) : ship->transponder);
 			echo_to_cockpit(target, buf);
-			sprintf(buf, "Statek strzela wi±zk± jonizuj±c± w %s, ale chybia.",
+			sprintf(buf, "Statek strzela wiï¿½zkï¿½ jonizujï¿½cï¿½ w %s, ale chybia.",
 					know_trans(ship, target) ?
 							SHIPNAME(target) : target->transponder);
 			echo_to_cockpit(ship, buf);
 			learn_from_failure(ch, gsn_spacecombat);
 			learn_from_failure(ch, gsn_spacecombat2);
 			learn_from_failure(ch, gsn_spacecombat3);
-			sprintf(buf, "%s chybia wi±zk± jonizuj±c± %s.", ship->sslook,
+			sprintf(buf, "%s chybia wiï¿½zkï¿½ jonizujï¿½cï¿½ %s.", ship->sslook,
 					target->sslook);
 			echo_to_system(ship, buf, target);
 			return;
 		}
-		sprintf(buf, "%s trafia wi±zk± jonizuj±c± %s.", ship->sslook,
+		sprintf(buf, "%s trafia wiï¿½zkï¿½ jonizujï¿½cï¿½ %s.", ship->sslook,
 				target->sslook);
 		echo_to_system(ship, buf, target);
-		sprintf(buf, "Wi±zka jonizuj±ca z %s trafia ciê!",
+		sprintf(buf, "Wiï¿½zka jonizujï¿½ca z %s trafia ciï¿½!",
 				know_trans(target, ship) ? SHIPNAME(ship) : ship->transponder);
 		echo_to_cockpit(target, buf);
-		sprintf(buf, "Trafiasz w %s wi±zk± jonizuj±c±!.",
+		sprintf(buf, "Trafiasz w %s wiï¿½zkï¿½ jonizujï¿½cï¿½!.",
 				know_trans(ship, target) ?
 						SHIPNAME(target) : target->transponder);
 		echo_to_cockpit(ship, buf);
@@ -11154,10 +11096,10 @@ DEF_DO_FUN( fire )	//pix0
 		learn_from_success(ch, gsn_spacecombat2);
 		learn_from_success(ch, gsn_spacecombat3);
 		if (target->shield > 0)
-			echo_to_ship(target, "Lekkie wibracje wstrz±saj± statkiem.");
+			echo_to_ship(target, "Lekkie wibracje wstrzï¿½sajï¿½ statkiem.");
 		else
 			echo_to_ship(target,
-					"Wy³adowania elektryczne przebiegaj± po ¶cianach z przera¼liwym trzaskiem.");
+					"Wyï¿½adowania elektryczne przebiegajï¿½ po ï¿½cianach z przeraï¿½liwym trzaskiem.");
 		damage_ship_energy(target, 5, 20, ch, ship);
 
 		if (autofly(target) && target->target0 != ship
@@ -11166,7 +11108,7 @@ DEF_DO_FUN( fire )	//pix0
 						<= 2000 + target->target_array * 500))
 		{
 			target->target0 = ship;
-			sprintf(buf, "%s namierza ciê.",
+			sprintf(buf, "%s namierza ciï¿½.",
 					know_trans(ship, target) ?
 							SHIPNAME(target) : target->transponder);
 			echo_to_cockpit(ship, buf);
@@ -11188,23 +11130,23 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->missilestate == MISSILE_DAMAGED)
 		{
-			send_to_char(FB_RED "Wyrzutnie pocisków statku s± uszkodzone." NL,
+			send_to_char(FB_RED "Wyrzutnie pociskï¿½w statku sï¿½ uszkodzone." NL,
 					ch);
 			return;
 		}
 		if (ship->missiles <= 0)
 		{
-			send_to_char(FB_RED "Nie masz ju¿ pocisków!" NL, ch);
+			send_to_char(FB_RED "Nie masz juï¿½ pociskï¿½w!" NL, ch);
 			return;
 		}
 		if (ship->missilestate != MISSILE_READY)
 		{
-			send_to_char(FB_RED "Pociski wci±¿ siê ³aduj±." NL, ch);
+			send_to_char(FB_RED "Pociski wciï¿½ï¿½ siï¿½ ï¿½adujï¿½." NL, ch);
 			return;
 		}
 		if (ship->target0 == NULL)
 		{
-			send_to_char(FB_RED "Musisz najpierw obraæ cel." NL, ch);
+			send_to_char(FB_RED "Musisz najpierw obraï¿½ cel." NL, ch);
 			return;
 		}
 		target = ship->target0;
@@ -11216,7 +11158,7 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->target0->starsystem != ship->starsystem)
 		{
-			send_to_char(FB_RED "Twój cel chyba ci zwia³." NL, ch);
+			send_to_char(FB_RED "Twï¿½j cel chyba ci zwiaï¿½." NL, ch);
 			ship->target0 = NULL;
 			return;
 		}
@@ -11224,7 +11166,7 @@ DEF_DO_FUN( fire )	//pix0
 				(target->vz - ship->vz)) > 5000)
 		{
 			send_to_char(FB_RED
-			"Ten statek jest chyba poza zasiêgiem pocisków." NL, ch);
+			"Ten statek jest chyba poza zasiï¿½giem pociskï¿½w." NL, ch);
 			return;
 		}
 		if ((is_scout(ship) || is_fighter(ship) || is_midship(ship)
@@ -11233,7 +11175,7 @@ DEF_DO_FUN( fire )	//pix0
 		{
 			send_to_char(
 					FB_RED
-					"Pociskiem mo¿esz strzelaæ tylko przed siebie. Musisz najpierw obróciæ statek."
+					"Pociskiem moï¿½esz strzelaï¿½ tylko przed siebie. Musisz najpierw obrï¿½ciï¿½ statek."
 					NL, ch);
 			return;
 		}
@@ -11255,22 +11197,22 @@ DEF_DO_FUN( fire )	//pix0
 		chance = URANGE(5, chance, 95);
 		if (ch->position != POS_SITTING)
 			chance /= 3;
-		act(PLAIN, "$n naciska przycisk strza³u na dr±¿ku.", ch, NULL, argument,
+		act(PLAIN, "$n naciska przycisk strzaï¿½u na drï¿½ï¿½ku.", ch, NULL, argument,
 				TO_ROOM);
 		if (number_percent() > chance)
 		{
 			send_to_char(FB_RED
-			"Autonaprowadzanie przesta³o dzia³aæ. Tracisz cel!", ch);
+			"Autonaprowadzanie przestaï¿½o dziaï¿½aï¿½. Tracisz cel!", ch);
 			//ship->target0 = NULL;
 			ship->missilestate = MISSILE_RELOAD_2;
 			return;
 		}
 		new_missile(ship, target, ch, CONCUSSION_MISSILE);
 		ship->missiles--;
-		act(PLAIN, "$n naciska przycisk strza³u na dr±¿ku.", ch, NULL, argument,
+		act(PLAIN, "$n naciska przycisk strzaï¿½u na drï¿½ï¿½ku.", ch, NULL, argument,
 				TO_ROOM);
 		echo_to_cockpit(ship, "Pocisk wystrzelony.");
-		sprintf(buf, "Ostrze¿enie: zbli¿a siê pocisk z %s.",
+		sprintf(buf, "Ostrzeï¿½enie: zbliï¿½a siï¿½ pocisk z %s.",
 				know_trans(target, ship) ? SHIPNAME(ship) : ship->transponder);
 		echo_to_cockpit(target, buf);
 		sprintf(buf, "Widzisz odpalany pocisk z %s.", ship->sslook);
@@ -11287,7 +11229,7 @@ DEF_DO_FUN( fire )	//pix0
 						<= 2000 + target->target_array * 500))
 		{
 			target->target0 = ship;
-			sprintf(buf, FG_RED "%s namierza ciê.",
+			sprintf(buf, FG_RED "%s namierza ciï¿½.",
 					know_trans(ship, target) ?
 							SHIPNAME(target) : target->transponder);
 			echo_to_cockpit(ship, buf);
@@ -11309,23 +11251,23 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->missilestate == MISSILE_DAMAGED)
 		{
-			send_to_char(FB_RED "Wyrzutnie pocisków statku s± uszkodzone." NL,
+			send_to_char(FB_RED "Wyrzutnie pociskï¿½w statku sï¿½ uszkodzone." NL,
 					ch);
 			return;
 		}
 		if (ship->torpedos <= 0)
 		{
-			send_to_char(FB_RED "Nie masz ¿adnych torped!" NL, ch);
+			send_to_char(FB_RED "Nie masz ï¿½adnych torped!" NL, ch);
 			return;
 		}
 		if (ship->missilestate != MISSILE_READY)
 		{
-			send_to_char(FB_RED "Torpedy wci±¿ siê ³aduj±." NL, ch);
+			send_to_char(FB_RED "Torpedy wciï¿½ï¿½ siï¿½ ï¿½adujï¿½." NL, ch);
 			return;
 		}
 		if (ship->target0 == NULL)
 		{
-			send_to_char(FB_RED "Musisz najpierw obraæ cel." NL, ch);
+			send_to_char(FB_RED "Musisz najpierw obraï¿½ cel." NL, ch);
 			return;
 		}
 		target = ship->target0;
@@ -11337,14 +11279,14 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->target0->starsystem != ship->starsystem)
 		{
-			send_to_char(FB_RED "Twój cel chyba zwia³." NL, ch);
+			send_to_char(FB_RED "Twï¿½j cel chyba zwiaï¿½." NL, ch);
 			ship->target0 = NULL;
 			return;
 		}
 		if (srange((target->vx - ship->vx), (target->vy - ship->vy),
 				(target->vz - ship->vz)) > 2000)
 		{
-			send_to_char(FB_RED "Ten statek jest poza zasiêgiem torped." NL,
+			send_to_char(FB_RED "Ten statek jest poza zasiï¿½giem torped." NL,
 					ch);
 			return;
 		}
@@ -11353,7 +11295,7 @@ DEF_DO_FUN( fire )	//pix0
 		&& !is_facing(ship, target))
 		{
 			send_to_char(FB_RED
-			"Torpedy mog± strzelaæ tylko do przodu. Musisz obróciæ statek."
+			"Torpedy mogï¿½ strzelaï¿½ tylko do przodu. Musisz obrï¿½ciï¿½ statek."
 			NL, ch);
 			return;
 		}
@@ -11375,24 +11317,24 @@ DEF_DO_FUN( fire )	//pix0
 		chance = URANGE(2, chance, 98);
 		if (ch->position != POS_SITTING)
 			chance /= 3;
-		act(PLAIN, "$n naciska przycisk strza³u na dr±¿ku.", ch, NULL, argument,
+		act(PLAIN, "$n naciska przycisk strzaï¿½u na drï¿½ï¿½ku.", ch, NULL, argument,
 				TO_ROOM);
 		if (number_percent() > chance)
 		{
-			send_to_char(FB_RED "Autonamierzanie zosta³o zerwane!", ch);
+			send_to_char(FB_RED "Autonamierzanie zostaï¿½o zerwane!", ch);
 			ship->missilestate = MISSILE_RELOAD_2;
 			//ship->target0 = NULL;
 			return;
 		}
 		new_missile(ship, target, ch, PROTON_TORPEDO);
 		ship->torpedos--;
-		act(PLAIN, "$n naciska przycisk strza³u na dr±¿ku.", ch, NULL, argument,
+		act(PLAIN, "$n naciska przycisk strzaï¿½u na drï¿½ï¿½ku.", ch, NULL, argument,
 				TO_ROOM);
 		echo_to_cockpit(ship, "Pocisk wystrzelony.");
-		sprintf(buf, "Ostrze¿enie: Nadlatuje torpeda z %s.",
+		sprintf(buf, "Ostrzeï¿½enie: Nadlatuje torpeda z %s.",
 				know_trans(target, ship) ? SHIPNAME(ship) : ship->transponder);
 		echo_to_cockpit(target, buf);
-		sprintf(buf, "%s wypuszca torpedê.", ship->sslook);
+		sprintf(buf, "%s wypuszca torpedï¿½.", ship->sslook);
 		echo_to_system(ship, buf, target);
 		learn_from_success(ch, gsn_weaponsystems);
 		if (is_capital(ship) || is_platform(ship))
@@ -11406,7 +11348,7 @@ DEF_DO_FUN( fire )	//pix0
 						<= 2000 + target->target_array * 500))
 		{
 			target->target0 = ship;
-			sprintf(buf, FG_RED "%s namierza ciê.",
+			sprintf(buf, FG_RED "%s namierza ciï¿½.",
 					know_trans(ship, target) ?
 							SHIPNAME(target) : target->transponder);
 			echo_to_cockpit(ship, buf);
@@ -11428,23 +11370,23 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->missilestate == MISSILE_DAMAGED)
 		{
-			send_to_char(FB_RED "Wyrzutnia pocisków statku jest uszkodzona."
+			send_to_char(FB_RED "Wyrzutnia pociskï¿½w statku jest uszkodzona."
 			NL, ch);
 			return;
 		}
 		if (ship->rockets <= 0)
 		{
-			send_to_char(FB_RED "Nie masz ¿adnych rakiet!" NL, ch);
+			send_to_char(FB_RED "Nie masz ï¿½adnych rakiet!" NL, ch);
 			return;
 		}
 		if (ship->missilestate != MISSILE_READY)
 		{
-			send_to_char(FB_RED "Rakiety wci±¿ siê prze³adowuj±." NL, ch);
+			send_to_char(FB_RED "Rakiety wciï¿½ï¿½ siï¿½ przeï¿½adowujï¿½." NL, ch);
 			return;
 		}
 		if (ship->target0 == NULL)
 		{
-			send_to_char(FB_RED "Musisz najpierw obraæ cel." NL, ch);
+			send_to_char(FB_RED "Musisz najpierw obraï¿½ cel." NL, ch);
 			return;
 		}
 		target = ship->target0;
@@ -11456,14 +11398,14 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (ship->target0->starsystem != ship->starsystem)
 		{
-			send_to_char(FB_RED "Twój cel chyba zwia³." NL, ch);
+			send_to_char(FB_RED "Twï¿½j cel chyba zwiaï¿½." NL, ch);
 			ship->target0 = NULL;
 			return;
 		}
 		if (srange((target->vx - ship->vx), (target->vy - ship->vy),
 				(target->vz - ship->vz)) > 800)
 		{
-			send_to_char(FB_RED "Ten statek jest poza zasiêgiem rakiet." NL,
+			send_to_char(FB_RED "Ten statek jest poza zasiï¿½giem rakiet." NL,
 					ch);
 			return;
 		}
@@ -11471,7 +11413,7 @@ DEF_DO_FUN( fire )	//pix0
 				|| is_freighter(ship)) && !is_facing(ship, target))
 		{
 			send_to_char(FB_RED
-			"Mo¿esz strzelaæ rakietami tylko do przodu. Musisz obróciæ statek!"
+			"Moï¿½esz strzelaï¿½ rakietami tylko do przodu. Musisz obrï¿½ciï¿½ statek!"
 			NL, ch);
 			return;
 		}
@@ -11493,7 +11435,7 @@ DEF_DO_FUN( fire )	//pix0
 		chance = URANGE(1, chance, 99);
 		if (ch->position != POS_SITTING)
 			chance /= 3;
-		act(PLAIN, "$n naciska przycisk strza³u na dr±¿ku.", ch, NULL, argument,
+		act(PLAIN, "$n naciska przycisk strzaï¿½u na drï¿½ï¿½ku.", ch, NULL, argument,
 				TO_ROOM);
 		if (number_percent() > chance)
 		{
@@ -11504,13 +11446,13 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		new_missile(ship, target, ch, HEAVY_ROCKET);
 		ship->rockets--;
-		act(PLAIN, "$n naciska przycisk strza³u na dr±¿ku.", ch, NULL, argument,
+		act(PLAIN, "$n naciska przycisk strzaï¿½u na drï¿½ï¿½ku.", ch, NULL, argument,
 				TO_ROOM);
 		echo_to_cockpit(ship, "Rakieta wystrzelona.");
-		sprintf(buf, "Ostrze¿enie: nadlatuje rakieta z %s.",
+		sprintf(buf, "Ostrzeï¿½enie: nadlatuje rakieta z %s.",
 				know_trans(target, ship) ? SHIPNAME(ship) : ship->transponder);
 		echo_to_cockpit(target, buf);
-		sprintf(buf, "%s wypuszcza ciê¿k± rakietê.", ship->sslook);
+		sprintf(buf, "%s wypuszcza ciï¿½kï¿½ rakietï¿½.", ship->sslook);
 		echo_to_system(ship, buf, target);
 		learn_from_success(ch, gsn_weaponsystems);
 		if (is_capital(ship) || is_platform(ship))
@@ -11524,7 +11466,7 @@ DEF_DO_FUN( fire )	//pix0
 						<= 2000 + target->target_array * 500))
 		{
 			target->target0 = ship;
-			sprintf(buf, FG_RED "%s namierza ciê.",
+			sprintf(buf, FG_RED "%s namierza ciï¿½.",
 					know_trans(ship, target) ?
 							SHIPNAME(target) : target->transponder);
 			echo_to_cockpit(ship, buf);
@@ -11540,7 +11482,7 @@ DEF_DO_FUN( fire )	//pix0
 	{
 		if (!check_crew(ship, ch, "gunner"))
 		{
-			send_to_char(FB_RED "Nie nale¿ysz do obs³ugi tego dzia³a." NL, ch);
+			send_to_char(FB_RED "Nie naleï¿½ysz do obsï¿½ugi tego dziaï¿½a." NL, ch);
 			return;
 		}
 		if (turret->status == TURRET_DAMAGED)
@@ -11551,25 +11493,25 @@ DEF_DO_FUN( fire )	//pix0
 
 		if (turret->type < 5 && turret->statet0 >= turret->type)
 		{
-			send_to_char(FB_RED "Wie¿yczka prze³adowuje siê teraz." NL, ch);
+			send_to_char(FB_RED "Wieï¿½yczka przeï¿½adowuje siï¿½ teraz." NL, ch);
 			return;
 		}
 
 		if ((turret->type == 5 || turret->type == 6) && turret->statet0 > 0)
 		{
-			send_to_char(FB_RED "Bateria prze³adowuje siê teraz." NL, ch);
+			send_to_char(FB_RED "Bateria przeï¿½adowuje siï¿½ teraz." NL, ch);
 			return;
 		}
 
 		if (turret->type == 7 && turret->statet0 > 0)
 		{
-			send_to_char(FB_RED "Superlaser prze³adowuje siê teraz." NL, ch);
+			send_to_char(FB_RED "Superlaser przeï¿½adowuje siï¿½ teraz." NL, ch);
 			return;
 		}
 
 		if (turret->target == NULL)
 		{
-			send_to_char(FB_RED "Musisz najpierw obraæ cel." NL, ch);
+			send_to_char(FB_RED "Musisz najpierw obraï¿½ cel." NL, ch);
 			return;
 		}
 		target = turret->target;
@@ -11581,14 +11523,14 @@ DEF_DO_FUN( fire )	//pix0
 		}
 		if (target->starsystem != ship->starsystem)
 		{
-			send_to_char(FB_RED "Twój cel chyba zwia³." NL, ch);
+			send_to_char(FB_RED "Twï¿½j cel chyba zwiaï¿½." NL, ch);
 			turret->target = NULL;
 			return;
 		}
 		if (srange((target->vx - ship->vx), (target->vy - ship->vy),
 				(target->vz - ship->vz)) > 1000 && turret->type < 6)
 		{
-			send_to_char(FB_RED "Ten statek jest poza zasiêgiem laserów." NL,
+			send_to_char(FB_RED "Ten statek jest poza zasiï¿½giem laserï¿½w." NL,
 					ch);
 			return;
 		}
@@ -11597,7 +11539,7 @@ DEF_DO_FUN( fire )	//pix0
 				&& (turret->type == 5 || turret->type == 6))
 		{
 			send_to_char(
-					FB_RED "Ten statek jest poza zasiêgiem turbolaserów." NL,
+					FB_RED "Ten statek jest poza zasiï¿½giem turbolaserï¿½w." NL,
 					ch);
 			return;
 		}
@@ -11605,7 +11547,7 @@ DEF_DO_FUN( fire )	//pix0
 				(target->vz - ship->vz)) > 5000 && turret->type == 7)
 		{
 			send_to_char(
-					FB_RED "Ten statek jest poza zasiêgiem twojego superlasera." NL,
+					FB_RED "Ten statek jest poza zasiï¿½giem twojego superlasera." NL,
 					ch);
 			return;
 		}
@@ -11673,23 +11615,23 @@ DEF_DO_FUN( fire )	//pix0
 		chance -= (abs(target->vy - ship->vy) / 70);
 		chance -= (abs(target->vz - ship->vz) / 70);
 
-		act(PLAIN, "$n naciska przycisk strza³u na dr±¿ku.", ch, NULL, argument,
+		act(PLAIN, "$n naciska przycisk strzaï¿½u na drï¿½ï¿½ku.", ch, NULL, argument,
 				TO_ROOM);
 		if (number_percent() > chance)
 		{
 			sprintf(buf, "%s z %s chybia.",
-					turret->type < 5 ? "Wie¿yczka laserowa" :
+					turret->type < 5 ? "Wieï¿½yczka laserowa" :
 					turret->type == 7 ? "Superlaser" : "Bateria Turbolasera",
 					know_trans(target, ship) ?
 							SHIPNAME(ship) : ship->transponder);
 			echo_to_cockpit(target, buf);
-			sprintf(buf, "%s unika strza³u.",
+			sprintf(buf, "%s unika strzaï¿½u.",
 					know_trans(ship, target) ?
 							SHIPNAME(target) : target->transponder);
 			echo_to_cockpit(ship, buf);
 			sprintf(buf, "%s strzela w %s z %s, ale chybia.", ship->sslook,
 					target->sslook,
-					turret->type < 5 ? "wie¿yczki laserowej" :
+					turret->type < 5 ? "wieï¿½yczki laserowej" :
 					turret->type == 7 ? "superlasera" : "turbolasera");
 			echo_to_system(ship, buf, target);
 			learn_from_failure(ch, gsn_spacecombat);
@@ -11698,17 +11640,17 @@ DEF_DO_FUN( fire )	//pix0
 			return;
 		}
 		sprintf(buf, "%s z %s trafia %s.",
-				turret->type < 5 ? "Wie¿yczka laserowa" :
+				turret->type < 5 ? "Wieï¿½yczka laserowa" :
 				turret->type == 7 ? "Superlaser" : "Bateria Turbolasera",
 				ship->sslook, target->sslook);
 		echo_to_system(ship, buf, target);
-		sprintf(buf, "%s trafia ciê %s!",
+		sprintf(buf, "%s trafia ciï¿½ %s!",
 				know_trans(target, ship) ? SHIPNAME(ship) : ship->transponder,
 				turret->type < 5 ? "laserem" :
 				turret->type == 7 ? "superlaserem" : "turbolaserem");
 		echo_to_cockpit(target, buf);
 		sprintf(buf, "%s trafia %s!.",
-				turret->type < 5 ? "Wie¿yczka laserowa" :
+				turret->type < 5 ? "Wieï¿½yczka laserowa" :
 				turret->type == 7 ? "Superlaser" : "Bateria turbolasera",
 				know_trans(ship, target) ?
 						SHIPNAME(target) : target->transponder);
@@ -11719,24 +11661,24 @@ DEF_DO_FUN( fire )	//pix0
 
 		if (turret->type < 5)
 		{
-			echo_to_ship(target, "Ma³a eksplozja wstrz±sa statkiem.");
+			echo_to_ship(target, "Maï¿½a eksplozja wstrzï¿½sa statkiem.");
 			damage_ship_ch(target, MIN_LASER_DAMAGE, MAX_LASER_DAMAGE, ch);
 		}
 		else if (turret->type == 7)
 		{
 			echo_to_ship(target,
-					FB_GREEN "Potê¿na eksplozja niszczy statek!!!");
+					FB_GREEN "Potï¿½na eksplozja niszczy statek!!!");
 			//damage_ship_ch(target, 5000, 10000, ch);
 			purge_ship(target, ch);
 		}
 		else if (turret->type == 5)
 		{
-			echo_to_ship(target, "Eksplozja wstrz±sa statkiem!");
+			echo_to_ship(target, "Eksplozja wstrzï¿½sa statkiem!");
 			damage_ship_ch(target, MIN_TURBO_DAMAGE, MAX_TURBO_DAMAGE, ch);
 		}
 		else if (turret->type == 6)
 		{
-			echo_to_ship(target, "Eksplozja wstrz±sa statkiem!");
+			echo_to_ship(target, "Eksplozja wstrzï¿½sa statkiem!");
 			damage_ship_ch(target, MIN_HTURBO_DAMAGE, MAX_HTURBO_DAMAGE, ch);
 		}
 		else
@@ -11747,7 +11689,7 @@ DEF_DO_FUN( fire )	//pix0
 						<= 2000 + target->target_array * 500))
 		{
 			target->target0 = ship;
-			sprintf(buf, "%s namierza ciê.",
+			sprintf(buf, "%s namierza ciï¿½.",
 					know_trans(ship, target) ?
 							SHIPNAME(target) : target->transponder);
 			echo_to_cockpit(ship, buf);
@@ -11756,7 +11698,7 @@ DEF_DO_FUN( fire )	//pix0
 		return;
 	}
 
-	send_to_char(FB_RED "nie mo¿esz strzelaæ z czego¶ takiego!" NL, ch);
+	send_to_char(FB_RED "nie moï¿½esz strzelaï¿½ z czegoï¿½ takiego!" NL, ch);
 
 }
 
@@ -11773,14 +11715,14 @@ int get_sorted_systems(SPACE_DATA ***sorted_systems)
 	SPACE_DATA *starsystem;
 	int count = 0;
 
-	FOREACH( starsystem, first_starsystem )
+	for (auto* starsystem : starsystem_list)
 		count++;
 
 	if (count)
 	{
 		CREATE(*sorted_systems, SPACE_DATA*, count);
 		count = 0;
-		FOREACH( starsystem, first_starsystem )
+		for (auto* starsystem : starsystem_list)
 			(*sorted_systems)[count++] = starsystem;
 		qsort(*sorted_systems, count, sizeof(SPACE_DATA*),
 				(int (*)(const void*, const void*)) starsystem_cmp);
@@ -11803,7 +11745,7 @@ DEF_DO_FUN( calculate )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiæ." NL,
+		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiï¿½." NL,
 				ch);
 		return;
 	}
@@ -11811,7 +11753,7 @@ DEF_DO_FUN( calculate )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
@@ -11819,20 +11761,20 @@ DEF_DO_FUN( calculate )
 	{
 		send_to_char(
 				FB_RED
-				"Musisz staæ przy komputerze nawigacyjnym, by obliczaæ wspó³rzêdne skoku."
+				"Musisz staï¿½ przy komputerze nawigacyjnym, by obliczaï¿½ wspï¿½rzï¿½dne skoku."
 				NL, ch);
 		return;
 	}
 
 	if (!check_crew(ship, ch, "navigator"))
 	{
-		send_to_char(FB_RED "Nie jeste¶ nawigatorem na tym statku." NL, ch);
+		send_to_char(FB_RED "Nie jesteï¿½ nawigatorem na tym statku." NL, ch);
 		return;
 	}
 
 	if (ship->hyperspeed == 0)
 	{
-		send_to_char(FB_RED "Ten statek nie jest wyposa¿ony w hipernapêd!" NL,
+		send_to_char(FB_RED "Ten statek nie jest wyposaï¿½ony w hipernapï¿½d!" NL,
 				ch);
 		return;
 	}
@@ -11848,7 +11790,7 @@ DEF_DO_FUN( calculate )
 		int i, j, count = get_sorted_systems(&sorted_systems);
 
 		pager_printf(ch, FB_WHITE
-		"Sk³adnia: calculate <nazwa> <x wej¶cia> <y wej¶cia> <z wej¶cia>"
+		"Skï¿½adnia: calculate <nazwa> <x wejï¿½cia> <y wejï¿½cia> <z wejï¿½cia>"
 		EOL NL);
 		pager_printf(ch, FG_GREEN
 		"Nazwa                   odl.      Nazwa                   odl."
@@ -11878,7 +11820,7 @@ DEF_DO_FUN( calculate )
 		}
 		else
 		{
-			send_to_char("Nie znaleziono systemów." NL, ch);
+			send_to_char("Nie znaleziono systemï¿½w." NL, ch);
 		}
 
 		DISPOSE(sorted_systems);
@@ -11887,7 +11829,7 @@ DEF_DO_FUN( calculate )
 	}
 	if (!is_number(argument))
 	{
-		send_to_char(FB_RED "B³êdna trzecia wspó³rzêdna 'wyj¶cia'!" NL, ch);
+		send_to_char(FB_RED "Bï¿½ï¿½dna trzecia wspï¿½rzï¿½dna 'wyjï¿½cia'!" NL, ch);
 		return;
 	}
 	chance =
@@ -11895,7 +11837,7 @@ DEF_DO_FUN( calculate )
 					ch->top_level : (int) (ch->pcdata->learned[gsn_navigation]);
 	if (number_percent() > chance)
 	{
-		send_to_char(FB_RED "Nie udaje ci siê jako¶ nic wyliczyæ." NL, ch);
+		send_to_char(FB_RED "Nie udaje ci siï¿½ jakoï¿½ nic wyliczyï¿½." NL, ch);
 		learn_from_failure(ch, gsn_navigation);
 		if (ship->currjump)
 		{
@@ -11921,7 +11863,7 @@ DEF_DO_FUN( calculate )
 	if (ship->currjump == NULL)
 	{
 		send_to_char(FB_RED
-		"Nie mo¿esz znale¼æ wspó³rzêdnych systemu na wykresach."
+		"Nie moï¿½esz znaleï¿½ï¿½ wspï¿½rzï¿½dnych systemu na wykresach."
 		NL, ch);
 		return;
 	}
@@ -11953,7 +11895,7 @@ DEF_DO_FUN( calculate )
 
 		starsystem = ship->currjump;
 
-		for (star = starsystem->first_star; star; star = star->next)
+		for (auto* star : starsystem->stars)
 		{
 			if (srange((ship->jx - star->xpos), (ship->jy - star->ypos),
 					(ship->jz - star->zpos))
@@ -11961,10 +11903,10 @@ DEF_DO_FUN( calculate )
 			{
 				echo_to_cockpit(ship,
 						FB_RED
-						"OSTRZE¯ENIE.. Koordynaty skoku przecinaj± siê z obiektem w systemie docelowym.");
+						"OSTRZEï¿½ENIE.. Koordynaty skoku przecinajï¿½ siï¿½ z obiektem w systemie docelowym.");
 				echo_to_cockpit(ship,
 				FB_RED
-				"OSTRZE¯ENIE.. Wyliczanie koordynat skoku przerwane.");
+				"OSTRZEï¿½ENIE.. Wyliczanie koordynat skoku przerwane.");
 				ship->currjump = NULL;
 				return;
 			}
@@ -11974,13 +11916,12 @@ DEF_DO_FUN( calculate )
 			{
 				echo_to_cockpit(ship,
 						FB_RED
-						"OSTRZE¯ENIE.. Koordynaty skoku w pobli¿u obiektu w systemie docelowym.");
+						"OSTRZEï¿½ENIE.. Koordynaty skoku w pobliï¿½u obiektu w systemie docelowym.");
 				echo_to_cockpit(ship,
-				FB_RED "OSTRZE¯ENIE.. Zalecana ostro¿no¶æ.");
+				FB_RED "OSTRZEï¿½ENIE.. Zalecana ostroï¿½noï¿½ï¿½.");
 			}
 		}
-		for (planet = starsystem->first_planet; planet;
-				planet = planet->next_in_system)
+		for (auto* planet : starsystem->planets)
 		{
 			if (srange((ship->jx - planet->xpos), (ship->jy - planet->ypos),
 					(ship->jz - planet->zpos))
@@ -11988,10 +11929,10 @@ DEF_DO_FUN( calculate )
 			{
 				echo_to_cockpit(ship,
 						FB_RED
-						"OSTRZE¯ENIE.. Koordynaty skoku przecinaj± siê z obiektem w systemie docelowym.");
+						"OSTRZEï¿½ENIE.. Koordynaty skoku przecinajï¿½ siï¿½ z obiektem w systemie docelowym.");
 				echo_to_cockpit(ship,
 				FB_RED
-				"OSTRZE¯ENIE.. Hiperskok NIE ustalony.");
+				"OSTRZEï¿½ENIE.. Hiperskok NIE ustalony.");
 				ship->currjump = NULL;
 				return;
 			}
@@ -12001,22 +11942,22 @@ DEF_DO_FUN( calculate )
 			{
 				echo_to_cockpit(ship,
 						FB_RED
-						"OSTRZE¯ENIE.. Koordynaty skoku w pobli¿u obiektu w systemie docelowym.");
+						"OSTRZEï¿½ENIE.. Koordynaty skoku w pobliï¿½u obiektu w systemie docelowym.");
 				echo_to_cockpit(ship,
-				FB_RED "OSTRZE¯ENIE.. Zalecana ostro¿no¶æ.");
+				FB_RED "OSTRZEï¿½ENIE.. Zalecana ostroï¿½noï¿½ï¿½.");
 			}
 		}
-		for (moon = starsystem->first_moon; moon; moon = moon->next)
+		for (auto* moon : starsystem->moons)
 		{
 			if (srange((ship->jx - moon->xpos), (ship->jy - moon->ypos),
 					(ship->jz - moon->zpos)) < moon->gravity + 50)
 			{
 				echo_to_cockpit(ship,
 						FB_RED
-						"OSTRZE¯ENIE.. Koordynaty skoku przecinaj± siê z obiektem w systemie docelowym.");
+						"OSTRZEï¿½ENIE.. Koordynaty skoku przecinajï¿½ siï¿½ z obiektem w systemie docelowym.");
 				echo_to_cockpit(ship,
 				FB_RED
-				"OSTRZE¯ENIE.. Hiperskok NIE ustalony.");
+				"OSTRZEï¿½ENIE.. Hiperskok NIE ustalony.");
 				ship->currjump = NULL;
 				return;
 			}
@@ -12025,9 +11966,9 @@ DEF_DO_FUN( calculate )
 			{
 				echo_to_cockpit(ship,
 						FB_RED
-						"OSTRZE¯ENIE.. Koordynaty skoku w pobli¿u obiektu w systemie docelowym.");
+						"OSTRZEï¿½ENIE.. Koordynaty skoku w pobliï¿½u obiektu w systemie docelowym.");
 				echo_to_cockpit(ship,
-				FB_RED "OSTRZE¯ENIE.. Zalecana ostro¿no¶æ.");
+				FB_RED "OSTRZEï¿½ENIE.. Zalecana ostroï¿½noï¿½ï¿½.");
 			}
 		}
 		ship->jx += number_range(-10, 10);
@@ -12047,10 +11988,10 @@ DEF_DO_FUN( calculate )
 	}
 	sound_to_room(ch->in_room, "!!SOUND(computer)");
 
-	send_to_char(FB_GREEN "Wspó³rzêdne hiperprzestrzenne wprowadzone." EOL, ch);
+	send_to_char(FB_GREEN "Wspï¿½rzï¿½dne hiperprzestrzenne wprowadzone." EOL, ch);
 	send_to_char(FG_MAGENTA "Rozpoczynam przeliczanie kursu." EOL, ch);
 	act(PLAIN,
-			"$n wykonuje jakie¶ skomplikowane obliczenia na komputerze statku.",
+			"$n wykonuje jakieï¿½ skomplikowane obliczenia na komputerze statku.",
 			ch, NULL, NULL, TO_ROOM);
 
 	learn_from_success(ch, gsn_navigation);
@@ -12067,7 +12008,7 @@ DEF_DO_FUN( recharge )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byæ w kokpicie statku by to zrobiæ." NL,
+		send_to_char(FB_RED "Musisz byï¿½ w kokpicie statku by to zrobiï¿½." NL,
 				ch);
 		return;
 	}
@@ -12075,13 +12016,13 @@ DEF_DO_FUN( recharge )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	if ((ship = ship_from_coseat(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz staæ na stanowisku drugiego pilota." NL,
+		send_to_char(FB_RED "Musisz staï¿½ na stanowisku drugiego pilota." NL,
 				ch);
 		return;
 	}
@@ -12096,7 +12037,7 @@ DEF_DO_FUN( recharge )
 			ship->size / 10 + ship->size / 40);
 	if (ship->energy < energy)
 	{
-		send_to_char(FB_RED "Masz za ma³o paliwa!" NL, ch);
+		send_to_char(FB_RED "Masz za maï¿½o paliwa!" NL, ch);
 		return;
 	}
 
@@ -12108,7 +12049,7 @@ DEF_DO_FUN( recharge )
 
 	if (ship->energy < -100)
 	{
-		send_to_char(FB_RED "Reaktor nie wytrzymuje przeci±¿enia!" NL, ch);
+		send_to_char(FB_RED "Reaktor nie wytrzymuje przeciï¿½ï¿½enia!" NL, ch);
 		destroy_ship(ship, ch);
 		return;
 	}
@@ -12119,14 +12060,14 @@ DEF_DO_FUN( recharge )
 					(int) (ch->pcdata->learned[gsn_shipsystems]);
 	if (number_percent() > chance)
 	{
-		send_to_char(FB_RED "Nie uda³o ci siê poprawnie obs³u¿yæ urz±dzeñ."
+		send_to_char(FB_RED "Nie udaï¿½o ci siï¿½ poprawnie obsï¿½uï¿½yï¿½ urzï¿½dzeï¿½."
 		NL, ch);
 		learn_from_failure(ch, gsn_shipsystems);
 		return;
 	}
 
-	send_to_char("&GPrze³adowanie tarczy.." NL, ch);
-	act(PLAIN, "$n poci±ga za d¼wigniê na panelu sterowania.", ch, NULL,
+	send_to_char("&GPrzeï¿½adowanie tarczy.." NL, ch);
+	act(PLAIN, "$n pociï¿½ga za dï¿½wigniï¿½ na panelu sterowania.", ch, NULL,
 			argument, TO_ROOM);
 
 	learn_from_success(ch, gsn_shipsystems);
@@ -12156,15 +12097,15 @@ DEF_DO_FUN( repairship )
 		if ((ship = ship_from_room(ch->in_room)) == NULL)
 		{
 			send_to_char(FB_RED
-			"Statek mozna naprawiac tylko od wewn±trz!" NL, ch);
+			"Statek mozna naprawiac tylko od wewnï¿½trz!" NL, ch);
 			return;
 		}
 
 		if (!str_cmp(arg, "show"))
 		{
-			pager_printf(ch, FG_CYAN "Kad³ub             %d/%d" NL, ship->hull,
+			pager_printf(ch, FG_CYAN "Kadï¿½ub             %d/%d" NL, ship->hull,
 					ship->maxhull);
-			pager_printf(ch, FG_CYAN "Napêd              %s" NL,
+			pager_printf(ch, FG_CYAN "Napï¿½d              %s" NL,
 					ship->shipstate == SHIP_DISABLED ?
 							FG_YELLOW "Uszkodzony" : FB_CYAN
 							"Sprawny");
@@ -12179,9 +12120,9 @@ DEF_DO_FUN( repairship )
 					ship->missilestate != MISSILE_READY ?
 							FG_YELLOW "Uszkodzona" : FB_CYAN
 							"Sprawna");
-			for (turret = ship->first_turret; turret; turret = turret->next)
+			for (auto* turret : ship->turrets)
 			{
-				pager_printf(ch, FG_CYAN "Wie¿yczka nr %-5d %s" NL, a,
+				pager_printf(ch, FG_CYAN "Wieï¿½yczka nr %-5d %s" NL, a,
 						turret->status == 0 ?
 								FB_CYAN "Sprawna" :
 								(turret->status == -1 ? FB_RED "Zniszczona" :
@@ -12192,30 +12133,30 @@ DEF_DO_FUN( repairship )
 		}
 		if (argument[0] == '\0')
 		{
-			send_to_char(FB_RED "Musisz sprecyzowaæ co chcesz naprawiæ:"
+			send_to_char(FB_RED "Musisz sprecyzowaï¿½ co chcesz naprawiï¿½:"
 			NL, ch);
-			send_to_char(FG_RED "Spróbuj: Kad³ub (hull)" NL
-			"         Napêd (drive)" NL
+			send_to_char(FG_RED "Sprï¿½buj: Kadï¿½ub (hull)" NL
+			"         Napï¿½d (drive)" NL
 			"         Systemy(systems)" NL, ch);
 			send_to_char(FG_RED "         Wyrzutnia (launcher)" NL
-			"         Laser" NL "         Dzia³o (Turret)"
+			"         Laser" NL "         Dziaï¿½o (Turret)"
 			NL, ch);
-			send_to_char(FB_RED "Aby zobaczyæ stan podsystemów:" NL FG_RED
+			send_to_char(FB_RED "Aby zobaczyï¿½ stan podsystemï¿½w:" NL FG_RED
 			"wpisz:   Repairship Show" NL, ch);
 			return;
 		}
-		else if (!str_cmp(arg, "hull") || !str_cmp(arg, "kad³ub"))
+		else if (!str_cmp(arg, "hull") || !str_cmp(arg, "kadï¿½ub"))
 		{
-			ch_printf(ch, FB_YELLOW "Kad³ub: %d z %d" NL, ship->hull,
+			ch_printf(ch, FB_YELLOW "Kadï¿½ub: %d z %d" NL, ship->hull,
 					ship->maxhull);
 		}
-		else if (!str_cmp(arg, "drive") || !str_cmp(arg, "napêd"))
+		else if (!str_cmp(arg, "drive") || !str_cmp(arg, "napï¿½d"))
 		{
 			if (ch->in_room != ship->engineroom)
 			{
 				ch_printf(ch,
 				FB_RED
-				"Musisz byæ w pobli¿u silnika ¿eby go naprawiaæ."
+				"Musisz byï¿½ w pobliï¿½u silnika ï¿½eby go naprawiaï¿½."
 				NL);
 				return;
 			}
@@ -12227,7 +12168,7 @@ DEF_DO_FUN( repairship )
 			{
 				ch_printf(ch,
 				FB_RED
-				"Musisz byæ w pobli¿u uzbrojenia które chcesz naprawiaæ."
+				"Musisz byï¿½ w pobliï¿½u uzbrojenia ktï¿½re chcesz naprawiaï¿½."
 				NL);
 				return;
 			}
@@ -12238,11 +12179,11 @@ DEF_DO_FUN( repairship )
 			{
 				ch_printf(ch,
 				FB_RED
-				"Koncówka dejonizatora jest u nawigatorów." NL);
+				"Koncï¿½wka dejonizatora jest u nawigatorï¿½w." NL);
 				return;
 			}
 		}
-		else if (!str_cmp(arg, "dzia³o") || !str_cmp(arg, "turret"))
+		else if (!str_cmp(arg, "dziaï¿½o") || !str_cmp(arg, "turret"))
 		{
 			if ((turret = get_turret_here(ship, ch->in_room)) != NULL)
 			{
@@ -12250,14 +12191,14 @@ DEF_DO_FUN( repairship )
 				{
 					ch_printf(ch,
 					FB_RED
-					"To dzia³o jest doszczêtnie zniszczone trzeba je wymieniæ."
+					"To dziaï¿½o jest doszczï¿½tnie zniszczone trzeba je wymieniï¿½."
 					NL);
 					return;
 				}
 				else if (turret->status == TURRET_READY)
 				{
 					ch_printf(ch,
-					FB_GREEN "Sprawno¶æ baterii 100 procent."
+					FB_GREEN "Sprawnoï¿½ï¿½ baterii 100 procent."
 					NL);
 					return;
 				}
@@ -12265,14 +12206,14 @@ DEF_DO_FUN( repairship )
 				 {
 				 ch_printf(ch,
 				 FB_RED
-				 "Co chcesz naprawiaæ? To dzia³o siê prze³adowuje."
+				 "Co chcesz naprawiaï¿½? To dziaï¿½o siï¿½ przeï¿½adowuje."
 				 NL);
 				 return;
 				 }*/
 			}
 			else
 			{
-				ch_printf(ch, FB_RED "Nie jeste¶ w pobli¿u dzia³a." NL);
+				ch_printf(ch, FB_RED "Nie jesteï¿½ w pobliï¿½u dziaï¿½a." NL);
 				return;
 			}
 		}
@@ -12288,10 +12229,10 @@ DEF_DO_FUN( repairship )
 						(int) (ch->pcdata->learned[gsn_shipmaintenance]);
 		if (number_percent() < chance)
 		{
-			send_to_char("&GOstro bierzesz siê za naprawianie..." NL, ch);
-			act(PLAIN, "$n naprawia jakie¶ elementy statku.", ch, NULL, NULL,
+			send_to_char("&GOstro bierzesz siï¿½ za naprawianie..." NL, ch);
+			act(PLAIN, "$n naprawia jakieï¿½ elementy statku.", ch, NULL, NULL,
 					TO_ROOM);
-			if (!str_cmp(arg, "hull") || !str_cmp(arg, "kad³ub"))
+			if (!str_cmp(arg, "hull") || !str_cmp(arg, "kadï¿½ub"))
 				add_timer(ch, TIMER_DO_FUN, 15, do_repairship, 1);
 			else
 				add_timer(ch, TIMER_DO_FUN, 5, do_repairship, 1);
@@ -12299,7 +12240,7 @@ DEF_DO_FUN( repairship )
 			return;
 		}
 		send_to_char(FB_RED
-		"Nie uda³o ci siê zlokalizowaæ ¼ród³a problemu." NL, ch);
+		"Nie udaï¿½o ci siï¿½ zlokalizowaï¿½ ï¿½rï¿½dï¿½a problemu." NL, ch);
 		learn_from_failure(ch, gsn_shipmaintenance);
 		return;
 
@@ -12316,7 +12257,7 @@ DEF_DO_FUN( repairship )
 		if ((ship = ship_from_room(ch->in_room)) == NULL)
 			return;
 		ch_printf(ch, FB_RED
-		"Rozkojarzy³%s¶ siê. Nici z naprawy." EOL, SEX_SUFFIX_EAE(ch));
+		"Rozkojarzyï¿½%sï¿½ siï¿½. Nici z naprawy." EOL, SEX_SUFFIX_EAE(ch));
 		return;
 	}
 
@@ -12327,7 +12268,7 @@ DEF_DO_FUN( repairship )
 		return;
 	}
 
-	if (!str_cmp(arg, "kad³ub") || (!str_cmp(arg, "hull")))
+	if (!str_cmp(arg, "kadï¿½ub") || (!str_cmp(arg, "hull")))
 	{
 		change = URANGE(0,
 				number_range((int )
@@ -12336,17 +12277,17 @@ DEF_DO_FUN( repairship )
 				(ship->maxhull - ship->hull));
 		ship->hull += change;
 		ch_printf(ch,
-				"&GNaprawa zakoñczona.. Si³a kad³ubu podniesiona o %d punkt%s."
-				NL, change, NUMBER_SUFF(change, "", "y", "ów"));
+				"&GNaprawa zakoï¿½czona.. Siï¿½a kadï¿½ubu podniesiona o %d punkt%s."
+				NL, change, NUMBER_SUFF(change, "", "y", "ï¿½w"));
 	}
 
-	if (!str_cmp(arg, "drive") || !str_cmp(arg, "napêd"))
+	if (!str_cmp(arg, "drive") || !str_cmp(arg, "napï¿½d"))
 	{
 		if (ship->location == ship->lastdoc)
 			ship->shipstate = SHIP_DOCKED;
 		else
 			ship->shipstate = SHIP_READY;
-		send_to_char("&GNapêd statku naprawiony." NL, ch);
+		send_to_char("&GNapï¿½d statku naprawiony." NL, ch);
 	}
 
 	if (!str_cmp(arg, "Systems") || !str_cmp(arg, "systemy"))
@@ -12359,34 +12300,34 @@ DEF_DO_FUN( repairship )
 		}
 		else
 			send_to_char(FB_RED
-			"NIC z tego nie masz gdzie odprowadziæ nadmiaru ³adunków."
-			NL "Musisz poczekaæ mo¿e same siê rozprosz±." NL, ch);
+			"NIC z tego nie masz gdzie odprowadziï¿½ nadmiaru ï¿½adunkï¿½w."
+			NL "Musisz poczekaï¿½ moï¿½e same siï¿½ rozproszï¿½." NL, ch);
 	}
 
 	if (!str_cmp(arg, "launcher") || !str_cmp(arg, "wyrzutnia"))
 	{
 		ship->missilestate = MISSILE_READY;
-		send_to_char("&GWyrzutnia pocisków naprawiona." NL, ch);
+		send_to_char("&GWyrzutnia pociskï¿½w naprawiona." NL, ch);
 	}
 
 	if (!str_cmp(arg, "laser"))
 	{
 		ship->statet0 = LASER_READY;
-		send_to_char("&GG³ówny laser naprawiony." NL, ch);
+		send_to_char("&GGï¿½ï¿½wny laser naprawiony." NL, ch);
 	}
-	if (!str_cmp(arg, "dzia³o") || !str_cmp(arg, "turret"))
+	if (!str_cmp(arg, "dziaï¿½o") || !str_cmp(arg, "turret"))
 	{
 		if ((turret = get_turret_here(ship, ch->in_room)) != NULL)
 		{
 			turret->status = TURRET_READY;
-			send_to_char("&GDzia³o naprawione." NL, ch);
+			send_to_char("&GDziaï¿½o naprawione." NL, ch);
 			save_ship(ship);
 		}
 		else
-			send_to_char(FB_RED "UPS dzia³o gdzie¶ zwia³o." NL, ch);
+			send_to_char(FB_RED "UPS dziaï¿½o gdzieï¿½ zwiaï¿½o." NL, ch);
 	}
 
-	act(PLAIN, "$n koñczy naprawê.", ch, NULL, argument, TO_ROOM);
+	act(PLAIN, "$n koï¿½czy naprawï¿½.", ch, NULL, argument, TO_ROOM);
 
 	learn_from_success(ch, gsn_shipmaintenance);
 
@@ -12402,14 +12343,14 @@ DEF_DO_FUN( addpilot )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiæ." NL,
+		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiï¿½." NL,
 				ch);
 		return;
 	}
 
 	if (!is_ship(ship))
 	{
-		send_to_char(FB_RED "Nie mo¿esz zrobiæ tego tutaj." NL, ch);
+		send_to_char(FB_RED "Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch);
 		return;
 	}
 
@@ -12421,13 +12362,13 @@ DEF_DO_FUN( addpilot )
 		{
 			if (!IS_LEADER(ch) && !IS_FIRST(ch) && !IS_SECOND(ch))
 			{
-				send_to_char(FB_RED "To nie twój statek!", ch);
+				send_to_char(FB_RED "To nie twï¿½j statek!", ch);
 				return;
 			}
 		}
 		else
 		{
-			send_to_char(FB_RED "To nie twój statek!", ch);
+			send_to_char(FB_RED "To nie twï¿½j statek!", ch);
 			return;
 		}
 
@@ -12435,7 +12376,7 @@ DEF_DO_FUN( addpilot )
 
 	if (argument[0] == '\0')
 	{
-		send_to_char(FB_RED "Którego pilota dodaæ?" NL, ch);
+		send_to_char(FB_RED "Ktï¿½rego pilota dodaï¿½?" NL, ch);
 		return;
 	}
 
@@ -12443,9 +12384,9 @@ DEF_DO_FUN( addpilot )
 	{
 		if (str_cmp(ship->copilot, ""))
 		{
-			send_to_char(FB_RED "Masz ju¿ obu pilotów.." NL, ch);
+			send_to_char(FB_RED "Masz juï¿½ obu pilotï¿½w.." NL, ch);
 			send_to_char(FB_RED
-			"Je¶li chcesz ich zmieniæ, spróbuj najpierw 'rempilot'."
+			"Jeï¿½li chcesz ich zmieniï¿½, sprï¿½buj najpierw 'rempilot'."
 			NL, ch);
 			return;
 		}
@@ -12470,14 +12411,14 @@ DEF_DO_FUN( rempilot )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiæ." NL,
+		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiï¿½." NL,
 				ch);
 		return;
 	}
 
 	if (!is_ship(ship))
 	{
-		send_to_char(FB_RED "Nie mo¿esz zrobiæ tego tutaj." NL, ch);
+		send_to_char(FB_RED "Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch);
 		return;
 	}
 
@@ -12489,13 +12430,13 @@ DEF_DO_FUN( rempilot )
 		{
 			if (!IS_LEADER(ch) && !IS_FIRST(ch) && !IS_SECOND(ch))
 			{
-				send_to_char(FB_RED "To nie twój statek!", ch);
+				send_to_char(FB_RED "To nie twï¿½j statek!", ch);
 				return;
 			}
 		}
 		else
 		{
-			send_to_char(FB_RED "To nie twój statek!", ch);
+			send_to_char(FB_RED "To nie twï¿½j statek!", ch);
 			return;
 		}
 
@@ -12503,14 +12444,14 @@ DEF_DO_FUN( rempilot )
 
 	if (argument[0] == '\0')
 	{
-		send_to_char(FB_RED "Którego pilota chcesz odj±æ?" NL, ch);
+		send_to_char(FB_RED "Ktï¿½rego pilota chcesz odjï¿½ï¿½?" NL, ch);
 		return;
 	}
 
 	if (!str_cmp(ship->pilot, argument))
 	{
 		STRDUP(ship->pilot, "");
-		send_to_char("Pilot usuniêty." NL, ch);
+		send_to_char("Pilot usuniï¿½ty." NL, ch);
 		save_ship(ship);
 		return;
 	}
@@ -12518,12 +12459,12 @@ DEF_DO_FUN( rempilot )
 	if (!str_cmp(ship->copilot, argument))
 	{
 		STRDUP(ship->copilot, "");
-		send_to_char("Drugi pilot usuniêty." NL, ch);
+		send_to_char("Drugi pilot usuniï¿½ty." NL, ch);
 		save_ship(ship);
 		return;
 	}
 
-	send_to_char(FB_RED "Ta osoba nie figuruje na li¶cie pilotów tego statku."
+	send_to_char(FB_RED "Ta osoba nie figuruje na liï¿½cie pilotï¿½w tego statku."
 	NL, ch);
 
 }
@@ -12534,7 +12475,7 @@ DEF_DO_FUN( radar )
 	int chance, emp;
 	SHIP_DATA *ship;
 	MISSILE_DATA *missile;
-	ASTRO_DATA *astro, *a_next;
+	ASTRO_DATA *astro;
 	STAR_DATA *star;
 	PLANET_DATA *planet;
 	MOON_DATA *moon;
@@ -12543,14 +12484,14 @@ DEF_DO_FUN( radar )
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
 		send_to_char(FB_RED
-		"Musisz byæ na mostku lub w wie¿yczce by to zrobiæ!" NL, ch);
+		"Musisz byï¿½ na mostku lub w wieï¿½yczce by to zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
@@ -12558,7 +12499,7 @@ DEF_DO_FUN( radar )
 	{
 		ch_printf(ch,
 				FB_RED
-				"To jest wytwór obcej biotechnologi, niestety nie masz o niej zielonego pojêcia."
+				"To jest wytwï¿½r obcej biotechnologi, niestety nie masz o niej zielonego pojï¿½cia."
 				EOL);
 		return;
 	}
@@ -12573,7 +12514,7 @@ DEF_DO_FUN( radar )
 	if (number_percent() > chance)
 	{
 		send_to_char(FB_RED
-		"Nie uda³o ci siê odczytaæ wska¼ników. Co to za be³kot?"
+		"Nie udaï¿½o ci siï¿½ odczytaï¿½ wskaï¿½nikï¿½w. Co to za beï¿½kot?"
 		NL, ch);
 		learn_from_failure(ch, gsn_navigation);
 		return;
@@ -12584,17 +12525,17 @@ DEF_DO_FUN( radar )
 	pager_printf(ch, FB_CYAN " ___________________________" NL);
 	pager_printf(ch, "( " FB_WHITE "%-25s" FB_CYAN " )" NL,
 			!IS_SET(ship->starsystem->flags, STARS_FLAG_TEMP) ?
-					ship->starsystem->name : "Gdzie¶ w galaktyce");
+					ship->starsystem->name : "Gdzieï¿½ w galaktyce");
 	pager_printf(ch,
 			"|-----------------------------------------------------------------------------."
 			NL);
 	pager_printf(ch,
-			"|        Transponder lub nazwa      |     Wspó³rzêdne lokalne    | Odleglo¶æ  |"
+			"|        Transponder lub nazwa      |     Wspï¿½rzï¿½dne lokalne    | Odlegloï¿½ï¿½  |"
 			NL);
 	pager_printf(ch,
 			"|-----------------------------------------------------------------------------|"
 			NL);
-	for (star = ship->starsystem->first_star; star; star = star->next)
+	for (auto* star : ship->starsystem->stars)
 	{
 		if (srange((star->xpos - ship->vx), (star->ypos - ship->vy),
 				(star->zpos - ship->vz)) * emp < ship->astro_array * 150000)
@@ -12605,8 +12546,7 @@ DEF_DO_FUN( radar )
 					(srange((star->xpos - ship->vx), (star->ypos - ship->vy),
 							(star->zpos - ship->vz)) - star->radius));
 	}
-	for (planet = ship->starsystem->first_planet; planet;
-			planet = planet->next_in_system)
+	for (auto* planet : ship->starsystem->planets)
 	{
 		if (srange((planet->xpos - ship->vx), (planet->ypos - ship->vy),
 				(planet->zpos - ship->vz)) * emp < ship->astro_array * 90000)
@@ -12618,7 +12558,7 @@ DEF_DO_FUN( radar )
 							(planet->ypos - ship->vy),
 							(planet->zpos - ship->vz)) - planet->radius)); // To albo do powierzchni albo do jadra, konsekwencji troche!!
 	}
-	for (moon = ship->starsystem->first_moon; moon; moon = moon->next)
+	for (auto* moon : ship->starsystem->moons)
 	{
 		if (srange((moon->xpos - ship->vx), (moon->ypos - ship->vy),
 				(moon->zpos - ship->vz)) * emp < ship->astro_array * 50000)
@@ -12632,9 +12572,8 @@ DEF_DO_FUN( radar )
 	pager_printf(ch,
 			"|-----------------------------------------------------------------------------|"
 			NL);
-	for (astro = ship->starsystem->first_astro; astro; astro = a_next)
+	for (auto* astro : ship->starsystem->astros)
 	{
-		a_next = astro->next_in_starsystem;
 		if (srange((ship->vx - astro->ox), (ship->vy - astro->oy),
 				(ship->vz - astro->oz)) * emp
 				> (astro->value + ship->sensor) * 200)
@@ -12660,8 +12599,7 @@ DEF_DO_FUN( radar )
 	pager_printf(ch,
 			"|-----------------------------------------------------------------------------|"
 			NL);
-	for (target = ship->starsystem->first_ship; target;
-			target = target->next_in_starsystem)
+	for (auto* target : ship->starsystem->ships)
 	{
 		snprintf(buf, 28, "%s", SHIPNAME(target));
 		if (target->cloack != 0
@@ -12675,7 +12613,7 @@ DEF_DO_FUN( radar )
 				(target->vx - ship->vx)) * emp
 				> ship->sensor * 2900 + target->size * 9 + 1500)
 		{
-			pager_printf(ch, "| " FB_RED "Co¶ tam jest.                     "
+			pager_printf(ch, "| " FB_RED "Coï¿½ tam jest.                     "
 			FB_CYAN "|" FB_RED " %-8.0f %-8.0f %-8.0f " FB_CYAN
 			"|            |" NL,
 					target->vx - ship->vx + 100 * number_range(-5, 5),
@@ -12711,8 +12649,7 @@ DEF_DO_FUN( radar )
 	pager_printf(ch,
 			"|-----------------------------------------------------------------------------|"
 			NL);
-	for (missile = ship->starsystem->first_missile; missile;
-			missile = missile->next_in_starsystem)
+	for (auto* missile : ship->starsystem->missiles)
 	{
 		if (srange((missile->mx - ship->vx), (missile->my - ship->vy),
 				(missile->mz - ship->vz)) * emp > ship->sensor * 2000)
@@ -12724,7 +12661,7 @@ DEF_DO_FUN( radar )
 		{
 			send_to_char(
 					FB_RED
-					"| To chyba jaka¶ rakieta, ale gdzie ona leci?                                 |"
+					"| To chyba jakaï¿½ rakieta, ale gdzie ona leci?                                 |"
 					NL, ch);
 			continue;
 		}
@@ -12734,7 +12671,7 @@ DEF_DO_FUN( radar )
 						(missile->missiletype == PROTON_TORPEDO ?
 								"Torpeda" :
 								(missile->missiletype == HEAVY_ROCKET ?
-										"Ciê¿ka Rakieta" : "Ciê¿ka Bomba")),
+										"Ciï¿½ka Rakieta" : "Ciï¿½ka Bomba")),
 				missile->mx - ship->vx, missile->my - ship->vy,
 				missile->mz - ship->vz,
 				srange((missile->mx - ship->vx), (missile->my - ship->vy),
@@ -12744,7 +12681,7 @@ DEF_DO_FUN( radar )
 	pager_printf(ch,
 			"|-----------------------------------------------------------------------------|"
 			NL);
-	pager_printf(ch, "| Twoje wspó³rzêdne solarne: %-8.0f %-8.0f %-7.0f /" NL,
+	pager_printf(ch, "| Twoje wspï¿½rzï¿½dne solarne: %-8.0f %-8.0f %-7.0f /" NL,
 			ship->vx, ship->vy, ship->vz);
 	pager_printf(ch,
 			"`------------------------------------------------------" NL);
@@ -12760,7 +12697,7 @@ DEF_DO_FUN( autotrack )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiæ." NL,
+		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiï¿½." NL,
 				ch);
 		return;
 	}
@@ -12768,7 +12705,7 @@ DEF_DO_FUN( autotrack )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
@@ -12782,31 +12719,31 @@ DEF_DO_FUN( autotrack )
 	{
 		echo_to_cockpit(ship,
 				FB_RED
-				"W systemie panuje burza elektromagnetyczna, komputer nie bêdzie w stanie ¶ledziæ celu");
+				"W systemie panuje burza elektromagnetyczna, komputer nie bï¿½dzie w stanie ï¿½ledziï¿½ celu");
 		return;
 	}
 	if (is_platform(ship))
 	{
-		send_to_char(FB_RED "Platformy nie maj± systemu samonaprowadzalnego!"
+		send_to_char(FB_RED "Platformy nie majï¿½ systemu samonaprowadzalnego!"
 		NL, ch);
 		return;
 	}
 	if (is_capital(ship))
 	{
-		send_to_char(FB_RED "Ten statek jest zbyt du¿y na autonaprowadzanie!"
+		send_to_char(FB_RED "Ten statek jest zbyt duï¿½y na autonaprowadzanie!"
 		NL, ch);
 		return;
 	}
 	if (is_huge(ship))
 	{
-		send_to_char(FB_RED "Ten statek jest zbyt du¿y na autonaprowadzanie!"
+		send_to_char(FB_RED "Ten statek jest zbyt duï¿½y na autonaprowadzanie!"
 		NL, ch);
 		return;
 	}
 
 	if (autofly(ship))
 	{
-		send_to_char(FB_RED "Musisz najpierw wy³±czyæ autopilota..." NL, ch);
+		send_to_char(FB_RED "Musisz najpierw wyï¿½ï¿½czyï¿½ autopilota..." NL, ch);
 		return;
 	}
 
@@ -12817,31 +12754,31 @@ DEF_DO_FUN( autotrack )
 	if (number_percent() > chance)
 	{
 		send_to_char(FB_RED
-		"Nie za bardzo wiesz, któr± by tu d¼wigniê przestawiæ."
+		"Nie za bardzo wiesz, ktï¿½rï¿½ by tu dï¿½wigniï¿½ przestawiï¿½."
 		NL, ch);
 		learn_from_failure(ch, gsn_shipsystems);
 		return;
 	}
 
-	act(PLAIN, "$n prze³±cza d¼wigniê na panelu sterowania.", ch, NULL,
+	act(PLAIN, "$n przeï¿½ï¿½cza dï¿½wigniï¿½ na panelu sterowania.", ch, NULL,
 			argument, TO_ROOM);
 	if (ship->autotrack)
 	{
 		ship->autotrack = false;
-		echo_to_cockpit(ship, FB_YELLOW "Autonaprowadzanie WY£¡CZONE.");
+		echo_to_cockpit(ship, FB_YELLOW "Autonaprowadzanie WYï¿½ï¿½CZONE.");
 	}
 	else
 	{
 		ship->autotrack = true;
-		echo_to_cockpit(ship, FB_YELLOW "Autonaprowadzanie W£¡CZONE.");
+		echo_to_cockpit(ship, FB_YELLOW "Autonaprowadzanie Wï¿½ï¿½CZONE.");
 	}
 
 	learn_from_success(ch, gsn_shipsystems);
 
 }
 
-//Modified by Thanos (zrobi³em tak, by wy¶wietla³o listê wszystkich staków
-//publicznych a nie tylko pluogusa i toccê)
+//Modified by Thanos (zrobiï¿½em tak, by wyï¿½wietlaï¿½o listï¿½ wszystkich stakï¿½w
+//publicznych a nie tylko pluogusa i toccï¿½)
 DEF_DO_FUN( pluogus )
 {
 	int itt;
@@ -12853,7 +12790,7 @@ DEF_DO_FUN( pluogus )
 
 	if (!get_comlink(ch))
 	{
-		send_to_char("Nie masz przy sobie urz±dzenia komunikacyjnego!" NL, ch);
+		send_to_char("Nie masz przy sobie urzï¿½dzenia komunikacyjnego!" NL, ch);
 		return;
 	}
 
@@ -12862,9 +12799,9 @@ DEF_DO_FUN( pluogus )
 	all |= !str_cmp("wszystkie", arg1);
 	all |= !str_cmp("", arg1);
 
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 	{
-		if (ship->ship_public && ship->first_stop && ship->curr_stop)
+		if (ship->ship_public && !ship->stops.empty() && ship->curr_stop)
 		{
 			if (!all && argument && !nifty_is_name_prefix(arg1, ship->name))
 				continue;
@@ -12877,7 +12814,7 @@ DEF_DO_FUN( pluogus )
 						"Aktualnie zadokowany na stacji: " FB_WHITE "%s"
 						PLAIN "." NL, ship->curr_stop->stop_name);
 			/* destinations */
-			send_to_pager("Nastêpne stacje: ", ch);
+			send_to_pager("Nastï¿½pne stacje: ", ch);
 			if (ship->bus_pos <= 1)
 				pager_printf(ch, "%s,", ship->curr_stop->stop_name);
 
@@ -12885,7 +12822,10 @@ DEF_DO_FUN( pluogus )
 
 			for (itt = 0; itt < 3; itt++)
 			{
-				course = course->next ? course->next : ship->first_stop;
+				auto c_it = std::find(ship->stops.begin(), ship->stops.end(), course);
+				if (c_it != ship->stops.end())
+					++c_it;
+				course = (c_it != ship->stops.end()) ? *c_it : ship->stops.front();
 				if (itt)
 					pager_printf(ch, ",");
 
@@ -12959,7 +12899,6 @@ ch_ret drive_ship(CHAR_DATA *ch, SHIP_DATA *ship, EXIT_DATA *pexit, int fall)
 	int door;
 	bool drunk = false;
 	CHAR_DATA *rch;
-	CHAR_DATA *next_rch;
 
 	if (!IS_NPC(ch))
 		if (IS_DRUNK(ch, 2) && (ch->position != POS_SHOVE)
@@ -13110,7 +13049,7 @@ ch_ret drive_ship(CHAR_DATA *ch, SHIP_DATA *ship, EXIT_DATA *pexit, int fall)
 		CHAR_DATA *ctmp;
 		int count = 0;
 
-		for (ctmp = to_room->first_person; ctmp; ctmp = ctmp->next_in_room)
+		for (auto* ctmp : to_room->people)
 			if (++count >= to_room->tunnel)
 			{
 				send_to_char("There is no room for you in there." NL, ch);
@@ -13199,9 +13138,9 @@ ch_ret drive_ship(CHAR_DATA *ch, SHIP_DATA *ship, EXIT_DATA *pexit, int fall)
 	sprintf(buf, FB_YELLOW "%s %s from %s.", ship->name, txt, dtxt);
 	echo_to_room(ship->location, buf);
 
-	for (rch = ch->in_room->last_person; rch; rch = next_rch)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* rch : people_snapshot)
 	{
-		next_rch = rch->prev_in_room;
 		original = rch->in_room;
 		char_from_room(rch);
 		char_to_room(rch, to_room);
@@ -13241,7 +13180,7 @@ DEF_DO_FUN( chaff )
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
-		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiæ." NL,
+		send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiï¿½." NL,
 				ch);
 		return;
 	}
@@ -13249,7 +13188,7 @@ DEF_DO_FUN( chaff )
 	if (isnt_in_realspace(ship))
 	{
 		send_to_char(FB_RED
-		"W obecnej chwili i miejscu nie mo¿esz tego zrobiæ!" NL, ch);
+		"W obecnej chwili i miejscu nie moï¿½esz tego zrobiï¿½!" NL, ch);
 		return;
 	}
 
@@ -13271,7 +13210,7 @@ DEF_DO_FUN( chaff )
 					(int) (ch->pcdata->learned[gsn_weaponsystems]);
 	if (number_percent() > chance)
 	{
-		send_to_char(FB_RED "Nie wiesz który przycisk wcisn±æ" NL, ch);
+		send_to_char(FB_RED "Nie wiesz ktï¿½ry przycisk wcisnï¿½ï¿½" NL, ch);
 		learn_from_failure(ch, gsn_weaponsystems);
 		return;
 	}
@@ -13281,10 +13220,10 @@ DEF_DO_FUN( chaff )
 	ship->chaff_released++;
 
 	send_to_char("Odpalasz flare" NL, ch);
-	act(PLAIN, "$n naciska co¶ na pulpicie kontroli uzbrojenia" NL, ch, NULL,
+	act(PLAIN, "$n naciska coï¿½ na pulpicie kontroli uzbrojenia" NL, ch, NULL,
 			argument, TO_ROOM);
 	echo_to_cockpit(ship,
-	FB_YELLOW "Seria termicznych wabików ulatuje w kosmos."
+	FB_YELLOW "Seria termicznych wabikï¿½w ulatuje w kosmos."
 	NL);
 
 	learn_from_success(ch, gsn_weaponsystems);
@@ -13332,7 +13271,7 @@ bool autofly(SHIP_DATA *ship)
  return;
  }
 
- for ( ship = first_ship; ship; ship = ship->next )
+ for (auto* ship : ship_list)
  {
  if ( !str_cmp(ship->owner,ch->name) )
  {
@@ -13351,7 +13290,7 @@ bool autofly(SHIP_DATA *ship)
 
  if (!IS_SET(ship->flags, SHIP_HIDDEN) )
  {
- send_to_char(FB_RED "Ten statek nie jest ukryty! Spróbuj wpisac allships!" NL, ch );
+ send_to_char(FB_RED "Ten statek nie jest ukryty! Sprï¿½buj wpisac allships!" NL, ch );
  return;
  }
 
@@ -13372,7 +13311,7 @@ bool autofly(SHIP_DATA *ship)
  REMOVE_BIT(ship->flags, SHIP_HIDDEN);
  sprintf( buf, "%s Znaleziony przez: %s.", ship->name, ch->name );
  logfs( buf, 0 );
- ch_printf( ch, "Znalaz³eœ: %s!" NL, ship->name );
+ ch_printf( ch, "Znalazï¿½eï¿½: %s!" NL, ship->name );
  return;
  }
  }
@@ -13393,7 +13332,7 @@ bool autofly(SHIP_DATA *ship)
  default:
  if (  (ship = ship_from_cockpit(ch->in_room))  == NULL )
  {
- send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiæ." NL,ch);
+ send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiï¿½." NL,ch);
  return;
  }
  if (ship->shipstate == SHIP_HYPERSPACE)
@@ -13501,7 +13440,7 @@ bool autofly(SHIP_DATA *ship)
 
  if (  (ship = ship_from_cockpit(ch->in_room))  == NULL )
  {
- send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiæ." NL,ch);
+ send_to_char(FB_RED "Musisz byc w kokpicie statku by to zrobiï¿½." NL,ch);
  return;
  }
 

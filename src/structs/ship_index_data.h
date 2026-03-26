@@ -20,34 +20,26 @@
 #define SHIP_INDEX_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct ship_index_data
 {
-	SHIP_INDEX_DATA		* next;
-	SHIP_INDEX_DATA		* prev;
 	char				* name;
 	char				* builders;
 	int					security;
 	int					roomcount;	//dla wygody
-	int					resetcount;	//równie¿
-	SHIP_ROOM_DATA		* first_room;
-	SHIP_ROOM_DATA		* last_room;
+	int					resetcount;	//rï¿½wnieï¿½
+	std::list<SHIP_ROOM_DATA*> rooms;
 	int					vnum;
 	int					first_dumped;	//olc
 	int					last_dumped;
-	int					count;		// ile egzemplarzy za³adowano z wzorca
-	TURRET_DATA			* first_turret;
-	TURRET_DATA			* last_turret;
-	HANGAR_DATA			* first_hangar;
-	HANGAR_DATA			* last_hangar;
-	CARGO_DATA			* first_cargo;
-	CARGO_DATA			* last_cargo;
-	MODULE_DATA			* first_module;
-	MODULE_DATA			* last_module;
-	SMAP_DATA			* first_smap;
-	SMAP_DATA			* last_smap;
-	SHIPDOCK_DATA		* first_dock;
-	SHIPDOCK_DATA		* last_dock;
+	int					count;		// ile egzemplarzy zaï¿½adowano z wzorca
+	std::list<TURRET_DATA*> turrets;
+	std::list<HANGAR_DATA*> hangars;
+	std::list<CARGO_DATA*> cargo;
+	std::list<MODULE_DATA*> modules;
+	std::list<SMAP_DATA*> smaps;
+	std::list<SHIPDOCK_DATA*> docks;
 	int					maxmodule;
 	char				* filename;
 	char				* description;

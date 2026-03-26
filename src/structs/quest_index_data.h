@@ -20,11 +20,10 @@
 #define QUEST_INDEX_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	quest_index_data
 {
-	QUEST_INDEX_DATA	* next;
-	QUEST_INDEX_DATA	* prev;
 	char				* name;		/* nazwa */
 	char				* author;		/* nazwa */
 	char				* description;	/* opis	 */
@@ -32,16 +31,13 @@ struct	quest_index_data
 	int					quest_id;	/* vnum questa */
 	int					min_lev;	/* ograniczniki levelowe */
 	int					max_lev;
-	int					questor;	/* vnum moba daj±cego quest */
+	int					questor;	/* vnum moba dajï¿½cego quest */
 	int					time;		/* ile czasu (w godzinach) */
 	int					penalty;	/* kara w exp */
 	int					security;
-	CHAPTER_INDEX_DATA	* first_chapter;	/* wska¼niki na rozdzia³y questa */
-	CHAPTER_INDEX_DATA	* last_chapter;
-	QUEST_CMND_DATA		* first_init_cmd;
-	QUEST_CMND_DATA		* last_init_cmd;
-	QUEST_ACTION_DATA	* first_action;
-	QUEST_ACTION_DATA	* last_action;
+	std::list<CHAPTER_INDEX_DATA*> chapters;
+	std::list<QUEST_CMND_DATA*> init_cmds;
+	std::list<QUEST_ACTION_DATA*> actions;
 };
 
 #endif //QUEST_INDEX_DATA_H_

@@ -23,8 +23,6 @@
 
 struct	descriptor_data
 {
-	DESCRIPTOR_DATA		* next;
-	DESCRIPTOR_DATA		* prev;
 	DESCRIPTOR_DATA		* snoop_by;
 	CHAR_DATA			* character;
 	CHAR_DATA			* tmp_ch;		//do rename (Thanos)

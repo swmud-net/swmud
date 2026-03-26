@@ -23,8 +23,6 @@
 
 struct lcnv_data
 {
-	LCNV_DATA			* next;
-	LCNV_DATA			* prev;
 	char				* old;
 	int					olen;
 	char				* _new;
