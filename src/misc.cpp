@@ -2402,7 +2402,7 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 			if ((pexit_rev = pexit->rexit) != NULL && pexit_rev->to_room == ch->in_room)
 			{
 				REMOVE_BIT(pexit_rev->flags, EX_CLOSED);
-				for (auto* rch : to_room->people)
+				for (auto* rch : pexit->to_room->people)
 					act( COL_ACTION, "$d otwieraj� si�.", rch, NULL, pexit_rev->keyword, TO_CHAR);
 			}
 			check_room_for_traps(ch, trap_door[edir]);
@@ -2418,7 +2418,7 @@ void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 			if ((pexit_rev = pexit->rexit) != NULL && pexit_rev->to_room == ch->in_room)
 			{
 				SET_BIT(pexit_rev->flags, EX_CLOSED);
-				for (auto* rch : to_room->people)
+				for (auto* rch : pexit->to_room->people)
 					act( COL_ACTION, "$d zamykaj� si�.", rch, NULL, pexit_rev->keyword, TO_CHAR);
 			}
 			check_room_for_traps(ch, trap_door[edir]);

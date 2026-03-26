@@ -3272,8 +3272,8 @@ void clean_rat_loop()
 
 void update_rat()
 {
-	CHAR_DATA *owner;
-	bool found;
+	CHAR_DATA *owner = nullptr;
+	bool found = false;
 
 	if (rat_loop.rStopped)
 		return;
