@@ -39,8 +39,6 @@ std::list<SWInvite*> invites_list;
 /*added by Thanos*/
 bool get_comlink(CHAR_DATA *ch)
 {
-	OBJ_DATA *obj;
-
 	if (IS_NPC(ch))
 		return true;
 
@@ -63,7 +61,6 @@ bool get_comlink(CHAR_DATA *ch)
 DEF_DO_FUN( buyhome )
 {
 	ROOM_INDEX_DATA *room;
-	AREA_DATA *pArea;
 
 	if (!ch->in_room)
 		return;
@@ -352,8 +349,6 @@ DEF_DO_FUN( invites )
 
 bool does_knows_name(CHAR_DATA *ch, char *vict_name)
 {
-	KNOWN_CHAR_DATA *known;
-
 	if (IS_NPC(ch)) // Pixel: Wszystkie moby maj� by� znane graczom, decyzja spowodowana
 		return true; // brakiem sensownej alternatywy, a gracze maj� problemy z interakcj�
 
@@ -375,8 +370,6 @@ bool does_knows_name(CHAR_DATA *ch, char *vict_name)
 //Tanglor - sprawdza czy ch zna victim
 bool does_knows(CHAR_DATA *ch, CHAR_DATA *victim)
 {
-	KNOWN_CHAR_DATA *known;
-
 	if ( IS_NPC( ch ) || IS_NPC(victim)) // Pixel: Wszystkie moby maj� by� znane graczom, decyzja spowodowana
 		return true; // brakiem sensownej alternatywy, a gracze maj� problemy z interakcj�
 
@@ -487,8 +480,6 @@ char* format_char_attribute_wrapper(CHAR_DATA *ch, int przypadek)
 
 CLONING_DATA* get_cloning(ROOM_INDEX_DATA *room)
 {
-	CLONING_DATA *cloning;
-
 	for (auto* cloning : cloning_list)
 	{
 		if (cloning->entrance == room)
@@ -500,8 +491,6 @@ CLONING_DATA* get_cloning(ROOM_INDEX_DATA *room)
 
 CLONING_DATA* get_cloning_by_cyl(ROOM_INDEX_DATA *room)
 {
-	CLONING_DATA *cloning;
-
 	for (auto* cloning : cloning_list)
 	{
 		if (cloning->cylinder == room)
@@ -1593,9 +1582,7 @@ DEF_DO_FUN( fill )
 
 	if (dest_item == ITEM_CONTAINER)
 	{
-		OBJ_DATA *otmp, *otmp_next;
 		char name[MAX_INPUT_LENGTH];
-		CHAR_DATA *gch;
 		char *pd;
 		bool found = false;
 
@@ -2195,7 +2182,6 @@ DEF_DO_FUN( quaff )
 void pullorpush(CHAR_DATA *ch, OBJ_DATA *obj, bool pull)
 {
 	char buf[MAX_STRING_LENGTH];
-	CHAR_DATA *rch;
 	bool isup;
 	ROOM_INDEX_DATA *room, *to_room = 0;
 	EXIT_DATA *pexit, *pexit_rev;

@@ -26,32 +26,30 @@
 #include <time.h>
 #include "mud.h"
 
-const char* inv_pers_i[6] = {	"Kto¶",
-				"Kogo¶",
-				"Komu¶",
-				"Kogo¶",
-				"Kim¶",
-				"Kim¶"	};
+const char* inv_pers_i[6] = {	"Ktoï¿½",
+				"Kogoï¿½",
+				"Komuï¿½",
+				"Kogoï¿½",
+				"Kimï¿½",
+				"Kimï¿½"	};
 
 
 /* Trog: rasa bazowa (u nas czlowiek) */
 const RACE_DATA human_race =
 {
-	NULL,
-	NULL,
 	(char *)"Human",
 	(char *)"",
-	{ (char *)"Mê¿czyzna", (char *)"Mê¿czyzny", (char *)"Mê¿czy¼nie",(char *) "Mê¿czyznê",
-			(char *)"Mê¿czyzn±", (char *)"Mê¿czy¼nie"
+	{ (char *)"Mï¿½czyzna", (char *)"Mï¿½czyzny", (char *)"Mï¿½czyï¿½nie",(char *) "Mï¿½czyznï¿½",
+			(char *)"Mï¿½czyznï¿½", (char *)"Mï¿½czyï¿½nie"
 	},
-	{ (char *)"Kobieta", (char *)"Kobiety", (char *)"Kobiecie",(char *) "Kobietê",
-			(char *)"Kobiet±", (char *)"Kobiecie"                                 // Pixel
+	{ (char *)"Kobieta", (char *)"Kobiety", (char *)"Kobiecie",(char *) "Kobietï¿½",
+			(char *)"Kobietï¿½", (char *)"Kobiecie"                                 // Pixel
 	},
-	(char *)"S± najliczniejsz± i najzwyklejsz± z ras zamieszkuj±cych gataktyke. Nie" NL
-	"posiadaj± ¿adnych specjalnych umiejêtno¶ci czy bonusów, ale tak¿e nie maj±" NL
-	"wielu wad. Ludzie ³atwo przystosowuj± sie do wszystkich warunków i s± zdolni" NL
-	"do obrania wiekszo¶ci klas. Ludzie posiadaj± dwa ramiona, dwie nogi i" NL
-	"okr±g³e g³owy. Zaskakuj±co ludzie maj± tendencjê wygl±dac inaczej od siebie." NL,
+	(char *)"Sï¿½ najliczniejszï¿½ i najzwyklejszï¿½ z ras zamieszkujï¿½cych gataktyke. Nie" NL
+	"posiadajï¿½ ï¿½adnych specjalnych umiejï¿½tnoï¿½ci czy bonusï¿½w, ale takï¿½e nie majï¿½" NL
+	"wielu wad. Ludzie ï¿½atwo przystosowujï¿½ sie do wszystkich warunkï¿½w i sï¿½ zdolni" NL
+	"do obrania wiekszoï¿½ci klas. Ludzie posiadajï¿½ dwa ramiona, dwie nogi i" NL
+	"okrï¿½gï¿½e gï¿½owy. Zaskakujï¿½co ludzie majï¿½ tendencjï¿½ wyglï¿½dac inaczej od siebie." NL,
 	FRACE_PC_AVAIL,
 	0,
 	0,
@@ -74,15 +72,11 @@ const RACE_DATA human_race =
 /** Trog: jezyk bazowy (u nas common) */
 const LANG_DATA lang_common =
 {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	{},
+	{},
 	(char *)"Basic",
 	(char *)"",
-	(char *)"Nie mo¿esz mówiæ we wspólnym.",
+	(char *)"Nie moï¿½esz mï¿½wiï¿½ we wspï¿½lnym.",
 	99,
 	75,
 	10,
@@ -96,8 +90,8 @@ const	struct	class_type	class_table	[MAX_ABILITY]	=
 		    "Walka",
 		    "walki",
 		    "walce",
-		    "walkê",
-		    "walk±",
+		    "walkï¿½",
+		    "walkï¿½",
 		    "walce",
 		    "w walce"
 		},
@@ -110,12 +104,12 @@ const	struct	class_type	class_table	[MAX_ABILITY]	=
 	},
 	{	"piloting", 		"Pil",
 		{
-		    "Pilota¿",
-		    "pilota¿u",
-		    "pilota¿owi",
-		    "pilota¿",
-		    "pilota¿em",
-		    "pilota¿u",
+		    "Pilotaï¿½",
+		    "pilotaï¿½u",
+		    "pilotaï¿½owi",
+		    "pilotaï¿½",
+		    "pilotaï¿½em",
+		    "pilotaï¿½u",
 		    "w pilotowaniu"
 		},
 #if defined (ARMAGEDDON)
@@ -127,13 +121,13 @@ const	struct	class_type	class_table	[MAX_ABILITY]	=
 	},
 	{	"engineering", 		"Eng",
 		{
-		    "In¿ynieria",
-		    "in¿ynierii",
-		    "in¿ynierii",
-		    "in¿ynieriê",
-		    "in¿ynieri±",
-		    "in¿ynierii",
-		    "w in¿ynierii"
+		    "Inï¿½ynieria",
+		    "inï¿½ynierii",
+		    "inï¿½ynierii",
+		    "inï¿½ynieriï¿½",
+		    "inï¿½ynieriï¿½",
+		    "inï¿½ynierii",
+		    "w inï¿½ynierii"
 		},
 #if defined (ARMAGEDDON)
 		{ 0, 3, 4, 0, 0, 0, 0 },
@@ -144,13 +138,13 @@ const	struct	class_type	class_table	[MAX_ABILITY]	=
 	},
 	{	"bounty hunting", 	"Bou",
 		{
-		    "£owienie nagród",
-		    "³owienia nagród",
-		    "³owieniu nagród",
-		    "³owienie nagród",
-		    "³owieniem nagród",
-		    "³owieniu nagród",
-		    "w ³owieniu nagród"
+		    "ï¿½owienie nagrï¿½d",
+		    "ï¿½owienia nagrï¿½d",
+		    "ï¿½owieniu nagrï¿½d",
+		    "ï¿½owienie nagrï¿½d",
+		    "ï¿½owieniem nagrï¿½d",
+		    "ï¿½owieniu nagrï¿½d",
+		    "w ï¿½owieniu nagrï¿½d"
 		},
 #if defined (ARMAGEDDON)
 		{ 3, 3, 0, 0, 1, 0, 0 },
@@ -182,8 +176,8 @@ const	struct	class_type	class_table	[MAX_ABILITY]	=
 		    "Dyplomacja",
 		    "dyplomacji",
 		    "dyplomacji",
-		    "dyplomacjê",
-		    "dyplomacj±",
+		    "dyplomacjï¿½",
+		    "dyplomacjï¿½",
 		    "dyplomacji",
 		    "w dyplomacji"
 		},
@@ -196,13 +190,13 @@ const	struct	class_type	class_table	[MAX_ABILITY]	=
 	},
 	{	"leadership", 		"Lea",
 		{
-		    "Przywódczo¶æ",
-		    "przywódczo¶ci",
-		    "przywódczo¶ci",
-		    "przywódczo¶æ",
-		    "przywódczo¶ci±",
-		    "przywódczo¶ci",
-		    "w przywództwie"
+		    "Przywï¿½dczoï¿½ï¿½",
+		    "przywï¿½dczoï¿½ci",
+		    "przywï¿½dczoï¿½ci",
+		    "przywï¿½dczoï¿½ï¿½",
+		    "przywï¿½dczoï¿½ciï¿½",
+		    "przywï¿½dczoï¿½ci",
+		    "w przywï¿½dztwie"
 		},
 #if defined (ARMAGEDDON)
 		{ 1, 2, 3, 0, 1, 0, 0 },
@@ -213,13 +207,13 @@ const	struct	class_type	class_table	[MAX_ABILITY]	=
 	},
 	{	"force", 		"For",
 		{
-		    "W³adanie Moc±",
-		    "w³adania Moc±",
-		    "w³adaniu Moc±",
-		    "w³adanie Moc±",
-		    "w³adaniem Moc±",
-		    "w³adaniu Moc±",
-		    "we w³adaniu Moc±"
+		    "Wï¿½adanie Mocï¿½",
+		    "wï¿½adania Mocï¿½",
+		    "wï¿½adaniu Mocï¿½",
+		    "wï¿½adanie Mocï¿½",
+		    "wï¿½adaniem Mocï¿½",
+		    "wï¿½adaniu Mocï¿½",
+		    "we wï¿½adaniu Mocï¿½"
 		},
 #if defined (ARMAGEDDON)
 		{ 0, 5, 1, 1, 0, 0, 0 },
@@ -493,115 +487,115 @@ const	struct	frc_app_type	frc_app		[26]		=
  */
 const	struct	liq_type	liq_table	[LIQ_MAX]	=
 {
-    { "wodê",			"prze¼roczyst±",{  0, 1, 10 }	},  /*  0 */
-    { "piwo",			"br±zow±",	{  3, 2,  5 }	},
-    { "wino",			"ró¿owaw±",	{  5, 2,  5 }	},
-    { "ale",			"br±zow±",	{  2, 2,  5 }	},
-    { "ciemne ale",		"ciemnobr±zow±",{  1, 2,  5 }	},
+    { "wodï¿½",			"przeï¿½roczystï¿½",{  0, 1, 10 }	},  /*  0 */
+    { "piwo",			"brï¿½zowï¿½",	{  3, 2,  5 }	},
+    { "wino",			"rï¿½owawï¿½",	{  5, 2,  5 }	},
+    { "ale",			"brï¿½zowï¿½",	{  2, 2,  5 }	},
+    { "ciemne ale",		"ciemnobrï¿½zowï¿½",{  1, 2,  5 }	},
 
-    { "whisky",			"z³otaw±",	{  6, 1,  4 }	},  /*  5 */
-    { "lemoniadê",		"ró¿ow±",	{  0, 1,  8 }	},
-    { "gorza³ê",			"mêtn±",	{ 10, 0,  0 }	},
-    { "lokalny specja³",	"mêtniaw±",	{  3, 3,  3 }	},
-    { "sok ¿urawinowy",		"zielon±",	{  0, 4, -8 }	},
+    { "whisky",			"zï¿½otawï¿½",	{  6, 1,  4 }	},  /*  5 */
+    { "lemoniadï¿½",		"rï¿½owï¿½",	{  0, 1,  8 }	},
+    { "gorzaï¿½ï¿½",			"mï¿½tnï¿½",	{ 10, 0,  0 }	},
+    { "lokalny specjaï¿½",	"mï¿½tniawï¿½",	{  3, 3,  3 }	},
+    { "sok ï¿½urawinowy",		"zielonï¿½",	{  0, 4, -8 }	},
 
-    { "mleko",			"bia³±",	{  0, 3,  6 }	},  /* 10 */
-    { "herbatê",		"zielonobr±zow±",{  0, 1,  6 }	},
-    { "kawê",			"czarn±",	{  0, 1,  6 }	},
-    { "krew",			"czerwon±",	{  0, 2, -1 }	},
-    { "morsk± wodê",		"prze¼roczyst±",{  0, 1, -2 }	},
+    { "mleko",			"biaï¿½ï¿½",	{  0, 3,  6 }	},  /* 10 */
+    { "herbatï¿½",		"zielonobrï¿½zowï¿½",{  0, 1,  6 }	},
+    { "kawï¿½",			"czarnï¿½",	{  0, 1,  6 }	},
+    { "krew",			"czerwonï¿½",	{  0, 2, -1 }	},
+    { "morskï¿½ wodï¿½",		"przeï¿½roczystï¿½",{  0, 1, -2 }	},
 
-    { "colê",			"wi¶niow±",	{  0, 1,  5 }	},  /* 15 */
-    { "poncz",			"jasnobr±zow±",	{  4, 2,  5 }	},  /* 16 */
-    { "grog",			"br±zow±",	{  3, 2,  5 }	},  /* 17 */
-    { "shake'a",              	"kremow±",      {  0, 8,  5 }   },   /* 18 */
-    { "drinka",              	"przezroczyst±",{  0, 8,  5 }   }   /* 19 */
+    { "colï¿½",			"wiï¿½niowï¿½",	{  0, 1,  5 }	},  /* 15 */
+    { "poncz",			"jasnobrï¿½zowï¿½",	{  4, 2,  5 }	},  /* 16 */
+    { "grog",			"brï¿½zowï¿½",	{  3, 2,  5 }	},  /* 17 */
+    { "shake'a",              	"kremowï¿½",      {  0, 8,  5 }   },   /* 18 */
+    { "drinka",              	"przezroczystï¿½",{  0, 8,  5 }   }   /* 19 */
 };
 
 const char *	const	attack_table	[13] =
 {
     "uderzenie",
-    "ciêcie",  "pchniêcie",  "palniêcie", "smagniêcie", "darpniêcie",
-    "buchniêcie",  "r±bniêcie", "trza¶niêcie", "postrzelenie", "ugryzienie",
-    "d¼gniêcie", "ssanie"
+    "ciï¿½cie",  "pchniï¿½cie",  "palniï¿½cie", "smagniï¿½cie", "darpniï¿½cie",
+    "buchniï¿½cie",  "rï¿½bniï¿½cie", "trzaï¿½niï¿½cie", "postrzelenie", "ugryzienie",
+    "dï¿½gniï¿½cie", "ssanie"
 };
 
 const char *	const	sith_hatred	[10] =
 {
-    FG_RED "Czujesz wzrastaj±c± w sobie nienawi¶æ!" EOL,
-    FG_RED "Zaczynasz coraz bardziej nienawidziæ ¿ywych istot!" EOL,
-    FG_RED "Twoja nienawi¶æ staje siê coraz wiêksza!" EOL,
-    FG_RED "Strach prowadzi Ciê prosto do Ciemnej Strony Mocy!" EOL,
-    FG_RED "Z ka¿d± chwil± Twój gniew staje siê silniejszy!" EOL,
-    FG_RED "Strach staje siê Twoim sprzymierzeñcem!" EOL,
-    FG_RED "Powoli odczuwasz potêgê Ciemnej Strony Mocy!" EOL,
-    FG_RED "Gniew przyczynia siê do Twojej si³y!" EOL,
-    FG_RED "Czujesz jak Ciemna Strona Mocy wspomaga Ciê!" EOL,
-    FG_RED "Dziêki nienawi¶ci zyskujesz si³ê!" EOL
+    FG_RED "Czujesz wzrastajï¿½cï¿½ w sobie nienawiï¿½ï¿½!" EOL,
+    FG_RED "Zaczynasz coraz bardziej nienawidziï¿½ ï¿½ywych istot!" EOL,
+    FG_RED "Twoja nienawiï¿½ï¿½ staje siï¿½ coraz wiï¿½ksza!" EOL,
+    FG_RED "Strach prowadzi Ciï¿½ prosto do Ciemnej Strony Mocy!" EOL,
+    FG_RED "Z kaï¿½dï¿½ chwilï¿½ Twï¿½j gniew staje siï¿½ silniejszy!" EOL,
+    FG_RED "Strach staje siï¿½ Twoim sprzymierzeï¿½cem!" EOL,
+    FG_RED "Powoli odczuwasz potï¿½gï¿½ Ciemnej Strony Mocy!" EOL,
+    FG_RED "Gniew przyczynia siï¿½ do Twojej siï¿½y!" EOL,
+    FG_RED "Czujesz jak Ciemna Strona Mocy wspomaga Ciï¿½!" EOL,
+    FG_RED "Dziï¿½ki nienawiï¿½ci zyskujesz siï¿½ï¿½!" EOL
 };
 const char *  male_desc_y[6]={"y","ego","emu","ego","ym","ym" };
 const char *	male_desc_i[6]={"i","iego","iemu","iego","im","im"};
-const char *  female_desc_y[6]={"a","ej","ej","±","±","ej"};
-const char *  female_desc_i[6]={"a","iej","iej","±","±","iej"};
-const char *  category_desc[]={"W³osy","Budowa","Wiek","Skóra","Zarost","Twarz","Ogólne","Oczy","Futro","Empty"};
+const char *  female_desc_y[6]={"a","ej","ej","ï¿½","ï¿½","ej"};
+const char *  female_desc_i[6]={"a","iej","iej","ï¿½","ï¿½","iej"};
+const char *  category_desc[]={"Wï¿½osy","Budowa","Wiek","Skï¿½ra","Zarost","Twarz","Ogï¿½lne","Oczy","Futro","Empty"};
 const	struct	char_desc	desc_table1[]=
 {
-	{	HAIR,"bia³ow³os",				Y_END	},
-	{	HAIR,"ciemnow³os",				Y_END	},
-	{	HAIR,"czarnow³os",				Y_END	},
-	{	HAIR,"czerwonow³os",			Y_END	},
-	{	HAIR,"d³ugow³os",				Y_END	},
-	{	HAIR,"jasnow³os",				Y_END	},
-	{	HAIR,"kêdzierzaw",				Y_END	},
-	{	HAIR,"krótkow³os",				Y_END	},
-	{	HAIR,"kud³at",					Y_END	},
-	{	HAIR,"³ysiej±c",				Y_END	},
-	{	HAIR,"³ys",						Y_END	},
+	{	HAIR,"biaï¿½owï¿½os",				Y_END	},
+	{	HAIR,"ciemnowï¿½os",				Y_END	},
+	{	HAIR,"czarnowï¿½os",				Y_END	},
+	{	HAIR,"czerwonowï¿½os",			Y_END	},
+	{	HAIR,"dï¿½ugowï¿½os",				Y_END	},
+	{	HAIR,"jasnowï¿½os",				Y_END	},
+	{	HAIR,"kï¿½dzierzaw",				Y_END	},
+	{	HAIR,"krï¿½tkowï¿½os",				Y_END	},
+	{	HAIR,"kudï¿½at",					Y_END	},
+	{	HAIR,"ï¿½ysiejï¿½c",				Y_END	},
+	{	HAIR,"ï¿½ys",						Y_END	},
 	{	HAIR,"niebieskowlos",			Y_END	},
-	{	HAIR,"ognistow³os",				Y_END	},
-	{	HAIR,"pomarañczowow³os",		Y_END	},
-	{	HAIR,"rudow³os",				Y_END	},
+	{	HAIR,"ognistowï¿½os",				Y_END	},
+	{	HAIR,"pomaraï¿½czowowï¿½os",		Y_END	},
+	{	HAIR,"rudowï¿½os",				Y_END	},
 	{	HAIR,"rud",						Y_END	},
-	{	HAIR,"ry¿",						Y_END	},
+	{	HAIR,"ryï¿½",						Y_END	},
 	{	HAIR,"siw",						Y_END	},
-	{	HAIR,"siwow³os",				Y_END	},
+	{	HAIR,"siwowï¿½os",				Y_END	},
 	{ (desc_type)0 , "",Y_END }
 };
 const	struct	char_desc	desc_table2[]=
 {
 	{	BUILD,"barczyst",			Y_END	}, //20
-	{	BUILD,"bary³kowat",			Y_END	},
-	{	BUILD,"beczu³kowat",		Y_END	},
+	{	BUILD,"baryï¿½kowat",			Y_END	},
+	{	BUILD,"beczuï¿½kowat",		Y_END	},
 	{	BUILD,"brzuchat",			Y_END	},
 	{	BUILD,"chud",				Y_END	},
-	{	BUILD,"d³ugonog",			I_END	},
+	{	BUILD,"dï¿½ugonog",			I_END	},
 	{	BUILD,"grub",				Y_END	},
 	{	BUILD,"insektoidaln",		Y_END	},
-	{	BUILD,"krêp",				Y_END	},
-	{	BUILD,"krótkonog",			I_END	},
+	{	BUILD,"krï¿½p",				Y_END	},
+	{	BUILD,"krï¿½tkonog",			I_END	},
 	{	BUILD,"krzywonog",			I_END	}, //30
 	{	BUILD,"masywn",				Y_END	},
 	{	BUILD,"muskularn",			Y_END	},
 	{	BUILD,"niewysok",			I_END	},
 	{	BUILD,"nisk",				I_END	},
-	{	BUILD,"okaza³",				Y_END	},
-	{	BUILD,"pêkat",				Y_END	},
+	{	BUILD,"okazaï¿½",				Y_END	},
+	{	BUILD,"pï¿½kat",				Y_END	},
 	{	BUILD,"przysadzist",		Y_END	},
-	{	BUILD,"szczup³",			Y_END	},
-	{	BUILD,"t³u¶ciutk",			I_END	},
-	{	BUILD,"umiê¶nion",			Y_END	}, //40
+	{	BUILD,"szczupï¿½",			Y_END	},
+	{	BUILD,"tï¿½uï¿½ciutk",			I_END	},
+	{	BUILD,"umiï¿½nion",			Y_END	}, //40
 	{	BUILD,"wychudzon",			Y_END	},
 	{	BUILD,"wysok",				I_END	},
 	{ (desc_type)0 , "",Y_END }
 };
 const	struct	char_desc	desc_table3[]=
 {
-	{	AGE,"dojrza³",            Y_END		},
+	{	AGE,"dojrzaï¿½",            Y_END		},
 	{	AGE,"leciw",              Y_END		},
-	{	AGE,"ma³oletn",           I_END		}, //40
-	{	AGE,"m³od",               Y_END		},
-	{	AGE,"podrastaj±c",        Y_END		},
-	{	AGE,"podstarza³",         Y_END		},
+	{	AGE,"maï¿½oletn",           I_END		}, //40
+	{	AGE,"mï¿½od",               Y_END		},
+	{	AGE,"podrastajï¿½c",        Y_END		},
+	{	AGE,"podstarzaï¿½",         Y_END		},
 	{	AGE,"star",               Y_END		},
 	{	AGE,"szczawikowat",       Y_END		},
 	{	AGE,"wiekow",             Y_END		},
@@ -609,90 +603,90 @@ const	struct	char_desc	desc_table3[]=
 };
 const	struct	char_desc	desc_table4[]=
 {
-	{	SKIN,"bladoskór",			Y_END	},
-	{	SKIN,"br±zowoskór",			Y_END 	},
-	{	SKIN,"czerwonoskór",		Y_END 	},
-	{	SKIN,"ciemnoskór",			Y_END 	},
-	{	SKIN,"fioletowoskór",		Y_END 	},
-	{	SKIN,"jaskrawoskór",		Y_END 	},
-	{	SKIN,"jasnoskór",			Y_END 	},
-	{	SKIN,"gadoskór",			Y_END 	},
-	{	SKIN,"karmazynowoskór",		Y_END 	},
+	{	SKIN,"bladoskï¿½r",			Y_END	},
+	{	SKIN,"brï¿½zowoskï¿½r",			Y_END 	},
+	{	SKIN,"czerwonoskï¿½r",		Y_END 	},
+	{	SKIN,"ciemnoskï¿½r",			Y_END 	},
+	{	SKIN,"fioletowoskï¿½r",		Y_END 	},
+	{	SKIN,"jaskrawoskï¿½r",		Y_END 	},
+	{	SKIN,"jasnoskï¿½r",			Y_END 	},
+	{	SKIN,"gadoskï¿½r",			Y_END 	},
+	{	SKIN,"karmazynowoskï¿½r",		Y_END 	},
 	{	SKIN,"kosmat",				Y_END 	},
-	{	SKIN,"lethañsk",			I_END 	},
-	{	SKIN,"³ososiowoskór",		Y_END 	},
-	{	SKIN,"niebieskoskór",		Y_END 	},
-	{	SKIN,"pomarañczowoskór",	Y_END 	},
-	{	SKIN,"rutiañsk",			I_END 	},
-	{	SKIN,"turkosowoskór",		Y_END 	},
+	{	SKIN,"lethaï¿½sk",			I_END 	},
+	{	SKIN,"ï¿½ososiowoskï¿½r",		Y_END 	},
+	{	SKIN,"niebieskoskï¿½r",		Y_END 	},
+	{	SKIN,"pomaraï¿½czowoskï¿½r",	Y_END 	},
+	{	SKIN,"rutiaï¿½sk",			I_END 	},
+	{	SKIN,"turkosowoskï¿½r",		Y_END 	},
 	{	SKIN,"opalon",				Y_END 	},
-	{	SKIN,"stalowoskór",			Y_END 	},
-	{	SKIN,"szaroskór",			Y_END 	},
-	{	SKIN,"¶niad",				Y_END 	},
-	{	SKIN,"w³ochat",				Y_END 	},
-	{	SKIN,"zielonoskór",			Y_END 	},
-	{	SKIN,"¿ó³toskór",			Y_END 	},
+	{	SKIN,"stalowoskï¿½r",			Y_END 	},
+	{	SKIN,"szaroskï¿½r",			Y_END 	},
+	{	SKIN,"ï¿½niad",				Y_END 	},
+	{	SKIN,"wï¿½ochat",				Y_END 	},
+	{	SKIN,"zielonoskï¿½r",			Y_END 	},
+	{	SKIN,"ï¿½ï¿½toskï¿½r",			Y_END 	},
 	{ (desc_type)0 , "",Y_END }
   };
 const	struct	char_desc	desc_table5[]=
 {
-	{	BEARD,"bia³obrod",				Y_END	},
-	{	BEARD,"b³êkitnobrod",			Y_END	},
+	{	BEARD,"biaï¿½obrod",				Y_END	},
+	{	BEARD,"bï¿½ï¿½kitnobrod",			Y_END	},
 	{	BEARD,"brodat",					Y_END	},
 	{	BEARD,"ciemnobrod",				Y_END	},
 	{	BEARD,"czarnobrod",				Y_END	},
 	{	BEARD,"czerwonobrod",			Y_END	},
-	{	BEARD,"d³ugobrod",				Y_END	},
+	{	BEARD,"dï¿½ugobrod",				Y_END	},
 	{	BEARD,"jasnobrod",				Y_END	},
-	{	BEARD,"krótkobrod",				Y_END	}, //60
+	{	BEARD,"krï¿½tkobrod",				Y_END	}, //60
 	{	BEARD,"kruczobrod",				Y_END	},
 	{	BEARD,"krzaczast",				Y_END	},
 	{	BEARD,"ognistobrod",			Y_END	},
-	{	BEARD,"p³omiennobrod",			Y_END	},
-	{	BEARD,"pomarañczowobrod",		Y_END	},
+	{	BEARD,"pï¿½omiennobrod",			Y_END	},
+	{	BEARD,"pomaraï¿½czowobrod",		Y_END	},
 	{	BEARD,"rudobrod",				Y_END	},
 	{	BEARD,"sinobrod",				Y_END	},
 	{	BEARD,"siwobrod",				Y_END	},
-	{	BEARD,"sko³tunion",				Y_END	},
-	{	BEARD,"¶nie¿nobrod",			Y_END	}, //70
-	{	BEARD,"w±sat",					Y_END	},
-	{	BEARD,"zaro¶niêt",				Y_END	},
+	{	BEARD,"skoï¿½tunion",				Y_END	},
+	{	BEARD,"ï¿½nieï¿½nobrod",			Y_END	}, //70
+	{	BEARD,"wï¿½sat",					Y_END	},
+	{	BEARD,"zaroï¿½niï¿½t",				Y_END	},
 	{	BEARD,"zielonobrod",			Y_END	},
-	{	BEARD,"¿ó³tobrod",				Y_END	},
+	{	BEARD,"ï¿½ï¿½tobrod",				Y_END	},
 	{ (desc_type)0 , "",Y_END }
   };
 const	struct	char_desc	desc_table6[]=
 {
 	{	FACE,"beznos",				Y_END	},
-	{	FACE,"bezw³os",				Y_END	},
+	{	FACE,"bezwï¿½os",				Y_END	},
 	{	FACE,"czerwononos",			Y_END	},
-	{	FACE,"d³ugonos",			Y_END	},
-	{	FACE,"d³ugouch",			Y_END	},
+	{	FACE,"dï¿½ugonos",			Y_END	},
+	{	FACE,"dï¿½ugouch",			Y_END	},
 	{	FACE,"dziobat",				Y_END	},
-	{	FACE,"g³adkolic",			Y_END	},
+	{	FACE,"gï¿½adkolic",			Y_END	},
 	{	FACE,"jednorog",			I_END	},
-	{	FACE,"krótkonos",			Y_END	},
+	{	FACE,"krï¿½tkonos",			Y_END	},
 	{	FACE,"krzywonos",			Y_END	}, //80
-	{	FACE,"mackog³ow",			Y_END	},
+	{	FACE,"mackogï¿½ow",			Y_END	},
 	{	FACE,"nakrapian",			Y_END	},
-	{	FACE,"ogorza³",				Y_END	},
+	{	FACE,"ogorzaï¿½",				Y_END	},
 	{	FACE,"ospowat",				Y_END	},
 	{	FACE,"ostronos",			Y_END	},
 	{	FACE,"piegowat",			Y_END	},
-	{	FACE,"p³askonos",			Y_END	},
+	{	FACE,"pï¿½askonos",			Y_END	},
 	{	FACE,"pryszczat",			Y_END	},
-	{	FACE,"pucu³owat",			Y_END	},
+	{	FACE,"pucuï¿½owat",			Y_END	},
 	{	FACE,"rogat",				Y_END	},
 	{	FACE,"rumian",				Y_END	},
 	{	FACE,"szpiczastouch",		Y_END	},
 	{	FACE,"szczerbat",			Y_END	},
 	{	FACE,"wielkonos",			Y_END	},
-	{	FACE,"wielkog³ow",			Y_END	},
+	{	FACE,"wielkogï¿½ow",			Y_END	},
 	{ (desc_type)0 , "",Y_END }
   };
 const	struct	char_desc	desc_table7[]=
 {
-	{	GENERAL,"bezwzglêdn",		Y_END	}, //90
+	{	GENERAL,"bezwzglï¿½dn",		Y_END	}, //90
 	{	GENERAL,"brudn",			Y_END	},
 	{ 	GENERAL,"chciw",			Y_END	},
 	{ 	GENERAL,"cwan",				Y_END	},
@@ -700,34 +694,34 @@ const	struct	char_desc	desc_table7[]=
 	{	GENERAL,"dostojn",			Y_END	},
 	{	GENERAL,"dumn",				Y_END	},
 	{	GENERAL,"energiczn",		Y_END	},
-	{	GENERAL,"gro¼n",			Y_END	},
+	{	GENERAL,"groï¿½n",			Y_END	},
 	{	GENERAL,"hard",				Y_END	},
 	{ 	GENERAL,"inteligentn",		Y_END	},
-	{	GENERAL,"ma³omówn",			Y_END	},
+	{	GENERAL,"maï¿½omï¿½wn",			Y_END	},
 	{	GENERAL,"melancholijn",		Y_END	},
 	{	GENERAL,"nerwow",			Y_END	}, //100
-	{ 	GENERAL,"oble¶n",			Y_END	},
+	{ 	GENERAL,"obleï¿½n",			Y_END	},
 	{	GENERAL,"opanowan",			Y_END	},
 	{	GENERAL,"paskudn",			Y_END	},
 	{	GENERAL,"ponur",			Y_END	},
 	{	GENERAL,"porywcz",			Y_END	},
-	{	GENERAL,"powa¿n",			Y_END	},
-	{	GENERAL,"przyg³up",			I_END	},
+	{	GENERAL,"powaï¿½n",			Y_END	},
+	{	GENERAL,"przygï¿½up",			I_END	},
 	{	GENERAL,"przyjacielsk",		I_END	},
 	{	GENERAL,"rozmown",			Y_END	},
 	{	GENERAL,"spokojn",			Y_END	},
-	{	GENERAL,"¶mierdz±c",		Y_END	},
-	{	GENERAL,"têp",				Y_END	},
-	{	GENERAL,"weso³",			Y_END	}, //110
-	{	GENERAL,"wynios³",			Y_END	},
+	{	GENERAL,"ï¿½mierdzï¿½c",		Y_END	},
+	{	GENERAL,"tï¿½p",				Y_END	},
+	{	GENERAL,"wesoï¿½",			Y_END	}, //110
+	{	GENERAL,"wyniosï¿½",			Y_END	},
 	{	GENERAL,"zawadiack",		I_END	},
-	{	GENERAL,"z³o¶liw",			Y_END	},
+	{	GENERAL,"zï¿½oï¿½liw",			Y_END	},
 	{ (desc_type)0 , "",Y_END }
   };
 const	struct	char_desc	desc_table8[]=
 {
-	{	EYES,"b³êkitnook",			I_END	},
-	{	EYES,"br±zowook",			I_END	},
+	{	EYES,"bï¿½ï¿½kitnook",			I_END	},
+	{	EYES,"brï¿½zowook",			I_END	},
 	{	EYES,"ciemnook",			I_END	},
 	{	EYES,"czarnook",			I_END	},
 	{	EYES,"czerwonook",			I_END	},
@@ -735,26 +729,26 @@ const	struct	char_desc	desc_table8[]=
 	{	EYES,"jasnook",				I_END	},
 	{	EYES,"jednook",				I_END	}, //120
 	{	EYES,"krwistook",			I_END	},
-	{	EYES,"mêtnook",				I_END	},
+	{	EYES,"mï¿½tnook",				I_END	},
 	{	EYES,"niebieskook",			I_END	},
-	{	EYES,"pomarañczowook",		I_END	},
+	{	EYES,"pomaraï¿½czowook",		I_END	},
 	{	EYES,"piwnook",				I_END	},
 	{	EYES,"rybiook",				I_END	},
 	{	EYES,"szarook",				I_END	},
-	{	EYES,"¶wiñskook",			I_END	},
+	{	EYES,"ï¿½wiï¿½skook",			I_END	},
 	{	EYES,"wielkook",			I_END	},
-	{	EYES,"wy³upiastook",		I_END	},
+	{	EYES,"wyï¿½upiastook",		I_END	},
 	{	EYES,"zezowat",				Y_END	},
 	{	EYES,"zielonook",			I_END	},
-	{	EYES,"zó³took",				I_END	},
+	{	EYES,"zï¿½took",				I_END	},
 	{ (desc_type)0 , "",Y_END }
   };
 const	struct	char_desc	desc_table9[]=
 {
-	{	FUR,"br±zowym",				Y_END	},
-	{	FUR,"ciemnobr±zowym",		Y_END	},
+	{	FUR,"brï¿½zowym",				Y_END	},
+	{	FUR,"ciemnobrï¿½zowym",		Y_END	},
 	{	FUR,"czarnym",				Y_END	},
-	{	FUR,"jasnobr±zowym",		Y_END	},
+	{	FUR,"jasnobrï¿½zowym",		Y_END	},
 	{	FUR,"kosmatym",				Y_END	},
 	{	FUR,"rozczochranym",		Y_END	},
 	{	FUR,"rudym",				Y_END	},
@@ -763,7 +757,7 @@ const	struct	char_desc	desc_table9[]=
 	{	(desc_type)0,"",Y_END	}
   };
 
-//dodawac kolejne pozycje na koñcu, nie sortowac
+//dodawac kolejne pozycje na koï¿½cu, nie sortowac
 const	struct	char_desc	 *desc_table [MAX_DESC_TYPES]=
 //const	struct	char_desc	 desc_table [MAX_DESC_TYPES][]=
 {

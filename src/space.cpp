@@ -320,7 +320,6 @@ void change_bus_planet(SHIP_DATA *bus)
 
 void update_bus()
 {
-	SHIP_DATA *ship;
 	SHIP_DATA *target;
 	int destination;
 	char buf[MAX_STRING_LENGTH];
@@ -478,18 +477,12 @@ float srange(float x, float y, float z)
 void move_ships()
 {
 	SHIP_DATA *ship;
-	MISSILE_DATA *missile;
 	SHIP_DATA *target;
 	float dx, dy, dz, change;
 	char buf[MAX_STRING_LENGTH];
-	CHAR_DATA *ch;
 	bool ch_found = false;
 	int damage;
-	STAR_DATA *star;
 	SPACE_DATA *system;
-	PLANET_DATA *planet;
-	MOON_DATA *moon;
-	ASTRO_DATA *astro;
 
 	auto missile_snapshot = missile_list;
 	for (auto* missile : missile_snapshot)
@@ -745,9 +738,6 @@ void move_ships()
 				}
 			}
 
-			for (auto* astro : system->astros)
-			{
-			}
 		}
 	}
 
@@ -773,9 +763,7 @@ void move_ships()
 
 void recharge_ships()
 {
-	SHIP_DATA *ship;
 	char buf[MAX_STRING_LENGTH];
-	TURRET_DATA *turret;
 
 	for (auto* ship : ship_list)
 	{
@@ -1054,17 +1042,12 @@ void recharge_ships()
 
 void update_space()
 {
-	SHIP_DATA *ship, *target;
+	SHIP_DATA *target;
 	char buf[MAX_STRING_LENGTH];
 	char descbuf[MAX_STRING_LENGTH];
 	int too_close, target_too_close, recharge;
 	char name[256];
-	SPACE_DATA *star_system;
 	SPACE_DATA *egzist_system;
-	TURRET_DATA *turret;
-	STAR_DATA *star;
-	PLANET_DATA *planet;
-	MOON_DATA *moon;
 
 	for (auto* ship : ship_list)
 	{
@@ -1816,10 +1799,7 @@ void update_space()
 		 */
 	}
 	{
-		CHAR_DATA *rch;
 		int dam;
-		ROOM_INDEX_DATA *room;
-		SHIPDOCK_DATA *dock;
 
 		for (auto* ship : ship_list)
 		{
@@ -1881,7 +1861,6 @@ void update_space()
 
 void write_starsystem_list()
 {
-	SPACE_DATA *tstarsystem;
 	FILE *fpout;
 
 	if (!(fpout = fopen(SPACE_LIST, "w")))
@@ -1900,8 +1879,6 @@ void write_starsystem_list()
  */
 SPACE_DATA* starsystem_from_name(char *name)
 {
-	SPACE_DATA *starsystem;
-
 	for (auto* starsystem : starsystem_list)
 		if (!str_cmp(name, starsystem->name))
 			return starsystem;
@@ -1918,13 +1895,6 @@ SPACE_DATA* starsystem_from_name(char *name)
  */
 SPACE_DATA* starsystem_from_vnum(int vnum)
 {
-	SPACE_DATA *starsystem;
-	SHIP_DATA *ship;
-	HANGAR_DATA *hangar;
-	PLANET_DATA *planet;
-	DOCK_DATA *dock;
-	MOON_DATA *moon;
-
 	for (auto* starsystem : starsystem_list)
 	{
 		for (auto* planet : starsystem->planets)
@@ -1951,8 +1921,6 @@ void save_starsystem(SPACE_DATA *starsystem)
 {
 	FILE *fp;
 	char filename[256];
-	MOON_DATA *moon;
-	STAR_DATA *star;
 
 	if (!starsystem)
 	{
@@ -2077,9 +2045,6 @@ void fread_starsystem(SPACE_DATA *starsystem, FILE *fp)
 					STRDUP(starsystem->description3, "");
 				if (starsystem->version < 2)
 				{
-					STAR_DATA *star;
-					MOON_DATA *moon;
-
 					for (auto* star : starsystem->stars)
 					{
 						if (star->radius == 0)
@@ -2333,7 +2298,6 @@ DEF_DO_FUN( setstarsystem )
 	MOON_DATA *moon;
 	STAR_DATA *star;
 	int count;
-	SHIP_DATA *ship;
 
 	if (IS_NPC(ch))
 	{
@@ -2699,10 +2663,6 @@ DEF_DO_FUN( setstarsystem )
 
 void showstarsystem(CHAR_DATA *ch, SPACE_DATA *starsystem)
 {
-	MOON_DATA *moon;
-	PLANET_DATA *planet;
-	DOCK_DATA *dock;
-	STAR_DATA *star;
 	int i, j;
 
 	ch_printf(ch,
@@ -2884,7 +2844,6 @@ DEF_DO_FUN( starsystems )
 void echo_to_ship(SHIP_DATA *ship, const char *argument)
 {
 //     int room;
-	ROOM_INDEX_DATA *room;
 //     for ( room = ship->firstroom ; room <= ship->lastroom ;room++ )
 //     {
 //         echo_to_room( get_room_index(room) , argument );
@@ -2896,8 +2855,6 @@ void echo_to_ship(SHIP_DATA *ship, const char *argument)
 
 void echo_to_ship_nospam(SHIP_DATA *ship, const char *argument)
 {
-	ROOM_INDEX_DATA *room;
-
 	for (auto* room : ship->locations)
 	{
 		if (!(room == ship->cockpit) || !(room == ship->navseat)
@@ -2909,9 +2866,6 @@ void echo_to_ship_nospam(SHIP_DATA *ship, const char *argument)
 
 void sound_to_ship(SHIP_DATA *ship, const char *argument)
 {
-	ROOM_INDEX_DATA *room;
-	CHAR_DATA *vic;
-
 	for (auto* room : ship->locations)
 	{
 		for (auto* vic : room->people)
@@ -2925,10 +2879,6 @@ void sound_to_ship(SHIP_DATA *ship, const char *argument)
 
 void echo_to_cockpit(SHIP_DATA *ship, const char *argument)
 {
-	TURRET_DATA *turret;
-	HANGAR_DATA *hangar;
-	ROOM_INDEX_DATA *room;
-
 	for (auto* room : ship->locations)
 	{
 		if (room == ship->cockpit || room == ship->navseat
@@ -2946,8 +2896,6 @@ void echo_to_cockpit(SHIP_DATA *ship, const char *argument)
 
 void echo_to_system(SHIP_DATA *ship, const char *argument, SHIP_DATA *ignore)
 {
-	SHIP_DATA *target;
-
 	if (!ship->starsystem)
 		return;
 
@@ -2988,9 +2936,6 @@ bool is_facing(SHIP_DATA *ship, SHIP_DATA *target)
 long int get_ship_value(SHIP_DATA *ship)
 {
 	long int price;
-	TURRET_DATA *turret;
-	HANGAR_DATA *hangar;
-	MODULE_DATA *module;
 
 	if (is_scout(ship))
 		price = 30000;
@@ -3119,8 +3064,7 @@ long int get_ship_value(SHIP_DATA *ship)
 	if (ship->hyperspeed)
 		price += (1000 + ship->hyperspeed * 10);
 
-	for (auto* hangar : ship->hangars)
-		price += 100000;
+	price += 100000 * ship->hangars.size();
 
 	for (auto* module : ship->modules)
 		price += module->cost * module->status / module->crs;
@@ -3132,7 +3076,6 @@ long int get_ship_value(SHIP_DATA *ship)
 
 void write_ship_list()
 {
-	SHIP_DATA *tship;
 	FILE *fpout;
 
 	fpout = fopen(SHIP_LIST, "w");
@@ -3149,7 +3092,6 @@ void write_ship_list()
 //pix0
 void remove_ship_from_list(const char *shipfile)
 {
-	SHIP_DATA *tship;
 	FILE *fpout;
 	char filename[256];
 
@@ -3188,7 +3130,6 @@ SHIP_DATA* ship_from_room(ROOM_INDEX_DATA *room)
 SHIP_DATA* ship_in_room(ROOM_INDEX_DATA *room, char *argument)
 {
 	char arg[MAX_INPUT_LENGTH];
-	SHIP_DATA *ship;
 	int number, count;
 
 	if (room == NULL)
@@ -3243,7 +3184,6 @@ SHIP_DATA* ship_in_room(ROOM_INDEX_DATA *room, char *argument)
  */
 SHIP_DATA* get_ship(char *argument)
 {
-	SHIP_DATA *ship;
 	char name[MAX_INPUT_LENGTH];
 	int count;
 	int number = number_argument(argument, name);
@@ -3292,8 +3232,6 @@ SHIP_DATA* get_ship(char *argument)
  */
 SHIP_DATA* get_ship_here(char *name, SPACE_DATA *starsystem)
 {
-	SHIP_DATA *ship;
-
 	if (starsystem == NULL)
 		return NULL;
 
@@ -3358,7 +3296,6 @@ SHIP_DATA* ship_from_pilot(char *name)
 SHIP_DATA* ship_from_cockpit(ROOM_INDEX_DATA *room)
 {
 	SHIP_DATA *ship;
-	TURRET_DATA *turret;
 
 	if (!(ship = room->ship))
 		return NULL;
@@ -3451,7 +3388,6 @@ SHIP_DATA* ship_from_engine(ROOM_INDEX_DATA *room)
 SHIP_DATA* ship_from_turret(ROOM_INDEX_DATA *room)
 {
 	SHIP_DATA *ship;
-	TURRET_DATA *turret;
 
 	if (!(ship = room->ship))
 		return NULL;
@@ -3482,7 +3418,6 @@ SHIP_DATA* ship_from_entrance(ROOM_INDEX_DATA *room)
 SHIP_DATA* ship_from_hangar(ROOM_INDEX_DATA *room)
 {
 	SHIP_DATA *ship;
-	HANGAR_DATA *hangar;
 
 	IF_BUG(room == NULL, "")
 		return NULL;
@@ -3510,11 +3445,6 @@ void save_ship(SHIP_DATA *ship)
 {
 	FILE *fp;
 	char filename[256];
-	TURRET_DATA *turret;
-	HANGAR_DATA *hangar;
-//    MODULE_DATA *module;
-	TRANSPONDER_DATA *transponder;
-	SHIPDOCK_DATA *dock;
 
 	IF_BUG(ship == NULL, "")
 		return;
@@ -3660,7 +3590,6 @@ void fread_ship(SHIP_DATA *ship, FILE *fp)
 {
 	const char *word;
 	bool fMatch;
-	MODULE_DATA *module;
 
 	for (;;)
 	{
@@ -4076,8 +4005,6 @@ bool load_course(SHIP_DATA *ship)
 
 void prepare_ship(SHIP_DATA *ship)
 {
-	TURRET_DATA *turret;
-	HANGAR_DATA *hangar;
 	MODULE_DATA *module;
 	ROOM_INDEX_DATA *pRoomIndex;
 	CLAN_DATA *clan;
@@ -4787,7 +4714,6 @@ void load_ships()
 {
 	FILE *fpList;
 	const char *filename;
-	SHIP_DATA *ship;
 	int i;
 	FILE *fpub;
 
@@ -4866,9 +4792,7 @@ void load_ships()
 
 void resetship(SHIP_DATA *ship)
 {
-	TURRET_DATA *turret;
-	HANGAR_DATA *hangar;
-	SHIPDOCK_DATA *dock, *targetdock;
+	SHIPDOCK_DATA *targetdock;
 
 	ship->shipstate = SHIP_READY;
 
@@ -5098,13 +5022,13 @@ DEF_DO_FUN( setship )
 	char arg3[MAX_INPUT_LENGTH];
 	char arg4[MAX_INPUT_LENGTH];
 	char arg5[MAX_INPUT_LENGTH];
-	SHIP_DATA *ship, *target;
+	SHIP_DATA *ship;
+	SHIPDOCK_DATA *dock;
+	TURRET_DATA *turret;
+	HANGAR_DATA *hangar;
 	int tempnum;
 	ROOM_INDEX_DATA *roomindex;
 	char filename[256];
-	TURRET_DATA *turret;
-	HANGAR_DATA *hangar;
-	SHIPDOCK_DATA *dock;
 
 	if (IS_NPC(ch))
 	{
@@ -5530,7 +5454,7 @@ DEF_DO_FUN( setship )
 				return;
 			}
 
-			UNship->docks.push_back(dock);
+			ship->docks.remove(dock);
 			DISPOSE(dock);
 		}
 		else
@@ -5666,7 +5590,7 @@ DEF_DO_FUN( setship )
 				return;
 			}
 
-			UNship->turrets.push_back(turret);
+			ship->turrets.remove(turret);
 			DISPOSE(turret);
 		}
 		else
@@ -5755,7 +5679,7 @@ DEF_DO_FUN( setship )
 				return;
 			}
 
-			UNship->hangars.push_back(hangar);
+			ship->hangars.remove(hangar);
 			DISPOSE(hangar);
 		}
 		else
@@ -6311,10 +6235,6 @@ DEF_DO_FUN( showship )
 {
 	SHIP_DATA *ship;
 	int a;
-	TURRET_DATA *turret;
-	HANGAR_DATA *hangar;
-	MODULE_DATA *module;
-	SHIPDOCK_DATA *dock;
 
 	if (IS_NPC(ch))
 	{
@@ -6531,7 +6451,7 @@ DEF_DO_FUN( showship )
 
 DEF_DO_FUN( makeship )
 {
-	SHIP_DATA *ship, *target;
+	SHIP_DATA *ship;
 	char arg1[MAX_INPUT_LENGTH];
 	ROOM_INDEX_DATA *location;
 
@@ -6615,7 +6535,7 @@ DEF_DO_FUN( makeship )
 
 DEF_DO_FUN( copyship )
 {
-	SHIP_DATA *ship, *target;
+	SHIP_DATA *ship;
 	SHIP_DATA *old;
 	char arg[MAX_INPUT_LENGTH];
 	char arg2[MAX_INPUT_LENGTH];
@@ -6915,7 +6835,6 @@ DEF_DO_FUN( add_ship_title )
 
 DEF_DO_FUN( ships )
 {
-	SHIP_DATA *ship;
 	int count;
 	char color[MSL];
 	int price;
@@ -7036,7 +6955,6 @@ DEF_DO_FUN( ships )
 
 DEF_DO_FUN( speeders )
 {
-	SHIP_DATA *ship;
 	int count;
 
 	if (!IS_NPC(ch))
@@ -7123,7 +7041,6 @@ DEF_DO_FUN( speeders )
 
 DEF_DO_FUN( allspeeders )
 {
-	SHIP_DATA *ship;
 	int count = 0;
 
 	count = 0;
@@ -7170,7 +7087,6 @@ DEF_DO_FUN( allspeeders )
 
 DEF_DO_FUN( allships )
 {
-	SHIP_DATA *ship;
 	SPACE_DATA *starsystem;
 	int count = 0;
 	char buf[MAX_STRING_LENGTH * 8];	//Wielki Bufor Patrzy ;)
@@ -7653,7 +7569,6 @@ void damage_ship_ch(SHIP_DATA *ship, int min, int max, CHAR_DATA *ch)
 {
 	int damage, shield_dmg;
 	long xp;
-	TURRET_DATA *turret;
 
 	damage = number_range(min, max);
 
@@ -7793,11 +7708,8 @@ void damage_ship(SHIP_DATA *ship, int min, int max)
 void purge_ship(SHIP_DATA *ship, CHAR_DATA *ch)
 {
 	char buf[MAX_STRING_LENGTH];
-	ROOM_INDEX_DATA *room;
-	OBJ_DATA *robj;
 	CHAR_DATA *rch;
-	SHIP_DATA *target;
-	SHIPDOCK_DATA *dock, *targetdock;
+	SHIPDOCK_DATA *targetdock;
 
 	sprintf(buf, FB_WHITE MOD_BLINK
 	"%s eksploduje w o�lepiaj�cym b�ysku!" RESET, ship->sslook);
@@ -8023,7 +7935,6 @@ DEF_DO_FUN( board )
 
 		if (toroom->tunnel > 0 && !IS_SET(ch->act, PLR_HOLYLIGHT))
 		{
-			CHAR_DATA *ctmp;
 			int count = 0;
 
 			for (auto* ctmp : toroom->people)
@@ -8138,7 +8049,6 @@ DEF_DO_FUN( leaveship )
 	{
 		if (toroom->tunnel > 0 && !IS_SET(ch->act, PLR_HOLYLIGHT))
 		{
-			CHAR_DATA *ctmp;
 			int count = 0;
 
 			for (auto* ctmp : toroom->people)
@@ -8375,12 +8285,7 @@ DEF_DO_FUN( launch )
 void launchship(SHIP_DATA *ship)
 {
 	char buf[MAX_STRING_LENGTH];
-	SHIP_DATA *target;
-	PLANET_DATA *planet;
-	DOCK_DATA *dock;
 	SPACE_DATA *starsystem;
-	HANGAR_DATA *hangar;
-	MOON_DATA *moon;
 	int plusminus;
 	int radiusplus;
 
@@ -8574,7 +8479,6 @@ DEF_DO_FUN( land )
 	SPACE_DATA *starsystem;
 	HANGAR_DATA *hangar;
 	MOON_DATA *moon;
-	SHIPDOCK_DATA *shdock;
 
 	strcpy(arg, argument);
 	argument = one_argument(argument, arg1);
@@ -9142,7 +9046,6 @@ DEF_DO_FUN( accelerate )
 	int change;
 	int energychange;
 	SHIP_DATA *ship, *target;
-	SHIPDOCK_DATA *dock;
 	char buf[MAX_STRING_LENGTH];
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
@@ -9247,7 +9150,6 @@ DEF_DO_FUN( trajectory )
 	float vx, vy, vz;
 	SHIP_DATA *ship, *target;
 	ASTRO_DATA *astro;
-	SHIPDOCK_DATA *dock;
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
 	{
@@ -10369,7 +10271,6 @@ DEF_DO_FUN( hyperspace )
 {
 	int chance;
 	SHIP_DATA *ship;
-	SHIP_DATA *eShip;
 	char buf[MAX_STRING_LENGTH];
 	char arg2[MAX_INPUT_LENGTH];
 	char arg3[MAX_INPUT_LENGTH];
@@ -11712,11 +11613,7 @@ int starsystem_cmp(SPACE_DATA **st1, SPACE_DATA **st2)
  * z tablicy)!!! */
 int get_sorted_systems(SPACE_DATA ***sorted_systems)
 {
-	SPACE_DATA *starsystem;
-	int count = 0;
-
-	for (auto* starsystem : starsystem_list)
-		count++;
+	int count = starsystem_list.size();
 
 	if (count)
 	{
@@ -11889,9 +11786,6 @@ DEF_DO_FUN( calculate )
 	else
 	{
 		SPACE_DATA *starsystem;
-		MOON_DATA *moon;
-		STAR_DATA *star;
-		PLANET_DATA *planet;
 
 		starsystem = ship->currjump;
 
@@ -12471,14 +12365,8 @@ DEF_DO_FUN( rempilot )
 
 DEF_DO_FUN( radar )
 {
-	SHIP_DATA *target;
 	int chance, emp;
 	SHIP_DATA *ship;
-	MISSILE_DATA *missile;
-	ASTRO_DATA *astro;
-	STAR_DATA *star;
-	PLANET_DATA *planet;
-	MOON_DATA *moon;
 	char buf[MSL];
 
 	if ((ship = ship_from_cockpit(ch->in_room)) == NULL)
@@ -12782,7 +12670,6 @@ DEF_DO_FUN( autotrack )
 DEF_DO_FUN( pluogus )
 {
 	int itt;
-	SHIP_DATA *ship;
 	COURSE_DATA *course;
 	char arg1[MAX_INPUT_LENGTH];
 	bool found = false;
@@ -12898,7 +12785,6 @@ ch_ret drive_ship(CHAR_DATA *ch, SHIP_DATA *ship, EXIT_DATA *pexit, int fall)
 	ch_ret retcode;
 	int door;
 	bool drunk = false;
-	CHAR_DATA *rch;
 
 	if (!IS_NPC(ch))
 		if (IS_DRUNK(ch, 2) && (ch->position != POS_SHOVE)
@@ -13046,15 +12932,11 @@ ch_ret drive_ship(CHAR_DATA *ch, SHIP_DATA *ship, EXIT_DATA *pexit, int fall)
 
 	if (to_room->tunnel > 0)
 	{
-		CHAR_DATA *ctmp;
-		int count = 0;
-
-		for (auto* ctmp : to_room->people)
-			if (++count >= to_room->tunnel)
-			{
-				send_to_char("There is no room for you in there." NL, ch);
-				return rNONE;
-			}
+		if ((int)to_room->people.size() >= to_room->tunnel)
+		{
+			send_to_char("There is no room for you in there." NL, ch);
+			return rNONE;
+		}
 	}
 
 	if (fall)

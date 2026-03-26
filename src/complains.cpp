@@ -265,7 +265,6 @@ void fwrite_complain( COMPLAIN_DATA *comp, int type, bool fixed, FILE *fp )
 
 void save_bugs( bool fixed )
 {
-    COMPLAIN_DATA *	comp;
     FILE *		fp;
     char *		fname = (char *)(fixed ? PBUG_FIX_FILE : PBUG_FILE);
 
@@ -294,7 +293,6 @@ void save_bugs( bool fixed )
 
 void save_typos( bool fixed )
 {
-    COMPLAIN_DATA *	comp;
     FILE *		fp;
     char *		fname = (char *)(fixed ? PTYPO_FIX_FILE : PTYPO_FILE);
 
@@ -323,7 +321,6 @@ void save_typos( bool fixed )
 
 void save_ideas( bool fixed )
 {
-    COMPLAIN_DATA *	comp;
     FILE *		fp;
     char *		fname = (char *)(fixed ? PIDEA_FIX_FILE : PIDEA_FILE);
 
@@ -377,7 +374,6 @@ COMPLAIN_DATA * new_complain( CHAR_DATA *ch, complain_data::Type type, char *txt
 
 void show_complains( CHAR_DATA *ch, int type )
 {
-    COMPLAIN_DATA *	comp;
     int 		i = 1;
 
     for( auto* comp : complain_list )

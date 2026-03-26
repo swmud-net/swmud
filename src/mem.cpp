@@ -903,9 +903,9 @@ void free_ship( SHIP_DATA *ship )
 	DISPOSE( hanger );
     ship->hangars.clear();
 
-/*    for( auto* cargo : ship->cargo )
+/*    for( auto* cargo : ship->cargo_list )
 	DISPOSE( cargo );
-    ship->cargo.clear();    */
+    ship->cargo_list.clear();    */
 
     for( auto* module : ship->modules )
     {
@@ -1060,7 +1060,7 @@ SHIP_DATA *new_ship( )
     ship->turrets.clear();
     ship->hangars.clear();
     ship->in_room		= NULL;
-    ship->cargo.clear();
+    ship->cargo_list.clear();
     ship->modules.clear();
     ship->smaps.clear();
     ship->transponders.clear();
@@ -1101,9 +1101,6 @@ SHIP_INDEX_DATA *new_ship_index( )
 
 void free_sroom( SHIP_ROOM_DATA * sRoom )
 {
-    MPROG_DATA *    	mprog;
-    MPROG_DATA *    	mprog_next;
-
     for( auto* ed : sRoom->extradesc )
         free_ed( ed );
     sRoom->extradesc.clear();
@@ -1430,7 +1427,6 @@ DIALOG_NODE *new_dialog_node()
 	STRDUP( pNode->text, "(brak)" );
 	STRDUP( pNode->mob_answer, "");
 	pNode->pBase			= NULL;
-	pNode->first			= NULL;
 	pNode->prog				= NULL;
 	pNode->nr				= -1;
 	pNode->target_nr		= -1;
@@ -1441,7 +1437,6 @@ DIALOG_NODE *new_dialog_node()
 void free_dialog_node( DIALOG_NODE *pNode )
 {
 	DIALOG_DATA		* pData = pNode->pBase;
-	DIALOG_NODE		* pLeaf = NULL, * pNextLeaf = NULL;
 
 	if ( pData  )
 	{
@@ -1543,9 +1538,6 @@ TURBOCAR *new_turbocar()
 
 void free_turbocar( TURBOCAR *tc )
 {
-	TC_STATION	*station;
-	TC_STATION	*station_next;
-
 	STRFREE( tc->name );
 	STRFREE( tc->filename );
 	while( !tc->stations.empty() )
@@ -1603,8 +1595,6 @@ MID	*new_mob()
 
 void free_mob( MID *mob )
 {
-	MPROG_DATA	*mprog;
-	MPROG_DATA	*mprog_next;
 	int			i;
 
 	STRFREE( mob->player_name );
@@ -1615,11 +1605,9 @@ void free_mob( MID *mob )
 	STRFREE( mob->description );
 	STRFREE( mob->dialog_name );
 
-	for( mprog = mob->mudprogs; mprog; mprog = mprog_next )
-	{
-		mprog_next = mprog->next;
-		free_mprog( mprog );
-	}
+	for( auto* mp : mob->mudprogs )
+		free_mprog( mp );
+	mob->mudprogs.clear();
 }
 
 REQ *new_requirement()

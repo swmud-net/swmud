@@ -277,8 +277,6 @@ DEF_DO_FUN( goto )
 {
 	char arg[MAX_INPUT_LENGTH];
 	ROOM_INDEX_DATA *location;
-	CHAR_DATA *fch;
-	CHAR_DATA *fch_next;
 	ROOM_INDEX_DATA *in_room;
 	AREA_DATA *pArea;
 	int vnum;
@@ -1464,7 +1462,6 @@ DEF_DO_FUN( mset )
 
 	if (!str_cmp(arg2, "wanted"))
 	{
-		CRIME_DATA *crime;
 
 		if (IS_NPC(victim))
 		{
@@ -1494,8 +1491,6 @@ DEF_DO_FUN( mset )
 		/* usuwamy wszystkie flagi */
 		if (!str_cmp(argument, "clear"))
 		{
-			CRIME_DATA *crime_next;
-
 			if (!victim->crimes.empty())
 			{
 				auto snapshot = victim->crimes;
@@ -2231,7 +2226,6 @@ DEF_DO_FUN( mset )
 	}
 	if (!str_cmp(arg2, "kin") && !str_cmp(arg3, "clear"))
 	{
-		KNOWN_CHAR_DATA *_friend;
 		while (!victim->known.empty())
 		{
 			auto* _friend = victim->known.back();
@@ -2828,7 +2822,6 @@ DEF_DO_FUN( oset )
 
 	if (!str_cmp(arg2, "rmaffect"))
 	{
-		AFFECT_DATA *paf;
 		int loc, count;
 
 		if (!argument || argument[0] == '\0')
@@ -3489,7 +3482,6 @@ DEF_DO_FUN( rset )
 
 	if (!str_cmp(arg, "rlist"))
 	{
-		RESET_DATA *pReset;
 		const char *bptr;
 		int num;
 
@@ -4008,8 +4000,6 @@ DEF_DO_FUN( rset )
 
 EXTRA_DESCR_DATA* SetRExtra(ROOM_INDEX_DATA *room, char *keywords)
 {
-	EXTRA_DESCR_DATA *ed;
-
 	for (auto* ed : room->extradesc)
 	{
 		if (is_name(keywords, ed->keyword))
@@ -4114,7 +4104,6 @@ void adv_save_mobiles(AREA_DATA *tarea, FILE *fpout, bool install)
 {
 	int vnum;
 	MOB_INDEX_DATA *pMobIndex;
-	MPROG_DATA *mprog;
 
 	fprintf(fpout, "#MOBILES\n");
 	for (vnum = tarea->lvnum; vnum <= tarea->uvnum; vnum++)
@@ -4205,7 +4194,6 @@ void adv_save_mobiles(AREA_DATA *tarea, FILE *fpout, bool install)
 void vsave_resets(FILE *fp, AREA_DATA *pArea)
 {
 	ROOM_INDEX_DATA *pRoomIndex;
-	RESET_DATA *pReset;
 	int vnum;
 
 	fprintf(fp, "#RESETS\n");
@@ -4264,11 +4252,6 @@ void fold_area(AREA_DATA *tarea, char *filename, bool install)
 	ROOM_INDEX_DATA *room;
 	MOB_INDEX_DATA *pMobIndex;
 	OBJ_INDEX_DATA *pObjIndex;
-	MPROG_DATA *mprog;
-	EXIT_DATA *xit;
-	EXTRA_DESCR_DATA *ed;
-	AFFECT_DATA *paf;
-	REQUIREMENT_DATA *req;
 	SHOP_DATA *pShop;
 	REPAIR_DATA *pRepair;
 	char buf[MAX_STRING_LENGTH];
@@ -4411,9 +4394,6 @@ void fold_area(AREA_DATA *tarea, char *filename, bool install)
 			continue;
 		if (install)
 		{
-			CHAR_DATA *victim, *vnext;
-			OBJ_DATA *obj, *obj_next;
-
 			/* remove prototype flag from room */
 			REMOVE_BIT(room->room_flags, ROOM_PROTOTYPE);
 			/* purge room of (prototyped) mobiles */
@@ -4607,7 +4587,6 @@ extern int top_area;
 
 void write_area_list()
 {
-	AREA_DATA *tarea;
 	FILE *fpout;
 
 	fpout = fopen( AREA_LIST, "w");

@@ -872,8 +872,8 @@ char *	obj_short			args( ( OBJ_DATA *obj ) );
 int		get_door			args( ( char *arg ) );
 char *	format_obj_to_char	args( ( OBJ_DATA *obj, CHAR_DATA *ch,
 									bool fShort ) );
-void	show_list_to_char	args( ( OBJ_DATA *list, CHAR_DATA *ch,
-									bool fShort, bool fShowNothing ) );
+void	show_list_to_char	( const std::list<OBJ_DATA*>& list, CHAR_DATA *ch,
+									bool fShort, bool fShowNothing );
 
 /* act_move.c */
 void	clear_vrooms		args( ( void ) );
@@ -1164,7 +1164,7 @@ CD *	create_mobile			args( ( MOB_INDEX_DATA *pMobIndex ) );
 OD *	create_object			args( ( OBJ_INDEX_DATA *pObjIndex, int level ) );
 void	clear_char				args( ( CHAR_DATA *ch ) );
 void	clear_pcdata			args( ( PC_DATA	  *pcdata ) );
-char *	get_extra_descr			args( ( const char *name, EXTRA_DESCR_DATA *ed ) );
+char *	get_extra_descr			( const char *name, std::list<EXTRA_DESCR_DATA*>& edlist );
 MID *	get_mob_index			args( ( int vnum ) );
 OID *	get_obj_index			args( ( int vnum ) );
 RID *	get_room_index			args( ( int vnum ) );
@@ -1495,7 +1495,7 @@ int	apply_ac		args( ( OBJ_DATA *obj, int iWear ) );
 OD *	get_eq_char		args( ( CHAR_DATA *ch, int iWear ) );
 void	equip_char		args( ( CHAR_DATA *ch, OBJ_DATA *obj, int iWear ) );
 void	unequip_char		args( ( CHAR_DATA *ch, OBJ_DATA *obj ) );
-int	count_obj_list		args( ( OBJ_INDEX_DATA *obj, OBJ_DATA *list ) );
+int	count_obj_list		( OBJ_INDEX_DATA *obj, const std::list<OBJ_DATA*>& list );
 void	obj_from_room		args( ( OBJ_DATA *obj ) );
 OD *	obj_to_room		args( ( OBJ_DATA *obj, ROOM_INDEX_DATA *pRoomIndex ) );
 OD *	obj_to_obj		args( ( OBJ_DATA *obj, OBJ_DATA *obj_to ) );
@@ -1694,8 +1694,8 @@ void	hunt_victim		args( ( CHAR_DATA *ch) );
 #if defined( itoa )
 #undef itoa
 #endif
-#define itoa			__itoa
-char *	__itoa			args( ( int num ) );
+#define itoa			sw_itoa
+char *	sw_itoa			args( ( int num ) );
 void	clean_for_loop		args( ( void ) );
 void	update_for		args( ( void ) );
 void	clean_rat_loop		args( ( void ) );
@@ -1805,9 +1805,5 @@ void rprog_act_trigger			( char *buf, ROOM_INDEX_DATA *room,
 
 //int64 abs(int64);
 //long int abs(long int);
-
-int atoi(const char *) throw();
-int atoi(char *);
-int atoi(char *);
 
 #endif /* FUN_DECLS_H_ */

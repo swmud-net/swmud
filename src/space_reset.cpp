@@ -393,8 +393,6 @@ void starsystems_update(void)
 
 		if (pStarsystem->age >= reset_age)
 		{
-			SHIP_DATA *target;
-
 			if (*pStarsystem->resetmsg)
 				sprintf(buf, NL "%s" EOL, pStarsystem->resetmsg);
 			else

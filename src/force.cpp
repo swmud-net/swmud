@@ -421,8 +421,6 @@ void immune_casting(SKILLTYPE *skill, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA
  */
 void say_spell(CHAR_DATA *ch, int sn)
 {
-	CHAR_DATA *rch;
-
 	for (auto* rch : ch->in_room->people)
 	{
 		if (rch != ch)
@@ -1940,8 +1938,6 @@ ch_ret spell_dispel_force(int sn, int level, CHAR_DATA *ch, void *vo)
 
 ch_ret spell_earthquake(int sn, int level, CHAR_DATA *ch, void *vo)
 {
-	CHAR_DATA *vch;
-	CHAR_DATA *vch_next;
 	bool ch_died;
 	ch_ret retcode;
 	SKILLTYPE *skill = get_skilltype(sn);
@@ -2125,8 +2121,6 @@ ch_ret spell_faerie_fire(int sn, int level, CHAR_DATA *ch, void *vo)
 
 ch_ret spell_faerie_fog(int sn, int level, CHAR_DATA *ch, void *vo)
 {
-	CHAR_DATA *ich;
-
 	act( COL_FORCE, "$n otacza si� mgie�k� r�owego dymu.", ch, NULL, NULL, TO_ROOM);
 	act( COL_FORCE, "Otaczasz si� mgie�k� r�owego dymu.", ch, NULL, NULL, TO_CHAR);
 
@@ -2178,7 +2172,6 @@ ch_ret spell_identify(int sn, int level, CHAR_DATA *ch, void *vo)
 	/* Modified by Scryn to work on mobs/players/objs */
 	OBJ_DATA *obj;
 	CHAR_DATA *victim;
-	AFFECT_DATA *paf;
 	SKILLTYPE *sktmp;
 	SKILLTYPE *skill = get_skilltype(sn);
 
@@ -2611,7 +2604,6 @@ ch_ret spell_ventriloquate(int sn, int level, CHAR_DATA *ch, void *vo)
 {
 	char buf1[MAX_STRING_LENGTH];
 	char speaker[MAX_INPUT_LENGTH];
-	CHAR_DATA *vch;
 
 	target_name = one_argument(target_name, speaker);
 
@@ -2665,8 +2657,6 @@ ch_ret spell_weaken(int sn, int level, CHAR_DATA *ch, void *vo)
 ch_ret spell_acid_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 {
 	CHAR_DATA *victim = (CHAR_DATA*) vo;
-	OBJ_DATA *obj_lose;
-	OBJ_DATA *obj_next;
 	int dam;
 	int hpch;
 
@@ -2718,8 +2708,6 @@ ch_ret spell_acid_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 ch_ret spell_fire_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 {
 	CHAR_DATA *victim = (CHAR_DATA*) vo;
-	OBJ_DATA *obj_lose;
-	OBJ_DATA *obj_next;
 	int dam;
 	int hpch;
 
@@ -2776,8 +2764,6 @@ ch_ret spell_fire_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 ch_ret spell_frost_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 {
 	CHAR_DATA *victim = (CHAR_DATA*) vo;
-	OBJ_DATA *obj_lose;
-	OBJ_DATA *obj_next;
 	int dam;
 	int hpch;
 
@@ -2823,8 +2809,6 @@ ch_ret spell_frost_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 
 ch_ret spell_gas_breath(int sn, int level, CHAR_DATA *ch, void *vo)
 {
-	CHAR_DATA *vch;
-	CHAR_DATA *vch_next;
 	int dam;
 	int hpch;
 	bool ch_died;
@@ -3057,9 +3041,6 @@ ch_ret spell_animate_dead(int sn, int level, CHAR_DATA *ch, void *vo)
 {
 	CHAR_DATA *mob;
 	OBJ_DATA *corpse;
-	OBJ_DATA *corpse_next;
-	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	bool found;
 	MOB_INDEX_DATA *pMobIndex;
 	AFFECT_DATA af;
@@ -3404,7 +3385,6 @@ ch_ret spell_attack(int sn, int level, CHAR_DATA *ch, void *vo)
  */
 ch_ret spell_area_attack(int sn, int level, CHAR_DATA *ch, void *vo)
 {
-	CHAR_DATA *vch, *vch_next;
 	SKILLTYPE *skill = get_skilltype(sn);
 	bool saved;
 	bool affects;
@@ -4258,15 +4238,13 @@ ch_ret spell_black_lightning(int sn, int level, CHAR_DATA *ch, void *vo)
  * i jesli to bylo ostatnie, dajemu graczowi moc */
 void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 {
-	FEVENT_DATA *fevent;
-	FEVENT_DATA *fevent_next;
 	bool found = false;
 	va_list args;
 
-	if ( IS_NPC( ch ) || !ch->pcdata || ch->pcdata->fevents.empty())
+	if ( IS_NPC( ch ) || !ch->pcdata || ch->pcdata->fevents_list.empty())
 		return;
 
-	auto fevents_snapshot = ch->pcdata->fevents;
+	auto fevents_snapshot = ch->pcdata->fevents_list;
 	for (auto* fevent : fevents_snapshot)
 	{
 		found = false;
@@ -4285,8 +4263,6 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 
 		case FE_FIND_OBJECT:
 		{
-			OBJ_DATA *obj;
-
 			for (auto* obj : ch->in_room->contents)
 				if (obj->pIndexData->vnum == fevent->attr[0])
 				{
@@ -4298,8 +4274,6 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 
 		case FE_FIND_MOB:
 		{
-			CHAR_DATA *mob;
-
 			for (auto* mob : ch->in_room->people)
 				if ( IS_NPC( mob ) && mob->pIndexData->vnum == fevent->attr[0])
 				{
@@ -4311,8 +4285,6 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 
 		case FE_FIND_PLAYER:
 		{
-			CHAR_DATA *player;
-
 			for (auto* player : ch->in_room->people)
 				if (!IS_NPC(player) && ((*fevent->sattr && !str_cmp(player->name, fevent->sattr)) || !*fevent->sattr))
 				{
@@ -4324,8 +4296,6 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 
 		case FE_FIND_SHIP:
 		{
-			SHIP_DATA *ship;
-
 			for (auto* ship : ch->in_room->ships)
 				if (((*fevent->sattr && !str_cmp(ship->name, fevent->sattr)) || !*fevent->sattr))
 				{
@@ -4518,7 +4488,7 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 			buf << " completed force event: " << bit_name(fevent_types_list, fevent->trigger);
 			log_string(buf.c_str());
 
-			ch->pcdata->fevents.remove(fevent);
+			ch->pcdata->fevents_list.remove(fevent);
 			free_fevent(fevent);
 		}
 
@@ -4526,7 +4496,7 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 	}
 
 	/* jesli tak, to gracz dostaje moc */
-	if (ch->pcdata->fevents.empty())
+	if (ch->pcdata->fevents_list.empty())
 	{
 		char buf[MSL];
 
@@ -4668,16 +4638,11 @@ void drawlots_fevents(CHAR_DATA *ch)
 		case FE_FAIL_QUEST:
 		case FE_FINISH_QUEST:
 		{
-			QUEST_INDEX_DATA *quest;
 			int i = 0;
 			int num;
 
-			for (auto* quest : quest_index_list)
-				i++;
+			num = number_range(0, (int)quest_index_list.size() - 1);
 
-			num = number_range(0, i - 1);
-
-			i = 0;
 			for (auto* quest : quest_index_list)
 				if (i++ == num)
 				{
@@ -4693,16 +4658,11 @@ void drawlots_fevents(CHAR_DATA *ch)
 		case FE_LAUNCH_SHIP:
 		case FE_LAND_SHIP:
 		{
-			SHIP_DATA *ship;
 			int i = 0;
 			int num;
 
-			for (auto* ship : ship_list)
-				i++;
+			num = number_range(0, (int)ship_list.size() - 1);
 
-			num = number_range(0, i - 1);
-
-			i = 0;
 			for (auto* ship : ship_list)
 				if (i++ == num)
 				{
@@ -4763,7 +4723,7 @@ void drawlots_fevents(CHAR_DATA *ch)
 		}
 
 		if (link)
-			ch->pcdata->fevents.push_back(fevent);
+			ch->pcdata->fevents_list.push_back(fevent);
 	}
 }
 

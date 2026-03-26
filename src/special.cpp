@@ -132,8 +132,6 @@ const char* lookup_spec(SPEC_FUN *spec)
 bool spec_newbie_pilot(CHAR_DATA *ch)
 {
 	int home = 32149;
-	CHAR_DATA *victim;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	bool diploma = false;
 
@@ -243,8 +241,6 @@ bool spec_jedi(CHAR_DATA *ch)
 
 bool spec_clan_guard(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-
 	if (!IS_AWAKE(ch) || ch->fighting)
 		return false;
 
@@ -270,8 +266,6 @@ bool spec_clan_guard(CHAR_DATA *ch)
 
 bool spec_customs_smut(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	long ch_exp;
 
@@ -374,8 +368,6 @@ bool spec_customs_smut(CHAR_DATA *ch)
 
 bool spec_customs_weapons(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	long ch_exp;
 
@@ -480,8 +472,6 @@ bool spec_customs_weapons(CHAR_DATA *ch)
 
 bool spec_customs_alcohol(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	int liquid;
 	long ch_exp;
@@ -596,8 +586,6 @@ bool spec_customs_alcohol(CHAR_DATA *ch)
 
 bool spec_customs_spice(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	long ch_exp;
 
@@ -700,8 +688,6 @@ bool spec_customs_spice(CHAR_DATA *ch)
 
 SUSPECT_DATA* get_suspect(CHAR_DATA *victim, CHAR_DATA *ch)
 {
-	SUSPECT_DATA *sus;
-
 	for (auto* sus : ch->suspects)
 		if (!str_cmp(sus->name, victim->name))
 			return sus;
@@ -778,8 +764,6 @@ void police_bribe_trigger(CHAR_DATA *mob, CHAR_DATA *ch, int amount)
 
 void end_hunting(CHAR_DATA *victim, CHAR_DATA *ch, CRIME_DATA *crime)
 {
-	CHAR_DATA *hch;
-
 	jail_char(victim, ch, crime);
 
 	/* alarm odwo�any */
@@ -805,8 +789,6 @@ void end_hunting(CHAR_DATA *victim, CHAR_DATA *ch, CRIME_DATA *crime)
 bool spec_police(CHAR_DATA *ch)
 {
 	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-	PLANET_DATA *planet;
 	SUSPECT_DATA *sus;
 	char buf[MAX_STRING_LENGTH];
 
@@ -830,7 +812,6 @@ bool spec_police(CHAR_DATA *ch)
 			/* a gracz zwia�??? */
 			if ((victim = get_char_room(ch, sus->name)) == NULL)
 			{
-				OBJ_DATA *obj;
 				bool got_comlink = false;
 
 				/* czy policjant ma komlink ? */
@@ -846,9 +827,6 @@ bool spec_police(CHAR_DATA *ch)
 				/* farciarz - wyszed� z gry (to na d�u�sz� met� nic nie da) */
 				if ((victim = get_char_world(ch, sus->name)))
 				{
-
-					CHAR_DATA *hch;
-
 					sprintf(buf, "%s do wszystkich jednostek!" NL
 					"Cel akcji %s!" NL
 					"Uwaga! Przeciwnik mo�e by� uzbrojony!" NL, NAME(ch, 0),
@@ -963,8 +941,6 @@ bool spec_police(CHAR_DATA *ch)
 
 bool spec_police_attack(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	PLANET_DATA *planet;
 	char buf[MAX_STRING_LENGTH];
 
 	if (!IS_AWAKE(ch) || ch->fighting)
@@ -1012,7 +988,6 @@ bool spec_police_attack(CHAR_DATA *ch)
 /*Przerobione zupe�nie przez Ganisa*/
 bool spec_police_fine(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
 	char buf[MAX_STRING_LENGTH];
 	map<SWString, bool> *my_memory;
 	map<SWString, bool>::iterator it;
@@ -1082,8 +1057,6 @@ bool spec_police_fine(CHAR_DATA *ch)
 
 bool spec_police_jail(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	PLANET_DATA *planet;
 	char buf[MAX_STRING_LENGTH];
 
 	if (!IS_AWAKE(ch) || ch->fighting)
@@ -1277,9 +1250,6 @@ bool spec_dark_jedi(CHAR_DATA *ch)
 
 bool spec_fido(CHAR_DATA *ch)
 {
-	OBJ_DATA *corpse;
-	OBJ_DATA *obj;
-
 	if (!IS_AWAKE(ch))
 		return false;
 
@@ -1306,8 +1276,6 @@ bool spec_fido(CHAR_DATA *ch)
 
 bool spec_stormtrooper(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-
 	if (!IS_AWAKE(ch) || ch->fighting)
 		return false;
 
@@ -1339,8 +1307,6 @@ bool spec_stormtrooper(CHAR_DATA *ch)
 
 bool spec_new_republic_trooper(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-
 	if (!IS_AWAKE(ch) || ch->fighting)
 		return false;
 
@@ -1425,8 +1391,6 @@ bool spec_guardian(CHAR_DATA *ch)
 
 bool spec_janitor(CHAR_DATA *ch)
 {
-	OBJ_DATA *trash;
-
 	if (!IS_AWAKE(ch))
 		return false;
 
@@ -1467,7 +1431,6 @@ bool spec_poison(CHAR_DATA *ch)
 
 bool spec_thief(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
 	int gold, maxgold;
 
 	if (ch->position != POS_STANDING)
@@ -1510,12 +1473,10 @@ bool spec_thief(CHAR_DATA *ch)
 
 bool spec_auth(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
 	char buf[MAX_STRING_LENGTH];
 	OBJ_INDEX_DATA *pObjIndex;
 	OBJ_DATA *obj;
 	bool hasdiploma;
-	BAN_DATA *pban;
 	bool ban = false;
 
 	auto people_snapshot = ch->in_room->people;

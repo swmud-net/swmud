@@ -41,7 +41,6 @@ SHIP_ROOM_DATA* get_sroom_ind(SHIP_INDEX_DATA *ship, int vnum)
 
 DEF_DO_FUN( shlist )
 {
-	SHIP_INDEX_DATA *shrec;
 	char buf[MSL];
 	char buf1[MSL];
 
@@ -313,7 +312,6 @@ void fread_ship_data(SHIP_INDEX_DATA *ship, FILE *fp)
 {
 	const char *word;
 	bool fMatch;
-	MODULE_DATA *module;
 
 	for (;;)
 	{
@@ -800,16 +798,8 @@ void load_shipdb()
 
 void save_ship_index(SHIP_INDEX_DATA *ship)
 {
-	SHIP_ROOM_DATA *sRoom;
-	MPROG_DATA *mprog;
-	SHIP_EXIT_DATA *xit;
-	EXTRA_DESCR_DATA *ed;
-	RESET_DATA *pReset;
 	char filename[256];
 	FILE *fp;
-	TURRET_DATA *turret;
-	HANGAR_DATA *hangar;
-	SHIPDOCK_DATA *dock;
 
 	IF_BUG(ship == NULL, "")
 		return;
@@ -980,7 +970,6 @@ void save_ship_index(SHIP_INDEX_DATA *ship)
 void save_ship_index_list()
 {
 	FILE *fp;
-	SHIP_INDEX_DATA *ship;
 
 	if ((fp = fopen( SHIP_DB, "w")) == NULL)
 	{

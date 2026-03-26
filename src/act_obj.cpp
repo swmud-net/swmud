@@ -87,7 +87,6 @@ int get_obj_resistance(OBJ_DATA *obj)
 
 void show_obj_stats(OBJ_DATA *obj, CHAR_DATA *ch)
 {
-	AFFECT_DATA * paf;
 	SKILLTYPE * sktmp;
 #if defined(ARMAGEDDON)
 	REQUIREMENT_DATA *req;
@@ -312,7 +311,6 @@ DEF_DO_FUN( get )
 	char arg1[MAX_INPUT_LENGTH];
 	char arg2[MAX_INPUT_LENGTH];
 	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	OBJ_DATA *container;
 	int number;
 	bool found;
@@ -626,7 +624,6 @@ DEF_DO_FUN( put )
 	char arg2[MAX_INPUT_LENGTH];
 	OBJ_DATA *container;
 	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	int count;
 	int number;
 	bool save_char = false;
@@ -870,7 +867,6 @@ DEF_DO_FUN( drop )
 {
 	char arg[MAX_INPUT_LENGTH];
 	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	bool found;
 	int number;
 
@@ -1383,7 +1379,6 @@ bool can_twohanded(CHAR_DATA *ch)
  */
 bool can_layer(CHAR_DATA *ch, OBJ_DATA *obj, int wear_loc)
 {
-	OBJ_DATA *otmp;
 	int bitlayers = 0;
 	int objlayers = obj->pIndexData->layers;
 
@@ -2373,7 +2368,6 @@ void obj_fall(OBJ_DATA *obj, bool through)
 			/* Damage players */
 			if (!obj->in_room->people.empty() && number_percent() > 15)
 			{
-				CHAR_DATA *rch;
 				CHAR_DATA *vch = NULL;
 				int chcnt = 0;
 

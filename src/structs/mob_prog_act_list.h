@@ -23,6 +23,7 @@
 
 struct	mob_prog_act_list
 {
+	MPROG_ACT_LIST		* next;
 	char				* buf;
 	CHAR_DATA			* ch;
 	OBJ_DATA			* obj;

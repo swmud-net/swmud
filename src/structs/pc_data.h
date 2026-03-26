@@ -105,7 +105,7 @@ struct	pc_data
 									// a te nie
 	char				* last_dialog;	//ostatnio wypowiedziany tekst moba
 	CHAR_DATA			* pMob_speaking; //mob z kt�rym rozmawiamy
-	std::list<FEVENT_DATA*> fevents;
+	std::list<FEVENT_DATA*> fevents_list;
 	int					fevents;
 	int					remembered_mob_bounty; /*!< Trog: vnum zapamietanego moba, za ktorego chcemy wystawic bounty */
 	short int			hotel_safe_time; //Ganis: Przez ile sekund jeszcze gracz bedzie bezpieczny w hotelu

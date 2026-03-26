@@ -73,7 +73,6 @@ void generate_ship_rooms( SHIP_DATA *ship, SHIP_INDEX_DATA *shrec )
     for( auto* sRoom : shrec->rooms )
     {
 	EXTRA_DESCR_DATA *ed;
-	MPROG_DATA     *pPrg;
 
 	pRoom                   = make_room( 0, sRoom->vnum );
 	pRoom->area		= shipTmpArea;

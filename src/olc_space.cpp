@@ -250,7 +250,6 @@ bool pedit_create( CHAR_DATA *ch, char *argument )
 SEASON_DATA *get_season( PLANET_DATA *planet, int nr )
 {
     int 		i=1;
-    SEASON_DATA *	season;
 
     for( auto* season : planet->seasons )
     {
@@ -812,10 +811,6 @@ DEF_DO_FUN( pedit )
 DEF_DO_FUN( ssindex )
 {
     SPACE_DATA *	starsystem;
-    MOON_DATA *		moon;
-    PLANET_DATA *	planet;
-    STAR_DATA *		star;
-    RESET_DATA *	reset;
     int 		stars, moons, planets, resets;
 
     starsystem = starsystem_from_name( argument );
@@ -972,8 +967,6 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 
     if( !str_cmp( arg1, "delete" ) )
     {
-	int 		count;
-	SHIP_DATA *	ship;
 	SPACE_DATA *	jump;
 
 	argument = one_argument( argument, arg2 );
@@ -1276,8 +1269,6 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 
     if ( !str_cmp( arg1, "planet" ) )
     {
-	PLANET_DATA * planet;
-
     	if ( !str_cmp( arg2, "list" ) )
     	{
 	    pager_printf( ch, FB_CYAN
@@ -1534,10 +1525,6 @@ DEF_DO_FUN( shstat )
 {
     char            	arg  [ MAX_INPUT_LENGTH ];
     SHIP_INDEX_DATA *	ship;
-    TURRET_DATA *	turret;
-    HANGAR_DATA *	hangar;
-    SHIPDOCK_DATA *	dock;
-    MODULE_DATA *	module;
     int			a;
 
     argument = one_argument( argument, arg );
@@ -1772,7 +1759,6 @@ void shedit_done( CHAR_DATA *ch )
  */
 int shedit_roomdump( CHAR_DATA *ch, SHIP_INDEX_DATA *ship )
 {
-    SHIP_ROOM_DATA *	sRoom;
     ROOM_INDEX_DATA *	pRoom;
     int			start;
     int			vector;
@@ -1788,12 +1774,6 @@ int shedit_roomdump( CHAR_DATA *ch, SHIP_INDEX_DATA *ship )
 
     for( auto* sRoom : ship->rooms )
     {
-	EXTRA_DESCR_DATA *	sEd;
-	EXTRA_DESCR_DATA *	ed;
-	MPROG_DATA *		sPrg;
-	MPROG_DATA *		pPrg;
-	RESET_DATA *		sRes;
-
 	pRoom 		= make_room( start+(sRoom->vnum-vector), 0 );
 	pRoom->area	= shipTmpArea;
 
@@ -1915,17 +1895,11 @@ void ship_room_copy( SHIP_INDEX_DATA *shrec, int start, int end )
     int i;
     ROOM_INDEX_DATA *	pRoom;
     SHIP_ROOM_DATA *	sRoom;
-    RESET_DATA *	res;
-    RESET_DATA *	res_next;
 
     for( i = start; i <= end; i++ )
     {
 	SHIP_EXIT_DATA *	sExit;
-	EXIT_DATA *		pExit;
 	EXTRA_DESCR_DATA *	sEd;
-	EXTRA_DESCR_DATA *	pEd;
-	MPROG_DATA *		pProg;
-	MPROG_DATA *		sProg;
 
 	if( !(pRoom = get_room_index( i ) ) )
 	    continue;
@@ -2070,8 +2044,6 @@ DEF_DO_FUN( shedit )
 
 SHIP_INDEX_DATA *get_ship_index_fn( char *fn )
 {
-    SHIP_INDEX_DATA *    shp;
-
     for( auto* shp : ship_index_list )
     {
 	if( !str_cmp( shp->filename, fn ) )

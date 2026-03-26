@@ -175,7 +175,6 @@ void deal_with_crash()
 	char bbuf[MSL];
 	int num = 0;
 	FILE *fp;
-	DESCRIPTOR_DATA *d;
 	bool rsn = false;
 
 	if (sysdata.lastcmd_log) /* je�li logowa� komend� */
@@ -520,7 +519,6 @@ bool check_bad_desc(int desc)
 void accept_new(int ctrl, int ctrl2)
 {
 	static struct timeval null_time;
-	DESCRIPTOR_DATA *d;
 	/* int maxdesc; Moved up for use with id.c as extern */
 
 #if defined(MALLOC_DEBUG)
@@ -587,7 +585,6 @@ void accept_new(int ctrl, int ctrl2)
 void process_input()
 {
 	char cmdline[MAX_INPUT_LENGTH];
-	DESCRIPTOR_DATA *d;
 
 	/*
 	 * Kick out descriptors with raised exceptions
@@ -732,7 +729,6 @@ void process_output()
 void game_loop()
 {
 	struct timeval last_time;
-	time_t last_check = 0;
 
 #if !defined( WIN32 )
 	signal(SIGALRM, (void (*)(int)) caught_alarm);
@@ -854,7 +850,6 @@ void new_descriptor(int new_desc)
 	char buf[MSL] =
 	{ 0 };
 	DESCRIPTOR_DATA *dnew;
-	BAN_DATA *pban;
 	char hostname[MSL];
 	union
 	{
@@ -1160,7 +1155,7 @@ void read_from_buffer(DESCRIPTOR_DATA *d)
 	int i, j, k;
 
 	const char winletter[(2 * INNE_LITERY_WIN)] =
-	{ (char) 0xB9, '�', (char) 0x9C, '�', (char) 0x9F, '�', (char) 0xA5, '�', (char) 0x8C, '�', (char) 0x8F, '�' };
+	{ (char) 0xB9, '\xb1', (char) 0x9C, '\xb6', (char) 0x9F, '\xbc', (char) 0xA5, '\xa1', (char) 0x8C, '\xa6', (char) 0x8F, '\xac' };
 
 	/*
 	 * Hold horses if pending command already.
@@ -1654,11 +1649,11 @@ int write_to_buffer(DESCRIPTOR_DATA *d, const char *txt, int length)
 {
 	int i, j;
 	const char letter[(2 * INNE_LITERY_WIN)] =
-	{ '�', '�', '�', '�', '�', '�', '�', '�', '�', '�', '�', '�' };
+	{ '\xb1', '\xb9', '\xb6', '\x9c', '\xbc', '\x9f', '\xa1', '\xa5', '\xa6', '\x8c', '\xac', '\x8f' };
 
 	const char noplletter[2 * INNE_LITERY_NOPL] =
-	{ '�', 'a', '�', 'c', '�', 'e', '�', 'l', '�', 'n', '�', 'o', '�', 's', '�', 'z', '�', 'z', '�', 'A', '�', 'C', '�', 'E', '�', 'L', '�',
-			'N', '�', 'O', '�', 'S', '�', 'Z', '�', 'Z' };
+	{ '\xb1', 'a', '\xe6', 'c', '\xea', 'e', '\xb3', 'l', '\xf1', 'n', '\xf3', 'o', '\xb6', 's', '\xbc', 'z', '\xbf', 'z', '\xa1', 'A', '\xc6', 'C', '\xca', 'E', '\xa3', 'L', '\xd1',
+			'N', '\xd3', 'O', '\xa6', 'S', '\xac', 'Z', '\xaf', 'Z' };
 
 //tutaj    char 	*txt1;
 	char txt1[MSL * 4];
@@ -2116,11 +2111,11 @@ void write_to_pager(DESCRIPTOR_DATA *d, const char *txt, int length)
 
 	int i, j;
 	char letter[(2 * INNE_LITERY_WIN)] =
-	{ '�', '�', '�', '�', '�', '�', '�', '�', '�', '�', '�', '�' };
+	{ '\xb1', '\xb9', '\xb6', '\x9c', '\xbc', '\x9f', '\xa1', '\xa5', '\xa6', '\x8c', '\xac', '\x8f' };
 
 	char noplletter[2 * INNE_LITERY_NOPL] =
-	{ '�', 'a', '�', 'c', '�', 'e', '�', 'l', '�', 'n', '�', 'o', '�', 's', '�', 'z', '�', 'z', '�', 'A', '�', 'C', '�', 'E', '�', 'L', '�',
-			'N', '�', 'O', '�', 'S', '�', 'Z', '�', 'Z' };
+	{ '\xb1', 'a', '\xe6', 'c', '\xea', 'e', '\xb3', 'l', '\xf1', 'n', '\xf3', 'o', '\xb6', 's', '\xbc', 'z', '\xbf', 'z', '\xa1', 'A', '\xc6', 'C', '\xca', 'E', '\xa3', 'L', '\xd1',
+			'N', '\xd3', 'O', '\xa6', 'S', '\xac', 'Z', '\xaf', 'Z' };
 
 	//  char 	*txt1;
 	char txt1[MSL * 8];

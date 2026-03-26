@@ -699,8 +699,6 @@ bool can_edit(CHAR_DATA *ch, int vnum)
 
 AREA_DATA* get_vnum_area(int vnum)
 {
-	AREA_DATA *pArea;
-
 	for (auto* pArea : area_list)
 		if (vnum >= pArea->lvnum && vnum <= pArea->uvnum)
 			return pArea;
@@ -709,8 +707,6 @@ AREA_DATA* get_vnum_area(int vnum)
 
 AREA_DATA* get_area_by_id(int area_id)
 {
-	AREA_DATA *pArea;
-
 	for (auto* pArea : area_list)
 		if (area_id == pArea->area_id)
 			return pArea;
@@ -1888,8 +1884,6 @@ DEF_DO_FUN( oindex )
 	char arg[ MAX_INPUT_LENGTH];
 	char arg2[ MAX_INPUT_LENGTH];
 	OBJ_INDEX_DATA *pObj;
-	AFFECT_DATA *paf;
-	REQUIREMENT_DATA *req;
 	int cnt;
 	AREA_DATA *are;
 	char areastr[MSL];
@@ -1943,8 +1937,6 @@ DEF_DO_FUN( oindex )
 
 	if (!pObj->extradesc.empty())
 	{
-		EXTRA_DESCR_DATA *ed;
-
 		send_to_char( FG_CYAN "Extra description keywords: " PLAIN, ch);
 
 		for (auto* ed : pObj->extradesc)
@@ -2569,7 +2561,6 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 	ROOM_INDEX_DATA *pRoom;
 	EXIT_DATA *pExit;
 	EXIT_DATA *rExit;
-	EXIT_DATA *rExit_next;
 	EXTRA_DESCR_DATA *ed;
 	char arg[MSL] = {0};
 	char arg1[MSL] = {0};
@@ -3419,14 +3410,15 @@ bool mpedit_create(CHAR_DATA *ch, char *argument)
 		return false;
 	}
 
-	if (pMob->mudprogs)
+	if (!pMob->mudprogs.empty())
 	{
 		send_to_char("Mobile already has mob programs!" NL, ch);
 		return false;
 	}
 
-	pMob->mudprogs = new_mprog();
-	pMob->progtypes = pMob->mudprogs->type;
+	auto* mprg = new_mprog();
+	pMob->mudprogs.push_back(mprg);
+	pMob->progtypes = mprg->type;
 
 	ch->desc->olc_editing = (void*) pMob;
 	ch->pcdata->mprog_edit = 0;
@@ -3459,14 +3451,14 @@ bool opedit_create(CHAR_DATA *ch, char *argument)
 		return false;
 	}
 
-	if (pObj->mudprogs)
+	if (!pObj->mudprogs.empty())
 	{
 		send_to_char("Obj already has programs!" NL, ch);
 		return false;
 	}
 
-	CREATE(pObj->mudprogs, MPROG_DATA, 1);
-	mprg = pObj->mudprogs;
+	mprg = new_mprog();
+	pObj->mudprogs.push_back(mprg);
 	mprg->type = 0 | RAND_PROG;
 	STRDUP(mprg->comlist, "break\n");
 	STRDUP(mprg->arglist, "0");
@@ -3502,14 +3494,14 @@ bool rpedit_create(CHAR_DATA *ch, char *argument)
 		return false;
 	}
 
-	if (pRoom->mudprogs)
+	if (!pRoom->mudprogs.empty())
 	{
 		send_to_char("Room already has programs!" NL, ch);
 		return false;
 	}
 
-	CREATE(pRoom->mudprogs, MPROG_DATA, 1);
-	mprg = pRoom->mudprogs;
+	mprg = new_mprog();
+	pRoom->mudprogs.push_back(mprg);
 
 	mprg->type = 0 | RAND_PROG;
 	pRoom->progtypes = pRoom->progtypes | mprg->type;
@@ -3681,7 +3673,6 @@ void mpedit_show(CHAR_DATA *ch, char *argument)
 		show_mprog(ch, pMobProg);
 	else if ( is_number(argument))
 	{
-		MPROG_DATA *mprg;
 		int prg = atoi(argument);
 		int cnt = mprog_count(pMob);
 
@@ -3727,7 +3718,6 @@ void opedit_show(CHAR_DATA *ch, char *argument)
 		show_oprog(ch, pObjProg);
 	else if ( is_number(argument))
 	{
-		MPROG_DATA *oprg;
 		int prg = atoi(argument);
 		int cnt = oprog_count(pObj);
 
@@ -3772,7 +3762,6 @@ void rpedit_show(CHAR_DATA *ch, char *argument)
 		show_rprog(ch, pRoomProg);
 	else if ( is_number(argument))
 	{
-		MPROG_DATA *rprg;
 		int prg = atoi(argument);
 		int cnt = rprog_count(pRoom);
 
@@ -3867,9 +3856,6 @@ void mpedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_cmp(arg1, "add"))
 	{
-		MPROG_DATA *mprg;
-		MPROG_DATA *mprg2;
-
 		if (pMob->mudprogs.empty())
 			send_to_char("Mobile doesn't have mobprogs. Use create." NL, ch);
 
@@ -3926,9 +3912,6 @@ void mpedit(DESCRIPTOR_DATA *d, char *argument)
 	if (!str_prefix(arg1, "copy"))
 	{
 		MOB_INDEX_DATA *cMob;
-		MPROG_DATA *mprg;
-		MPROG_DATA *cprg;
-		MPROG_DATA *mprg_next;
 
 		if (arg2[0] == '\0' || !is_number(arg2))
 		{
@@ -4077,9 +4060,6 @@ void opedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_prefix(arg1, "add"))
 	{
-		MPROG_DATA *oprg;
-		MPROG_DATA *oprg2;
-
 		if (pObj->mudprogs.empty())
 			send_to_char("Object doesn't have objprogs. Use create." NL, ch);
 
@@ -4139,9 +4119,6 @@ void opedit(DESCRIPTOR_DATA *d, char *argument)
 	if (!str_prefix(arg1, "copy"))
 	{
 		OBJ_INDEX_DATA *cObj;
-		MPROG_DATA *oprg;
-		MPROG_DATA *cprg;
-		MPROG_DATA *oprg_next;
 
 		if (arg2[0] == '\0' || !is_number(arg2))
 		{
@@ -4288,9 +4265,6 @@ void rpedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_prefix(arg1, "add"))
 	{
-		MPROG_DATA *rprg;
-		MPROG_DATA *rprg2;
-
 		if (pRoom->mudprogs.empty())
 			send_to_char("Room doesn't have progs. Use create." NL, ch);
 
@@ -4351,9 +4325,6 @@ void rpedit(DESCRIPTOR_DATA *d, char *argument)
 	if (!str_prefix(arg1, "copy"))
 	{
 		ROOM_INDEX_DATA *cRoom;
-		MPROG_DATA *rprg;
-		MPROG_DATA *cprg;
-		MPROG_DATA *rprg_next;
 
 		if (arg2[0] == '\0' || !is_number(arg2))
 		{
@@ -4436,8 +4407,6 @@ void rpedit(DESCRIPTOR_DATA *d, char *argument)
 DEF_DO_FUN( opedit )
 {
 	OBJ_INDEX_DATA *pObj;
-	MPROG_DATA *oprg;
-	MPROG_DATA *cprg;
 	int value;
 	char arg1[MAX_STRING_LENGTH];
 	char arg2[MAX_STRING_LENGTH];
@@ -4461,7 +4430,7 @@ DEF_DO_FUN( opedit )
 
 		if (arg2[0] == '\0' || atoi(arg2) == 0)
 		{
-			if (!pObj->mudprogs)
+			if (pObj->mudprogs.empty())
 			{
 				send_to_char("Przedmiot nie ma objprog�w.", ch);
 				send_to_char("  U�yj create." NL, ch);
@@ -4551,8 +4520,6 @@ DEF_DO_FUN( opedit )
 DEF_DO_FUN( rpedit )
 {
 	ROOM_INDEX_DATA *pRoom;
-	MPROG_DATA *rprg;
-	MPROG_DATA *cprg;
 	int value;
 	char arg1[MAX_STRING_LENGTH];
 	char arg2[MAX_STRING_LENGTH];
@@ -4576,7 +4543,7 @@ DEF_DO_FUN( rpedit )
 
 		if (arg2[0] == '\0' || atoi(arg2) == 0)
 		{
-			if (!pRoom->mudprogs)
+			if (pRoom->mudprogs.empty())
 			{
 				send_to_char("Pok�j nie ma prog�w.", ch);
 				send_to_char("  U�yj create." NL, ch);
@@ -4667,8 +4634,6 @@ DEF_DO_FUN( rpedit )
 DEF_DO_FUN( mpedit )
 {
 	MOB_INDEX_DATA *pMob;
-	MPROG_DATA *mprg;
-	MPROG_DATA *cprg;
 	int value;
 	char arg1[MAX_STRING_LENGTH];
 	char arg2[MAX_STRING_LENGTH];
@@ -4692,7 +4657,7 @@ DEF_DO_FUN( mpedit )
 
 		if (arg2[0] == '\0' || atoi(arg2) == 0)
 		{
-			if (!pMob->mudprogs)
+			if (pMob->mudprogs.empty())
 			{
 				send_to_char("Mob nie ma mobprogow.", ch);
 				send_to_char("  Uzyj create." NL, ch);
@@ -4817,8 +4782,6 @@ void save_helps();
 
 HELPS_FILE* find_helps_file(char *name)
 {
-	HELPS_FILE *fHelp;
-
 	for (auto* fHelp : helps_file_list)
 		if (!str_cmp(name, fHelp->name))
 			return fHelp;
@@ -4827,7 +4790,6 @@ HELPS_FILE* find_helps_file(char *name)
 
 HELP_DATA* find_help(const char *argument)
 {
-	HELPS_FILE *fHelp;
 	HELP_DATA *pHelp = 0;
 	int count = 0;
 	bool found = false;
@@ -5017,15 +4979,10 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 
 	if (!str_cmp(arg1, "listfiles"))
 	{
-		HELPS_FILE *fHelp;
-		HELP_DATA *pHelp_cnt;
-
 		send_to_char("Helps files: " NL, ch);
 		for (auto* fHelp : helps_file_list)
 		{
-			int i = 0;
-			for (auto* pHelp_cnt : fHelp->helps)
-				i++;
+			int i = (int)fHelp->helps.size();
 			ch_printf(ch, "  %s (%d)" NL, fHelp->name, i);
 		}
 
@@ -5074,8 +5031,6 @@ void hedit(DESCRIPTOR_DATA *d, char *argument)
 		if (!str_cmp(arg4, "moveto"))
 		{
 			HELPS_FILE *fHelp_to;
-			HELP_DATA *pHelp;
-			HELP_DATA *pHelp_next;
 
 			if (*argument == '\0')
 			{
@@ -5380,7 +5335,6 @@ char* help_fix(char *text)
 void save_helps_list()
 {
 	FILE *fpout;
-	HELPS_FILE *fHelp;
 
 	log_string_plus("Saving helps files list...", LOG_NORMAL, LEVEL_GREATER);
 	RESERVE_CLOSE;
@@ -5402,8 +5356,6 @@ void save_helps_list()
 
 void save_helps()
 {
-	HELPS_FILE *fHelp;
-	HELP_DATA *pHelp;
 	FILE *fpout;
 	const size_t fname_size = 256;
 	char help_file[fname_size] = {0};
@@ -5465,8 +5417,6 @@ DEF_DO_FUN( olcinfo )
 
 PROJECT_DATA* get_project(char *argument)
 {
-	PROJECT_DATA *pro;
-
 	for (auto* pro : project_list)
 	{
 		if (pro->effect)
@@ -5480,7 +5430,6 @@ PROJECT_DATA* get_project(char *argument)
 DEF_DO_FUN( prostat )
 {
 	PROJECT_DATA *pro;
-	PART_DATA *part;
 	int i;
 
 	if (!(pro = get_project(argument)))
@@ -5572,7 +5521,6 @@ bool proedit_create(CHAR_DATA *ch, char *argument)
 
 PART_DATA* get_part(PROJECT_DATA *pro, int nr)
 {
-	PART_DATA *part;
 	int i;
 
 	i = 1;
@@ -5588,7 +5536,6 @@ PART_DATA* get_part(PROJECT_DATA *pro, int nr)
 
 COMPONENT_DATA* get_component(int nr, PART_DATA *part)
 {
-	COMPONENT_DATA *comp;
 	int i = 1;
 
 	for (auto* comp : part->components)
@@ -5954,7 +5901,6 @@ DEF_DO_FUN( proedit )
 
 		for (auto* pro : project_list)
 		{
-			PART_DATA *part;
 			int i;
 
 			if (!pro->effect)
@@ -5985,8 +5931,6 @@ DEF_DO_FUN( proedit )
 /** Trog: LEdit */
 LANG_DATA* find_lang(const char *name)
 {
-	LANG_DATA *lang;
-
 	if (!str_cmp(name, lang_base->name))
 		return lang_base;
 
@@ -5999,8 +5943,6 @@ LANG_DATA* find_lang(const char *name)
 
 KNOWN_LANG* find_klang(CHAR_DATA *ch, LANG_DATA *lang)
 {
-	KNOWN_LANG *klang;
-
 	for (auto* klang : ch->klangs)
 		if (lang == klang->language)
 			return klang;
@@ -6015,8 +5957,6 @@ KNOWN_LANG* find_klang(CHAR_DATA *ch, LANG_DATA *lang)
  * zwracala base_rece */
 RACE_DATA* find_race(char *name)
 {
-	RACE_DATA *race;
-
 	if (!str_cmp(name, base_race->name))
 		return base_race;
 
@@ -6396,17 +6336,15 @@ void save_race(RACE_DATA *pRace)
 
 void save_races_list2()
 {
-	ILD *first_ild = NULL;
-	ILD *last_ild = NULL;
+	std::list<ILD*> ild_list;
 
-	ILD_CREATE(RACE_DATA, race, filename, first_ild, last_ild);
-	save_list( RACE_LISTXML, first_ild);
-	ILD_FREE(first_ild);
+	ILD_CREATE(RACE_DATA, race_list, filename, ild_list);
+	save_list( RACE_LISTXML, ild_list);
+	ILD_FREE(ild_list);
 }
 
 void save_races_list()
 {
-	RACE_DATA *pRace;
 	FILE *fpout;
 
 	RESERVE_CLOSE;
@@ -6433,8 +6371,6 @@ void save_races_list()
 /* Trog: TCEdit */
 TURBOCAR* find_turbocar(char *name)
 {
-	TURBOCAR *turbocar;
-
 	for (auto* turbocar : turbocar_list)
 		if (!str_cmp(name, turbocar->name))
 			return turbocar;
@@ -6469,7 +6405,6 @@ bool tcedit_create(CHAR_DATA *ch, char *argument)
 void tcedit_show(CHAR_DATA *ch, char *argument)
 {
 	TURBOCAR *pTurbocar;
-	TC_STATION *station;
 	int i = 0;
 
 	if (*argument != '\0')
@@ -6504,7 +6439,6 @@ void tcedit(DESCRIPTOR_DATA *d, char *argument)
 	CHAR_DATA *ch = d->character;
 	TURBOCAR *pTurbocar;
 	TC_STATION *station;
-	TC_STATION *station_pn;
 	char arg[MIL];
 	char arg1[MIL];
 	char arg2[MIL];
@@ -6751,7 +6685,6 @@ void save_turbocar(TURBOCAR *pTurbocar)
 {
 	FILE *fpout;
 	char filename[MFL];
-	TC_STATION *station;
 
 	if (!pTurbocar)
 	{
@@ -6788,7 +6721,6 @@ void save_turbocar(TURBOCAR *pTurbocar)
 
 void save_turbocars_list()
 {
-	TURBOCAR *pTurbocar;
 	FILE *fpout;
 
 	RESERVE_CLOSE;

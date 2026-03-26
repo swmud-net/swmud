@@ -227,8 +227,6 @@ void do_clonescore(CHAR_DATA *ch, char *argument)	//Trog
 
 DEF_DO_FUN( oldscore )
 {
-	AFFECT_DATA *paf;
-	KNOWN_LANG *klang;
 	int drug;
 
 	if (IS_NPC(ch))
@@ -871,7 +869,6 @@ DEF_DO_FUN( experience )
 DEF_DO_FUN( affected )
 {
 	char arg[MAX_INPUT_LENGTH];
-	AFFECT_DATA *paf;
 	SKILLTYPE *skill;
 
 	if (IS_NPC(ch))
@@ -966,7 +963,6 @@ DEF_DO_FUN( inventory )
 
 DEF_DO_FUN( equipment )
 {
-	OBJ_DATA *obj;
 	int iWear, dam;
 	bool found;
 	char buf[MAX_STRING_LENGTH];

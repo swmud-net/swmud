@@ -87,8 +87,7 @@ DEF_DO_FUN( dump )
 		count++;
 		if (fch->pcdata != NULL)
 			num_pcs++;
-		for (auto* af : fch->affects)
-			aff_count++;
+		aff_count += fch->affects.size();
 	}
 
 	Mem = count * (sizeof(*fch));
@@ -101,9 +100,7 @@ DEF_DO_FUN( dump )
 			Mem / 1024);
 
 	/* descriptors */
-	count = 0;
-	for (auto* d : descriptor_list)
-		count++;
+	count = descriptor_list.size();
 
 	Mem = count * (sizeof(*d));
 	TotMem += Mem;
@@ -135,11 +132,8 @@ DEF_DO_FUN( dump )
 	for (vnum = 0; nMatch < top_obj_index; vnum++)
 		if ((pObjIndex = get_obj_index(vnum)) != NULL)
 		{
-			for (auto* af : pObjIndex->affects)
-				aff_count++;
-
-			for (auto* req : pObjIndex->requirements)
-				req_count++;
+			aff_count += pObjIndex->affects.size();
+			req_count += pObjIndex->requirements.size();
 			nMatch++;
 		}
 
@@ -153,11 +147,9 @@ DEF_DO_FUN( dump )
 	for (auto* obj : object_list)
 	{
 		count++;
-		for (auto* af : obj->affects)
-			aff_count++;
+		aff_count += obj->affects.size();
 
-		for (auto* req : pObjIndex->requirements)
-			req_count++;
+		req_count += pObjIndex->requirements.size();
 	}
 
 	Mem = count * (sizeof(*obj));
@@ -301,7 +293,6 @@ char* my_one_argument(char *argument, char *arg_first)
 bool save_bus_list()
 {
 	FILE *fp;
-	SHIP_DATA *ship;
 	char buf[MAX_STRING_LENGTH];
 	int i = 0;
 
@@ -332,7 +323,6 @@ bool save_ship_course(SHIP_DATA *ship)
 {
 	FILE *fp;
 	char filename[256];
-	COURSE_DATA *course;
 
 	sprintf(filename, "%s%s.course", SHIP_DIR, ship->filename);
 
@@ -692,7 +682,6 @@ DEF_DO_FUN( last )
 	int64 channel = 0;
 	char buf[ MSL * (MAX_LAST / 20)];
 	char buf1[ MIL * 2];
-	LAST_DATA *last;
 
 	if (IS_NPC(ch))
 	{
@@ -879,7 +868,6 @@ LANG_DATA* set_last_lang(CHAR_DATA *ch)
 
 void add_to_last_tell(CHAR_DATA *ch, CHAR_DATA *sender, const char *linia)
 {
-	int i;
 	LAST_DATA *last;
 
 	if (IS_NPC(ch))
@@ -909,7 +897,6 @@ void add_to_last_tell(CHAR_DATA *ch, CHAR_DATA *sender, const char *linia)
 
 void add_to_last_ctalk(CLAN_DATA *clan, CHAR_DATA *sender, const char *linia)
 {
-	int i;
 	LAST_DATA *last;
 
 	if ((int)clan->ctalk_history.size() >= MAX_LAST_CTALK)
@@ -937,7 +924,6 @@ void add_to_last_ctalk(CLAN_DATA *clan, CHAR_DATA *sender, const char *linia)
 void add_to_last_buf(CHAR_DATA *ch, char *tekst, const char *verb,
 		int64 channel)
 {
-	int i;
 	LAST_DATA *last;
 
 	auto& the_buf_list =
@@ -1150,7 +1136,6 @@ DEF_DO_FUN( alias )
 DEF_DO_FUN( unalias )
 {
 	CHAR_DATA *rch;
-	ALIAS_DATA *alias;
 	char arg[ MAX_INPUT_LENGTH];
 
 	rch = (!ch->pcdata ? ch->desc->original : ch);
@@ -1592,8 +1577,9 @@ bool ispolchar(const char letter)
 {
 	int i;
 	const char polchars[22] =
-	{ '�', '�', '�', '�', '�', '�', '�', '�', '�', '�', '�', '�', '�', '�', '�',
-			'�', '�', '�', '�', '�', '�', '�' };
+	{ '\xb1', '\xe6', '\xea', '\xb3', '\xf1', '\xf3', '\xb6', '\xbc', '\xbf',
+	  '\xa1', '\xc6', '\xca', '\xa3', '\xd1', '\xd3', '\xa6', '\xac', '\xaf',
+	  '\xb9', '\xa5', '\xbf', '\xaf' };
 
 	if (letter >= 'A' && letter <= 'z')
 		return false;
@@ -1613,9 +1599,9 @@ char shiftpl(bool shift, char letter)
 {
 	int i;
 	const char uchars[9] =
-	{ '�', '�', '�', '�', '�', '�', '�', '�', '�' };
+	{ '\xa1', '\xc6', '\xca', '\xa3', '\xd1', '\xd3', '\xa6', '\xac', '\xaf' };
 	const char lchars[9] =
-	{ '�', '�', '�', '�', '�', '�', '�', '�', '�' };
+	{ '\xb1', '\xe6', '\xea', '\xb3', '\xf1', '\xf3', '\xb6', '\xbc', '\xbf' };
 
 	if (shift) //zamie� z ma�ych na du�e
 	{

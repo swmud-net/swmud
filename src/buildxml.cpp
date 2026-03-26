@@ -65,12 +65,6 @@ void save_area( AREA_DATA *area )
 	MID			*pMobIndex;
 	OID			*pObjIndex;
 	RID			*pRoomIndex;
-	MPROG_DATA	*mprog;
-	EDD			*ed;
-	REQ			*req;
-	AFF			*paf;
-	ED			*xit;
-	RD			*pReset;
 	SHD			*pShop;
 	RHD			*pRepair;
 	char		buf[MSL];
@@ -575,8 +569,6 @@ void swGetContentExtraDescs( std::list<EDD*>& edlist, xmlNodePtr node )
 
 MID *get_mob_tmp( int vnum, AREA_DATA *area )
 {
-	MID		*pMobIndex;
-
 	for (auto* pMobIndex : area->area_tmp->mobs)
 		if( pMobIndex->vnum == vnum )
 			return pMobIndex;
@@ -586,8 +578,6 @@ MID *get_mob_tmp( int vnum, AREA_DATA *area )
 
 OID *get_obj_tmp( int vnum, AREA_DATA *area )
 {
-	OID		*pObjIndex;
-
 	for (auto* pObjIndex : area->area_tmp->objs)
 		if( pObjIndex->vnum == vnum )
 			return pObjIndex;
@@ -597,8 +587,6 @@ OID *get_obj_tmp( int vnum, AREA_DATA *area )
 
 RID *get_room_tmp( int vnum, AREA_DATA *area )
 {
-	RID		*pRoomIndex;
-
 	for (auto* pRoomIndex : area->area_tmp->rooms)
 		if( pRoomIndex->vnum == vnum )
 			return pRoomIndex;
@@ -1545,15 +1533,6 @@ AREA_DATA *load_area2( const char *filename )
 
 bool install_area( AREA_DATA *area )
 {
-	AREA_DATA	*pArea;
-	MID			*pMobIndex;
-	OID			*pObjIndex;
-	RID			*pRoomIndex;
-	MID			*pMobIndex_next;
-	OID			*pObjIndex_next;
-	RID			*pRoomIndex_next;
-	SHD			*pShop;
-	RHD			*pRepair;
 	int			i;
 
 

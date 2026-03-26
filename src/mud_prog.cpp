@@ -272,8 +272,6 @@ void obj_count(CHAR_DATA *ch, const std::list<OBJ_DATA*>& objlist, count_locatio
 
 void obj_countall(CHAR_DATA *ch, count_locations loc, count_by type, void *data, int *ammount)
 {
-	CHAR_DATA *pCh;
-
 	for (auto* pCh : ch->in_room->people)
 		obj_count(pCh, pCh->carrying, loc, type, data, ammount);
 	obj_count(ch, ch->in_room->contents, loc, type, data, ammount);
@@ -476,7 +474,6 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 	{
 		int vnum = atoi(cvar);
 		int lhsvl;
-		CHAR_DATA *oMob;
 
 		if (vnum < 1 || vnum > MAX_VNUM)
 		{
@@ -821,7 +818,6 @@ int mprog_do_ifcheck(char *ifcheck, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *
 
 	if (!str_cmp(chck, "weapontypeinv"))
 	{
-		OBJ_DATA *pObj;
 		int type;
 
 		if ( is_number(rval))
@@ -2215,7 +2211,6 @@ void mprog_driver(char *com_list, CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *ob
 	char *command_list;
 	char *cmnd;
 	CHAR_DATA *rndm = NULL;
-	CHAR_DATA *vch = NULL;
 	int count = 0;
 	int ignorelevel = 0;
 	int iflevel, result;
@@ -3334,7 +3329,6 @@ void mprog_give_trigger(CHAR_DATA *mob, CHAR_DATA *ch, OBJ_DATA *obj)
 
 void mprog_greet_trigger(CHAR_DATA *ch)
 {
-	CHAR_DATA *vmob, *vmob_next;
 #ifdef DEBUG
  char buf[MAX_STRING_LENGTH];
  sprintf( buf, "mprog_greet_trigger -> %s", ch->name );
@@ -3362,8 +3356,6 @@ void mprog_greet_trigger(CHAR_DATA *ch)
 
 void mprog_all_greet_trigger(CHAR_DATA *ch)
 {
-	CHAR_DATA *vmob;
-
 	/* Imps are safe ;) */
 	if (!IS_NPC(ch) && (
 	IS_SET( ch->act, PLR_WIZINVIS ) || IS_SET(ch->act, PLR_HOLYLIGHT)))
@@ -3605,8 +3597,6 @@ bool oprog_percent_check(CHAR_DATA *mob, CHAR_DATA *actor, OBJ_DATA *obj, void *
 
 void oprog_greet_trigger(CHAR_DATA *ch)
 {
-	OBJ_DATA *vobj;
-
 	for (auto* vobj : ch->in_room->contents)
 		if (vobj->pIndexData->progtypes & GREET_PROG)
 		{

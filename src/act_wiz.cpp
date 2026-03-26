@@ -60,8 +60,6 @@ void deal_with_crash args( ( ) );
 
 time_t new_boot_time_t;
 extern struct tm new_boot_struct;
-extern OBJ_INDEX_DATA *obj_index_hash[MAX_KEY_HASH];
-extern MOB_INDEX_DATA *mob_index_hash[MAX_KEY_HASH];
 
 int get_saveflag(char *name)
 {
@@ -156,7 +154,6 @@ DEF_DO_FUN( wizinfo )
  */
 CHAR_DATA* get_waiting_desc(CHAR_DATA *ch, char *name)
 {
-	DESCRIPTOR_DATA *d;
 	CHAR_DATA *ret_char = 0;
 	static unsigned int number_of_hits;
 
@@ -189,7 +186,6 @@ DEF_DO_FUN( authorize )
 	char arg2[MIL];
 	char buf[MAX_STRING_LENGTH];
 	CHAR_DATA *victim;
-	DESCRIPTOR_DATA *d;
 
 	argument = one_argument(argument, arg1);
 	argument = one_argument(argument, arg2);
@@ -398,7 +394,6 @@ DEF_DO_FUN( deny )
 DEF_DO_FUN( disconnect )
 {
 	char arg[MIL];
-	DESCRIPTOR_DATA *d;
 	CHAR_DATA *victim;
 
 	one_argument(argument, arg);
@@ -480,8 +475,6 @@ DEF_DO_FUN( fquit )
 
 DEF_DO_FUN( forceclose )
 {
-	DESCRIPTOR_DATA *d;
-
 	if (argument[0] == '\0')
 	{
 		send_to_char("Usage: forceclose <descriptor#>" NL, ch);
@@ -537,8 +530,6 @@ DEF_DO_FUN( pardon )
 
 void echo_to_all(const char *argument, int tar)
 {
-	DESCRIPTOR_DATA *d;
-
 	if (!argument || argument[0] == '\0')
 		return;
 
@@ -634,8 +625,6 @@ void do_echoat(CHAR_DATA *ch, char *argument) //byTrog
 
 void echo_to_room(ROOM_INDEX_DATA *room, const char *argument)
 {
-	CHAR_DATA *vic;
-
 	if (room == NULL)
 		return;
 
@@ -650,8 +639,6 @@ void echo_to_room(ROOM_INDEX_DATA *room, const char *argument)
 /* Thanos */
 void echo_to_area(AREA_DATA *area, char *argument)
 {
-	CHAR_DATA *pch;
-
 	if (area == NULL)
 		return;
 
@@ -718,7 +705,6 @@ DEF_DO_FUN( transfer )
 	char arg1[MIL];
 	char arg2[MIL];
 	ROOM_INDEX_DATA *location;
-	DESCRIPTOR_DATA *d;
 	CHAR_DATA *victim;
 
 	argument = one_argument(argument, arg1);
@@ -847,7 +833,6 @@ DEF_DO_FUN( at )
 	char arg[MIL];
 	ROOM_INDEX_DATA *location;
 	ROOM_INDEX_DATA *original;
-	CHAR_DATA *wch;
 
 	argument = one_argument(argument, arg);
 
@@ -1020,9 +1005,6 @@ DEF_DO_FUN( rstat )
 	char buf[MAX_STRING_LENGTH];
 	char arg[MIL];
 	ROOM_INDEX_DATA *location;
-	OBJ_DATA *obj;
-	CHAR_DATA *rch;
-	EXIT_DATA *pexit;
 	int cnt;
 	static const char *dir_text[] =
 	{ "n", "e", "s", "w", "u", "d", "ne", "nw", "se", "sw", "?" };
@@ -1161,8 +1143,6 @@ DEF_DO_FUN( rstat )
 DEF_DO_FUN( ostat )
 {
 	char arg[MIL];
-	REQUIREMENT_DATA *req;
-	AFFECT_DATA *paf;
 	OBJ_DATA *obj;
 	char *pdesc;
 
@@ -1305,12 +1285,8 @@ DEF_DO_FUN( mstat )
 {
 	char arg[MIL];
 	char *n;
-	AFFECT_DATA *paf;
 	CHAR_DATA *victim;
 	SKILLTYPE *skill;
-	CRIME_DATA *crime;
-	NAMESLIST_DATA *nameslist;
-	KNOWN_LANG *klang;
 
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
@@ -1538,11 +1514,11 @@ DEF_DO_FUN( mstat )
 					bit_name(apply_types_list, paf->location), paf->modifier,
 					paf->duration, flag_string(aff_flags_list, paf->bitvector));
 
-	if (get_trust(ch) > 103 && !IS_NPC(victim) && !victim->pcdata->fevents.empty())
+	if (get_trust(ch) > 103 && !IS_NPC(victim) && !victim->pcdata->fevents_list.empty())
 	{
 		ch_printf(ch, FG_CYAN "Force Events (" PLAIN "%zu" FG_CYAN "):" EOL,
-				victim->pcdata->fevents.size());
-		for (auto* fevent : victim->pcdata->fevents)
+				victim->pcdata->fevents_list.size());
+		for (auto* fevent : victim->pcdata->fevents_list)
 			ch_printf(ch, "%s" FG_CYAN ": (" PLAIN "%s" FG_CYAN ") (" PLAIN
 			"%lld %lld %lld %lld %lld" FG_CYAN ")" EOL,
 					bit_name(fevent_types_list, fevent->trigger), fevent->sattr,
@@ -1555,7 +1531,6 @@ DEF_DO_FUN( mstat )
 DEF_DO_FUN( mfind )
 {
 	char arg[MIL];
-	MOB_INDEX_DATA *pMobIndex;
 	int hash;
 	int nMatch;
 	bool fAll;
@@ -1624,7 +1599,6 @@ DEF_DO_FUN( ofind )
 	char arg[MIL];
 	char arg2[MIL];
 	char arg3[MIL];
-	OBJ_INDEX_DATA *pObjIndex;
 	int hash;
 	int nMatch;
 
@@ -1750,7 +1724,6 @@ DEF_DO_FUN( ofind )
 DEF_DO_FUN( mwhere )
 {
 	char arg[MIL];
-	CHAR_DATA *victim;
 	bool found;
 
 	one_argument(argument, arg);
@@ -1784,7 +1757,6 @@ DEF_DO_FUN( bodybag )
 	char buf2[MAX_STRING_LENGTH];
 	char buf3[MAX_STRING_LENGTH];
 	char arg[MIL];
-	OBJ_DATA *obj;
 	bool found;
 
 	one_argument(argument, arg);
@@ -1923,8 +1895,6 @@ DEF_DO_FUN( reboot )
 {
 	char buf[MAX_STRING_LENGTH];
 	extern bool mud_down;
-	CHAR_DATA *vch;
-	DESCRIPTOR_DATA *d;
 
 	if (str_cmp(argument, "mud now") && str_cmp(argument, "nosave")
 			&& str_cmp(argument, "and sort skill table"))
@@ -1978,8 +1948,6 @@ DEF_DO_FUN( shutdown )
 {
 	char buf[MAX_STRING_LENGTH];
 	extern bool mud_down;
-	CHAR_DATA *vch;
-	DESCRIPTOR_DATA *d;
 
 	if (str_cmp(argument, "mud now") && str_cmp(argument, "nosave"))
 	{
@@ -2024,7 +1992,6 @@ void write_ship_list();
 DEF_DO_FUN( saveall )
 {
 	char arg[MIL];
-	AREA_DATA *area;
 
 	argument = one_argument(argument, arg);
 
@@ -2059,8 +2026,6 @@ DEF_DO_FUN( saveall )
 	/* Thanos */
 	if (!str_cmp(arg, "quests"))
 	{
-		QUEST_INDEX_DATA *quest;
-
 		for (auto* quest : quest_index_list)
 			save_quest(quest);
 		donemsg(ch);
@@ -2102,8 +2067,6 @@ DEF_DO_FUN( saveall )
 
 	if (!str_cmp(arg, "races"))
 	{
-		RACE_DATA *race;
-
 		for (auto* race : race_list)
 			save_race(race);
 		save_races_list();
@@ -2125,7 +2088,6 @@ DEF_DO_FUN( saveall )
 
 	if (!str_cmp(arg, "storages"))
 	{
-		AREA_DATA *area;
 		ROOM_INDEX_DATA *room;
 		int vnum;
 
@@ -2454,11 +2416,6 @@ DEF_DO_FUN( oinvoke )
 
 bool purge_room(CHAR_DATA *ch, ROOM_INDEX_DATA *room)
 {
-	CHAR_DATA *victim;
-	OBJ_DATA *obj;
-	CHAR_DATA *vnext;
-	OBJ_DATA *obj_next;
-
 	if (!can_edit(ch, room->vnum))
 		return false;
 
@@ -2949,9 +2906,6 @@ DEF_DO_FUN( restore )
 
 	if (!str_cmp(arg, "all"))
 	{
-		CHAR_DATA *vch;
-		CHAR_DATA *vch_next;
-
 		if (!ch->pcdata)
 			return;
 
@@ -3204,8 +3158,6 @@ DEF_DO_FUN( litterbug )
 
 DEF_DO_FUN( peace )
 {
-	CHAR_DATA *rch;
-
 	act( COL_IMMORT, "$n krzyczy 'SPOK�J!'&z&w", ch, NULL, NULL, TO_ROOM);
 	for (auto* rch : ch->in_room->people)
 	{
@@ -3315,7 +3267,6 @@ std::list<BAN_DATA*> ban_list;
 
 void save_banlist(void)
 {
-	BAN_DATA *pban;
 	FILE *fp;
 
 	RESERVE_CLOSE;
@@ -3462,7 +3413,6 @@ DEF_DO_FUN( ban )
 DEF_DO_FUN( allow )
 {
 	char arg[MIL];
-	BAN_DATA *pban;
 
 	one_argument(argument, arg);
 
@@ -3515,7 +3465,6 @@ DEF_DO_FUN( noresolve )
 DEF_DO_FUN( users )
 {
 	char buf[MAX_STRING_LENGTH];
-	DESCRIPTOR_DATA *d;
 	int count;
 	char arg[MIL];
 
@@ -3618,9 +3567,6 @@ DEF_DO_FUN( force )
 
 	if (!str_cmp(arg, "all"))
 	{
-		CHAR_DATA *vch;
-		CHAR_DATA *vch_next;
-
 		if (mobsonly)
 		{
 			send_to_char("Force whom to do what?" NL, ch);
@@ -4394,27 +4340,7 @@ DEF_DO_FUN( destro )
  */
 void close_area(AREA_DATA *pArea)
 {
-	CHAR_DATA *ech;
-	CHAR_DATA *ech_next;
-	OBJ_DATA *eobj;
-	OBJ_DATA *eobj_next;
 	int icnt;
-	ROOM_INDEX_DATA *rid;
-	ROOM_INDEX_DATA *rid_next;
-	OBJ_INDEX_DATA *oid;
-	OBJ_INDEX_DATA *oid_next;
-	MOB_INDEX_DATA *mid;
-	MOB_INDEX_DATA *mid_next;
-	EXTRA_DESCR_DATA *eed;
-	EXTRA_DESCR_DATA *eed_next;
-	EXIT_DATA *exit;
-	EXIT_DATA *exit_next;
-	MPROG_ACT_LIST *mpact;
-	MPROG_ACT_LIST *mpact_next;
-	MPROG_DATA *mprog;
-	MPROG_DATA *mprog_next;
-	AFFECT_DATA *paf;
-	AFFECT_DATA *paf_next;
 
 	bug("close_area used");
 
@@ -4641,7 +4567,6 @@ DEF_DO_FUN( destroy )
 const SWString name_expand(CHAR_DATA *ch)
 {
 	int count = 1;
-	CHAR_DATA *rch;
 	char name[MIL] = {0}; /*  HOPEFULLY no mob has a name longer than THAT */
 
 	char outbuf[MIL] = {0};
@@ -5603,7 +5528,6 @@ DEF_DO_FUN( vsearch )
 {
 	char arg[MIL];
 	bool found = false;
-	OBJ_DATA *obj;
 	OBJ_DATA *in_obj;
 	int obj_counter = 1;
 	int argi;
@@ -5740,31 +5664,31 @@ void add_social(SOCIALTYPE *social)
 //Added by Ratm
 		switch (social->name[0])
 		{
-		case '�':
+		case '\xb1': // ą (ISO-8859-2)
 			hash = 1;
 			break;
-		case '�':
+		case '\xe6': // ć (ISO-8859-2)
 			hash = 3;
 			break;
-		case '�':
+		case '\xea': // ę (ISO-8859-2)
 			hash = ('e' - 'a') + 1;
 			break;
-		case '�':
+		case '\xb3': // ł (ISO-8859-2)
 			hash = ('l' - 'a') + 1;
 			break;
-		case '�':
+		case '\xf1': // ń (ISO-8859-2)
 			hash = ('n' - 'a') + 1;
 			break;
-		case '�':
+		case '\xf3': // ó (ISO-8859-2)
 			hash = ('o' - 'a') + 1;
 			break;
-		case '�':
+		case '\xb6': // ś (ISO-8859-2)
 			hash = ('s' - 'a') + 1;
 			break;
-		case '�':
+		case '\xbf': // ż (ISO-8859-2)
 			hash = ('z' - 'a') + 1;
 			break;
-		case '�':
+		case '\xbc': // ź (ISO-8859-2)
 			hash = ('z' - 'a') + 1;
 			break;
 		default:

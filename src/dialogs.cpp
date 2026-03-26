@@ -86,7 +86,9 @@ DIALOG_NODE * get_answer( DIALOG_NODE * pBase, int nr)
 	int idx = nr - 1;
 	if ( idx < 0 || idx >= (int)pBase->children.size() )
 		return NULL;
-	return pBase->children[idx];
+	auto it = pBase->children.begin();
+	std::advance(it, idx);
+	return *it;
 }
 
 /*! \fn int find_free_nr( DIALOG_DATA * pBase)

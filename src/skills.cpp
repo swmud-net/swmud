@@ -951,8 +951,7 @@ DEF_DO_FUN( dig )
 {
 	char arg[MAX_INPUT_LENGTH];
 	OBJ_DATA *obj;
-	OBJ_DATA *startobj;
-	bool found, shovel;
+	bool shovel;
 	EXIT_DATA *pexit;
 
 	switch (ch->substate)
@@ -1108,7 +1107,6 @@ DEF_DO_FUN( search )
 	char arg[MAX_INPUT_LENGTH];
 	OBJ_DATA *obj;
 	OBJ_DATA *container;
-	OBJ_DATA *startobj;
 	int percent, door;
 	bool found;
 
@@ -2033,7 +2031,6 @@ void trip(CHAR_DATA *ch, CHAR_DATA *victim)
 DEF_DO_FUN( pick )
 {
 	char arg[MAX_INPUT_LENGTH];
-	CHAR_DATA *gch;
 	OBJ_DATA *obj;
 	EXIT_DATA *pexit;
 	SHIP_DATA *ship;
@@ -3026,8 +3023,6 @@ DEF_DO_FUN( berserk )
 ch_ret one_hit args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dt ) );
 DEF_DO_FUN( hitall )
 {
-	CHAR_DATA *vch;
-	CHAR_DATA *vch_next;
 	int nvict = 0;
 	int nhit = 0;
 	int percent;

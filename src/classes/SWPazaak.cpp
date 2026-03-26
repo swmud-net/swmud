@@ -436,13 +436,13 @@ const SWString SWPazaak::listCards(const SWString &playerName)
 	list<SWPazaakCard> *cards = SWPazaak::getCards(playerName);
 	if (!cards)
 	{
-		return SWString("Nie posiadasz ¿adnych kart w talii pomocniczej." NL);
+		return SWString("Nie posiadasz \xbf" "adnych kart w talii pomocniczej." NL);
 	}
 
 	int i = 1;
 	char buf[MIL] =
 	{ 0 };
-	SWString buf2("Posiadasz nastêpuj±ce karty, w talii pomocniczej:" NL);
+	SWString buf2("Posiadasz nast\xeapuj\xb1" "ce karty, w talii pomocniczej:" NL);
 	for (list<SWPazaakCard>::const_iterator it = cards->begin(); it != cards->end(); it++, i++)
 	{
 		snprintf(buf, MIL - 1, " %2d: %s" NL, i, it->description().c_str());

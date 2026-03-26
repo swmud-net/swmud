@@ -56,8 +56,6 @@ void	talk_channel	args( ( CHAR_DATA *ch, char *argument,
 
 void sound_to_room( ROOM_INDEX_DATA *room , const char *argument )
 {
-	CHAR_DATA *	vic;
-
 	if ( room == NULL ) return;
 
 	for (auto* vic : room->people)
@@ -290,7 +288,6 @@ char *scramble( const char *argument, int modifier )
 /* percent = percent knowing the language. */
 char *translate(int percent, const char *in, const char *name)
 {
-	LCNV_DATA		* cnv;
 	LANG_DATA		* lng;
 	const char		* pbuf;
 	static char		buf	[256];
@@ -616,7 +613,6 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 	char			buf	[MSL];
 	char			buf2[MSL];
 	char			orig_arg[MSL];
-	DESCRIPTOR_DATA	*d;
 	int				position;
 	CLAN_DATA		*clan = NULL;
 	char			nverb[MSL];
@@ -953,7 +949,6 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 void to_channel( const char *argument, int64 channel, const char *verb, int level )
 {
 	char			buf[MAX_STRING_LENGTH];
-	DESCRIPTOR_DATA	* d;
 
 	if ( descriptor_list.empty() || argument[0] == '\0' )
 		return;
@@ -1227,7 +1222,6 @@ DEF_DO_FUN( olctalk )
 DEF_DO_FUN( say )
 {
 	char			buf [MAX_STRING_LENGTH];
-	CHAR_DATA		* vch;
 	int				actflags;
 
 	/*Milczace rasy by Ganis*/
@@ -1451,7 +1445,7 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 	ch_printf( ch, COL_TELL "M�wisz %s" COL_TELL " '%s" COL_TELL "'" EOL,
 	can_see( ch, victim ) ?
    does_knows(ch, victim) ? victim->przypadki[2] :
-    format_char_attribute(victim,2) : "komu�", argument );
+    format_char_attribute_wrapper(victim,2) : "komu�", argument );
 	position		= victim->position;
 	victim->position	= POS_STANDING;
 
@@ -1890,8 +1884,6 @@ void stop_follower( CHAR_DATA *ch )
 
 void die_follower( CHAR_DATA *ch )
 {
-	CHAR_DATA *fch;
-
 	if ( ch->master )
 		stop_follower( ch );
 
@@ -1911,8 +1903,6 @@ DEF_DO_FUN( order )
 {
 	char		arg[MAX_INPUT_LENGTH];
 	CHAR_DATA	* victim;
-	CHAR_DATA	* och;
-	CHAR_DATA	* och_next;
 	bool		found;
 	bool		fAll;
 
@@ -1990,7 +1980,6 @@ DEF_DO_FUN( group )
 
 	if ( arg[0] == '\0' )
 	{
-		CHAR_DATA *gch;
 		CHAR_DATA *leader;
 
 		leader = ch->leader ? ch->leader : ch;
@@ -2035,7 +2024,6 @@ DEF_DO_FUN( group )
 
 	if ( !str_cmp( arg, "disband" ))
 	{
-		CHAR_DATA	* gch;
 		int			count = 0;
 
 		if ( ch->leader || ch->master )
@@ -2066,7 +2054,6 @@ DEF_DO_FUN( group )
 
 	if ( !str_cmp( arg, "all" ) )
 	{
-		CHAR_DATA *rch;
 		int count = 0;
 
 		for (auto* rch : ch->in_room->people)
@@ -2135,7 +2122,6 @@ DEF_DO_FUN( split )
 {
 	char		buf	[MAX_STRING_LENGTH];
 	char		arg	[MAX_INPUT_LENGTH];
-	CHAR_DATA	* gch;
 	int			members;
 	int			amount;
 	int			share;
@@ -2216,8 +2202,6 @@ DEF_DO_FUN( split )
 
 DEF_DO_FUN( gtell )
 {
-	CHAR_DATA	* gch;
-
 	if( !get_comlink( ch ) )
 	{
 		send_to_char( "Nie masz urz�dzenia komunikacyjnego." NL, ch );
@@ -2296,7 +2280,6 @@ bool is_same_group( CHAR_DATA *ach, CHAR_DATA *bch )
 */
 void talk_auction (char *argument)
 {
-	DESCRIPTOR_DATA	* d;
 	char			buf[MAX_STRING_LENGTH];
 	CHAR_DATA		* original;
 

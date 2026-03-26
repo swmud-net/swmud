@@ -16,7 +16,7 @@ DEF_DO_FUN( pazaak )
 
 	if (!*argument)
 	{
-		send_to_char("Sk³adnia: pazaak <komenda> [opcje]" NL NL
+		send_to_char("Sk\xb3" "adnia: pazaak <komenda> [opcje]" NL NL
 		"Komendy:" NL
 		" setpassword challenge accept withdraw list" NL, ch);
 		return;
@@ -28,7 +28,7 @@ DEF_DO_FUN( pazaak )
 	{
 		if (!*argument)
 		{
-			send_to_char("Sk³adnia: pazaak setpassowrd <has³o>" NL, ch);
+			send_to_char("Sk\xb3" "adnia: pazaak setpassowrd <has\xb3o>" NL, ch);
 			return;
 		}
 
@@ -36,18 +36,18 @@ DEF_DO_FUN( pazaak )
 
 		if (reg_cmp("^[A-Za-z0-9_]+$", arg2))
 		{
-			send_to_char("Has³o mo¿e zawieraæ jedynie znaki alfanumeryczne (litery i cyfry)." NL, ch);
+			send_to_char("Has\xb3o mo\xbf" "e zawiera\xe6 jedynie znaki alfanumeryczne (litery i cyfry)." NL, ch);
 			return;
 		}
 
 		bool changed = SWPazaak::setPassword(ch->name, arg2);
 		if (!changed)
 		{
-			send_to_char("Ustawienie has³a nie powiod³o siê. Mo¿e has³o zawiera niedozwolone znaki?" NL, ch);
+			send_to_char("Ustawienie has\xb3" "a nie powiod\xb3o si\xea. Mo\xbf" "e has\xb3o zawiera niedozwolone znaki?" NL, ch);
 			return;
 		}
 
-		send_to_char("Has³o zosta³o ustawione." NL, ch);
+		send_to_char("Has\xb3o zosta\xb3o ustawione." NL, ch);
 		return;
 	}
 
@@ -55,18 +55,18 @@ DEF_DO_FUN( pazaak )
 	{
 		if (!ch->in_room || !IS_SET(ch->in_room->room_flags, ROOM_BANK))
 		{
-			send_to_char("Musisz byæ w banku aby to zrobiæ." NL, ch);
+			send_to_char("Musisz by\xe6 w banku aby to zrobi\xe6." NL, ch);
 			return;
 		}
 
 		int creditsWithdrawn = SWPazaak::withdrawCredits(ch->name);
 		if (creditsWithdrawn < 1)
 		{
-			send_to_char("Nie masz ¿adnych funduszy na koncie Pazaak'a." NL, ch);
+			send_to_char("Nie masz \xbf" "adnych funduszy na koncie Pazaak'a." NL, ch);
 			return;
 		}
 
-		ch_printf(ch, "Wyp³acasz %d kredytek z konta Pazaak'a." NL, creditsWithdrawn);
+		ch_printf(ch, "Wyp\xb3" "acasz %d kredytek z konta Pazaak'a." NL, creditsWithdrawn);
 		ch->gold += creditsWithdrawn;
 		save_char_obj(ch);
 		return;
@@ -76,28 +76,28 @@ DEF_DO_FUN( pazaak )
 	{
 		if (!ch->in_room || !IS_SET(ch->in_room->room_flags, ROOM_BANK))
 		{
-			send_to_char("Musisz byæ w banku aby to zrobiæ." NL, ch);
+			send_to_char("Musisz by\xe6 w banku aby to zrobi\xe6." NL, ch);
 			return;
 		}
 
 		argument = one_argument(argument, arg2);
 		if (!*arg2 || !*argument)
 		{
-			send_to_char("Sk³adnia: pazaak challenge <gracz> <stawka>" NL, ch);
+			send_to_char("Sk\xb3" "adnia: pazaak challenge <gracz> <stawka>" NL, ch);
 			return;
 		}
 
 		CHAR_DATA *victim = get_char_world(ch, arg2);
 		if (!victim)
 		{
-			ch_printf(ch, "Szukasz w intergalaktycznym holonecie, ale nigdzie nie mo¿esz znale¼æ kogo¶ takiego jak: %s." NL, arg2);
+			ch_printf(ch, "Szukasz w intergalaktycznym holonecie, ale nigdzie nie mo\xbf" "esz znale\xbc\xe6 kogo\xb6 takiego jak: %s." NL, arg2);
 			return;
 		}
 
 		int reward = SWInt::fromString(argument);
 		if (reward < 1)
 		{
-			send_to_char("Mo¿e jednak podasz jaka¶ rozs±dn± kwotê?" NL, ch);
+			send_to_char("Mo\xbf" "e jednak podasz jaka\xb6 rozs\xb1" "dn\xb1 kwot\xea?" NL, ch);
 			return;
 		}
 
@@ -116,15 +116,15 @@ DEF_DO_FUN( pazaak )
 
 		if (!SWPazaak::challenge(ch->name, victim->name, reward))
 		{
-			ch_printf(ch, "Z jakiego¶ powodu wyzwanie na pojedynek Pazaak'owy nie zosta³o zaakceptowane." NL
-			"Upewnij siê, ¿e ty, jak i twój przeciwnik oboje spe³niacie wszystkie warunki." NL
-			"Mo¿e najzwyczajniej w galaktyce ju¿ wyzwa³%s¶ %s?" NL, SEX_SUFFIX_EAO(ch), victim->przypadki[1]);
+			ch_printf(ch, "Z jakiego\xb6 powodu wyzwanie na pojedynek Pazaak'owy nie zosta\xb3o zaakceptowane." NL
+			"Upewnij si\xea, \xbf" "e ty, jak i tw\xf3j przeciwnik oboje spe\xb3niacie wszystkie warunki." NL
+			"Mo\xbf" "e najzwyczajniej w galaktyce ju\xbf wyzwa\xb3%s\xb6 %s?" NL, SEX_SUFFIX_EAO(ch), victim->przypadki[1]);
 			return;
 		}
 
 		ch->gold -= reward;
 		ch_printf(ch, "Wyzywasz %s na pojedynek Pazaak'owy." NL, victim->przypadki[1]);
-		ch_printf(victim, "%s wyzywa ciê na pojedynek Pazaak'owy." NL, ch->przypadki[0]);
+		ch_printf(victim, "%s wyzywa ci\xea na pojedynek Pazaak'owy." NL, ch->przypadki[0]);
 		save_char_obj(ch);
 		return;
 	}
@@ -133,13 +133,13 @@ DEF_DO_FUN( pazaak )
 	{
 		if (!*argument)
 		{
-			send_to_char("Sk³adnia: pazaak accept <gracz>" NL, ch);
+			send_to_char("Sk\xb3" "adnia: pazaak accept <gracz>" NL, ch);
 			return;
 		}
 
 		if (!ch->in_room || !IS_SET(ch->in_room->room_flags, ROOM_BANK))
 		{
-			send_to_char("Musisz byæ w banku aby to zrobiæ." NL, ch);
+			send_to_char("Musisz by\xe6 w banku aby to zrobi\xe6." NL, ch);
 			return;
 		}
 
@@ -149,8 +149,8 @@ DEF_DO_FUN( pazaak )
 		SWPazaak::SWPazaakChallenge *challenge = SWPazaak::findChallenge(arg2, ch->name);
 		if (!challenge)
 		{
-			ch_printf(ch, "Nikt taki jak: %s nie wyzwa³ ciê na pojedynek Pazaak'owy." NL
-			"Chyba jeste¶ nadwra¿liw%s." NL, arg2, SEX_SUFFIX_YAE(ch));
+			ch_printf(ch, "Nikt taki jak: %s nie wyzwa\xb3 ci\xea na pojedynek Pazaak'owy." NL
+			"Chyba jeste\xb6 nadwra\xbf" "liw%s." NL, arg2, SEX_SUFFIX_YAE(ch));
 			return;
 		}
 
@@ -163,9 +163,9 @@ DEF_DO_FUN( pazaak )
 
 		if (!SWPazaak::acceptChallenge(challenge))
 		{
-			ch_printf(ch, "Z jakiego¶ powodu nie mo¿esz zaakceptowaæ takiego wyzwania." NL
-			"Mo¿e nikt taki jak: %s nie wyzwa³ ciê na pojedynek Pazaak'owy" NL
-			"a ty jeste¶ nadwra¿liw%s." NL, arg2, SEX_SUFFIX_YAE(ch));
+			ch_printf(ch, "Z jakiego\xb6 powodu nie mo\xbf" "esz zaakceptowa\xe6 takiego wyzwania." NL
+			"Mo\xbf" "e nikt taki jak: %s nie wyzwa\xb3 ci\xea na pojedynek Pazaak'owy" NL
+			"a ty jeste\xb6 nadwra\xbf" "liw%s." NL, arg2, SEX_SUFFIX_YAE(ch));
 			return;
 		}
 
@@ -185,7 +185,7 @@ DEF_DO_FUN( pazaak )
 	{
 		if (!*argument)
 		{
-			send_to_char("Sk³adnia: pazaak list challenges|games|cards" NL, ch);
+			send_to_char("Sk\xb3" "adnia: pazaak list challenges|games|cards" NL, ch);
 			return;
 		}
 
@@ -196,7 +196,7 @@ DEF_DO_FUN( pazaak )
 
 			char buf[MIL] =
 			{ 0 };
-			SWString buf2("Wyzwania na pojedynki Pazaak'owe, których jeste¶ stron±:" NL);
+			SWString buf2("Wyzwania na pojedynki Pazaak'owe, kt\xf3rych jeste\xb6 stron\xb1:" NL);
 			for (list<SWPazaak::SWPazaakChallenge*>::const_iterator it = challenges.begin(); it != challenges.end(); it++)
 			{
 				if ((*it)->getAggressor() == ch->name || (*it)->getDefender() == ch->name)
@@ -280,10 +280,10 @@ OD* pazaak_create_card_obj(const SWPazaakCard &card)
 	snprintf(buf, MIL - 1, "Karcie pazaak: %s", card.description().c_str());
 	STRDUP(obj->przypadki[2], buf);
 
-	snprintf(buf, MIL - 1, "Kartê pazaak: %s", card.description().c_str());
+	snprintf(buf, MIL - 1, "Kart\xea pazaak: %s", card.description().c_str());
 	STRDUP(obj->przypadki[3], buf);
 
-	snprintf(buf, MIL - 1, "Kart± pazaak: %s", card.description().c_str());
+	snprintf(buf, MIL - 1, "Kart\xb1 pazaak: %s", card.description().c_str());
 	STRDUP(obj->przypadki[4], buf);
 
 	snprintf(buf, MIL - 1, "Karcie pazaak: %s", card.description().c_str());
@@ -303,7 +303,7 @@ OD* pazaak_create_card_obj(const SWPazaakCard &card)
 	 else
 	 {
 	 obj = obj_to_room(obj, ch->in_room);
-	 act(COL_IMMORT, "$n stworzy³$o $p$3!", ch, obj, NULL, TO_ROOM);
+	 act(COL_IMMORT, "$n stworzy\xb3$o $p$3!", ch, obj, NULL, TO_ROOM);
 	 }
 	 */
 

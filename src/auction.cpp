@@ -314,7 +314,6 @@ void auction_item_gather(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 
 void auction_show_obj_stats(CHAR_DATA *ch, OBJ_DATA *obj)
 {
-	AFFECT_DATA *paf;
 	SKILLTYPE *sktmp;
 #if defined(ARMAGEDDON)
     REQUIREMENT_DATA 	*req;

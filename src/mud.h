@@ -1608,7 +1608,9 @@ extern	FILE			* fpLOG;
 extern	char			log_buf [ ];
 
 extern	AUCTION_DATA	* auction;
-extern	struct	act_prog_data * mob_act_list;
+extern	std::list<act_prog_data*> mob_act_list;
+extern	std::list<act_prog_data*> obj_act_list;
+extern	std::list<act_prog_data*> room_act_list;
 
 //added by Thanos
 extern	FOR_DATA		for_loop;

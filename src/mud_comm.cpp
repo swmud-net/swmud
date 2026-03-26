@@ -100,7 +100,6 @@ const char *mprog_type_to_name( int64 type )
 DEF_DO_FUN( mpstat )
 {
     char        arg[MAX_INPUT_LENGTH];
-    MPROG_DATA *mprg;
     CHAR_DATA  *victim;
     int		i;
 
@@ -149,12 +148,16 @@ DEF_DO_FUN( mpstat )
 	victim->top_level,        victim->alignment,
 	GET_AC( victim ),    victim->gold);
 
-    for ( i=1,mprg = victim->pIndexData->mudprogs; mprg; i++,mprg = mprg->next )
+    i = 1;
+    for ( auto* mprg : victim->pIndexData->mudprogs )
+    {
 	ch_printf( ch, "[" FB_WHITE "%d" PLAIN "]>%s %s" NL
 		       "%s" NL, i,
 		mprog_type_to_name( mprg->type ),
 		mprg->arglist,
 		mprg->comlist );
+	i++;
+    }
     return;
 }
 
@@ -162,7 +165,6 @@ DEF_DO_FUN( mpstat )
 DEF_DO_FUN( opstat )
 {
     char        arg[MAX_INPUT_LENGTH];
-    MPROG_DATA *mprg;
     OBJ_DATA   *obj;
     int		i;
 
@@ -198,12 +200,16 @@ DEF_DO_FUN( opstat )
 	    obj->przypadki[4],
 	    obj->przypadki[5]    );
 
-    for ( i=1,mprg = obj->pIndexData->mudprogs; mprg;i++, mprg = mprg->next )
+    i = 1;
+    for ( auto* mprg : obj->pIndexData->mudprogs )
+    {
 	ch_printf( ch, "[" FB_WHITE "%d" PLAIN "]>%s %s" NL
 		       "%s" NL, i,
 		mprog_type_to_name( mprg->type ),
 		mprg->arglist,
 		mprg->comlist );
+	i++;
+    }
 
     return;
 
@@ -212,7 +218,6 @@ DEF_DO_FUN( opstat )
 /* Rpstat - Scryn 8/12 */
 DEF_DO_FUN( rpstat )
 {
-    MPROG_DATA *mprg;
     int		i;
 
     if ( !( ch->in_room->progtypes ) )
@@ -224,12 +229,16 @@ DEF_DO_FUN( rpstat )
     ch_printf( ch, "Name: %s.  Vnum: %d." NL,
 	ch->in_room->name, ch->in_room->vnum );
 
-    for ( i=1,mprg = ch->in_room->mudprogs; mprg;i++, mprg = mprg->next )
+    i = 1;
+    for ( auto* mprg : ch->in_room->mudprogs )
+    {
 	ch_printf( ch, "[" FB_WHITE "%d" PLAIN "]>%s %s" NL
 		       "%s" NL, i,
 		mprog_type_to_name( mprg->type ),
 		mprg->arglist,
 		mprg->comlist );
+	i++;
+    }
     return;
 }
 
@@ -239,7 +248,6 @@ DEF_DO_FUN( rpstat )
 DEF_DO_FUN( mpasound )
 {
     ROOM_INDEX_DATA *was_in_room;
-    EXIT_DATA       *pexit;
     int		     actflags;
 
     MPCOMMAND; //do_mpasound" );
@@ -322,7 +330,6 @@ DEF_DO_FUN( mpjunk )
 {
     char      arg[ MAX_INPUT_LENGTH ];
     OBJ_DATA *obj;
-    OBJ_DATA *obj_next;
 
     MPCOMMAND; //do_mpjunk" );
 
@@ -1065,8 +1072,6 @@ DEF_DO_FUN( mpat )
     char             arg[ MAX_INPUT_LENGTH ];
     ROOM_INDEX_DATA *location;
     ROOM_INDEX_DATA *original;
-    CHAR_DATA       *wch, *ch_next;
-
     MPCOMMAND; //do_mpat" );
 
     argument = one_argument( argument, arg );
@@ -1128,7 +1133,6 @@ void save_nameslist( CHAR_DATA *ch )
 {
     FILE *fp;
     char buf[MSL];
-    NAMESLIST_DATA *nameslist;
 
     sprintf( buf, "%snl_%d", NAMESLIST_DIR, ch->pIndexData->vnum );
     if( ch->pIndexData->namescount == 0 )
@@ -1223,8 +1227,6 @@ bool nameslistempty( CHAR_DATA *ch )
 
 bool isinnameslist( CHAR_DATA *ch, char *arg )
 {
-    NAMESLIST_DATA	*nameslist;
-
     for( auto* nameslist : ch->pIndexData->nameslists )
 	if( !str_cmp( nameslist->name, arg ) )
 	    return true;
@@ -1234,7 +1236,7 @@ bool isinnameslist( CHAR_DATA *ch, char *arg )
 DEF_DO_FUN( mpaddtolist )
 {
     CHAR_DATA		*victim;
-    NAMESLIST_DATA	*nameslist,*tmp;
+    NAMESLIST_DATA	*nameslist;
     char		arg[MAX_INPUT_LENGTH];
 
     MPCOMMAND; //do_mpaddtolist" );
@@ -1275,7 +1277,6 @@ DEF_DO_FUN( mpaddtolist )
 DEF_DO_FUN( mpremfromlist )
 {
     CHAR_DATA		*victim;
-    NAMESLIST_DATA	*nameslist;
     char		arg[MAX_INPUT_LENGTH];
 
     MPCOMMAND; //do_mpremfromist" );
@@ -1517,7 +1518,6 @@ DEF_DO_FUN( mptransfer )
     char buf[MAX_STRING_LENGTH];
     ROOM_INDEX_DATA *location;
     CHAR_DATA       *victim;
-    CHAR_DATA       *nextinroom;
 
     MPCOMMAND; //do_mptransfer" );
 
@@ -2682,7 +2682,6 @@ ch_ret simple_damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 CHAR_DATA *get_char_room_mp( CHAR_DATA *ch, char *argument )
 {
     char arg[MAX_INPUT_LENGTH];
-    CHAR_DATA *rch;
     int number, count, vnum;
 
     number = number_argument( argument, arg );

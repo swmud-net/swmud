@@ -920,7 +920,6 @@ DEF_DO_FUN( look )
 	OBJ_DATA *obj;
 	ROOM_INDEX_DATA *original;
 	SHIP_DATA *ship;
-	ASTRO_DATA *astro, *a_next;
 	char *pdesc;
 	bool doProg;
 	int door;
@@ -1023,8 +1022,6 @@ DEF_DO_FUN( look )
 
 		if ((ch->in_room->vnum && (ship = ship_from_room(ch->in_room)) != NULL))
 		{
-			SHIPDOCK_DATA *dock;
-
 			if (ship->entrance == ch->in_room)
 				ch_printf(ch, FG_CYAN "%s w�az" EOL, !ship->hatchopen ? "Zamkni�ty" : "Otwarty");
 
@@ -1040,8 +1037,6 @@ DEF_DO_FUN( look )
 		}
 		else if ((!ch->in_room->vnum && (ship = ch->in_room->ship)))
 		{
-			SHIPDOCK_DATA *dock;
-
 			if (ship->entrance == ch->in_room)
 				ch_printf(ch, FG_CYAN "%s w�az" EOL, !ship->hatchopen ? "Zamkni�ty" : "Otwarty");
 
@@ -1070,11 +1065,6 @@ DEF_DO_FUN( look )
 
 				if ((starsystem = ship->starsystem) != NULL)
 				{
-					MISSILE_DATA *missile;
-					SHIP_DATA *target;
-					PLANET_DATA *planet;
-					MOON_DATA *moon;
-					STAR_DATA *star;
 					int slma = 315 - 3 * ch->top_level;
 
 					pager_printf(ch,
@@ -1940,7 +1930,6 @@ DEF_DO_FUN( examine )
 DEF_DO_FUN( exits )
 {
 	char buf[MAX_STRING_LENGTH];
-	EXIT_DATA *pexit;
 	bool found;
 	bool fAuto;
 	bool fMaps;
@@ -2060,13 +2049,6 @@ DEF_DO_FUN( exits )
 	send_to_char(PLAIN, ch);
 	return;
 }
-
-const char *const day_name[] =
-{ "Ksi�yca", "Byka", "Wybuch�w", "Wichru", "Wolno�ci", "Wielkich Bog�w", "S�o�ca" };
-
-const char *const month_name[] =
-{ "Zimy", "Zimowego Wilka", "Lodowego Giganta", "Starych Mocy", "Wielkich Wojen", "Wiosny", "Natury", "Nie Wiem Czego", "Smoka", "S�o�ca",
-		"�aru", "Bitew", "Ciemnych Cieni", "Cieni", "D�ugich Cieni", "Pradawnych Ciemno�ci", "Wielkiego Z�a" };
 
 DEF_DO_FUN( time )
 {
@@ -2189,8 +2171,6 @@ DEF_DO_FUN( weather )
  */
 HELP_DATA* get_help(CHAR_DATA *ch, char *argument)
 {
-	HELPS_FILE *fHelp;
-	HELP_DATA *pHelp;
 	char argall[MAX_INPUT_LENGTH];
 	char argone[MAX_INPUT_LENGTH];
 	char argnew[MAX_INPUT_LENGTH];
@@ -2294,8 +2274,6 @@ void similar_help_files(CHAR_DATA *ch, char *argument)
 {
 	char buf[MAX_STRING_LENGTH];
 	int lvl = 0;
-	HELPS_FILE *fHelp;
-	HELP_DATA *pHelp = NULL;
 	char *extension;
 	int count = 0;
 
@@ -2351,8 +2329,6 @@ void similar_help_files(CHAR_DATA *ch, char *argument)
 //added by Thanos - nowy help, zwraca uwag� na powtarzaj�ce si� s�owa kluczowe
 DEF_DO_FUN( help )
 {
-	HELPS_FILE *fHelp;
-	HELP_DATA *pHelp;
 	char bufk[MAX_STRING_LENGTH];
 	char bufh[MAX_STRING_LENGTH];
 	int count = 0;
@@ -2450,7 +2426,6 @@ DEF_DO_FUN( help )
 DEF_DO_FUN( hlist )
 {
 	HELPS_FILE *fHelp = 0;
-	HELP_DATA *help;
 	int min, max, minlimit, maxlimit, cnt;
 	char arg1[MIL];
 	char arg2[MIL];
@@ -2579,7 +2554,6 @@ DEF_DO_FUN( hlist )
 //Tanglor - zapamietujemy naszego znajomego
 DEF_DO_FUN( remember )
 {
-	KNOWN_CHAR_DATA *_friend;
 	int count;
 	char arg[MAX_INPUT_LENGTH];
 
@@ -2626,7 +2600,6 @@ DEF_DO_FUN( remember )
 //Pixel - zapominanie
 DEF_DO_FUN( forget )
 {
-	KNOWN_CHAR_DATA *_friend;
 	char arg[MAX_INPUT_LENGTH];
 
 	one_argument(argument, arg);
@@ -2657,8 +2630,6 @@ DEF_DO_FUN( forget )
 //Tanglor - lista osob ktore juz znamy i zapmietalismy
 DEF_DO_FUN( kin )
 {
-	KNOWN_CHAR_DATA *_friend;
-
 	send_to_char(NL " Oto lista Twoich znajomych" NL, ch);
 	for (auto* _friend : ch->known)
 		if (_friend->is_remembered > 0)
@@ -2672,7 +2643,7 @@ DEF_DO_FUN( kin )
 DEF_DO_FUN( introduce )
 {
 	char arg[MIL];
-	CHAR_DATA *someone, *someone1;
+	CHAR_DATA *someone;
 	KNOWN_CHAR_DATA *_friend;
 	ROOM_INDEX_DATA *room;
 
@@ -2967,7 +2938,6 @@ DEF_DO_FUN( who )
 	bool fImmortalOnly;
 	bool fSegregateUp = false; //For Jocik (Thanos)
 	bool fSegregateDown = false;
-	DESCRIPTOR_DATA *d;
 	int nPlayersCount = 0;
 
 	WHO_DATA *who = NULL;
@@ -3293,7 +3263,6 @@ DEF_DO_FUN( where )
 {
 	char arg[MAX_INPUT_LENGTH];
 	CHAR_DATA *victim;
-	DESCRIPTOR_DATA *d;
 	bool found;
 
 	if (get_trust(ch) < LEVEL_HERO)
@@ -4282,7 +4251,6 @@ DEF_DO_FUN( areas )
 {
 	int lev;
 	int maxlev;
-	AREA_DATA *pArea;
 
 	send_to_pager(FG_GREY MOD_BOLD
 	" Poziom    Autor            Kraina                              Planeta"
@@ -4509,7 +4477,6 @@ DEF_DO_FUN( whois )
 			!strcmp(victim->race->name, "Human") ? "ludzkiej" : victim->race->name, victim->top_level);
 	if (victim->pcdata->clan)
 	{
-		CLAN_DATA *clan;
 		MEMBER_DATA *member;
 		int i = 0;
 

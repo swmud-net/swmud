@@ -29,7 +29,7 @@ struct ship_data
 	std::list<HANGAR_DATA*> hangars;
 	ROOM_INDEX_DATA		* in_room;
 	SPACE_DATA			* starsystem;
-	std::list<CARGO_DATA*> cargo;
+	std::list<CARGO_DATA*> cargo_list;
 	std::list<MODULE_DATA*> modules;
 	std::list<SMAP_DATA*> smaps;
 	std::list<TRANSPONDER_DATA*> transponders;

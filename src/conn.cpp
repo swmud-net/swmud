@@ -245,7 +245,6 @@ void nanny_confirm_suicide(DESCRIPTOR_DATA *d, char *argument)
 void nanny_get_name(DESCRIPTOR_DATA *d, char *argument)
 {
 	CHAR_DATA *ch;
-	BAN_DATA *pban;
 	char buf[MSL];
 	bool fOld;
 	int chk;
@@ -660,7 +659,6 @@ void nanny_get_msp(DESCRIPTOR_DATA *d, char *argument)
 void nanny_wprowadzenie(DESCRIPTOR_DATA *d, char *argument)
 {
 	CHAR_DATA *ch = CH(d);
-	RACE_DATA *race;
 	int i = 1;
 	char buf[MSL];
 
@@ -879,7 +877,6 @@ void nanny_get_new_sex(DESCRIPTOR_DATA *d, char *argument)
 void nanny_get_new_race(DESCRIPTOR_DATA *d, char *argument)
 {
 	CHAR_DATA *ch = CH(d);
-	RACE_DATA *race;
 	char arg[MSL];
 	int i = 1;
 	bool found = false;
@@ -933,7 +930,6 @@ void nanny_get_new_race(DESCRIPTOR_DATA *d, char *argument)
 void nanny_confirm_new_race(DESCRIPTOR_DATA *d, char *argument)
 {
 	CHAR_DATA *ch = CH(d);
-	RACE_DATA *race;
 	char buf[MSL];
 	int i = 1;
 
@@ -1732,7 +1728,6 @@ void nanny_read_motd(DESCRIPTOR_DATA *d, char *argument)
 	/* Thanos - transportujemy gracza do wi�zienia */
 	if (!ch->crimes.empty())
 	{
-		CRIME_DATA *crime;
 		ROOM_INDEX_DATA *cell;
 
 		for (auto* crime : ch->crimes)

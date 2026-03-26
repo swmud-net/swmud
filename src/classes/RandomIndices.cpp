@@ -7,7 +7,7 @@ MOB_INDEX_DATA *RandomIndices::getMobIndex()
 	int count = 0;
 
 	for( int key = 0; key < MAX_KEY_HASH; key++ )
-		for( auto* pMobIndex : mob_index_hash[key] )
+		for( [[maybe_unused]] auto* pMobIndex : mob_index_hash[key] )
 			count++;
 
 	int rnd = number_range( 0, count );
@@ -28,7 +28,7 @@ ROOM_INDEX_DATA *RandomIndices::getRoomIndex()
 	int count = 0;
 
 	for( int key = 0; key < MAX_KEY_HASH; key++ )
-		for( auto* pRoomIndex : room_index_hash[key] )
+		for( [[maybe_unused]] auto* pRoomIndex : room_index_hash[key] )
 			count++;
 
 	int rnd = number_range( 0, count );
@@ -47,7 +47,7 @@ OBJ_INDEX_DATA *RandomIndices::getObjIndex()
 	int count = 0;
 
 	for( int key = 0; key < MAX_KEY_HASH; key++ )
-		for( auto* pObjIndex : obj_index_hash[key] )
+		for( [[maybe_unused]] auto* pObjIndex : obj_index_hash[key] )
 			count++;
 
 	int rnd = number_range( 0, count );

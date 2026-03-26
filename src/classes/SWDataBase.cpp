@@ -36,7 +36,6 @@ SWDataBase::~SWDataBase()
 	}
 	if (dbConnection)
 	{
-		dbConnection->disconnect();
 		delete dbConnection;
 	}
 	for (list<SWQueryResult *>::iterator it = results.begin(); it != results.end(); it = results.erase(it))

@@ -75,16 +75,18 @@ char * 	string_delete_last_line
 //funkcja liczy ile gracz ma nieprzeczytanych notek
 void note_count( CHAR_DATA *ch )
 {
-	BOARD_DATA *	board;
-	NOTE_DATA  *	pnote;
+	BOARD_DATA *	board = nullptr;
 	int				notes;
 
 	if( !ch->pcdata || NOT_AUTHED( ch ) )
 		return;
 
-	for ( auto* board : board_list )
-		if ( board->board_obj == 10414 )
+	for ( auto* b : board_list )
+		if ( b->board_obj == 10414 )
+		{
+			board = b;
 			break;
+		}
 
 	IF_BUG( board==NULL, "Obj vnum 10414 MUSTS EXIST !!!" )
 			return;
@@ -136,7 +138,6 @@ bool can_remove( CHAR_DATA *ch, BOARD_DATA *board )
  */
 void write_boards_txt( )
 {
-	BOARD_DATA *tboard;
 	FILE *fpout;
 
 	fpout = fopen( BOARD_FILE, "w" );
@@ -171,8 +172,6 @@ void write_boards_txt( )
 // ../boards/student.board
 BOARD_DATA *change_board_to_default()
 {
-	BOARD_DATA  *board;
-
 	for ( auto* board : board_list )
     /* !UWAGA! 10414 to vnum terminala w mudszkole!
 		Nie ma terminala - nie ma notek!!!  */
@@ -184,8 +183,6 @@ BOARD_DATA *change_board_to_default()
 
 BOARD_DATA *get_board( OBJ_DATA *obj )
 {
-	BOARD_DATA *board;
-
 	for ( auto* board : board_list )
 		if ( board->board_obj == obj->pIndexData->vnum )
 			return board;
@@ -194,7 +191,6 @@ BOARD_DATA *get_board( OBJ_DATA *obj )
 
 BOARD_DATA *find_board( CHAR_DATA *ch )
 {
-	OBJ_DATA *obj;
 	BOARD_DATA  *board;
 
 	for ( auto* obj : ch->in_room->contents )
@@ -225,7 +221,6 @@ BOARD_DATA *find_board( CHAR_DATA *ch )
 */
 bool is_note_to( CHAR_DATA *ch, NOTE_DATA *pnote )
 {
-	CLAN_DATA	*	clan;
 	MEMBER_DATA	*	member;
 	char 			name	[MAX_STRING_LENGTH];
 	int	 			i;
@@ -1950,8 +1945,6 @@ DEF_DO_FUN( bstat )
 
 DEF_DO_FUN( boards )
 {
-	BOARD_DATA *board;
-
 	if ( board_list.empty() )
 	{
 		send_to_char( "There are no boards.\n\r", ch );
@@ -1968,8 +1961,6 @@ DEF_DO_FUN( boards )
 
 void mail_count(CHAR_DATA *ch)
 {
-	BOARD_DATA *board;
-	NOTE_DATA *note;
 	int cnt = 0;
 
 	for ( auto* board : board_list )

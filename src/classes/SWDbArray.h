@@ -8,6 +8,8 @@
 #ifndef SWDBARRAY_H_
 #define SWDBARRAY_H_
 #include "SWString.h"
+#include "SWInt.h"
+#include "SWInt64.h"
 #include <vector>
 
 /**

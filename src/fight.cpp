@@ -354,7 +354,6 @@ void violence_update(void)
 					if (rch->pIndexData == ch->pIndexData
 							|| number_bits(3) == 0)
 					{
-						CHAR_DATA *vch;
 						CHAR_DATA *target;
 						int number;
 
@@ -568,7 +567,6 @@ int weapon_prof_bonus_check(CHAR_DATA *ch, OBJ_DATA *wield, int *gsn_ptr)
 int obj_hitroll(OBJ_DATA *obj)
 {
 	int tohit = 0;
-	AFFECT_DATA *paf;
 
 	for (auto* paf : obj->pIndexData->affects)
 		if (paf->location == APPLY_HITROLL)
@@ -1508,8 +1506,6 @@ ch_ret one_hit(CHAR_DATA *ch, CHAR_DATA *victim, int dt)
 			&& !IS_SET(victim->immune,
 					RIS_FORCE) && !IS_SET(victim->in_room->room_flags, ROOM_NO_FORCE))
 	{
-		AFFECT_DATA *aff;
-
 		for (auto* aff : wield->pIndexData->affects)
 			if (aff->location == APPLY_WEAPONSPELL && IS_VALID_SN(aff->modifier)
 					&& skill_table[aff->modifier]->spell_fun)
@@ -2291,8 +2287,7 @@ void check_killer(CHAR_DATA *ch, CHAR_DATA *victim)
 		/*   changed by Thanos	 */
 		if (IS_VIP1(victim))
 		{
-			PLANET_DATA *planet;
-			CRIME_DATA *crime;
+				CRIME_DATA *crime;
 
 			for (auto* planet : planet_list)
 			{
@@ -2479,8 +2474,6 @@ void free_fight(CHAR_DATA *ch)
  */
 void stop_fighting(CHAR_DATA *ch, bool fBoth)
 {
-	CHAR_DATA *fch;
-
 	free_fight(ch);
 	update_pos(ch);
 
@@ -2549,8 +2542,6 @@ void death_cry(CHAR_DATA *ch)
 
 void raw_kill(CHAR_DATA *ch, CHAR_DATA *victim, int suicide)
 {
-	SHIP_DATA *ship;
-	CLAN_DATA *clan;
 	char arg[MIL];
 	bool clone;
 
@@ -2676,8 +2667,6 @@ void raw_kill(CHAR_DATA *ch, CHAR_DATA *victim, int suicide)
 
 	if (!victim)
 	{
-		DESCRIPTOR_DATA *d;
-
 		/* Make sure they aren't halfway logged in. */
 		DESCRIPTOR_DATA *found_d = NULL;
 		for (auto* d : descriptor_list)
@@ -2711,7 +2700,6 @@ void raw_kill(CHAR_DATA *ch, CHAR_DATA *victim, int suicide)
 void group_gain(CHAR_DATA *ch, CHAR_DATA *victim)
 {
 	char buf[MAX_STRING_LENGTH];
-	CHAR_DATA *gch;
 	CHAR_DATA *lch;
 	int xp;
 	int members;
@@ -2738,8 +2726,6 @@ void group_gain(CHAR_DATA *ch, CHAR_DATA *victim)
 
 	for (auto* gch : ch->in_room->people)
 	{
-		OBJ_DATA *obj;
-
 		if (!is_same_group(gch, ch))
 			continue;
 

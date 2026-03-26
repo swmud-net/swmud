@@ -46,9 +46,7 @@ void hq_build_area(CHAR_DATA *ch);
 
 int hq_build_highest_vnum( CHAR_DATA * ch )
 {
-	RID *		pRoom=NULL;
 	CLAN_DATA * pClan=NULL;
-	HQ_DATA *	pHq=NULL;
 	int			vnum=0;
 
 	pClan = ch->pcdata->clan;
@@ -126,7 +124,6 @@ void hq_build_remove_room(CHAR_DATA *ch, EXIT_DATA * pExit)
 {
 //	HQ_ROOM_DESC * pHqRoom = NULL;
 	HQ_DATA *	pHq = NULL;
-	EXIT_DATA *	pDestExit = NULL;
 	RID *		pRoom = NULL;
 	RID *		pDestRoom = NULL;
 
@@ -273,7 +270,6 @@ void hq_build_show_rooms_list( CHAR_DATA * ch)
 {
 	HQ_DATA *	pHq = NULL;
 //	EXIT_DATA *	pExit = NULL;
-	RID *		pRoom = NULL;
 
 	if (IS_NPC(ch)) return;
 
@@ -289,7 +285,6 @@ void hq_build_show_rooms_list( CHAR_DATA * ch)
 
 bool hq_build_is_clan_room(CHAR_DATA * ch, bool only_this_hq)
 {
-	RID *		pRoom=NULL;
 	RID *		pRoom1=NULL;
 	CLAN_DATA * pClan=NULL;
 	HQ_DATA *	pHq=NULL;

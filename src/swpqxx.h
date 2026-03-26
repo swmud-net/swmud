@@ -10,14 +10,29 @@
 
 namespace pqxx
 {
-template<> void from_string(const char *str, SWInt &i)
+template<> struct string_traits<SWString>
 {
-	i.setValue(SWInt::fromString(str));
-}
-template<> void from_string(const char *str, SWString &s)
+	static constexpr bool converts_to_string{false};
+	static constexpr bool converts_from_string{true};
+
+	[[nodiscard]] static SWString from_string(std::string_view text)
+	{
+		return SWString(std::string{text}.c_str());
+	}
+};
+
+template<> struct string_traits<SWInt>
 {
-	s = SWString(str);
-}
+	static constexpr bool converts_to_string{false};
+	static constexpr bool converts_from_string{true};
+
+	[[nodiscard]] static SWInt from_string(std::string_view text)
+	{
+		SWInt i;
+		i.setValue(SWInt::fromString(std::string{text}.c_str()));
+		return i;
+	}
+};
 }
 
 #endif /* SWPQXX_H_ */

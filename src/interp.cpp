@@ -125,7 +125,6 @@ char* substitute_alias(DESCRIPTOR_DATA *d, char *argument)
 	char *point;
 	char *rest;
 	char *pntr;
-	ALIAS_DATA *alias;
 	static char buf[ MAX_STRING_LENGTH];
 	char name[ MAX_STRING_LENGTH];
 	char arg[ MAX_STRING_LENGTH];
@@ -565,31 +564,31 @@ SOCIALTYPE* find_social(const char *command)
 //added by Ratm
 		switch (command[0])
 		{
-		case '�':
+		case '\xb1':
 			hash = 1;
 			break;
-		case '�':
+		case '\xe6':
 			hash = 3;
 			break;
-		case '�':
+		case '\xea':
 			hash = ('e' - 'a') + 1;
 			break;
-		case '�':
+		case '\xb3':
 			hash = ('l' - 'a') + 1;
 			break;
-		case '�':
+		case '\xf1':
 			hash = ('n' - 'a') + 1;
 			break;
-		case '�':
+		case '\xf3':
 			hash = ('o' - 'a') + 1;
 			break;
-		case '�':
+		case '\xb6':
 			hash = ('s' - 'a') + 1;
 			break;
-		case '�':
+		case '\xbf':
 			hash = ('z' - 'a') + 1;
 			break;
-		case '�':
+		case '\xbc':
 			hash = ('z' - 'a') + 1;
 			break;
 		default:

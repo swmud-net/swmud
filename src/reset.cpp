@@ -72,7 +72,6 @@ void show_room_resets(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom)
 {
 	ROOM_INDEX_DATA *room;
 	RESET_DATA *lo_reset;
-	RESET_DATA *pReset;
 	OBJ_INDEX_DATA *obj;
 	OBJ_INDEX_DATA *obj2;
 	OBJ_INDEX_DATA *lastobj;
@@ -540,7 +539,6 @@ int mobs_in_area( MID *mob, AREA_DATA *area)
 
 void reset_room(ROOM_INDEX_DATA *pRoom)
 {
-	RESET_DATA *pReset;
 	CHAR_DATA *pMob;
 	OBJ_DATA *pObj;
 	OBJ_DATA *LastObj = NULL;
@@ -612,7 +610,6 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 				/* Trog: not in room, but in area as of Dungal's request */
 				if (IS_SET(pMobIndex->act, ACT_SENTINEL))
 				{
-					CHAR_DATA *ch;
 					int count = 0;
 
 					if (pRoomIndex->area)
@@ -1050,7 +1047,6 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 		case 'C':
 		{
 			SHIP_INDEX_DATA *shrec;
-			SHIP_DATA *ship;
 			int count;
 			bool loop;
 
@@ -1857,7 +1853,6 @@ void find_resets_in_area(const AREA_DATA *const area, const int64 vnum,
 		const LookingFor target, list<ROOM_INDEX_DATA*> &results)
 {
 	ROOM_INDEX_DATA *room;
-	RESET_DATA *reset;
 	bool loop_break = false;
 
 	if (!area)

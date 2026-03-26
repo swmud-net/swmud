@@ -158,8 +158,6 @@ CHAPTER_INDEX_DATA *get_chapter_index( QUEST_INDEX_DATA *quest, int nr )
 void show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 {
 	CHAPTER_INDEX_DATA *	pChapter;
-	QUEST_CMND_DATA *		pCmnd;
-	QUEST_ACTION_DATA *		pAction;
 	int				i;
 
 	if( (i = nr) == 0 )
@@ -511,8 +509,6 @@ void qprepare_comment( QUEST_CMND_DATA *pCmnd, int type )
 void adv_show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 {
 	CHAPTER_INDEX_DATA *	pChapter;
-	QUEST_CMND_DATA *		pCmnd;
-	QUEST_ACTION_DATA *		pAction;
 	int				i;
 
 	if( (i = nr) == 0 )
@@ -581,10 +577,7 @@ void adv_show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 
 DEF_DO_FUN( qstat )
 {
-	QUEST_CMND_DATA *	pCmnd;
-	QUEST_ACTION_DATA *	pAction;
 	QUEST_INDEX_DATA *	pQuest;
-	CHAPTER_INDEX_DATA *pChapter;
 	char            	arg  [ MAX_INPUT_LENGTH  ];
 	int			value, i;
 
@@ -709,9 +702,8 @@ DEF_DO_FUN( qstat )
 		return;
 	}
 
-	i=1;
-	for( auto* pChapter : pQuest->chapters )
-		show_chapter( ch, pQuest, i++ );
+	for( i = 1; i <= (int)pQuest->chapters.size(); i++ )
+		show_chapter( ch, pQuest, i );
 	return;
 }
 
@@ -899,7 +891,6 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 
 	if ( !str_prefix( arg1, "id" ) )
 	{
-		QUEST_INDEX_DATA* pQu;
 		int	nr;
 
 		if ( argument[0] == '\0' || !is_number( argument ) )
@@ -1611,9 +1602,6 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 
 void save_quest( QUEST_INDEX_DATA * pQuest )
 {
-	QUEST_CMND_DATA	*	pCmnd;
-	QUEST_ACTION_DATA	*	pAction;
-	CHAPTER_INDEX_DATA *	pChapter;
 	char			buf		[MSL];
 	FILE *			fpout;
 
@@ -1694,7 +1682,6 @@ void save_quest( QUEST_INDEX_DATA * pQuest )
 
 void write_quest_list( )
 {
-	QUEST_INDEX_DATA *	quest;
 	FILE *		fpout;
 
 	fpout = fopen( QUEST_LIST, "w" );

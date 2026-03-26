@@ -73,8 +73,6 @@ const char *defaultrank[CLAN_LEADER + 1] =
 
 void write_clan_all()
 {
-	CLAN_DATA *clan;
-
 	for( auto* clan : clan_list )
 		save_clan2(clan);
 	save_clan_list();
@@ -85,8 +83,6 @@ void write_clan_all()
  */
 CLAN_DATA* get_clan(char *name)
 {
-	CLAN_DATA *clan;
-
 	for (auto* clan : clan_list)
 		if (!str_cmp(name, clan->name)
 				|| (is_number(name) && (clan->clan_id == atoi(name))))
@@ -97,7 +93,6 @@ CLAN_DATA* get_clan(char *name)
 
 void write_clan_list()
 {
-	CLAN_DATA *tclan;
 	FILE *fpout;
 
 	RESERVE_CLOSE;
@@ -137,8 +132,6 @@ void save_clan_list()
 void save_clan(CLAN_DATA *clan)
 {
 	FILE *fp;
-	MEMBER_DATA *member;
-	POLITICS_DATA *politics;
 	char filename[256];
 	int i;
 
@@ -216,9 +209,6 @@ CLAN_DATA* load_clan2(const char *filename)
 {
 	xmlDocPtr doc;
 	xmlNodePtr root;
-	xmlNodePtr node;
-	xmlNodePtr child;
-	xmlNodePtr gchild;
 	CLAN_DATA *clan;
 	CLAN_DATA *pClan;
 	MEMBER_DATA *member;
@@ -359,8 +349,6 @@ void save_clan2(CLAN_DATA *clan)
 	xmlNodePtr root;
 	xmlNodePtr node;
 	xmlNodePtr child;
-	MEMBER_DATA *member;
-	POLITICS_DATA *politics;
 	char buf[MSL];
 	int i;
 
@@ -1020,8 +1008,6 @@ DEF_DO_FUN( crank )
 
 MEMBER_DATA* get_member(CLAN_DATA *clan, char *name)
 {
-	MEMBER_DATA *member;
-
 	for( auto* member : clan->member_list )
 		if (!str_cmp(member->name, name))
 			return member;
@@ -1030,7 +1016,6 @@ MEMBER_DATA* get_member(CLAN_DATA *clan, char *name)
 
 MEMBER_DATA* highest_ranked(CLAN_DATA *clan, int max_rank)
 {
-	MEMBER_DATA *member;
 	MEMBER_DATA *rmember = NULL;
 	int rank = CLAN_WAITING;
 
@@ -1098,7 +1083,7 @@ void remove_member(CLAN_DATA *clan, char *name)
 
 		if (clan->members > 0)
 			clan->members--;
-		UNclan->member_list.push_back(member);
+		clan->member_list.remove(member);
 		free_member(member);
 		adjust_clan(clan);
 	}
@@ -1113,9 +1098,6 @@ void remove_member(CLAN_DATA *clan, char *name)
  */
 void rename_member(const char *name, const char *newname)
 {
-	CLAN_DATA *clan;
-	MEMBER_DATA *member;
-
 	for( auto* clan : clan_list )
 		for( auto* member : clan->member_list )
 			if (!str_cmp(member->name, name))
@@ -1133,7 +1115,6 @@ void induct_member(CLAN_DATA *clan, CHAR_DATA *ch)
 
 void outcast_member(CLAN_DATA *clan, CHAR_DATA *ch)
 {
-	CLAN_DATA *pClan;
 	MEMBER_DATA *member;
 	bool found = false;
 
@@ -1184,8 +1165,6 @@ void adjust_only(CLAN_DATA *clan)
 
 void adjust_clan(CLAN_DATA *clan)
 {
-	MEMBER_DATA *member;
-
 	for( auto* member : clan->member_list )
 		switch (member->status)
 		{
@@ -1236,7 +1215,6 @@ void application(CHAR_DATA *ch, char *argument)
 	else /* Jesli to jest tajny klan, to czlonek z induct musi stac obok nas. */
 	if (IS_SET(clan->flags, CLAN_NOINFO))
 	{
-		CHAR_DATA *victim;
 		bool found = false;
 
 		for (auto* victim : ch->in_room->people)
@@ -1748,7 +1726,6 @@ DEF_DO_FUN( relations )
 {
 	POLITICS_DATA *politics;
 	CLAN_DATA *clan = CLAN(ch);
-	CLAN_DATA *sclan;
 	CLAN_DATA *tclan;
 	CLAN_DATA *vclan;
 	MEMBER_DATA *member;
@@ -2052,8 +2029,6 @@ void pclan_voting_end(CLAN_DATA *clan)
 DEF_DO_FUN( showclan )
 {
 	CLAN_DATA *clan;
-	POLITICS_DATA *politics;
-	MEMBER_DATA *member;
 	int i = 0;
 	int applicants = 0;
 
@@ -2253,7 +2228,6 @@ DEF_DO_FUN( clan )
 
 DEF_DO_FUN( clans )
 {
-	CLAN_DATA *clan;
 	int count = 0;
 
 	ch_printf(ch, FB_WHITE "Lista autoryzowanych organizacji:" EOL);
@@ -2310,9 +2284,6 @@ DEF_DO_FUN( clans )
 DEF_DO_FUN( claninfo )
 {
 	CLAN_DATA *clan;
-	CLAN_DATA *suborg;
-	PLANET_DATA *planet;
-	SHIP_DATA *ship;
 	MEMBER_DATA *member;
 	long revenue;
 	int support;
@@ -2469,7 +2440,6 @@ DEF_DO_FUN( claninfo )
 void clan_members(CHAR_DATA *ch)
 {
 	CLAN_DATA *clan = CLAN(ch);
-	MEMBER_DATA *member;
 	int i;
 
 	if (!clan)
@@ -2934,7 +2904,6 @@ DEF_DO_FUN( capture )
 {
 	CLAN_DATA *clan = CLAN(ch);
 	PLANET_DATA *planet;
-	PLANET_DATA *cPlanet;
 	float support = 0.0;
 	int pCount = 0;
 	char buf[MSL];
@@ -2967,7 +2936,6 @@ DEF_DO_FUN( capture )
 
 	if (planet->starsystem)
 	{
-		SHIP_DATA *ship;
 		CLAN_DATA *sClan;
 
 		for (auto* ship : planet->starsystem->ships)

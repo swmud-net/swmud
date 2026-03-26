@@ -215,7 +215,6 @@ int get_cost( CHAR_DATA *ch, CHAR_DATA *keeper, OBJ_DATA *obj, bool fBuy )
 			cost = obj->cost * pShop->profit_sell / 100;
 		else
 		{
-			OBJ_DATA *obj2;
 			int itype;
 
 			profitmod = get_curr_cha(ch) - 13 - (richcustomer ? 15 : 0);
@@ -347,8 +346,6 @@ return true;
 DEF_DO_FUN( bargain )
 {
 	CHAR_DATA*		keeper;
-	CHAR_DATA*		people;
-	OBJ_DATA *		offer;
 	OBJ_DATA *  		obj;
 	CHAR_DATA * 		pet;
 	ROOM_INDEX_DATA *	pRoomIndexNext;
@@ -667,7 +664,6 @@ void buy_an_item( CHAR_DATA *ch )
 	int 		count;
 	OBJ_DATA *  	obj;
 	int 		price;
-	OBJ_DATA *	offer;
 	bool 		is_offered;
 	CHAR_DATA*	keeper;
 	int		maxgold;
@@ -842,7 +838,6 @@ void buy_a_pet( CHAR_DATA *ch )
 {
     CHAR_DATA * 	pet;
     char             	buf [ MAX_STRING_LENGTH ];
-    CHAR_DATA * 	offer;
     ROOM_INDEX_DATA *	pRoomIndexNext;
     bool		is_offered;
     int			price;
@@ -1145,7 +1140,6 @@ DEF_DO_FUN( list )
 	char 		arg	[ MAX_INPUT_LENGTH ];
 	char       	arg2 	[ MAX_INPUT_LENGTH ];
 	CHAR_DATA *	keeper;
-	OBJ_DATA *	obj;
 	int 		cost;
 	int 		oref = 0;
 	bool 		found;
@@ -1213,7 +1207,6 @@ void sell_an_item( CHAR_DATA *ch )
 {
     OBJ_DATA *	obj;
     int		cost;
-    OBJ_DATA *	offer;
     bool 	is_offered;
     CHAR_DATA*	keeper;
 
@@ -1627,7 +1620,6 @@ DEF_DO_FUN( repair )
 
 void appraise_all( CHAR_DATA *ch, CHAR_DATA *keeper, const char *fixstr )
 {
-    OBJ_DATA *obj;
     char buf[MAX_STRING_LENGTH], *pbuf=buf;
     int cost, total=0;
 

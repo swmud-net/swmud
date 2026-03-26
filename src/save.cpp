@@ -388,7 +388,6 @@ void load_home_flags()
  */
 void de_equip_char(CHAR_DATA *ch)
 {
-	OBJ_DATA *obj;
 	int x, y;
 
 	for (x = 0; x < MAX_WEAR; x++)
@@ -528,8 +527,6 @@ void save_pdata2(CHAR_DATA *ch)
 	}
 	if (!ch->pcdata->aliases.empty())
 	{
-		ALIAS_DATA *alias;
-
 		node = xmlNewChild( root, NULL, BC"aliases", NULL );
 		for (auto* alias : ch->pcdata->aliases)
 		{
@@ -540,8 +537,6 @@ void save_pdata2(CHAR_DATA *ch)
 	}
 	if (!ch->crimes.empty())
 	{
-		CRIME_DATA *crime;
-
 		node = xmlNewChild( root, NULL, BC"crimes", NULL );
 		for (auto* crime : ch->crimes)
 		{
@@ -592,7 +587,6 @@ void save_pdata2(CHAR_DATA *ch)
 
 void save_pdata(CHAR_DATA *ch)
 {
-	CRIME_DATA *crime;
 	FILE *fp;
 	char filename[256];
 	char bckupname[256];
@@ -965,11 +959,9 @@ void save_char_data2(CHAR_DATA *ch)
 	}
 	if (ch->pcdata->fevents)
 	{
-		FEVENT_DATA *fevent;
-
 		node = xmlNewChild( root, NULL, BC"fevents", NULL );
 		swNewChildIntNE(node, NULL, "number", ch->pcdata->fevents);
-		for (auto* fevent : ch->pcdata->fevents)
+		for (auto* fevent : ch->pcdata->fevents_list)
 		{
 			child = xmlNewChild( node, NULL, BC"fevent", NULL );
 			swNewChildInt(child, NULL, "trigger", fevent->trigger);
@@ -998,9 +990,6 @@ void save_char_data2(CHAR_DATA *ch)
 void save_char_data(CHAR_DATA *ch, FILE *fp)
 {
 	SKILLTYPE *skill = 0;
-	AFFECT_DATA *paf;
-	FEVENT_DATA *fevent;
-	KNOWN_LANG *klang;
 	int sn;
 	int drug;
 	int track;
@@ -1177,7 +1166,7 @@ void save_char_data(CHAR_DATA *ch, FILE *fp)
 #warning Powyzsze do poprawy
 
 	fprintf(fp, "FEvents       %d\n", ch->pcdata->fevents);
-	for (auto* fevent : ch->pcdata->fevents)
+	for (auto* fevent : ch->pcdata->fevents_list)
 	{
 		fprintf(fp, "FEvent       %d %s~", fevent->trigger, fevent->sattr);
 		for (i = 0; i < FE_MAX_ATTR; i++)
@@ -1354,9 +1343,6 @@ void save_clone(CHAR_DATA *ch)
 void fwrite_obj_raw(OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
 {
 
-	EXTRA_DESCR_DATA *ed;
-	AFFECT_DATA *paf;
-	REQUIREMENT_DATA *req;
 	int wear, wear_loc, x;
 
 	/* Corpse saving. -- Altrag */
@@ -1854,7 +1840,6 @@ void fread_pdata(CHAR_DATA *ch, FILE *fp, bool preload)
 		case 'E':
 			if (word[0] == 'E' && word[1] == 'n' && word[2] == 'd')
 			{
-				CLAN_DATA *clan;
 				MEMBER_DATA *member;
 
 				if (!ch->pcdata->prompt)
@@ -2281,7 +2266,7 @@ void fread_char(CHAR_DATA *ch, FILE *fp)
 				int i;
 
 				fevent = new_fevent();
-				ch->pcdata->fevents.push_back(fevent);
+				ch->pcdata->fevents_list.push_back(fevent);
 				fevent->trigger = (fe_trigger) fread_number(fp);
 				STRDUP(fevent->sattr, st_fread_string(fp));
 				for (i = 0; i < FE_MAX_ATTR; i++)

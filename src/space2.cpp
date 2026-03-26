@@ -1618,8 +1618,6 @@ DEF_DO_FUN( load_cargo )
 
 void ship_to_repository(SHIP_DATA *ship)
 {
-	TURRET_DATA *turret;
-
 	ship->shipstate = SHIP_REPOSITORY;
 	extract_ship(ship);
 
@@ -2868,7 +2866,6 @@ bool same_star_pos(float system, float system2, float arg, float arg2,
 
 void calculate_number(CHAR_DATA *ch, char *arg_x, char *arg_y, SHIP_DATA *ship)
 {
-	SPACE_DATA *starsystem;
 	char dane[256];
 	int chance;
 
@@ -3265,7 +3262,7 @@ CARGO_DATA* get_cargo(SHIP_DATA *ship, int nr)
 {
 	int i = 0;
 
-	for (auto* cargo : ship->cargo)
+	for (auto* cargo : ship->cargo_list)
 	{
 		if (i == nr)
 			return cargo;
@@ -4401,8 +4398,6 @@ void leave_ship_by_dock(SHIP_DATA *ship, CHAR_DATA *ch)
 
 bool is_linked(SHIP_DATA *ship, SHIP_DATA *target)
 {
-	SHIPDOCK_DATA *dock;
-
 	if (target == NULL)
 	{
 		if (ship->shipstate == SHIP_DOCKED2)

@@ -5575,7 +5575,6 @@ DEF_DO_FUN( makehackdev )
 		if (skill->participants > 1)
 		{
 			int cnt = 1;
-			CD *tmp;
 			TIMER *t;
 
 			for (auto* tmp : ch->in_room->people)

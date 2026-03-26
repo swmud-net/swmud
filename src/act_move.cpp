@@ -338,9 +338,6 @@ void decorate_room(ROOM_INDEX_DATA *room)
 void clear_vrooms()
 {
 	int hash;
-	RID *room;
-	RID *room_next;
-	RID *prev;
 
 	bug("clear_vrooms used");
 
@@ -365,8 +362,6 @@ void clear_vrooms()
  */
 ED* get_exit( RID *room, int dir)
 {
-	ED *xit;
-
 	if (!room)
 	{
 		bug("NULL room");
@@ -384,8 +379,6 @@ ED* get_exit( RID *room, int dir)
  */
 ED* get_exit_to( RID *room, int dir, int vnum)
 {
-	ED *xit;
-
 	if (!room)
 	{
 		bug("NULL room");
@@ -403,7 +396,6 @@ ED* get_exit_to( RID *room, int dir, int vnum)
  */
 ED* get_exit_num( RID *room, int count)
 {
-	ED *xit;
 	int cnt;
 
 	if (!room)
@@ -737,7 +729,6 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 
 		if (in_room->sector_type == SECT_WATER_NOSWIM || to_room->sector_type == SECT_WATER_NOSWIM)
 		{
-			OBJ_DATA *obj;
 			bool found;
 
 			found = false;
@@ -883,7 +874,6 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	 */
 	if (to_room->tunnel > 0 && !IS_SET(ch->act, PLR_HOLYLIGHT))
 	{
-		CHAR_DATA *ctmp;
 		int count = ch->mount ? 1 : 0;
 
 		for (auto* ctmp : to_room->people)
@@ -1063,8 +1053,6 @@ ch_ret move_char(CHAR_DATA *ch, EXIT_DATA *pexit, int fall)
 	 */
 	if (!fall)
 	{
-		CHAR_DATA *fch;
-		CHAR_DATA *nextinroom;
 		int chars = 0, count = 0;
 
 		chars = static_cast<int>(from_room->people.size());
@@ -1349,8 +1337,6 @@ DEF_DO_FUN( open )
 			act( COL_ACTION, "Otwierasz $d.", ch, NULL, pexit->keyword, TO_CHAR);
 			if ((pexit_rev = pexit->rexit) != NULL && pexit_rev->to_room == ch->in_room)
 			{
-				CHAR_DATA *rch;
-
 				for (auto* rch : pexit->to_room->people)
 					act( COL_ACTION, "$d otwieraj� si�.", rch, NULL, pexit_rev->keyword, TO_CHAR);
 				sound_to_room(pexit->to_room, "!!SOUND(door)");
@@ -1443,8 +1429,6 @@ DEF_DO_FUN( close )
 		/* close the other side */
 		if ((pexit_rev = pexit->rexit) != NULL && pexit_rev->to_room == ch->in_room)
 		{
-			CHAR_DATA *rch;
-
 			SET_BIT(pexit_rev->flags, EX_CLOSED);
 			for (auto* rch : pexit->to_room->people)
 				act( COL_ACTION, "$d zamykaj� si�.", rch, NULL, pexit_rev->keyword, TO_CHAR);
@@ -1493,8 +1477,6 @@ DEF_DO_FUN( close )
 
 bool has_key(CHAR_DATA *ch, int key)
 {
-	OBJ_DATA *obj;
-
 	if (key == 0)
 		return true;
 	for (auto* obj : ch->carrying)
@@ -1690,7 +1672,6 @@ DEF_DO_FUN( unlock )
 
 DEF_DO_FUN( bashdoor )
 {
-	CHAR_DATA *gch;
 	EXIT_DATA *pexit;
 	char arg[ MAX_INPUT_LENGTH];
 
@@ -1751,8 +1732,6 @@ DEF_DO_FUN( bashdoor )
 
 			if ((to_room = pexit->to_room) != NULL && (pexit_rev = pexit->rexit) != NULL && pexit_rev->to_room == ch->in_room)
 			{
-				CHAR_DATA *rch;
-
 				REMOVE_BIT(pexit_rev->flags, EX_CLOSED);
 				if (IS_SET(pexit_rev->flags, EX_LOCKED))
 					REMOVE_BIT(pexit_rev->flags, EX_LOCKED);
@@ -2019,7 +1998,6 @@ void teleportch(CHAR_DATA *ch, ROOM_INDEX_DATA *room, bool show)
 
 void teleport(CHAR_DATA *ch, int room, int64 flags)
 {
-	CHAR_DATA *nch, *nch_next;
 	ROOM_INDEX_DATA *pRoomIndex;
 	bool show;
 

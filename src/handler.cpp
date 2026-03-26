@@ -81,7 +81,6 @@ void explode(OBJ_DATA *obj)
 	if (obj->armed_by && obj->value[4] != 1)
 	{
 		ROOM_INDEX_DATA *room;
-		CHAR_DATA *xch;
 		bool held = false;
 		/* Lomion: moje zmienne */
 		SHIP_DATA *ship;
@@ -1706,7 +1705,6 @@ void obj_personalize(CHAR_DATA *ch, OBJ_DATA *obj)
  */
 OBJ_DATA* obj_to_char(OBJ_DATA *obj, CHAR_DATA *ch)
 {
-	OBJ_DATA *otmp;
 	OBJ_DATA *oret = obj;
 	bool skipgroup, grouped;
 	int oweight = get_obj_weight(obj);
@@ -2127,7 +2125,7 @@ OBJ_DATA* obj_to_room(OBJ_DATA *obj, ROOM_INDEX_DATA *pRoomIndex)
  */
 OBJ_DATA* obj_to_obj(OBJ_DATA *obj, OBJ_DATA *obj_to)
 {
-	OBJ_DATA *otmp, *oret;
+	OBJ_DATA *oret;
 
 	IF_BUG(obj == NULL, "")
 		return NULL;
@@ -2267,7 +2265,6 @@ void extract_obj(OBJ_DATA *obj)
 	if (obj->inquest)
 	{
 		QUEST_DATA *quest = obj->inquest;
-		QUEST_OBJ_DATA *qObj;
 
 		for (auto* qObj : quest->objs)
 			if (qObj->obj && qObj->obj == obj)
@@ -2280,12 +2277,9 @@ void extract_obj(OBJ_DATA *obj)
 	/* Thanos 	- script cleanup */
 	if (obj->mpscriptrun)
 	{
-		SCRIPT_DATA *script;
-		SCRIPT_DATA *script_next;
-
-		for (script = first_script_prog; script; script = script_next)
+		auto scripts_snapshot = script_prog_list;
+		for (auto* script : scripts_snapshot)
 		{
-			script_next = script->next;
 			if (script->o_owner && script->o_owner == obj)
 				stopscript(script);
 		}
@@ -2347,7 +2341,6 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 	{
 		if (IS_NPC(ch))
 		{
-			QUEST_MOB_DATA *qMob;
 			QUEST_DATA *quest = ch->inquest;
 
 			for (auto* qMob : quest->mobs)
@@ -2364,12 +2357,9 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 
 	/* Thanos 	- script cleanup */
 	{
-		SCRIPT_DATA *script;
-		SCRIPT_DATA *script_next;
-
-		for (script = first_script_prog; script; script = script_next)
+		auto scripts_snapshot = script_prog_list;
+		for (auto* script : scripts_snapshot)
 		{
-			script_next = script->next;
 			if ((script->m_owner && script->m_owner == ch) || (script->victim && script->victim == ch))
 				stopscript(script);
 		}
@@ -2646,7 +2636,6 @@ CHAR_DATA* get_char_world(CHAR_DATA *ch, char *argument)
 //Trog: zle dzialalo, wiec poprawilem
 CHAR_DATA* get_player_world(CHAR_DATA *ch, char *argument)
 {
-	DESCRIPTOR_DATA *d;
 	CHAR_DATA *wch;
 	char arg[MIL];
 	int number, count;
@@ -4111,8 +4100,6 @@ void extract_room(ROOM_INDEX_DATA *room)
  */
 void clean_room(ROOM_INDEX_DATA *room)
 {
-	MPROG_DATA *rprg, *rprg_next;
-
 	STRDUP(room->name, "");
 	STRDUP(room->description, "");
 	STRDUP(room->nightdesc, "");
@@ -4125,12 +4112,9 @@ void clean_room(ROOM_INDEX_DATA *room)
 		free_exit(pexit);
 	room->exits.clear();
 
-	for (rprg = room->mudprogs; rprg; rprg = rprg_next)
-	{
-		rprg_next = rprg->next;
+	for (auto* rprg : room->mudprogs)
 		free_mprog(rprg);
-	}
-	room->mudprogs = NULL;
+	room->mudprogs.clear();
 
 	room->room_flags = 0;
 	room->sector_type = 0;
@@ -4181,7 +4165,6 @@ void clean_obj(OBJ_INDEX_DATA *obj)
 void clean_mob(MOB_INDEX_DATA *mob)
 {
 	int i;
-	MPROG_DATA *mprog, *mprog_next;
 
 	STRDUP(mob->player_name, "");
 //added by Thanos
@@ -4199,11 +4182,9 @@ void clean_mob(MOB_INDEX_DATA *mob)
 	mob->rShop = NULL;
 	mob->progtypes = 0;
 
-	for (mprog = mob->mudprogs; mprog; mprog = mprog_next)
-	{
-		mprog_next = mprog->next;
-		free_mprog(mprog);
-	}
+	for (auto* mp : mob->mudprogs)
+		free_mprog(mp);
+	mob->mudprogs.clear();
 	mob->count = 0;
 	mob->killed = 0;
 	mob->sex = 0;
@@ -4472,8 +4453,6 @@ void add_timer(CHAR_DATA *ch, int type, int count, DO_FUN *fun, int value)
 
 TIMER* get_timerptr(CHAR_DATA *ch, int type)
 {
-	TIMER *timer;
-
 	for (auto* timer : ch->timers)
 		if (timer->type == type)
 			return timer;
@@ -4505,8 +4484,6 @@ void extract_timer(CHAR_DATA *ch, TIMER *timer)
 
 void remove_timer(CHAR_DATA *ch, int type)
 {
-	TIMER *timer;
-
 	for (auto* t : ch->timers)
 		if (t->type == type)
 		{
@@ -4963,9 +4940,6 @@ char* get_race(CHAR_DATA *ch)
 
 void rename_char(CHAR_DATA *old, CHAR_DATA *tmp)
 {
-	INFORM_DATA *inform;
-	SHIP_DATA *ship;
-	OBJ_DATA *obj;
 	char buf[MIL];
 	char buf2[MIL];
 	int i;
@@ -5062,8 +5036,6 @@ void destroy_char(char *name)
 {
 	char buf[MSL];
 	char buf2[MSL];
-	SHIP_DATA *ship;
-	CLAN_DATA *clan;
 
 	sprintf(buf, "Deleting char: %s", capitalize(name));
 	log_string(buf);

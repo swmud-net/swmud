@@ -21,9 +21,9 @@ CUSTOM_C_FLAGS = -nostdinc++ -isystem /usr/include/c++/v1
 CUSTOM_L_FLAGS = -lkvm -liconv -lc++
 MAKE	= gmake
 endif
-ILIBS	= -I/usr/local/include -I/usr/include/libxml2 -I. -I./classes -I./classes/player -I./classes/math
+ILIBS	= -I/usr/local/include -I/usr/include/libxml2 -I/opt/homebrew/include -I. -I./classes -I./classes/player -I./classes/math
 LLIBS	= -L/usr/local/lib -lm -lcrypt -lxml2 -lpqxx -lpq -lpthread $(CUSTOM_L_FLAGS)
-C_FLAGS = -O2 -ggdb3 -Wall -Wfatal-errors -std=c++17 $(CUSTOM_C_FLAGS) $(PROF) $(NOCRYPT) $(DBUGFLG) $(ILIBS)
+C_FLAGS = -O2 -ggdb3 -Wall -Wfatal-errors -std=c++20 $(CUSTOM_C_FLAGS) $(PROF) $(NOCRYPT) $(DBUGFLG) $(ILIBS)
 #-D_GLIBCXX_USE_C99
 #L_FLAGS = -gdwarf-2
 

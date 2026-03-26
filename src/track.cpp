@@ -375,7 +375,6 @@ void found_prey(CHAR_DATA *ch, CHAR_DATA *victim)
 void hunt_victim(CHAR_DATA *ch)
 {
 	bool found;
-	CHAR_DATA *tmp;
 	int ret;
 
 	if (!ch || !ch->hunting || !ch->hunting->who)

@@ -76,7 +76,6 @@ int main(int argc, char **argv)
 #endif
 
 	set_terminate(&sw_terminate);
-	set_unexpected(&sw_unexpected);
 
 	pid = getpid();
 	if ((fpPid = fopen( PID_FILE, "w")) == NULL)

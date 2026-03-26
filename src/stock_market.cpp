@@ -547,7 +547,7 @@ void load_stock_markets( )
 	else    pager_printf( ch, NL FG_CYAN "    Aukcja ");
 	if ( !auction_finished( pAuction ) )
 		pager_printf( ch, FG_CYAN "zako�czy si� za %s" NL,
-				prepare_time(pAuction->end_time,false,false));
+				prepare_time(pAuction->end_time,false,false).c_str());
 	else 	pager_printf( ch, FG_CYAN "zako�czy�a si�" NL);
 
 	pager_printf( ch, NL PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL "    " );
@@ -799,7 +799,7 @@ void stock_show_details( CHAR_DATA * ch )
 	else    pager_printf( ch, NL FG_CYAN "    Aukcja ");
 	if ( !auction_finished( pAuction ) )
 		pager_printf( ch, FG_CYAN "zako�czy si� za %s" NL,
-				prepare_time(pAuction->end_time,false,false));
+				prepare_time(pAuction->end_time,false,false).c_str());
 	else 	pager_printf( ch, FG_CYAN "zako�czy�a si�" NL);
 
 	pager_printf( ch, NL PLAIN "   [" FG_CYAN T_LINE PLAIN "]" NL "    " );

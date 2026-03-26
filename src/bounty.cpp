@@ -78,7 +78,6 @@ void load_informs()
 
 void save_informs()
 {
-	INFORM_DATA * inform;
 	FILE *fpout;
 
 	fpout = fopen(INFORM_LIST, "w");
@@ -99,8 +98,6 @@ void save_informs()
 
 INFORM_DATA *get_inform(char *attacker, char *vict)
 {
-	INFORM_DATA * inf;
-
 	for (auto* inf : inform_list)
 		if (!str_cmp(inf->attacker, attacker) && !str_cmp(inf->victim, vict))
 			return inf;
@@ -628,7 +625,7 @@ DEF_DO_FUN( addbounty )
 	}
 	ch->gold -= ammount + agio;
 
-	found = false;
+	bool found = false;
 	SWBounty *bounty = 0;
 	SWString placedBy(ch->name);
 	/* nie pozawlajmy na wystawianie bounty za moby, ktorych vnum < 11 */

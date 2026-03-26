@@ -1357,7 +1357,6 @@ void area_update(void)
 {
 	for (auto* pArea : area_list)
 	{
-		CHAR_DATA *pch;
 		int reset_age;
 
 		reset_age =
@@ -2815,41 +2814,41 @@ char change_to_nopol(const char letter)
 {
 	switch (letter)
 	{
-	case '�':
+	case '\xb1':
 		return 'a';
-	case '�':
+	case '\xe6':
 		return 'c';
-	case '�':
+	case '\xea':
 		return 'e';
-	case '�':
+	case '\xb3':
 		return 'l';
-	case '�':
+	case '\xf1':
 		return 'n';
-	case '�':
+	case '\xf3':
 		return 'o';
-	case '�':
+	case '\xb6':
 		return 's';
-	case '�':
+	case '\xbc':
 		return 'z';
-	case '�':
+	case '\xbf':
 		return 'z';
-	case '�':
+	case '\xa1':
 		return 'A';
-	case '�':
+	case '\xc6':
 		return 'C';
-	case '�':
+	case '\xca':
 		return 'E';
-	case '�':
+	case '\xa3':
 		return 'L';
-	case '�':
+	case '\xd1':
 		return 'N';
-	case '�':
+	case '\xd3':
 		return 'O';
-	case '�':
+	case '\xa6':
 		return 'S';
-	case '�':
+	case '\xac':
 		return 'Z';
-	case '�':
+	case '\xaf':
 		return 'Z';
 	default:
 		return letter;
@@ -4288,14 +4287,23 @@ bool delete_room(ROOM_INDEX_DATA *room)
 
 	/* Take the room index out of the hash list. */
 	auto& bucket = room_index_hash[iHash];
-	auto it = std::find(bucket.begin(), bucket.end(), room);
-	if (it == bucket.end())
+	auto prev = bucket.before_begin();
+	bool found = false;
+	for (auto it = bucket.begin(); it != bucket.end(); ++it)
+	{
+		if (*it == room)
+		{
+			bucket.erase_after(prev);
+			found = true;
+			break;
+		}
+		prev = it;
+	}
+	if (!found)
 	{
 		bug("room not found");
 		return false;
 	}
-
-	bucket.erase(it);
 
 	free_room(room);
 	top_room--;
@@ -4392,8 +4400,8 @@ OBJ_INDEX_DATA* make_object(int vnum, int cvnum, char *name)
 	}
 	else
 	{
-		EXTRA_DESCR_DATA *ed, *ced;
-		AFFECT_DATA *paf, *cpaf;
+		EXTRA_DESCR_DATA *ed;
+		AFFECT_DATA *paf;
 
 		for (i = 0; i < 6; i++)
 			STRDUP(pObjIndex->przypadki[i], cObjIndex->przypadki[i]);
@@ -4580,7 +4588,6 @@ EXIT_DATA* make_exit(ROOM_INDEX_DATA *pRoomIndex, ROOM_INDEX_DATA *to_room,
 		int door)
 {
 	EXIT_DATA *pexit, *texit;
-	bool broke;
 
 	CREATE(pexit, EXIT_DATA, 1);
 	pexit->vdir = door;
@@ -4615,7 +4622,7 @@ EXIT_DATA* make_exit(ROOM_INDEX_DATA *pRoomIndex, ROOM_INDEX_DATA *to_room,
 void fix_area_exits(AREA_DATA *tarea)
 {
 	ROOM_INDEX_DATA *pRoomIndex;
-	EXIT_DATA *pexit, *rev_exit;
+	EXIT_DATA *rev_exit;
 	int rnum;
 	bool fexit;
 
@@ -5131,7 +5138,6 @@ void show_vnums(CHAR_DATA *ch, int low, int high, bool proto, bool shownl,
 /* Trog: wyswietlanie krain. */
 DEF_DO_FUN( alist )
 {
-	AREA_DATA *area;
 	int i, low, high;
 	char arg1[MIL];
 	char arg2[MIL];
@@ -5571,7 +5577,6 @@ void load_banlist(void)
 
 DEF_DO_FUN( check_vnums )
 {
-	AREA_DATA *pArea;
 	char buf[MAX_STRING_LENGTH];
 	char buf2[MAX_STRING_LENGTH];
 	char arg1[MAX_STRING_LENGTH];
@@ -6115,8 +6120,6 @@ void reset_planet(PLANET_DATA *planet)
 
 void set_timeweather()
 {
-	PLANET_DATA *planet;
-
 	for (auto* planet : planet_list)
 		reset_planet(planet);
 
@@ -6604,7 +6607,6 @@ void save_languages()
 	xmlDocPtr doc;
 	xmlNodePtr root;
 	xmlNodePtr node;
-	LANG_DATA *lang;
 
 	swXmlInitIO();
 	doc = xmlNewDoc( BC"1.0" );

@@ -994,7 +994,6 @@ void mobile_update(void)
 		&& !IS_SET(pexit->flags, EX_CLOSED)
 		&& !IS_SET(pexit->to_room->room_flags, ROOM_NO_MOB))
 		{
-			CHAR_DATA *rch;
 			bool found;
 			found = false;
 			for (auto* rch : ch->in_room->people)
@@ -1033,8 +1032,6 @@ void mobile_update(void)
 
 void update_mining()
 {
-	PLANET_DATA *pPlanet;
-	DEPOSIT_DATA *pDeposit;
 	MATERIAL_DATA *pMat;
 
 	for (auto* pPlanet : planet_list)
@@ -1057,14 +1054,12 @@ void update_mining()
 
 void update_taxes(void)
 {
-	PLANET_DATA *planet;
 	CLAN_DATA *clan;
 
 	for (auto* planet : planet_list)
 	{
 		if ((clan = planet->governed_by))
 		{
-			CLAN_DATA *suborg = NULL;
 			int sCount = 0;
 
 			/* Trog: tu raczej trzeba dorobic, ze org czerpie kase z suborg */
@@ -1096,8 +1091,6 @@ void update_taxes(void)
  */
 void weather_update(void)
 {
-	DESCRIPTOR_DATA *d;
-	PLANET_DATA *pPlanet;
 	const char *AT_TEMP = PLAIN;
 	char buf[MAX_STRING_LENGTH];
 	int diff;
@@ -2073,9 +2066,11 @@ void aggr_update(void)
 #endif
 
 	/* check mobprog act queue */
-	while ((apdtmp = mob_act_list) != NULL)
+	while (!mob_act_list.empty())
 	{
-		wch = (CD*) mob_act_list->vo;
+		apdtmp = mob_act_list.front();
+		mob_act_list.pop_front();
+		wch = (CD*) apdtmp->vo;
 		if (!char_died(wch) && wch->mpactnum > 0)
 		{
 			MPROG_ACT_LIST *tmp_act;
@@ -2092,7 +2087,6 @@ void aggr_update(void)
 			wch->mpactnum = 0;
 			wch->mpact = NULL;
 		}
-		mob_act_list = apdtmp->next;
 		DISPOSE(apdtmp);
 	}
 
@@ -2332,7 +2326,6 @@ void auth_update( void )
 void auth_update(void)
 {
 	CHAR_DATA *victim;
-	DESCRIPTOR_DATA *d;
 	char buf[MAX_INPUT_LENGTH];
 	bool found = false; /* was at least one found? */
 
@@ -2432,8 +2425,6 @@ void update_informs()
 
 void hotel_safe_update()
 {
-	DESCRIPTOR_DATA *d;
-
 	for (auto* d : descriptor_list)
 	{
 		if (d->connected < CON_PLAYING)
@@ -2604,7 +2595,6 @@ void remove_portal(OBJ_DATA *portal)
 {
 	ROOM_INDEX_DATA *fromRoom, *toRoom;
 	CHAR_DATA *ch;
-	EXIT_DATA *pexit;
 	bool found;
 
 	IF_BUG(portal == NULL, "")
@@ -2693,10 +2683,7 @@ void reboot_check(time_t reset)
 
 	if (new_boot_time_t <= current_time)
 	{
-		CHAR_DATA *vch;
 		extern bool mud_down;
-		PLANET_DATA *planet;
-		DESCRIPTOR_DATA *d;
 
 		echo_to_all( NL NL
 		"Wyczuwasz, �e olbrzymia si�a nie pozwala ci" NL NL
@@ -2979,9 +2966,6 @@ void subtract_times(struct timeval *etime, struct timeval *stime)
 /* Trog */
 void clan_update()
 {
-	HQ_DATA *hq;
-	RID *room;
-
 	auto clan_snapshot = clan_list;
 	for (auto* clan : clan_snapshot)
 	{
@@ -2993,16 +2977,16 @@ void clan_update()
 
 			if (clan->repay_date < current_time)
 			{
-				DESCRIPTOR_DATA *d;
-				CHAR_DATA *ch;
-
 				/* rozwiazujemy organizacje z powodu nie splacenia pozyczki */
 				for (auto* d : descriptor_list)
+				{
+					CHAR_DATA *ch;
 					if ((ch = d->original) && ch->pcdata && ch->pcdata->clan && ch->pcdata->clan == clan)
 					{
 						ch->pcdata->clan = NULL;
 						save_char_obj(ch);
 					}
+				}
 				clan_list.remove(clan);
 				free_clan(clan);
 			}
@@ -3042,7 +3026,7 @@ void clean_for_loop()
 }
 
 /* no �eby itoa nie by�o... */
-char* __itoa(int num)	// defined as itoa (mud.h)
+char* sw_itoa(int num)	// defined as itoa (mud.h)
 {
 	static char buf[256];
 
@@ -3336,8 +3320,6 @@ void update_rat()
  */
 void update_explosives(void)
 {
-	OBJ_DATA *obj;
-
 	for (auto* obj : object_list)
 	{
 		CHAR_DATA *ch;

@@ -253,7 +253,6 @@ void fread_planet( PLANET_DATA *planet, FILE *fp )
 	    if ( !str_cmp( word, "Area" ) )
 	    {
 	        char aName[MAX_STRING_LENGTH];
-                AREA_DATA *pArea;
 
 	     	strcpy(aName, st_fread_string(fp));
 		for( auto* pArea : area_list )
@@ -1014,9 +1013,7 @@ DEF_DO_FUN( makeplanet )
 
 DEF_DO_FUN( planets )
 {
-    PLANET_DATA 	*planet;
     int 		 count 		= 0;
-    AREA_DATA   	*area;
 
     for ( auto* planet : planet_list )
     {

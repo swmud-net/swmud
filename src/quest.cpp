@@ -111,8 +111,6 @@ void q_bug( const char *str, ... )
 /* do mobkomend mpqoload i mpqmload oraz do can_see_obj */
 bool belongs_to_quest( CHAR_DATA *ch, QUEST_DATA *quest )
 {
-	QUEST_MOB_DATA *qMob;
-
 	if( ch->inquest == quest )
 		return true;
 
@@ -149,7 +147,6 @@ void restore_quest_master()
 
 bool done_that_quest( CHAR_DATA *ch, int id )
 {
-	QUEST_INDEX_DATA *	pQuest;
 	char				buf	[MSL];
 
 	if( IS_NPC( ch ) )
@@ -281,7 +278,6 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 
 			case ACTION_PROG:
 			{
-				MPROG_DATA *	mprg;
 				MOB_INDEX_DATA *	pMobIndex;
 				QUEST_MOB_DATA * 	qMob;
 				bool		found = false;
@@ -808,13 +804,10 @@ CHAR_DATA *get_questor( QUEST_DATA *quest )
 QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 {
 	QUEST_INDEX_DATA *	pQuest;
-	CHAPTER_INDEX_DATA*	ChaptIndex;
 	CHAPTER_DATA *	pChapter;
 	QUEST_DATA *	quest;
 	EVENT_DATA *	pEvent;
 	QUEST_CMND_DATA *	pCmnd;
-	QUEST_ACTION_DATA *	action;
-	QUEST_CMND_DATA * 	cmd;
 
 	int			i = 1;
 
@@ -870,7 +863,6 @@ QUEST_DATA *quest_start( CHAR_DATA *ch, int quest_id, bool fromfile )
 			{
 				MOB_INDEX_DATA *	pMobIndex;
 				CHAR_DATA *		pMob;
-				CHAR_DATA *		mob;
 				int			pIndex = pCmnd->arg1;
 
 				if ( !( pMobIndex = get_mob_index( pIndex ) ) )
@@ -1282,7 +1274,6 @@ DEF_DO_FUN( quest )
 
 	if ( arg[0] == '\0' || !str_prefix( arg, "info" ) )
 	{
-		QUEST_CMND_DATA * 	pCmnd;
 		CHAPTER_DATA *		chapt;
 		bool			found;
 
@@ -1390,8 +1381,6 @@ DEF_DO_FUN( quest )
 
 	if( !str_prefix( arg, "list" ) )
 	{
-		int 			i = 1;
-		QUEST_INDEX_DATA *	pQuest;
 
 		ch_printf( ch,
 				   "                              Spis Quest�w:" NL FB_WHITE
@@ -1911,8 +1900,6 @@ void quest_trigger( CHAR_DATA *ch, int cmd, OBJ_DATA *obj, CHAR_DATA *victim )
 	/* wracaj do questora */
 	if( quest->finished && cmd == EVENT_VISIT_MOB )
 	{
-		CHAR_DATA *	fch;
-
 		for ( auto* fch : ch->in_room->people )
 		{
 			if( !IS_NPC( fch ) )
@@ -1985,8 +1972,6 @@ void quest_trigger( CHAR_DATA *ch, int cmd, OBJ_DATA *obj, CHAR_DATA *victim )
 /* zwraca wska�nik na chapter o numerze nr */
 CHAPTER_DATA *get_chapter( QUEST_DATA *quest, int nr )
 {
-	CHAPTER_DATA *	chapter = NULL;
-
 	for( auto* ch : quest->chapters )
 		if( ch->nr == nr )
 			return ch;
@@ -1997,8 +1982,6 @@ CHAPTER_DATA *get_chapter( QUEST_DATA *quest, int nr )
 /* i na event w danym chapterze */
 EVENT_DATA *get_event( CHAPTER_DATA *chapter, int nr )
 {
-	EVENT_DATA * 	event = NULL;
-
 	for( auto* ev : chapter->events )
 		if( ev->nr == nr )
 			return ev;
@@ -2010,7 +1993,6 @@ EVENT_DATA *get_event( CHAPTER_DATA *chapter, int nr )
 void fwrite_quest_mob( CHAR_DATA *ch, QUEST_MOB_DATA *qMob, FILE *fp )
 {
 	CHAR_DATA *		mob=qMob->mob;
-	AFFECT_DATA *	paf;
 	SKILLTYPE *		skill = 0;
 	int			roomvnum;
 
@@ -2072,7 +2054,6 @@ void fwrite_quest_mob( CHAR_DATA *ch, QUEST_MOB_DATA *qMob, FILE *fp )
 void fwrite_quest_obj( CHAR_DATA *ch, QUEST_OBJ_DATA *qObj, FILE * fp )
 {
 	OBJ_DATA *		obj=qObj->obj;
-	REQUIREMENT_DATA *	req;
 	int			roomvnum;
 
 	if( !obj )
@@ -2136,9 +2117,6 @@ void save_quest_data( CHAR_DATA *ch )
 {
 	FILE *		fp;
 	QUEST_DATA *	quest = ch->inquest;
-	QUEST_OBJ_DATA * 	qObj;
-	QUEST_MOB_DATA * 	qMob;
-	CHAPTER_DATA *	chptr;
 	char 		filename	[256];
 
 
@@ -2160,8 +2138,6 @@ void save_quest_data( CHAR_DATA *ch )
 
 	if( !quest->finished )
 	{
-		EVENT_DATA *	pEvent;
-
 		for( auto* chptr : quest->chapters )
 		{
 			if( !chptr->completed )
