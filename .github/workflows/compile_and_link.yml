@@ -21,4 +21,4 @@ jobs:
           mkdir -p bin
           mv .mudrc.dist .mudrc
           cd src
-          make MUD_DIR=../bin MUD_BIN=swmud CPUs=-j$(nproc)
+          make MUD_DIR=.. MUD_BIN=swmud CPUs=-j$(nproc)
