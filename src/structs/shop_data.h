@@ -23,8 +23,6 @@
 
 struct	shop_data
 {
-	SHOP_DATA			* next;			/* Next shop in list		*/
-	SHOP_DATA			* prev;			/* Previous shop in list	*/
 	int					keeper;			/* Vnum of shop keeper mob	*/
 	int					buy_type [MAX_TRADE];	/* Item types shop will buy	*/
 	int					profit_buy;		/* Cost multiplier for buying	*/

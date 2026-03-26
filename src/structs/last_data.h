@@ -23,8 +23,6 @@
 
 struct last_data
 {
-	LAST_DATA			* next;
-	LAST_DATA			* prev;
 	char				* text;
 	char				* teller;
 	char				* time;

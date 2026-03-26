@@ -31,7 +31,7 @@
 */
 bool dialog_leaf( DIALOG_NODE * pNode )
 {
-	return ( !pNode->first && !pNode->last );
+	return pNode->children.empty();
 }
 
 /*! \fn int free_dialog_ID()
@@ -39,14 +39,13 @@ bool dialog_leaf( DIALOG_NODE * pNode )
 */
 int free_dialog_ID()
 {
-	DIALOG_DATA		* pData;
 	int				val=0;
 	bool			fMatch;
 
 	for(;;)
 	{
 		fMatch = false;
-		FOREACH( pData, first_dialog )
+		for(auto* pData : dialog_list)
 			if ( pData->dialog_ID == val)
 			{
 				fMatch = true;
@@ -65,13 +64,11 @@ int free_dialog_ID()
 */
 DIALOG_DATA * get_dialog( char * name )
 {
-	DIALOG_DATA		* pData;
-
-	FOREACH( pData, first_dialog )
+	for(auto* pData : dialog_list)
 		if ( !str_cmp( pData->name, name ) )
 				return pData;
 
-	FOREACH( pData, first_dialog )
+	for(auto* pData : dialog_list)
 		if ( !str_prefix( pData->name, name ) )
 				return pData;
 	return NULL;
@@ -84,14 +81,14 @@ DIALOG_DATA * get_dialog( char * name )
 */
 DIALOG_NODE * get_answer( DIALOG_NODE * pBase, int nr)
 {
-	DIALOG_NODE		* pNode = pBase->first;
-	int				val;
-	if ( !pNode )
+	if ( pBase->children.empty() )
 		return NULL;
-	for(val=1;pNode && val != nr;pNode = pNode->next_in_dialog,val++);
-	if (val != nr || !pNode	)
+	int idx = nr - 1;
+	if ( idx < 0 || idx >= (int)pBase->children.size() )
 		return NULL;
-	return pNode;
+	auto it = pBase->children.begin();
+	std::advance(it, idx);
+	return *it;
 }
 
 /*! \fn int find_free_nr( DIALOG_DATA * pBase)
@@ -100,16 +97,15 @@ DIALOG_NODE * get_answer( DIALOG_NODE * pBase, int nr)
 */
 int find_free_nr( DIALOG_DATA * pBase)
 {
-	DIALOG_NODE	* pNode;
 	int			val = 0;
 	bool		fMatch;
-	if ( !pBase->first )
+	if ( pBase->nodes.empty() )
 		return 0;
 
 	for(;;)
 	{
 		fMatch = false;
-		FOREACH(pNode, pBase->first)
+		for(auto* pNode : pBase->nodes)
 			if ( pNode->nr == val)
 			{
 				fMatch = true;
@@ -125,17 +121,15 @@ int find_free_nr( DIALOG_DATA * pBase)
 
 DIALOG_NODE * get_dialog_target( DIALOG_DATA * pBase, int nr)
 {
-	DIALOG_NODE		* pNode = pBase->first;
-	for( ;pNode && pNode->nr != nr ;pNode = pNode->next);
-	if ( !pNode	)
-		return NULL;
-	return pNode;
+	for(auto* pNode : pBase->nodes)
+		if ( pNode->nr == nr )
+			return pNode;
+	return NULL;
 }
 
 void save_dialogs_list()
 {
 	FILE			* fp;
-	DIALOG_DATA		* pData;
 	RESERVE_CLOSE;
 
 	if ( ( fp = fopen( DIALOG_LIST_FILE, "w" ) ) == NULL )
@@ -146,7 +140,7 @@ void save_dialogs_list()
 		return;
 	}
 
-	FOREACH( pData, first_dialog )
+	for(auto* pData : dialog_list)
 		fprintf( fp, "%d\n", pData->dialog_ID );
 
 	fprintf( fp,"-1\n$\n" );
@@ -174,10 +168,13 @@ void fread_dialog( char * dialog_file, int ID )
 	}
 	pData = new_dialog_data();
 	pData->dialog_ID = ID;
-	LINK( pData, first_dialog, last_dialog, next, prev );
-	pNode = pData->first;
-	UNLINK( pNode, pData->first, pData->last, next, prev );
-	free_dialog_node( pNode );
+	dialog_list.push_back( pData );
+	if ( !pData->nodes.empty() )
+	{
+		pNode = pData->nodes.front();
+		pData->nodes.erase( pData->nodes.begin() );
+		free_dialog_node( pNode );
+	}
 	for(;;)
 	{
 		word = feof( fp ) ? "#END" : fread_word( fp );
@@ -207,8 +204,7 @@ void fread_dialog( char * dialog_file, int ID )
 			if ( !str_cmp( word, "Tekst" ) )
 			{
 				pNode = new_dialog_node();
-				LINK(pNode, pData->first, pData->last,
-						next, prev);
+				pData->nodes.push_back( pNode );
 				pNode->text = fread_string( fp );
 				pNode->pBase = pData;
 				fMatch = true;
@@ -217,10 +213,8 @@ void fread_dialog( char * dialog_file, int ID )
 			{
 				pLeaf = new_dialog_node();
 				pLeaf->pBase = pData;
-				LINK( pLeaf, pData->first, pData->last,
-						next, prev);
-				LINK( pLeaf, pNode->first, pNode->last,
-					next_in_dialog, prev_in_dialog);
+				pData->nodes.push_back( pLeaf );
+				pNode->children.push_back( pLeaf );
 				pLeaf->target_nr = fread_number( fp );
 				fMatch = true;
 			}
@@ -287,7 +281,6 @@ void save_dialog( CHAR_DATA * ch )
 {
 	FILE			* fp;
 	char			buf[MSL];
-	DIALOG_NODE		* pNode, * pNodeDialog;
 	DIALOG_DATA		* pData;
 
 	if ( !(pData = ((DIALOG_NODE *) ch->desc->olc_editing )->pBase ) )
@@ -303,18 +296,17 @@ void save_dialog( CHAR_DATA * ch )
 		return;
 	}
 	fprintf( fp, "Name          %s~\n\n",pData->name );
-	FOREACH( pNode, pData->first )
+	for(auto* pNode : pData->nodes)
 		pNode->saved = false;
 
-	FOREACH( pNode, pData->first )
+	for(auto* pNode : pData->nodes)
 	{
 		if ( pNode->saved ) continue;
 
 		fprintf( fp, "Tekst         %s~\n", pNode->text );
 		fprintf( fp, "NodeID        %d\n", pNode->nr );
 		pNode->saved = true;
-		for( pNodeDialog= pNode->first; pNodeDialog;
-				pNodeDialog=pNodeDialog->next_in_dialog)
+		for(auto* pNodeDialog : pNode->children)
 		{
 			fprintf( fp, "TargetNR      %d\n",pNodeDialog->target_nr );
 			fprintf( fp, "NodeTekst     %s~ \n",pNodeDialog->text );
@@ -337,13 +329,12 @@ void save_dialog( CHAR_DATA * ch )
 void dialog_show_phase( CHAR_DATA * ch, DIALOG_NODE * pNode )
 {
 	int				number = 1;
-	DIALOG_NODE		* pLeaf;
 
 	if ( !pNode || IS_NPC( ch ) )
 		return;
 
 
-	pager_printf( ch, FG_CYAN "%s mówi :",
+	pager_printf( ch, FG_CYAN "%s mï¿½wi :",
 		fcapitalize( ch->pcdata->pMob_speaking->przypadki[0] ) );
 
 	if ( ch->pcdata->last_dialog[0] =='\0' )
@@ -351,13 +342,13 @@ void dialog_show_phase( CHAR_DATA * ch, DIALOG_NODE * pNode )
 	else
 		pager_printf( ch, PLAIN "%s" EOL EOL, ch->pcdata->last_dialog );
 
-	if ( !pNode->first )
+	if ( pNode->children.empty() )
 	{
-		pager_printf( ch, PLAIN " Brak tekstów " EOL EOL );
+		pager_printf( ch, PLAIN " Brak tekstï¿½w " EOL EOL );
 	}
 	else
 	{
-		for( pLeaf= pNode->first; pLeaf; pLeaf=pLeaf->next_in_dialog)
+		for(auto* pLeaf : pNode->children)
 			pager_printf( ch, FG_CYAN "%-2d : " MOD_BOLD "%s" EOL,
 				number++, pLeaf->text );
 	}
@@ -367,21 +358,20 @@ void dialog_show_phase( CHAR_DATA * ch, DIALOG_NODE * pNode )
 void dialog_show( CHAR_DATA * ch, DIALOG_NODE * pNode )
 {
 	int				number = 1;
-	DIALOG_NODE		* pLeaf;
 
 	if ( !pNode )
 		return;
 
 	pager_printf( ch, FG_CYAN "Nr listy :" PLAIN "%d" EOL, pNode->nr );
 	pager_printf( ch, FG_CYAN "Tekst    :" PLAIN "%s" EOL EOL, pNode->text);
-	if ( !pNode->first )
+	if ( pNode->children.empty() )
 	{
-		pager_printf( ch, PLAIN " Brak tekstów " EOL EOL );
+		pager_printf( ch, PLAIN " Brak tekstï¿½w " EOL EOL );
 	}
 	else
 	{
 		pager_printf( ch, FG_CYAN "-------------------------------" EOL );
-		for( pLeaf= pNode->first; pLeaf; pLeaf=pLeaf->next_in_dialog)
+		for(auto* pLeaf : pNode->children)
 		{
 			pager_printf( ch, FG_CYAN "Test prog - " PLAIN "%s" NL,
 				pLeaf->prog ? "TAK" : "BRAK" );
@@ -404,16 +394,15 @@ void dialog_show( CHAR_DATA * ch, DIALOG_NODE * pNode )
 
 void dialog_show_all( CHAR_DATA * ch, DIALOG_NODE * pShowNode )
 {
-	DIALOG_NODE			* pNode;
 	DIALOG_DATA			* pData;
 
 	pData = pShowNode->pBase;
 
-	pager_printf( ch, FG_CYAN "Oto lista wszystkich etapów rozmowy" NL EOL, ch );
+	pager_printf( ch, FG_CYAN "Oto lista wszystkich etapï¿½w rozmowy" NL EOL, ch );
 	pager_printf( ch, FG_CYAN "[" PLAIN "Nr" FG_CYAN "]["
 	PLAIN "Tekst                    " FG_CYAN "]" NL );
 	pager_printf( ch, "-------------------------------" NL );
-	FOREACH( pNode, pData->first )
+	for(auto* pNode : pData->nodes)
 		if ( pNode->nr >= 0	)
 		{
 			pager_printf( ch, FG_CYAN "[" MOD_BOLD "%2d" FG_CYAN "]",
@@ -426,11 +415,8 @@ void dialog_show_all( CHAR_DATA * ch, DIALOG_NODE * pShowNode )
 
 DEF_DO_FUN( diallist )
 {
-	DIALOG_DATA			* pData;
-
-
-	send_to_char( "Lista wszystkich dialogów" NL NL, ch );
-	FOREACH( pData, first_dialog )
+	send_to_char( "Lista wszystkich dialogï¿½w" NL NL, ch );
+	for(auto* pData : dialog_list)
 		pager_printf( ch, "%i - %s" NL,pData->dialog_ID, pData->name );
 	pager_printf( ch, NL );
 }
@@ -495,10 +481,8 @@ void dialedit( DESCRIPTOR_DATA * d, char * argument )
 		if ( !str_prefix( arg1, "add") )
 		{
 			pNode = new_dialog_node();
-			LINK(pNode, pEditNode->pBase->first, pEditNode->pBase->last,
-			next, prev);
-			LINK(pNode, pEditNode->first,
-			pEditNode->last, next_in_dialog, prev_in_dialog);
+			pEditNode->pBase->nodes.push_back( pNode );
+			pEditNode->children.push_back( pNode );
 			pNode->pBase = pEditNode->pBase;
 			send_to_char("New answer add" NL, ch );
 			return;
@@ -556,19 +540,21 @@ void dialedit( DESCRIPTOR_DATA * d, char * argument )
 					send_to_char( "Nie ma tekstu o takim nr." NL, ch );
 					return;
 				}
-				UNLINK(pNode, pEditNode->pBase->first, pEditNode->pBase->last,
-					next, prev);
-				UNLINK(pNode, pEditNode->first, pEditNode->last,
-					next_in_dialog, prev_in_dialog);
+				pEditNode->pBase->nodes.erase(
+					std::remove( pEditNode->pBase->nodes.begin(), pEditNode->pBase->nodes.end(), pNode ),
+					pEditNode->pBase->nodes.end() );
+				pEditNode->children.erase(
+					std::remove( pEditNode->children.begin(), pEditNode->children.end(), pNode ),
+					pEditNode->children.end() );
 				free_dialog_node( pNode );
-				send_to_char("Tekst usuniêty" NL, ch );
+				send_to_char("Tekst usuniï¿½ty" NL, ch );
 				return;
 			}
 			else if ( !str_prefix( arg3, "follow" ) )
 			{
 				if ( pNode->target_nr < 0 )
 				{
-					send_to_char("Ustaw najpierw gdzie chcesz przej¶æ ." NL , ch );
+					send_to_char("Ustaw najpierw gdzie chcesz przejï¿½ï¿½ ." NL , ch );
 					return;
 				}
 				pNewNode = get_dialog_target( pNode->pBase,
@@ -597,8 +583,7 @@ void dialedit( DESCRIPTOR_DATA * d, char * argument )
 				pNewNode = new_dialog_node();
 				pNewNode->pBase = pEditNode->pBase;
 				pNewNode->nr = find_free_nr( pNewNode->pBase );
-				LINK( pNewNode, pNewNode->pBase->first,
-					pNewNode->pBase->last, next, prev);
+				pNewNode->pBase->nodes.push_back( pNewNode );
 				pNode->target_nr = pNewNode->nr;
 				send_to_char("Target node created." NL, ch );
 				return;
@@ -623,21 +608,21 @@ void dialedit( DESCRIPTOR_DATA * d, char * argument )
         string_append(ch, &pNode->text);
 				//argument = one_argument( arg2, arg1 );
 				//STRDUP(	pNode->text, argument );
-				//send_to_char( "Tekst zosta³ zapisany." NL, ch );
+				//send_to_char( "Tekst zostaï¿½ zapisany." NL, ch );
 				return;
 			}
 		}
 		else if ( !str_prefix( arg1, "clear") )
 		{
 			STRDUP( pEditNode->text, "");
-			send_to_char("Tekst zosta³ usuniêty" NL, ch);
+			send_to_char("Tekst zostaï¿½ usuniï¿½ty" NL, ch);
 			return;
 		}
 		else
 		{
       string_append(ch, &pEditNode->text);
 			//STRDUP( pEditNode->text,	arg2);
-			//send_to_char("Tekst zosta³ ustawiony" NL, ch);
+			//send_to_char("Tekst zostaï¿½ ustawiony" NL, ch);
 			return;
 		}
 	}
@@ -670,18 +655,19 @@ void dialedit( DESCRIPTOR_DATA * d, char * argument )
 			}
 			else if ( !str_cmp( arg3, "delete" ) )
 			{
-				if ( pNewNode->pBase->first == pNewNode->pBase->last)
+				if ( pNewNode->pBase->nodes.size() <= 1 )
 				{
-					send_to_char( "Nie mo¿esz usun±æ jedynego"
-					" istniej±cego etapu w tym dialogu" NL, ch );
+					send_to_char( "Nie moï¿½esz usunï¿½ï¿½ jedynego"
+					" istniejï¿½cego etapu w tym dialogu" NL, ch );
 					return;
 				}
-				pNode = pNewNode->pBase->first;
+				pNode = pNewNode->pBase->nodes.front();
 				ch->desc->olc_editing	= (void *)pNode;
-				UNLINK( pNewNode, pNewNode->pBase->first,
-				pNewNode->pBase->last, next, prev );
+				pNewNode->pBase->nodes.erase(
+					std::remove( pNewNode->pBase->nodes.begin(), pNewNode->pBase->nodes.end(), pNewNode ),
+					pNewNode->pBase->nodes.end() );
 				free_dialog_node( pNewNode );
-				ch_printf( ch , "Dialog %s zosta³ usuniety" NL NL, value );
+				ch_printf( ch , "Dialog %s zostaï¿½ usuniety" NL NL, value );
 				dialog_show( ch, pNode );
 				return;
 			}
@@ -708,16 +694,16 @@ bool dialedit_create( CHAR_DATA * ch, char * argument )
 	if ( arg1[0] != '\0' )
 	{
 		pData = new_dialog_data();
-		LINK( pData, first_dialog, last_dialog, next, prev );
+		dialog_list.push_back( pData );
 		STRDUP( pData->name, arg1 );
-		pData->first->nr		= 0;
-		dialog_show(ch, pData->first);
+		pData->nodes.front()->nr		= 0;
+		dialog_show(ch, pData->nodes.front());
 	}
 	else return false;
 
 	ch->pcdata->line_nr		= 0;
 	ch->desc->connected		= CON_DIALOGEDIT;
-	ch->desc->olc_editing	= (void *)pData->first;
+	ch->desc->olc_editing	= (void *)pData->nodes.front();
 	return true;
 }
 
@@ -749,11 +735,11 @@ DEF_DO_FUN( dialedit )
 			ch_printf( ch, "Brak takiego dialogu" EOL );
 			return;
 		}
-		dialog_show(ch, pData->first);
+		dialog_show(ch, pData->nodes.front());
 
 		ch->pcdata->line_nr		= 0;
 		ch->desc->connected		= CON_DIALOGEDIT;
-		ch->desc->olc_editing	= (void *)pData->first;
+		ch->desc->olc_editing	= (void *)pData->nodes.front();
 	}
 }
 
@@ -765,16 +751,15 @@ DEF_DO_FUN( start_speak )
 	DIALOG_DATA		* pData;
 
 	pRoom = ch->in_room;
-	if ( !pRoom->first_person )
+	if ( pRoom->people.empty() )
 		return;
-	if ( pRoom->first_person == pRoom->last_person &&
-			pRoom->first_person == ch )
+	if ( pRoom->people.size() == 1 && pRoom->people.front() == ch )
 		return;
 
 	one_argument( argument, arg );
 	if ( arg[0] == '\0' )
 	{
-		send_to_char( "Z kim chcesz rozmawiaæ ?", ch );
+		send_to_char( "Z kim chcesz rozmawiaï¿½ ?", ch );
 		return;
 	}
 
@@ -801,7 +786,7 @@ DEF_DO_FUN( start_speak )
 	}
 	ch->pcdata->line_nr		= 0;
 	ch->desc->connected		= CON_SPEAKING;
-	ch->desc->olc_editing	= (void *)pData->first;
+	ch->desc->olc_editing	= (void *)pData->nodes.front();
 	ch->pcdata->pMob_speaking	= pChar;
 	act( COL_ACTION, "$n rozpoczyna rozmowe z $N$4.", ch, NULL, pChar, TO_ROOM );
 	mob_speak( ch->desc, (char *)"show" );
@@ -824,7 +809,7 @@ void mob_speak( DESCRIPTOR_DATA * d, char * argument )
 	if ( !(pNode = (DIALOG_NODE *) ch->desc->olc_editing ) )
 	{
 		bug("dialedit: null dialog editing struct");
-		send_to_char( "Wystapi³ b³±d - rozmowa przerwana" NL, ch );
+		send_to_char( "Wystapiï¿½ bï¿½ï¿½d - rozmowa przerwana" NL, ch );
 		STRDUP(	ch->pcdata->last_dialog, "" );
 		ch->pcdata->pMob_speaking	= NULL;
 		ch->desc->olc_editing		= NULL;
@@ -840,7 +825,7 @@ void mob_speak( DESCRIPTOR_DATA * d, char * argument )
 	}
 	if ( !str_prefix( arg1, "done") || !str_prefix( arg1, "koniec" ) )
 	{
-		act( COL_ACTION, "$n koñczy rozmowê z $N$4.", ch, NULL, ch->pcdata->pMob_speaking, TO_ROOM );
+		act( COL_ACTION, "$n koï¿½czy rozmowï¿½ z $N$4.", ch, NULL, ch->pcdata->pMob_speaking, TO_ROOM );
 		STRDUP(	ch->pcdata->last_dialog, "" );
 		ch->pcdata->pMob_speaking	= NULL;
 		ch->desc->olc_editing		= NULL;
@@ -859,8 +844,8 @@ void mob_speak( DESCRIPTOR_DATA * d, char * argument )
 
 		if ( pNewNode->target_nr == -1 )
 		{
-			act( COL_ACTION, "$N koñczy rozmowê z $n$4.", ch, NULL, ch->pcdata->pMob_speaking, TO_ROOM );
-			ch_printf( ch, "%s koñczy z Tob± rozmowe" NL,
+			act( COL_ACTION, "$N koï¿½czy rozmowï¿½ z $n$4.", ch, NULL, ch->pcdata->pMob_speaking, TO_ROOM );
+			ch_printf( ch, "%s koï¿½czy z Tobï¿½ rozmowe" NL,
 		fcapitalize( ch->pcdata->pMob_speaking->przypadki[0] ) );
 			STRDUP(	ch->pcdata->last_dialog, "" );
 			ch->pcdata->pMob_speaking	= NULL;

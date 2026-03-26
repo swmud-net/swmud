@@ -60,8 +60,6 @@ void deal_with_crash args( ( ) );
 
 time_t new_boot_time_t;
 extern struct tm new_boot_struct;
-extern OBJ_INDEX_DATA *obj_index_hash[MAX_KEY_HASH];
-extern MOB_INDEX_DATA *mob_index_hash[MAX_KEY_HASH];
 
 int get_saveflag(char *name)
 {
@@ -86,7 +84,7 @@ DEF_DO_FUN( wizinfo )
 
 	one_argument(argument, arg);
 
-	if ((arg[0] == '\0'))
+	if (arg[0] == '\0')
 		victim = ch;
 	else if (!(victim = get_char_world(ch, arg)))
 	{
@@ -102,7 +100,7 @@ DEF_DO_FUN( wizinfo )
 
 	if (get_trust(victim) > get_trust(ch))
 	{
-		send_to_char("Nie masz wystarczaj±cych uprawnieñ." NL, ch);
+		send_to_char("Nie masz wystarczajï¿½cych uprawnieï¿½." NL, ch);
 		return;
 	}
 
@@ -156,12 +154,11 @@ DEF_DO_FUN( wizinfo )
  */
 CHAR_DATA* get_waiting_desc(CHAR_DATA *ch, char *name)
 {
-	DESCRIPTOR_DATA *d;
 	CHAR_DATA *ret_char = 0;
 	static unsigned int number_of_hits;
 
 	number_of_hits = 0;
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		if (d->character && (!str_prefix(name, d->character->name))
 				&& IS_WAITING_FOR_AUTH(d->character))
@@ -189,7 +186,6 @@ DEF_DO_FUN( authorize )
 	char arg2[MIL];
 	char buf[MAX_STRING_LENGTH];
 	CHAR_DATA *victim;
-	DESCRIPTOR_DATA *d;
 
 	argument = one_argument(argument, arg1);
 	argument = one_argument(argument, arg2);
@@ -200,7 +196,7 @@ DEF_DO_FUN( authorize )
 		send_to_char("Pending authorizations:" NL, ch);
 		send_to_char(" Chosen Character Name" NL, ch);
 		send_to_char("---------------------------------------------" NL, ch);
-		for (d = first_descriptor; d; d = d->next)
+		for (auto* d : descriptor_list)
 			if ((victim = d->character) != NULL && IS_WAITING_FOR_AUTH(victim))
 				ch_printf(ch, " %s!%s@%s new %s..." NL, victim->name,
 						victim->desc->user, victim->desc->host,
@@ -226,15 +222,15 @@ DEF_DO_FUN( authorize )
 		ch_printf(victim,
 				"" NL /* B */
 				"                                  &W%s!&w                                " NL /* B */
-				"                  &WAdministratorzy zaakceptowali twoje imiê.&w          " NL /* B */
-				"               Teraz masz ju¿ pe³ne prawo do gry na SW-Mudzie.           " NL
+				"                  &WAdministratorzy zaakceptowali twoje imiï¿½.&w          " NL /* B */
+				"               Teraz masz juï¿½ peï¿½ne prawo do gry na SW-Mudzie.           " NL
 				"                               &WGratulacje!&w                           " NL,
 				victim->name); /* B */
 		return;
 	}
 	else if (!str_cmp(arg2, "no") || !str_cmp(arg2, "deny"))
 	{
-		send_to_char("Twój dostêp do muda zosta³ zabroniony." NL, victim);
+		send_to_char("Twï¿½j dostï¿½p do muda zostaï¿½ zabroniony." NL, victim);
 		sprintf(buf, "%s denied authorization to %s", ch->name, victim->name);
 		to_channel(buf, CHANNEL_MONITOR, "Monitor", ch->top_level);
 		ch_printf(ch, "You have denied %s." NL, victim->name);
@@ -246,8 +242,8 @@ DEF_DO_FUN( authorize )
 		sprintf(buf, "%s has denied %s's name", ch->name, victim->name);
 		to_channel(buf, CHANNEL_MONITOR, "Monitor", ch->top_level);
 		ch_printf(victim,
-				"Administratorzy muda nie zaakceptuj± takiego imienia jak %s" NL
-				"Wymy¶l inne, bardziej odpowiednie i poinformuj o tym Administratorów." NL,
+				"Administratorzy muda nie zaakceptujï¿½ takiego imienia jak %s" NL
+				"Wymyï¿½l inne, bardziej odpowiednie i poinformuj o tym Administratorï¿½w." NL,
 				victim->name);
 		ch_printf(ch, "You requested %s change names." NL, victim->name);
 		victim->pcdata->auth_state = 2;
@@ -388,7 +384,7 @@ DEF_DO_FUN( deny )
 	}
 
 	SET_BIT(victim->act, PLR_DENY);
-	send_to_char("Masz zabroniony dostêp do muda!" NL, victim);
+	send_to_char("Masz zabroniony dostï¿½p do muda!" NL, victim);
 	send_to_char("OK." NL, ch);
 	do_quit(victim, (char*) "");
 
@@ -398,7 +394,6 @@ DEF_DO_FUN( deny )
 DEF_DO_FUN( disconnect )
 {
 	char arg[MIL];
-	DESCRIPTOR_DATA *d;
 	CHAR_DATA *victim;
 
 	one_argument(argument, arg);
@@ -426,7 +421,7 @@ DEF_DO_FUN( disconnect )
 		return;
 	}
 
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		if (d == victim->desc)
 		{
@@ -448,8 +443,7 @@ DEF_DO_FUN( disconnect )
  */
 DEF_DO_FUN( fquit )
 {
-	DESCRIPTOR_DATA *d;
-	bool found;
+	DESCRIPTOR_DATA *d = nullptr;
 
 	if (argument[0] == '\0')
 	{
@@ -457,22 +451,21 @@ DEF_DO_FUN( fquit )
 		return;
 	}
 
-	found = false;
-	for (d = first_descriptor; d; d = d->next)
-		if (d->character && !str_cmp(d->character->name, argument)
-				&& d->character->top_level == 1)
+	for (auto* desc : descriptor_list)
+		if (desc->character && !str_cmp(desc->character->name, argument)
+				&& desc->character->top_level == 1)
 		{
-			found = true;
+			d = desc;
 			break;
 		}
 
-	if (!found)
+	if (!d)
 	{
 		send_to_char("There is no player like that (at level 1)." NL, ch);
 		return;
 	}
 
-	send_to_char("Administratorzy muda ka¿± Ci wyj¶æ z gry." NL, d->character);
+	send_to_char("Administratorzy muda kaï¿½ï¿½ Ci wyjï¿½ï¿½ z gry." NL, d->character);
 	do_quit(d->character, (char*) "");
 	donemsg(ch);
 	return;
@@ -480,15 +473,13 @@ DEF_DO_FUN( fquit )
 
 DEF_DO_FUN( forceclose )
 {
-	DESCRIPTOR_DATA *d;
-
 	if (argument[0] == '\0')
 	{
 		send_to_char("Usage: forceclose <descriptor#>" NL, ch);
 		return;
 	}
 
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		if (d->descriptor == atoi(argument))
 		{
@@ -537,12 +528,10 @@ DEF_DO_FUN( pardon )
 
 void echo_to_all(const char *argument, int tar)
 {
-	DESCRIPTOR_DATA *d;
-
 	if (!argument || argument[0] == '\0')
 		return;
 
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		/* Added showing echoes to players who are editing, so they won't
 		 miss out on important info like upcoming reboots. --Narn */
@@ -634,12 +623,10 @@ void do_echoat(CHAR_DATA *ch, char *argument) //byTrog
 
 void echo_to_room(ROOM_INDEX_DATA *room, const char *argument)
 {
-	CHAR_DATA *vic;
-
 	if (room == NULL)
 		return;
 
-	for (vic = room->first_person; vic; vic = vic->next_in_room)
+	for (auto* vic : room->people)
 	{
 		send_to_char( FB_WHITE, vic);
 		send_to_char(argument, vic);
@@ -650,12 +637,10 @@ void echo_to_room(ROOM_INDEX_DATA *room, const char *argument)
 /* Thanos */
 void echo_to_area(AREA_DATA *area, char *argument)
 {
-	CHAR_DATA *pch;
-
 	if (area == NULL)
 		return;
 
-	for (pch = first_char; pch; pch = pch->next)
+	for (auto* pch : char_list)
 	{
 		if (!IS_NPC(pch) && IS_AWAKE(pch) && pch->in_room
 				&& pch->in_room->area == area)
@@ -718,7 +703,6 @@ DEF_DO_FUN( transfer )
 	char arg1[MIL];
 	char arg2[MIL];
 	ROOM_INDEX_DATA *location;
-	DESCRIPTOR_DATA *d;
 	CHAR_DATA *victim;
 
 	argument = one_argument(argument, arg1);
@@ -732,7 +716,7 @@ DEF_DO_FUN( transfer )
 
 	if (!str_cmp(arg1, "all"))
 	{
-		for (d = first_descriptor; d; d = d->next)
+		for (auto* d : descriptor_list)
 		{
 			if (d->connected >= CON_PLAYING && d->character != ch
 					&& d->character->in_room && d->newstate != 2
@@ -793,14 +777,14 @@ DEF_DO_FUN( transfer )
 	uncrew(ship_from_room(victim->in_room), victim);
 	if (victim->fighting)
 		stop_fighting(victim, true);
-	act( COL_FORCE, "$n znika rozpadaj±c siê na maleñkie cz±steczki.", victim,
+	act( COL_FORCE, "$n znika rozpadajï¿½c siï¿½ na maleï¿½kie czï¿½steczki.", victim,
 			NULL, NULL, TO_ROOM);
 	victim->retran = victim->in_room->vnum;
 	char_from_room(victim);
 	char_to_room(victim, location);
-	act( COL_FORCE, "$n materializuje siê tutaj.", victim, NULL, NULL, TO_ROOM);
+	act( COL_FORCE, "$n materializuje siï¿½ tutaj.", victim, NULL, NULL, TO_ROOM);
 	if (ch != victim)
-		act( COL_IMMORT, "$n przenosi ciê.", ch, NULL, victim, TO_VICT);
+		act( COL_IMMORT, "$n przenosi ciï¿½.", ch, NULL, victim, TO_VICT);
 	do_look(victim, (char*) "auto");
 	send_to_char("Ok." NL, ch);
 	if (!IS_IMMORTAL(victim) && !IS_NPC(victim)
@@ -847,7 +831,6 @@ DEF_DO_FUN( at )
 	char arg[MIL];
 	ROOM_INDEX_DATA *location;
 	ROOM_INDEX_DATA *original;
-	CHAR_DATA *wch, *ch_next;
 
 	argument = one_argument(argument, arg);
 
@@ -878,7 +861,9 @@ DEF_DO_FUN( at )
 	}
 
 	original = ch->in_room;
-	ch_next = ch->next_in_room;
+	/* Save position of ch in room's people list (the element after ch) */
+	auto ch_it = std::find(original->people.begin(), original->people.end(), ch);
+	auto next_it = (ch_it != original->people.end()) ? std::next(ch_it) : original->people.end();
 	char_from_room(ch);
 	char_to_room(ch, location);
 	interpret(ch, argument);
@@ -887,7 +872,7 @@ DEF_DO_FUN( at )
 	 * See if 'ch' still exists before continuing!
 	 * Handles 'at XXXX quit' case.
 	 */
-	for (wch = first_char; wch; wch = wch->next)
+	for (auto* wch : char_list)
 	{
 		if (wch == ch)
 		{
@@ -895,20 +880,18 @@ DEF_DO_FUN( at )
 			char_to_room(ch, original);
 
 			/* BUGFIX by Thanos:
-			 * po wykonaniu komendy progowej mob czêsto u¿ywa mpat, a co
-			 * za tym idzie robi co¶ w innej lokacji, czyli wypina siê z listy
-			 * lokacji aktualnej. Po powrocie zostaje wpiêty na sam jej koniec,
-			 * a co za tym idzie, pêtla lec±ca po wszystkich w pomieszczeniu
-			 * znów trafia na niego. Taki manewr grozi zapêtlaniem i duplikowaniem
-			 * siê wykonañ progów. Mój sposób: wepnijmy mobka tam gdzie by³.
+			 * po wykonaniu komendy progowej mob czï¿½sto uï¿½ywa mpat, a co
+			 * za tym idzie robi coï¿½ w innej lokacji, czyli wypina siï¿½ z listy
+			 * lokacji aktualnej. Po powrocie zostaje wpiï¿½ty na sam jej koniec,
+			 * a co za tym idzie, pï¿½tla lecï¿½ca po wszystkich w pomieszczeniu
+			 * znï¿½w trafia na niego. Taki manewr grozi zapï¿½tlaniem i duplikowaniem
+			 * siï¿½ wykonaï¿½ progï¿½w. Mï¿½j sposï¿½b: wepnijmy mobka tam gdzie byï¿½.
 			 * O ile ofcoz sa jeszcze ci, obok ktorych stal.
 			 */
-			if (ch_next)
+			if (next_it != original->people.end())
 			{
-				UNLINK(ch, original->first_person, original->last_person,
-						next_in_room, prev_in_room);
-				INSERT(ch, ch_next, original->first_person, next_in_room,
-						prev_in_room);
+				original->people.remove(ch);
+				original->people.insert(next_it, ch);
 			}
 			break;
 		}
@@ -924,13 +907,13 @@ DEF_DO_FUN( rat )
 	char arg2[MIL];
 	int Start, End;
 
-	if (IS_NPC(ch)) /*bez zbêdnego ryzyka*/
+	if (IS_NPC(ch)) /*bez zbï¿½dnego ryzyka*/
 	{
 		huh(ch);
 		return;
 	}
 
-	/* zatrzymujemy pêtlê */
+	/* zatrzymujemy pï¿½tlï¿½ */
 	if (argument[0] && !str_cmp(argument, "stop"))
 	{
 		if (rat_loop.rStopped)
@@ -950,7 +933,7 @@ DEF_DO_FUN( rat )
 		return;
 	}
 
-	/* je¶li kto¶ zainteresowany chce sprawdziæ co tak zapierdala :) */
+	/* jeï¿½li ktoï¿½ zainteresowany chce sprawdziï¿½ co tak zapierdala :) */
 	if (argument[0] && !str_cmp(argument, "status"))
 	{
 		if (rat_loop.rStopped)
@@ -1020,9 +1003,6 @@ DEF_DO_FUN( rstat )
 	char buf[MAX_STRING_LENGTH];
 	char arg[MIL];
 	ROOM_INDEX_DATA *location;
-	OBJ_DATA *obj;
-	CHAR_DATA *rch;
-	EXIT_DATA *pexit;
 	int cnt;
 	static const char *dir_text[] =
 	{ "n", "e", "s", "w", "u", "d", "ne", "nw", "se", "sw", "?" };
@@ -1034,7 +1014,7 @@ DEF_DO_FUN( rstat )
 		if (!can_edit(ch, ch->in_room->vnum))
 		{
 			send_to_char(
-					"Mo¿esz u¿ywaæ rstat tylko w przydzielonej ci krainie." NL,
+					"Moï¿½esz uï¿½ywaï¿½ rstat tylko w przydzielonej ci krainie." NL,
 					ch);
 			return;
 		}
@@ -1047,7 +1027,7 @@ DEF_DO_FUN( rstat )
 		ch_printf(ch, "&cExits for room '&w%s&c.' vnum&w %d" NL, location->name,
 				location->vnum);
 
-		for (cnt = 0, pexit = location->first_exit; pexit; pexit = pexit->next)
+		cnt = 0; for (auto* pexit : location->exits)
 			ch_printf(ch,
 					"%2d&c)&w %2s&c to&w %-5d&c Key:&w %d&c Flags:&w %d&c OrigFlags:&w %d&c  Keywords: '&w%s&c'.&w\n\r&cDescription:&w %s&cExit links back to vnum:&w %d&c  Exit's RoomVnum:&w %d&c  Distance:&w %d" NL,
 					++cnt, dir_text[pexit->vdir],
@@ -1075,7 +1055,7 @@ DEF_DO_FUN( rstat )
 		}
 		else
 		{
-			send_to_char("Omijam flagê 'private'!" NL, ch);
+			send_to_char("Omijam flagï¿½ 'private'!" NL, ch);
 		}
 
 	}
@@ -1106,22 +1086,20 @@ DEF_DO_FUN( rstat )
 	else
 		ch_printf(ch, PLAIN " (none)" NL);
 
-	if (location->first_extradesc)
+	if (!location->extradesc.empty())
 	{
-		EXTRA_DESCR_DATA *ed;
-
 		send_to_char( FG_CYAN "Extra description keywords: '" PLAIN, ch);
-		for (ed = location->first_extradesc; ed; ed = ed->next)
+		for (auto* ed : location->extradesc)
 		{
 			send_to_char(ed->keyword, ch);
-			if (ed->next)
+			if (ed != location->extradesc.back())
 				send_to_char(" ", ch);
 		}
 		send_to_char( FG_CYAN "'." EOL, ch);
 	}
 
 	send_to_char( FG_CYAN "Characters:" PLAIN, ch);
-	for (rch = location->first_person; rch; rch = rch->next_in_room)
+	for (auto* rch : location->people)
 	{
 		if (can_see(ch, rch))
 		{
@@ -1132,7 +1110,7 @@ DEF_DO_FUN( rstat )
 	}
 
 	send_to_char( EOL FG_CYAN "Objs:" PLAIN, ch);
-	for (obj = location->first_content; obj; obj = obj->next_content)
+	for (auto* obj : location->contents)
 	{
 		send_to_char(" ", ch);
 		one_argument(obj->name, buf);
@@ -1140,10 +1118,10 @@ DEF_DO_FUN( rstat )
 	}
 	send_to_char( FG_CYAN "." EOL, ch);
 
-	if (location->first_exit)
+	if (!location->exits.empty())
 		send_to_char(
 		FG_CYAN "------------------- EXITS -------------------" EOL, ch);
-	for (cnt = 0, pexit = location->first_exit; pexit; pexit = pexit->next)
+	cnt = 0; for (auto* pexit : location->exits)
 	{
 		ch_printf(ch, "%2d"
 		FG_CYAN ")" PLAIN " %-2s" FG_CYAN " to" PLAIN " %-5d"
@@ -1163,8 +1141,6 @@ DEF_DO_FUN( rstat )
 DEF_DO_FUN( ostat )
 {
 	char arg[MIL];
-	REQUIREMENT_DATA *req;
-	AFFECT_DATA *paf;
 	OBJ_DATA *obj;
 	char *pdesc;
 
@@ -1188,13 +1164,13 @@ DEF_DO_FUN( ostat )
 	ch_printf(ch, "&cName:&w %s. &cGender:&w %d &c(&w%s&c)&w" NL, obj->name,
 			obj->gender, bit_name(gender_types_list, obj->gender));
 
-	pdesc = get_extra_descr(arg, obj->first_extradesc);
+	pdesc = get_extra_descr(arg, obj->extradesc);
 	if (!pdesc)
-		pdesc = get_extra_descr(arg, obj->pIndexData->first_extradesc);
+		pdesc = get_extra_descr(arg, obj->pIndexData->extradesc);
 	if (!pdesc)
-		pdesc = get_extra_descr(obj->name, obj->first_extradesc);
+		pdesc = get_extra_descr(obj->name, obj->extradesc);
 	if (!pdesc)
-		pdesc = get_extra_descr(obj->name, obj->pIndexData->first_extradesc);
+		pdesc = get_extra_descr(obj->name, obj->pIndexData->extradesc);
 	if (pdesc)
 		send_to_char(pdesc, ch);
 
@@ -1251,12 +1227,10 @@ DEF_DO_FUN( ostat )
 			obj->value[1], obj->value[2], obj->value[3], obj->value[4],
 			obj->value[5]);
 
-	if (obj->pIndexData->first_extradesc)
+	if (!obj->pIndexData->extradesc.empty())
 	{
-		EXTRA_DESCR_DATA *ed;
-
 		send_to_char("&cPrimary description keywords:" NL, ch);
-		for (ed = obj->pIndexData->first_extradesc; ed; ed = ed->next)
+		for (auto* ed : obj->pIndexData->extradesc)
 		{
 			send_to_char("&W'&w", ch);
 			send_to_char(ed->keyword, ch);
@@ -1265,40 +1239,38 @@ DEF_DO_FUN( ostat )
 			send_to_char("&w\"" NL NL, ch);
 		}
 	}
-	if (obj->first_extradesc)
+	if (!obj->extradesc.empty())
 	{
-		EXTRA_DESCR_DATA *ed;
-
 		send_to_char("&cSecondary description keywords: '&w", ch);
-		for (ed = obj->first_extradesc; ed; ed = ed->next)
+		for (auto* ed : obj->extradesc)
 		{
 			send_to_char(ed->keyword, ch);
-			if (ed->next)
+			if (ed != obj->extradesc.back())
 				send_to_char(" ", ch);
 		}
 		send_to_char("&c'.&w" NL, ch);
 	}
 
-	for (paf = obj->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->affects)
 		ch_printf(ch, FG_CYAN
 		"Affects" PLAIN " %s" FG_CYAN " by" PLAIN " %s" FG_CYAN ". (extra)" EOL,
 				bit_name(apply_types_list, paf->location),
 				STRING_AFFECT(paf->location, paf->modifier));
 
-	for (paf = obj->pIndexData->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->pIndexData->affects)
 		ch_printf(ch, FG_CYAN
 		"Affects" PLAIN " %s" FG_CYAN " by" PLAIN " %s" FG_CYAN "." EOL,
 				bit_name(apply_types_list, paf->location),
 				STRING_AFFECT(paf->location, paf->modifier));
 
-	for (req = obj->first_requirement; req; req = req->next)
+	for (auto* req : obj->requirements)
 	{
 		send_to_char( FG_CYAN "Requires: ", ch);
 		show_req(ch, req);
 		send_to_char("(extra)" EOL, ch);
 	}
 
-	for (req = obj->pIndexData->first_requirement; req; req = req->next)
+	for (auto* req : obj->pIndexData->requirements)
 	{
 		send_to_char( FG_CYAN "Requires: ", ch);
 		show_req(ch, req);
@@ -1311,12 +1283,8 @@ DEF_DO_FUN( mstat )
 {
 	char arg[MIL];
 	char *n;
-	AFFECT_DATA *paf;
 	CHAR_DATA *victim;
 	SKILLTYPE *skill;
-	CRIME_DATA *crime;
-	NAMESLIST_DATA *nameslist;
-	KNOWN_LANG *klang;
 
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
@@ -1343,7 +1311,7 @@ DEF_DO_FUN( mstat )
 			|| ( IS_ADMIN( victim->name ) && !IS_ADMIN(ch->name))) //added by Thanos :)
 	{
 		ch_printf(ch, FB_WHITE
-		"%s blask o¶lepia ciê nie pozwalaj±c przyjrzeæ siê bli¿ej." EOL,
+		"%s blask oï¿½lepia ciï¿½ nie pozwalajï¿½c przyjrzeï¿½ siï¿½ bliï¿½ej." EOL,
 		FEMALE( victim ) ? "Jej" : "Jego");
 		return;
 	}
@@ -1465,9 +1433,9 @@ DEF_DO_FUN( mstat )
 		ch_printf(ch, "&cPcflags:&w %s" NL,
 				flag_string(pc_flags_list, victim->pcdata->flags));
 
-		if (victim->first_crime)
+		if (!victim->crimes.empty())
 		{
-			for (crime = victim->first_crime; crime; crime = crime->next)
+			for (auto* crime : victim->crimes)
 				ch_printf(ch,
 						"&cCrime data:&w Planet: %s  Lv: %d  for: %s (%d)" NL,
 						crime->planet, crime->level,
@@ -1481,11 +1449,9 @@ DEF_DO_FUN( mstat )
 			flag_string(aff_flags_list, victim->affected_by));
 	ch_printf(ch, "&cSpeaking:&w %s" NL, victim->speaking->name);
 	send_to_char("&cLanguages:&w", ch);
-	if ( IS_NPC( victim ) && !victim->first_klang)
+	if ( IS_NPC( victim ) && victim->klangs.empty())
 	{
-		LANG_DATA *lang;
-
-		FOREACH( lang, first_lang )
+		for (auto* lang : lang_list)
 		{
 			send_to_char(" ", ch);
 			send_to_char(lang->name, ch);
@@ -1493,7 +1459,7 @@ DEF_DO_FUN( mstat )
 		}
 	}
 	else
-		FOREACH( klang, victim->first_klang )
+		for (auto* klang : victim->klangs)
 		{
 			if (victim->speaking == klang->language)
 				send_to_char( FB_RED, ch);
@@ -1534,12 +1500,11 @@ DEF_DO_FUN( mstat )
 	{
 		ch_printf(ch, FG_CYAN "Nameslist (" PLAIN "%d" FG_CYAN "):" PLAIN,
 				victim->pIndexData->namescount);
-		for (nameslist = victim->pIndexData->first_nameslist; nameslist;
-				nameslist = nameslist->next)
+		for (auto* nameslist : victim->pIndexData->nameslists)
 			ch_printf(ch, " %s", nameslist->name);
 		ch_printf(ch, FG_CYAN ".\n" PLAIN);
 	}
-	for (paf = victim->first_affect; paf; paf = paf->next)
+	for (auto* paf : victim->affects)
 		if ((skill = get_skilltype(paf->type)) != NULL)
 			ch_printf(ch,
 					"%s: '%s' modifies %s by %d for %d rounds with bits %s." NL,
@@ -1547,13 +1512,11 @@ DEF_DO_FUN( mstat )
 					bit_name(apply_types_list, paf->location), paf->modifier,
 					paf->duration, flag_string(aff_flags_list, paf->bitvector));
 
-	if (get_trust(ch) > 103 && !IS_NPC(victim) && victim->pcdata->first_fevent)
+	if (get_trust(ch) > 103 && !IS_NPC(victim) && !victim->pcdata->fevents_list.empty())
 	{
-		FEVENT_DATA *fevent;
-
-		ch_printf(ch, FG_CYAN "Force Events (" PLAIN "%d" FG_CYAN "):" EOL,
-				victim->pcdata->fevents);
-		FOREACH( fevent, victim->pcdata->first_fevent )
+		ch_printf(ch, FG_CYAN "Force Events (" PLAIN "%zu" FG_CYAN "):" EOL,
+				victim->pcdata->fevents_list.size());
+		for (auto* fevent : victim->pcdata->fevents_list)
 			ch_printf(ch, "%s" FG_CYAN ": (" PLAIN "%s" FG_CYAN ") (" PLAIN
 			"%lld %lld %lld %lld %lld" FG_CYAN ")" EOL,
 					bit_name(fevent_types_list, fevent->trigger), fevent->sattr,
@@ -1566,7 +1529,6 @@ DEF_DO_FUN( mstat )
 DEF_DO_FUN( mfind )
 {
 	char arg[MIL];
-	MOB_INDEX_DATA *pMobIndex;
 	int hash;
 	int nMatch;
 	bool fAll;
@@ -1614,8 +1576,7 @@ DEF_DO_FUN( mfind )
 	 * -Thoric
 	 */
 	for (hash = 0; hash < MAX_KEY_HASH; hash++)
-		for (pMobIndex = mob_index_hash[hash]; pMobIndex;
-				pMobIndex = pMobIndex->next)
+		for (auto* pMobIndex : mob_index_hash[hash])
 			if (fAll || nifty_is_name(arg, pMobIndex->player_name))
 			{
 				nMatch++;
@@ -1636,7 +1597,6 @@ DEF_DO_FUN( ofind )
 	char arg[MIL];
 	char arg2[MIL];
 	char arg3[MIL];
-	OBJ_INDEX_DATA *pObjIndex;
 	int hash;
 	int nMatch;
 
@@ -1653,8 +1613,7 @@ DEF_DO_FUN( ofind )
 	if (!str_cmp(arg, "name"))
 	{
 		for (hash = 0; hash < MAX_KEY_HASH; hash++)
-			for (pObjIndex = obj_index_hash[hash]; pObjIndex; pObjIndex =
-					pObjIndex->next)
+			for (auto* pObjIndex : obj_index_hash[hash])
 				if (nifty_is_name(argument, pObjIndex->name))
 				{
 					nMatch++;
@@ -1685,8 +1644,7 @@ DEF_DO_FUN( ofind )
 		}
 
 		for (hash = 0; hash < MAX_KEY_HASH; hash++)
-			for (pObjIndex = obj_index_hash[hash]; pObjIndex; pObjIndex =
-					pObjIndex->next)
+			for (auto* pObjIndex : obj_index_hash[hash])
 				if (*arg3 == '\0' && pObjIndex->item_type == type)
 				{
 					nMatch++;
@@ -1712,8 +1670,7 @@ DEF_DO_FUN( ofind )
 		}
 
 		for (hash = 0; hash < MAX_KEY_HASH; hash++)
-			for (pObjIndex = obj_index_hash[hash]; pObjIndex; pObjIndex =
-					pObjIndex->next)
+			for (auto* pObjIndex : obj_index_hash[hash])
 				if (IS_SET(pObjIndex->extra_flags, flag))
 				{
 					nMatch++;
@@ -1733,8 +1690,7 @@ DEF_DO_FUN( ofind )
 		}
 
 		for (hash = 0; hash < MAX_KEY_HASH; hash++)
-			for (pObjIndex = obj_index_hash[hash]; pObjIndex; pObjIndex =
-					pObjIndex->next)
+			for (auto* pObjIndex : obj_index_hash[hash])
 				if (IS_SET(pObjIndex->wear_flags, flag))
 				{
 					nMatch++;
@@ -1746,8 +1702,7 @@ DEF_DO_FUN( ofind )
 	else if (!str_cmp(arg, "type"))
 	{
 		for (hash = 0; hash < MAX_KEY_HASH; hash++)
-			for (pObjIndex = obj_index_hash[hash]; pObjIndex; pObjIndex =
-					pObjIndex->next)
+			for (auto* pObjIndex : obj_index_hash[hash])
 				if (nifty_is_name(argument, pObjIndex->name))
 				{
 					nMatch++;
@@ -1767,7 +1722,6 @@ DEF_DO_FUN( ofind )
 DEF_DO_FUN( mwhere )
 {
 	char arg[MIL];
-	CHAR_DATA *victim;
 	bool found;
 
 	one_argument(argument, arg);
@@ -1778,7 +1732,7 @@ DEF_DO_FUN( mwhere )
 	}
 
 	found = false;
-	for (victim = first_char; victim; victim = victim->next)
+	for (auto* victim : char_list)
 	{
 		if ( IS_NPC(victim) && victim->in_room
 				&& nifty_is_name(arg, victim->name))
@@ -1801,7 +1755,6 @@ DEF_DO_FUN( bodybag )
 	char buf2[MAX_STRING_LENGTH];
 	char buf3[MAX_STRING_LENGTH];
 	char arg[MIL];
-	OBJ_DATA *obj;
 	bool found;
 
 	one_argument(argument, arg);
@@ -1816,7 +1769,7 @@ DEF_DO_FUN( bodybag )
 	/* check to see if vict is playing? */
 	sprintf(buf2, "the corpse of %s", arg);
 	found = false;
-	for (obj = first_object; obj; obj = obj->next)
+	for (auto* obj : object_list)
 	{
 		if (obj->in_room && !str_cmp(buf2, obj->przypadki[0])
 				&& (obj->pIndexData->vnum == 11))
@@ -1895,7 +1848,7 @@ DEF_DO_FUN( owhere )
 	}
 
 	found = false;
-	for (obj = first_object; obj; obj = obj->next)
+	for (auto* obj : object_list)
 	{
 		if (!nifty_is_name(arg, obj->name))
 			continue;
@@ -1940,8 +1893,6 @@ DEF_DO_FUN( reboot )
 {
 	char buf[MAX_STRING_LENGTH];
 	extern bool mud_down;
-	CHAR_DATA *vch;
-	DESCRIPTOR_DATA *d;
 
 	if (str_cmp(argument, "mud now") && str_cmp(argument, "nosave")
 			&& str_cmp(argument, "and sort skill table"))
@@ -1950,9 +1901,9 @@ DEF_DO_FUN( reboot )
 		return;
 	}
 
-	echo_to_all( EOL NL "Wyczuwasz, ¿e olbrzymia si³a nie pozwala ci"
+	echo_to_all( EOL NL "Wyczuwasz, ï¿½e olbrzymia siï¿½a nie pozwala ci"
 	NL NL "dostrzec"
-	NL NL "jak odradza siê ¿ycie ¶wiata..." NL, ECHOTAR_ALL);
+	NL NL "jak odradza siï¿½ ï¿½ycie ï¿½wiata..." NL, ECHOTAR_ALL);
 
 	sprintf(buf, "Reboot by %s." NL, ch->name);
 	echo_to_all(buf, ECHOTAR_IMM);
@@ -1963,7 +1914,7 @@ DEF_DO_FUN( reboot )
 		save_skill_table();
 	}
 
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		CHAR_DATA *ch = CH(d);
 		if (!ch)
@@ -1975,7 +1926,7 @@ DEF_DO_FUN( reboot )
 
 	/* Save all characters before booting. */
 	if (str_cmp(argument, "nosave"))
-		for (vch = first_char; vch; vch = vch->next)
+		for (auto* vch : char_list)
 			if (!IS_NPC(vch))
 				save_char_obj(vch);
 
@@ -1995,8 +1946,6 @@ DEF_DO_FUN( shutdown )
 {
 	char buf[MAX_STRING_LENGTH];
 	extern bool mud_down;
-	CHAR_DATA *vch;
-	DESCRIPTOR_DATA *d;
 
 	if (str_cmp(argument, "mud now") && str_cmp(argument, "nosave"))
 	{
@@ -2009,7 +1958,7 @@ DEF_DO_FUN( shutdown )
 	strcat(buf, EOL);
 	echo_to_all(buf, ECHOTAR_IMM);
 
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		CHAR_DATA *ch = CH(d);
 		if (!ch)
@@ -2020,7 +1969,7 @@ DEF_DO_FUN( shutdown )
 	}
 	/* Save all characters before booting. */
 	if (str_cmp(argument, "nosave"))
-		for (vch = first_char; vch; vch = vch->next)
+		for (auto* vch : char_list)
 			if (!IS_NPC(vch))
 				save_char_obj(vch);
 
@@ -2041,7 +1990,6 @@ void write_ship_list();
 DEF_DO_FUN( saveall )
 {
 	char arg[MIL];
-	AREA_DATA *area;
 
 	argument = one_argument(argument, arg);
 
@@ -2063,7 +2011,7 @@ DEF_DO_FUN( saveall )
 
 	if (!str_cmp(arg, "areas"))
 	{
-		FOREACH( area, first_area )
+		for (auto* area : area_list)
 		{
 //		fold_area( area, area->filename, false );
 			save_area(area);
@@ -2076,9 +2024,7 @@ DEF_DO_FUN( saveall )
 	/* Thanos */
 	if (!str_cmp(arg, "quests"))
 	{
-		QUEST_INDEX_DATA *quest;
-
-		for (quest = first_quest_index; quest; quest = quest->next)
+		for (auto* quest : quest_index_list)
 			save_quest(quest);
 		donemsg(ch);
 		ch_printf(ch, "Updating %s..." NL, QUEST_LIST);
@@ -2119,9 +2065,7 @@ DEF_DO_FUN( saveall )
 
 	if (!str_cmp(arg, "races"))
 	{
-		RACE_DATA *race;
-
-		FOREACH( race, first_race )
+		for (auto* race : race_list)
 			save_race(race);
 		save_races_list();
 		donemsg(ch);
@@ -2142,11 +2086,10 @@ DEF_DO_FUN( saveall )
 
 	if (!str_cmp(arg, "storages"))
 	{
-		AREA_DATA *area;
 		ROOM_INDEX_DATA *room;
 		int vnum;
 
-		for (area = first_area; area; area = area->next)
+		for (auto* area : area_list)
 		{
 			for (vnum = area->lvnum; vnum <= area->uvnum; ++vnum)
 			{
@@ -2195,7 +2138,7 @@ DEF_DO_FUN( snoop )
 	if (victim == ch)
 	{
 		send_to_char("Cancelling all snoops." NL, ch);
-		for (d = first_descriptor; d; d = d->next)
+		for (auto* d : descriptor_list)
 			if (d->snoop_by == ch->desc)
 				d->snoop_by = NULL;
 		return;
@@ -2309,7 +2252,7 @@ DEF_DO_FUN( return )
 		return;
 	}
 
-	send_to_char("Twój umys³ powraca do swojego cia³a." NL, ch);
+	send_to_char("Twï¿½j umysï¿½ powraca do swojego ciaï¿½a." NL, ch);
 	if ( IS_NPC( ch ) && IS_AFFECTED(ch, AFF_POSSESS))
 	{
 		affect_strip(ch, gsn_possess);
@@ -2348,8 +2291,7 @@ DEF_DO_FUN( minvoke )
 
 		vnum = -1;
 		for (hash = cnt = 0; hash < MAX_KEY_HASH; hash++)
-			for (pMobIndex = mob_index_hash[hash]; pMobIndex; pMobIndex =
-					pMobIndex->next)
+			for (auto* pMobIndex : mob_index_hash[hash])
 				if (nifty_is_name(arg2, pMobIndex->player_name)
 						&& ++cnt == count)
 				{
@@ -2379,7 +2321,7 @@ DEF_DO_FUN( minvoke )
 
 	victim = create_mobile(pMobIndex);
 	char_to_room(victim, ch->in_room);
-	act( COL_IMMORT, "$n stworzy³$o $N$3!", ch, NULL, victim, TO_ROOM);
+	act( COL_IMMORT, "$n stworzyï¿½$o $N$3!", ch, NULL, victim, TO_ROOM);
 	send_to_char("Ok." NL, ch);
 	return;
 }
@@ -2429,8 +2371,7 @@ DEF_DO_FUN( oinvoke )
 
 		vnum = -1;
 		for (hash = cnt = 0; hash < MAX_KEY_HASH; hash++)
-			for (pObjIndex = obj_index_hash[hash]; pObjIndex; pObjIndex =
-					pObjIndex->next)
+			for (auto* pObjIndex : obj_index_hash[hash])
 				if (nifty_is_name(arg, pObjIndex->name) && ++cnt == count)
 				{
 					vnum = pObjIndex->vnum;
@@ -2465,7 +2406,7 @@ DEF_DO_FUN( oinvoke )
 	else
 	{
 		obj = obj_to_room(obj, ch->in_room);
-		act( COL_IMMORT, "$n stworzy³$o $p$3!", ch, obj, NULL, TO_ROOM);
+		act( COL_IMMORT, "$n stworzyï¿½$o $p$3!", ch, obj, NULL, TO_ROOM);
 	}
 	send_to_char("Ok." NL, ch);
 	return;
@@ -2473,30 +2414,23 @@ DEF_DO_FUN( oinvoke )
 
 bool purge_room(CHAR_DATA *ch, ROOM_INDEX_DATA *room)
 {
-	CHAR_DATA *victim;
-	OBJ_DATA *obj;
-	CHAR_DATA *vnext;
-	OBJ_DATA *obj_next;
-
 	if (!can_edit(ch, room->vnum))
 		return false;
 
-	for (victim = room->first_person; victim; victim = vnext)
+	{ auto snapshot = room->people; for (auto* victim : snapshot)
 	{
-		vnext = victim->next_in_room;
 		if ( IS_NPC( victim ) && victim != ch && !victim->inquest)
 			extract_char(victim, true);
-	}
+	} }
 
-	for (obj = room->first_content; obj; obj = obj_next)
+	{ auto snapshot = room->contents; for (auto* obj : snapshot)
 	{
-		obj_next = obj->next_content;
 		if (obj->item_type == ITEM_SHIPMODULE|| obj->inquest
 		|| IS_OBJ_STAT( obj, ITEM_BURRIED ))
 			continue;
 
 		extract_obj(obj);
-	}
+	} }
 	return true;
 }
 
@@ -2578,8 +2512,8 @@ DEF_DO_FUN( purge )
 	if ((victim = get_char_room(ch, arg)) == NULL
 			&& (obj = get_obj_here(ch, arg)) == NULL)
 	{
-// removed by Thanos. Ze wzglêdu na bezpieczeñstwo (OLC)
-// purge robimy tylko w lokacji, w której jeste¶my.
+// removed by Thanos. Ze wzglï¿½du na bezpieczeï¿½stwo (OLC)
+// purge robimy tylko w lokacji, w ktï¿½rej jesteï¿½my.
 //	if ( ( victim = get_char_world( ch, arg ) ) == NULL
 //        &&   ( obj = get_obj_world( ch, arg ) ) == NULL )  /* no get_obj_room */
 //        {
@@ -2629,7 +2563,7 @@ DEF_DO_FUN( purge )
 		send_to_char("You cannot purge a polymorphed player." NL, ch);
 		return;
 	}
-//blee    act( COL_IMMORT, "$n dotyka d³oni± $N$3. $N rozpada siê na ma³e kawa³eczki!", ch, NULL, victim, TO_NOTVICT );
+//blee    act( COL_IMMORT, "$n dotyka dï¿½oniï¿½ $N$3. $N rozpada siï¿½ na maï¿½e kawaï¿½eczki!", ch, NULL, victim, TO_NOTVICT );
 	act( COL_IMMORT, "You make $N disappear in a puff of smoke!", ch, NULL,
 			victim, TO_CHAR);
 	extract_char(victim, true);
@@ -2720,10 +2654,10 @@ DEF_DO_FUN( balzhur )
 	//make_wizlist();
 	do_help(victim, (char*) "M_BALZHUR_");
 	send_to_char( FB_WHITE, victim);
-	send_to_char("Budzisz siê po d³ugiej chwili..." NL, victim);
+	send_to_char("Budzisz siï¿½ po dï¿½ugiej chwili..." NL, victim);
 
-	while (victim->first_carrying)
-		extract_obj(victim->first_carrying);
+	while (!victim->carrying.empty())
+		extract_obj(victim->carrying.front());
 	return;
 }
 
@@ -2779,13 +2713,13 @@ DEF_DO_FUN( advance )
 	/* You can demote yourself but not someone else at your own trust. -- Narn */
 	if (get_trust(ch) <= get_trust(victim) && ch != victim)
 	{
-		send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+		send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 		return;
 	}
 
 	if ((level = atoi(arg2)) < 1 || level > 500)
 	{
-		send_to_char("Poziom musi byæ z przedzia³u 1 do 500." NL, ch);
+		send_to_char("Poziom musi byï¿½ z przedziaï¿½u 1 do 500." NL, ch);
 		return;
 	}
 
@@ -2800,7 +2734,7 @@ DEF_DO_FUN( advance )
 	{
 		send_to_char("Lowering a player's level!" NL, ch);
 		send_to_char( COL_IMMORT, victim);
-		ch_printf(victim, "Przeklêt%s! W³adcy obni¿aj± twój poziom!" EOL,
+		ch_printf(victim, "Przeklï¿½t%s! Wï¿½adcy obniï¿½ajï¿½ twï¿½j poziom!" EOL,
 				SEX_SUFFIX_YAE(victim));
 		victim->experience[ability] = 0;
 		victim->top_level = 1; //added by Thanos
@@ -2813,7 +2747,7 @@ DEF_DO_FUN( advance )
 	else
 	{
 		send_to_char("Raising a player's level!" NL, ch);
-		send_to_char("W³adcy nagradzaj± ciê poziomem!" NL, victim);
+		send_to_char("Wï¿½adcy nagradzajï¿½ ciï¿½ poziomem!" NL, victim);
 	}
 
 	for (iLevel = victim->skill_level[ability]; iLevel < level; iLevel++)
@@ -2866,19 +2800,19 @@ DEF_DO_FUN( immadvance )
 	send_to_char("Empowering a player with immortal powers..." NL, ch);
 
 	act( COL_IMMORT,
-			"$n przygl±da ci siê z uwag±... potem wznosi swe rêce do góry...",
+			"$n przyglï¿½da ci siï¿½ z uwagï¿½... potem wznosi swe rï¿½ce do gï¿½ry...",
 			ch, NULL, NULL, TO_ROOM);
 	send_to_char( FB_WHITE, victim);
-	send_to_char("Wszystko staje siê takie dziwne..." NL NL, victim);
+	send_to_char("Wszystko staje siï¿½ takie dziwne..." NL NL, victim);
 	send_to_char( FB_CYAN, victim);
 
 	sprintf(buf, "M_GODLVL%d_", victim->top_level - 99);
 	do_help(victim, buf);
 	send_to_char( FB_WHITE, victim);
-	send_to_char("Budzisz siê... a wszystkie niedoskona³o¶ci znikaj±." EOL,
+	send_to_char("Budzisz siï¿½... a wszystkie niedoskonaï¿½oï¿½ci znikajï¿½." EOL,
 			victim);
-	while (victim->first_carrying)
-		extract_obj(victim->first_carrying);
+	while (!victim->carrying.empty())
+		extract_obj(victim->carrying.front());
 
 	victim->top_level++;
 
@@ -2932,12 +2866,12 @@ DEF_DO_FUN( trust )
 	return;
 }
 
-/* Moim zdaniem restore powinien od¶wie¿aæ postaæ a nie tylko hp, force i mv
- Bzdur± jest, ¿e np. menatl state zostaje taki sam, albo thirst   -Thanos
+/* Moim zdaniem restore powinien odï¿½wieï¿½aï¿½ postaï¿½ a nie tylko hp, force i mv
+ Bzdurï¿½ jest, ï¿½e np. menatl state zostaje taki sam, albo thirst   -Thanos
  Ja tez tak mysle wiec wez i zrob to tak jak ma byc -Aldegard
  */
 /* Alde:
- * to ju¿ jest od dawna zmienione. Dlatego napisa³em tamten komentarz :)
+ * to juï¿½ jest od dawna zmienione. Dlatego napisaï¿½em tamten komentarz :)
  * Thanos
  */
 void restore_char(CHAR_DATA *victim)
@@ -2970,9 +2904,6 @@ DEF_DO_FUN( restore )
 
 	if (!str_cmp(arg, "all"))
 	{
-		CHAR_DATA *vch;
-		CHAR_DATA *vch_next;
-
 		if (!ch->pcdata)
 			return;
 
@@ -2999,17 +2930,15 @@ DEF_DO_FUN( restore )
 		ch->pcdata->restore_time = current_time;
 		save_char_obj(ch);
 		send_to_char("Ok." NL, ch);
-		for (vch = first_char; vch; vch = vch_next)
+		{ auto snapshot = char_list; for (auto* vch : snapshot)
 		{
-			vch_next = vch->next;
-
 			if (!IS_NPC(vch) && !IS_IMMORTAL(vch))
 			{
 				restore_char(vch);
-				ch_printf(vch, "%s przywraca ci pe³niê si³." EOL,
+				ch_printf(vch, "%s przywraca ci peï¿½niï¿½ siï¿½." EOL,
 						PERS(ch, vch, 0));
 			}
-		}
+		} }
 	}
 	else
 	{
@@ -3031,7 +2960,7 @@ DEF_DO_FUN( restore )
 
 		restore_char(victim);
 		if (ch != victim)
-			ch_printf(victim, "%s przywraca ci pe³niê si³." EOL,
+			ch_printf(victim, "%s przywraca ci peï¿½niï¿½ siï¿½." EOL,
 					PERS(ch, victim, 0));
 		send_to_char("Ok." NL, ch);
 		return;
@@ -3106,13 +3035,13 @@ DEF_DO_FUN( freeze )
 	if (IS_SET(victim->act, PLR_FREEZE))
 	{
 		REMOVE_BIT(victim->act, PLR_FREEZE);
-		send_to_char("Mo¿esz znów graæ." NL, victim);
-		send_to_char("FREEZE usuniêty." NL, ch);
+		send_to_char("Moï¿½esz znï¿½w graï¿½." NL, victim);
+		send_to_char("FREEZE usuniï¿½ty." NL, ch);
 	}
 	else
 	{
 		SET_BIT(victim->act, PLR_FREEZE);
-		send_to_char("Nie mo¿esz zrobiæ NICZEGO!" NL, victim);
+		send_to_char("Nie moï¿½esz zrobiï¿½ NICZEGO!" NL, victim);
 		send_to_char("FREEZE ustawiony." NL, ch);
 	}
 
@@ -3212,13 +3141,13 @@ DEF_DO_FUN( litterbug )
 	if (IS_SET(victim->act, PLR_LITTERBUG))
 	{
 		REMOVE_BIT(victim->act, PLR_LITTERBUG);
-		send_to_char("Mo¿esz znów odrzucaæ ¶mieci." NL, victim);
+		send_to_char("Moï¿½esz znï¿½w odrzucaï¿½ ï¿½mieci." NL, victim);
 		send_to_char("LITTERBUG removed." NL, ch);
 	}
 	else
 	{
 		SET_BIT(victim->act, PLR_LITTERBUG);
-		send_to_char("Co¶ nie pozwala ci odrzucaæ przedmiotów!" NL, victim);
+		send_to_char("Coï¿½ nie pozwala ci odrzucaï¿½ przedmiotï¿½w!" NL, victim);
 		send_to_char("LITTERBUG set." NL, ch);
 	}
 
@@ -3227,10 +3156,8 @@ DEF_DO_FUN( litterbug )
 
 DEF_DO_FUN( peace )
 {
-	CHAR_DATA *rch;
-
-	act( COL_IMMORT, "$n krzyczy 'SPOKÓJ!'&z&w", ch, NULL, NULL, TO_ROOM);
-	for (rch = ch->in_room->first_person; rch; rch = rch->next_in_room)
+	act( COL_IMMORT, "$n krzyczy 'SPOKï¿½J!'&z&w", ch, NULL, NULL, TO_ROOM);
+	for (auto* rch : ch->in_room->people)
 	{
 		if (rch->fighting)
 			stop_fighting(rch, true);
@@ -3303,12 +3230,12 @@ DEF_DO_FUN( rename )
 
 	/*
 	 * Teraz tak:
-	 * ¯eby by³o ³adnie i stabilnie, nie zmieniamy imienia graczowi od
-	 * razu. Tworzymy sobie postaæ tymczasow± i zapamiêtujemy na ni± wska¼nik.
-	 * Immo mo¿e teraz bezstresowo edytowaæ postaæ tymczasow±, a jak skoñczy,
-	 * jej dane zostan± skopiowane na gracza.
-	 * Dodatkowo, ¿eby by³o wygodnie, nasz edytor bêdzie pyta³ o przypadki po
-	 * kolei. Numer aktualnie edytowanego przypadku mamy zapamiêtany w ...
+	 * ï¿½eby byï¿½o ï¿½adnie i stabilnie, nie zmieniamy imienia graczowi od
+	 * razu. Tworzymy sobie postaï¿½ tymczasowï¿½ i zapamiï¿½tujemy na niï¿½ wskaï¿½nik.
+	 * Immo moï¿½e teraz bezstresowo edytowaï¿½ postaï¿½ tymczasowï¿½, a jak skoï¿½czy,
+	 * jej dane zostanï¿½ skopiowane na gracza.
+	 * Dodatkowo, ï¿½eby byï¿½o wygodnie, nasz edytor bï¿½dzie pytaï¿½ o przypadki po
+	 * kolei. Numer aktualnie edytowanego przypadku mamy zapamiï¿½tany w ...
 	 * .. levelu postaci tymczasowej :)
 	 */
 	CREATE(ch->desc->tmp_ch, CHAR_DATA, 1);
@@ -3334,12 +3261,10 @@ DEF_DO_FUN( rename )
 	return;
 }
 
-BAN_DATA *first_ban;
-BAN_DATA *last_ban;
+std::list<BAN_DATA*> ban_list;
 
 void save_banlist(void)
 {
-	BAN_DATA *pban;
 	FILE *fp;
 
 	RESERVE_CLOSE;
@@ -3350,7 +3275,7 @@ void save_banlist(void)
 		RESERVE_OPEN;
 		return;
 	}
-	for (pban = first_ban; pban; pban = pban->next)
+	for (auto* pban : ban_list)
 		fprintf(fp, "%d %s~~%s~\n", pban->level, pban->name, pban->ban_time);
 	fprintf(fp, "-1\n");
 	fclose(fp);
@@ -3377,8 +3302,9 @@ DEF_DO_FUN( ban )
 		send_to_pager("[ #]  (Lv)  Time                     Site" NL, ch);
 		send_to_pager("---- ------ ------------------------ ---------------" NL,
 				ch);
-		for (pban = first_ban, bnum = 1; pban; pban = pban->next, bnum++)
+		bnum = 0; for (auto* pban : ban_list)
 		{
+			++bnum;
 			pager_printf(ch, "[%2d] (%4s) %-24s %s" NL, bnum,
 					pban->level == BAN_SOFT ? "soft" : itoa(pban->level),
 					pban->ban_time, pban->name);
@@ -3390,9 +3316,9 @@ DEF_DO_FUN( ban )
 	 number in the site ip.                               -- Altrag */
 	if ( is_number(arg))
 	{
-		for (pban = first_ban, bnum = 1; pban; pban = pban->next, bnum++)
-			if (bnum == atoi(arg))
-				break;
+		BAN_DATA *pban = nullptr;
+		{ int target = atoi(arg); bnum = 0;
+		for (auto* b : ban_list) { if (++bnum == target) { pban = b; break; } } }
 		if (!pban)
 		{
 			do_ban(ch, (char*) "");
@@ -3464,7 +3390,7 @@ DEF_DO_FUN( ban )
 		return;
 	}
 
-	for (pban = first_ban; pban; pban = pban->next)
+	for (auto* pban : ban_list)
 		if (!str_cmp(arg, pban->name))
 		{
 			send_to_char("That site is already banned!" NL, ch);
@@ -3472,7 +3398,7 @@ DEF_DO_FUN( ban )
 		}
 
 	CREATE(pban, BAN_DATA, 1);
-	LINK(pban, first_ban, last_ban, next, prev);
+	ban_list.push_back(pban);
 	STRDUP(pban->name, arg);
 	pban->level = LEVEL_AVATAR;
 	sprintf(buf, "%24.24s", ctime(&current_time));
@@ -3485,7 +3411,6 @@ DEF_DO_FUN( ban )
 DEF_DO_FUN( allow )
 {
 	char arg[MIL];
-	BAN_DATA *pban;
 
 	one_argument(argument, arg);
 
@@ -3495,11 +3420,11 @@ DEF_DO_FUN( allow )
 		return;
 	}
 
-	for (pban = first_ban; pban; pban = pban->next)
+	for (auto* pban : ban_list)
 	{
 		if (!str_cmp(arg, pban->name))
 		{
-			UNLINK(pban, first_ban, last_ban, next, prev);
+			ban_list.remove(pban);
 			free_ban(pban);
 			save_banlist();
 			send_to_char("Site no longer banned." NL, ch);
@@ -3538,7 +3463,6 @@ DEF_DO_FUN( noresolve )
 DEF_DO_FUN( users )
 {
 	char buf[MAX_STRING_LENGTH];
-	DESCRIPTOR_DATA *d;
 	int count;
 	char arg[MIL];
 
@@ -3556,7 +3480,7 @@ DEF_DO_FUN( users )
 		"----+---+----+------+------+--------------+---------------------" NL);
 	send_to_pager(buf, ch);
 
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		if (arg[0] == '\0')
 		{
@@ -3641,27 +3565,22 @@ DEF_DO_FUN( force )
 
 	if (!str_cmp(arg, "all"))
 	{
-		CHAR_DATA *vch;
-		CHAR_DATA *vch_next;
-
 		if (mobsonly)
 		{
 			send_to_char("Force whom to do what?" NL, ch);
 			return;
 		}
 
-		for (vch = first_char; vch; vch = vch_next)
+		{ auto snapshot = char_list; for (auto* vch : snapshot)
 		{
-			vch_next = vch->next;
-
 			if (!IS_NPC(vch) && get_trust(vch) < get_trust(ch))
 			{
 				act( COL_IMMORT,
-						"Za spraw± $n$1 czujesz, ¿e dobrze by³oby zrobiæ: '$t'.",
+						"Za sprawï¿½ $n$1 czujesz, ï¿½e dobrze byï¿½oby zrobiï¿½: '$t'.",
 						ch, argument, vch, TO_VICT);
 				interpret(vch, argument);
 			}
-		}
+		} }
 	}
 	else
 	{
@@ -3687,7 +3606,7 @@ DEF_DO_FUN( force )
 		}
 
 		act( COL_IMMORT,
-				"Za spraw± $n$1 czujesz, ¿e dobrze by³oby zrobiæ: '$t'.", ch,
+				"Za sprawï¿½ $n$1 czujesz, ï¿½e dobrze byï¿½oby zrobiï¿½: '$t'.", ch,
 				argument, victim, TO_VICT);
 		interpret(victim, argument);
 	}
@@ -3734,14 +3653,14 @@ DEF_DO_FUN( invis )
 		else if (!str_cmp(arg, "on"))
 		{
 			SET_BIT(ch->act, PLR_WIZINVIS);
-			act( COL_IMMORT, "$n powoli zlewa siê z otoczeniem.", ch, NULL,
+			act( COL_IMMORT, "$n powoli zlewa siï¿½ z otoczeniem.", ch, NULL,
 					NULL, TO_ROOM);
 			send_to_char("Wizinvis set." NL, ch);
 		}
 		else if (!str_cmp(arg, "off"))
 		{
 			REMOVE_BIT(ch->act, PLR_WIZINVIS);
-			act( COL_IMMORT, "$n powoli materializuje siê.", ch, NULL, NULL,
+			act( COL_IMMORT, "$n powoli materializuje siï¿½.", ch, NULL, NULL,
 			TO_ROOM);
 			send_to_char("Wizinvis removed." NL, ch);
 		}
@@ -3821,14 +3740,14 @@ DEF_DO_FUN( invis )
 	if (IS_SET(ch->act, PLR_WIZINVIS))
 	{
 		REMOVE_BIT(ch->act, PLR_WIZINVIS);
-		act( COL_IMMORT, "$n powoli materializuje siê.", ch, NULL, NULL,
+		act( COL_IMMORT, "$n powoli materializuje siï¿½.", ch, NULL, NULL,
 		TO_ROOM);
 		send_to_char("Wizinvis removed." NL, ch);
 	}
 	else
 	{
 		SET_BIT(ch->act, PLR_WIZINVIS);
-		act( COL_IMMORT, "$n powoli zlewa siê z otoczeniem.", ch, NULL, NULL,
+		act( COL_IMMORT, "$n powoli zlewa siï¿½ z otoczeniem.", ch, NULL, NULL,
 		TO_ROOM);
 		send_to_char("Wizinvis set." NL, ch);
 	}
@@ -3913,8 +3832,6 @@ DEF_DO_FUN( loadup )
 	if (stat(fname, &fst) != -1)
 	{
 		CREATE(d, DESCRIPTOR_DATA, 1);
-		d->next = NULL;
-		d->prev = NULL;
 		d->connected = CON_GET_NAME;
 		d->outsize = 2000;
 		CREATE(d->outbuf, char, d->outsize);
@@ -3925,8 +3842,8 @@ DEF_DO_FUN( loadup )
 		char_to_room(d->character, ch->in_room);
 		if (get_trust(d->character) >= get_trust(ch))
 		{
-			do_say(d->character, (char*) "*NIE* przeszkadzaæ!");
-			send_to_char("T± osobê lepiej zostawiæ w spokoju!" NL, ch);
+			do_say(d->character, (char*) "*NIE* przeszkadzaï¿½!");
+			send_to_char("Tï¿½ osobï¿½ lepiej zostawiï¿½ w spokoju!" NL, ch);
 			d->character->desc = NULL;
 			do_quit(d->character, (char*) "");
 			return;
@@ -4042,7 +3959,7 @@ DEF_DO_FUN( newbieset )
 		}
 	}
 
-	act( COL_IMMORT, "$n wyposa¿y³$o ciê w zestaw m³odego gracza.", ch, NULL,
+	act( COL_IMMORT, "$n wyposaï¿½yï¿½$o ciï¿½ w zestaw mï¿½odego gracza.", ch, NULL,
 			victim, TO_VICT);
 	ch_printf(ch, "You have re-equipped %s." NL, victim->name);
 	return;
@@ -4306,7 +4223,7 @@ DEF_DO_FUN( set_boot_time )
 		check = true;
 	}
 
-	/* Typy rebootów		-- Thanos */
+	/* Typy rebootï¿½w		-- Thanos */
 	else if (!str_cmp(arg, "reboot"))
 	{
 		sysdata.reboot_type = REB_REBOOT;
@@ -4365,7 +4282,7 @@ DEF_DO_FUN( set_boot_time )
 
 		check = true;
 	}
-	/* End of Typy rebootów */
+	/* End of Typy rebootï¿½w */
 
 	if (!check)
 	{
@@ -4395,7 +4312,7 @@ void do_set_password(CHAR_DATA *ch, char *argument) //Trog
 
 	if (strlen(argument) < MIN_PASS_LEN)
 	{
-		ch_printf(ch, "Has³o musi mieæ co najmniej %d znaków." NL,
+		ch_printf(ch, "Hasï¿½o musi mieï¿½ co najmniej %d znakï¿½w." NL,
 		MIN_PASS_LEN);
 		return;
 	}
@@ -4421,34 +4338,12 @@ DEF_DO_FUN( destro )
  */
 void close_area(AREA_DATA *pArea)
 {
-	CHAR_DATA *ech;
-	CHAR_DATA *ech_next;
-	OBJ_DATA *eobj;
-	OBJ_DATA *eobj_next;
 	int icnt;
-	ROOM_INDEX_DATA *rid;
-	ROOM_INDEX_DATA *rid_next;
-	OBJ_INDEX_DATA *oid;
-	OBJ_INDEX_DATA *oid_next;
-	MOB_INDEX_DATA *mid;
-	MOB_INDEX_DATA *mid_next;
-	EXTRA_DESCR_DATA *eed;
-	EXTRA_DESCR_DATA *eed_next;
-	EXIT_DATA *exit;
-	EXIT_DATA *exit_next;
-	MPROG_ACT_LIST *mpact;
-	MPROG_ACT_LIST *mpact_next;
-	MPROG_DATA *mprog;
-	MPROG_DATA *mprog_next;
-	AFFECT_DATA *paf;
-	AFFECT_DATA *paf_next;
 
 	bug("close_area used");
 
-	for (ech = first_char; ech; ech = ech_next)
+	{ auto snapshot = char_list; for (auto* ech : snapshot)
 	{
-		ech_next = ech->next;
-
 		if (ech->fighting)
 			stop_fighting(ech, true);
 
@@ -4464,42 +4359,42 @@ void close_area(AREA_DATA *pArea)
 
 		if (ech->in_room && ech->in_room->area == pArea)
 			do_recall(ech, (char*) "");
-	}
+	} }
 
-	for (eobj = first_object; eobj; eobj = eobj_next)
+	{ auto snapshot = object_list; for (auto* eobj : snapshot)
 	{
-		eobj_next = eobj->next;
 		/* if obj is in area, or part of area. */
 		if ( URANGE(pArea->lvnum, eobj->pIndexData->vnum,
 				pArea->uvnum) == eobj->pIndexData->vnum
 				|| (eobj->in_room && eobj->in_room->area == pArea))
 			extract_obj(eobj);
-	}
+	} }
 
 	for (icnt = 0; icnt < MAX_KEY_HASH; icnt++)
 	{
-		for (rid = room_index_hash[icnt]; rid; rid = rid_next)
+		/* Clean exits pointing to/from this area */
+		for (auto* rid : room_index_hash[icnt])
 		{
-			rid_next = rid->next;
-
-			for (exit = rid->first_exit; exit; exit = exit_next)
-			{
-				exit_next = exit->next;
+			auto exit_snap = rid->exits;
+			for (auto* exit : exit_snap)
 				if (rid->area == pArea || exit->to_room->area == pArea)
 				{
-					UNLINK(exit, rid->first_exit, rid->last_exit, next, prev);
+					rid->exits.remove(exit);
 					free_exit(exit);
 				}
-			}
-			if (rid->area != pArea)
-				continue;
+		}
 
-			if (rid->first_person)
+		/* Remove rooms in this area from hash */
+		room_index_hash[icnt].remove_if([&](ROOM_INDEX_DATA* rid) {
+			if (rid->area != pArea)
+				return false;
+
+			if (!rid->people.empty())
 			{
 				bug("room with people #%d", rid->vnum);
-				for (ech = rid->first_person; ech; ech = ech_next)
+				auto people_snap = rid->people;
+				for (auto* ech : people_snap)
 				{
-					ech_next = ech->next_in_room;
 					if (ech->fighting)
 						stop_fighting(ech, true);
 					if (IS_NPC(ech))
@@ -4508,133 +4403,77 @@ void close_area(AREA_DATA *pArea)
 						do_recall(ech, (char*) "");
 				}
 			}
-			if (rid->first_content)
+			if (!rid->contents.empty())
 			{
 				bug("room with contents #%d", rid->vnum);
-				for (eobj = rid->first_content; eobj; eobj = eobj_next)
-				{
-					eobj_next = eobj->next_content;
+				auto contents_snap = rid->contents;
+				for (auto* eobj : contents_snap)
 					extract_obj(eobj);
-				}
 			}
-			for (eed = rid->first_extradesc; eed; eed = eed_next)
-			{
-				eed_next = eed->next;
+			for (auto* eed : rid->extradesc)
 				free_ed(eed);
-			}
-			for (mpact = rid->mpact; mpact; mpact = mpact_next)
+			rid->extradesc.clear();
+			for (auto* mpact = rid->mpact; mpact; )
 			{
-				mpact_next = mpact->next;
+				auto* mpact_next = mpact->next;
 				free_mpact(mpact);
+				mpact = mpact_next;
 			}
-			for (mprog = rid->mudprogs; mprog; mprog = mprog_next)
-			{
-				mprog_next = mprog->next;
+			for (auto* mprog : rid->mudprogs)
 				free_mprog(mprog);
-			}
-			if (rid == room_index_hash[icnt])
-				room_index_hash[icnt] = rid->next;
-			else
-			{
-				ROOM_INDEX_DATA *trid;
-
-				for (trid = room_index_hash[icnt]; trid; trid = trid->next)
-					if (trid->next == rid)
-						break;
-				if (!trid)
-					bug("rid not in hash list %d", rid->vnum);
-				else
-					trid->next = rid->next;
-			}
+			rid->mudprogs.clear();
 			free_room(rid);
-		}
+			return true;
+		});
 
-		for (mid = mob_index_hash[icnt]; mid; mid = mid_next)
-		{
-			mid_next = mid->next;
-
+		/* Remove mobs in this area from hash */
+		mob_index_hash[icnt].remove_if([&](MOB_INDEX_DATA* mid) {
 			if (mid->vnum < pArea->lvnum || mid->vnum > pArea->uvnum)
-				continue;
+				return false;
 
 			if (mid->pShop)
 			{
-				UNLINK(mid->pShop, first_shop, last_shop, next, prev);
+				shop_list.remove(mid->pShop);
 				DISPOSE(mid->pShop);
 			}
 			if (mid->rShop)
 			{
-				UNLINK(mid->rShop, first_repair, last_repair, next, prev);
+				repair_list.remove(mid->rShop);
 				DISPOSE(mid->rShop);
 			}
-			for (mprog = mid->mudprogs; mprog; mprog = mprog_next)
-			{
-				mprog_next = mprog->next;
+			for (auto* mprog : mid->mudprogs)
 				free_mprog(mprog);
-			}
-			if (mid == mob_index_hash[icnt])
-				mob_index_hash[icnt] = mid->next;
-			else
-			{
-				MOB_INDEX_DATA *tmid;
-
-				for (tmid = mob_index_hash[icnt]; tmid; tmid = tmid->next)
-					if (tmid->next == mid)
-						break;
-				if (!tmid)
-					bug("mid not in hash list %s", mid->vnum);
-				else
-					tmid->next = mid->next;
-			}
+			mid->mudprogs.clear();
 			free_mid(mid);
-		}
+			return true;
+		});
 
-		for (oid = obj_index_hash[icnt]; oid; oid = oid_next)
-		{
-			oid_next = oid->next;
-
+		/* Remove objects in this area from hash */
+		obj_index_hash[icnt].remove_if([&](OBJ_INDEX_DATA* oid) {
 			if (oid->vnum < pArea->lvnum || oid->vnum > pArea->uvnum)
-				continue;
+				return false;
 
-			for (eed = oid->first_extradesc; eed; eed = eed_next)
-			{
-				eed_next = eed->next;
+			for (auto* eed : oid->extradesc)
 				free_ed(eed);
-			}
-			for (paf = oid->first_affect; paf; paf = paf_next)
-			{
-				paf_next = paf->next;
+			oid->extradesc.clear();
+			for (auto* paf : oid->affects)
 				DISPOSE(paf);
-			}
-			for (mprog = oid->mudprogs; mprog; mprog = mprog_next)
-			{
-				mprog_next = mprog->next;
+			oid->affects.clear();
+			for (auto* mprog : oid->mudprogs)
 				free_mprog(mprog);
-			}
-			if (oid == obj_index_hash[icnt])
-				obj_index_hash[icnt] = oid->next;
-			else
-			{
-				OBJ_INDEX_DATA *toid;
-
-				for (toid = obj_index_hash[icnt]; toid; toid = toid->next)
-					if (toid->next == oid)
-						break;
-				if (!toid)
-					bug("oid not in hash list %s", oid->vnum);
-				else
-					toid->next = oid->next;
-			}
+			oid->mudprogs.clear();
 			free_oid(oid);
-		}
+			return true;
+		});
 	}
-	UNLINK(pArea, first_build, last_build, next, prev);
-	UNLINK(pArea, first_asort, last_asort, next_sort, prev_sort);
+	build_list.remove(pArea);
+	asort_list.remove(pArea);
 	free_area(pArea);
 }
 
 DEF_DO_FUN( destroy )
 {
-	CHAR_DATA *victim;
+	CHAR_DATA *victim = nullptr;
 	char buf[MAX_STRING_LENGTH];
 	char arg[MIL];
 
@@ -4645,18 +4484,24 @@ DEF_DO_FUN( destroy )
 		return;
 	}
 
-	for (victim = first_char; victim; victim = victim->next)
-		if (!IS_NPC(victim) && !str_cmp(victim->name, arg))
+	for (auto* vch : char_list)
+		if (!IS_NPC(vch) && !str_cmp(vch->name, arg))
+		{
+			victim = vch;
 			break;
+		}
 	if (!victim)
 	{
-		DESCRIPTOR_DATA *d;
+		DESCRIPTOR_DATA *d = nullptr;
 
 		/* Make sure they aren't halfway logged in. */
-		for (d = first_descriptor; d; d = d->next)
-			if ((victim = d->character) && !IS_NPC(victim)
+		for (auto* desc : descriptor_list)
+			if ((victim = desc->character) && !IS_NPC(victim)
 					&& !str_cmp(victim->name, arg))
+			{
+				d = desc;
 				break;
+			}
 		if (d)
 			close_socket(d, true);
 	}
@@ -4726,7 +4571,6 @@ DEF_DO_FUN( destroy )
 const SWString name_expand(CHAR_DATA *ch)
 {
 	int count = 1;
-	CHAR_DATA *rch;
 	char name[MIL] = {0}; /*  HOPEFULLY no mob has a name longer than THAT */
 
 	char outbuf[MIL] = {0};
@@ -4742,19 +4586,20 @@ const SWString name_expand(CHAR_DATA *ch)
 		return outbuf;
 	}
 
-	/* ->people changed to ->first_person -- TRI */
-	for (rch = ch->in_room->first_person; rch && (rch != ch);
-			rch = rch->next_in_room)
+	for (auto* rch : ch->in_room->people)
+	{
+		if (rch == ch) break;
 		if (is_name(name, rch->name))
 			count++;
+	}
 	swsnprintf(outbuf, MIL, "%d.%s", count, name);
 	return SWString(outbuf);
 }
 
 /*changed by Thanos:
- zmieni³em tê funkcjê tak, by dzia³a³a fragmentami, co pulse_for (ok. 1s),a
- nie naraz tak jak by³o dotychczas. Teraz funkcja pulsuje sobie w tle nie
- laguj±c a gracz który wykona³ tê komendê ma wolny prompt.
+ zmieniï¿½em tï¿½ funkcjï¿½ tak, by dziaï¿½aï¿½a fragmentami, co pulse_for (ok. 1s),a
+ nie naraz tak jak byï¿½o dotychczas. Teraz funkcja pulsuje sobie w tle nie
+ lagujï¿½c a gracz ktï¿½ry wykonaï¿½ tï¿½ komendï¿½ ma wolny prompt.
  patrz update_for() w update.c
  */
 DEF_DO_FUN( for )
@@ -4771,13 +4616,13 @@ DEF_DO_FUN( for )
 	bool fAreaRooms = false;
 	int i;
 
-	if (IS_NPC(ch)) /*bez zbêdnego ryzyka*/
+	if (IS_NPC(ch)) /*bez zbï¿½dnego ryzyka*/
 	{
 		huh(ch);
 		return;
 	}
 
-	/* zatrzymujemy pêtlê */
+	/* zatrzymujemy pï¿½tlï¿½ */
 	if (argument[0] && !str_cmp(argument, "stop"))
 	{
 		if (for_loop.fStopped)
@@ -4797,7 +4642,7 @@ DEF_DO_FUN( for )
 		return;
 	}
 
-	/* je¶li kto¶ zainteresowany chce sprawdziæ co tak zapierdala :) */
+	/* jeï¿½li ktoï¿½ zainteresowany chce sprawdziï¿½ co tak zapierdala :) */
 	if (argument[0] && !str_cmp(argument, "status"))
 	{
 		if (for_loop.fStopped)
@@ -4880,11 +4725,12 @@ DEF_DO_FUN( for )
 		return;
 	}
 
-	/* znajd¼my pierwsz± ofiarê/pokój */
+	/* znajdï¿½my pierwszï¿½ ofiarï¿½/pokï¿½j */
 	if (fMobs || fMortals || fGods)
 	{
-		for (fVictim = last_char; fVictim; fVictim = fVictim->prev)
+		for (auto it = char_list.rbegin(); it != char_list.rend(); ++it)
 		{
+			fVictim = *it;
 			if (fVictim == ch)
 				continue;
 
@@ -4912,13 +4758,15 @@ DEF_DO_FUN( for )
 //Trog: od tad do komentarza powyzej jest to syfiaste i zle dziala, poprawie niedlugo.
 	else if (fAreaMobs)
 	{
-		for (fVictim = first_char; fVictim; fVictim = fVictim->next)
+		fVictim = nullptr;
+		for (auto* ch_it : char_list)
 		{
-			if (fVictim && IS_NPC(fVictim) && fVictim->in_room
-					&& fVictim->in_room->area && ch->in_room
+			if (ch_it && IS_NPC(ch_it) && ch_it->in_room
+					&& ch_it->in_room->area && ch->in_room
 					&& ch->in_room->area
-					&& fVictim->in_room->area == ch->in_room->area)
+					&& ch_it->in_room->area == ch->in_room->area)
 			{
+				fVictim = ch_it;
 				found = true;
 				break;
 			}
@@ -4969,11 +4817,11 @@ DEF_DO_FUN( for )
 		return;
 	}
 
-	/* czy¶cimy star± pêtlê (je¶li jest) tylko w przypadku, gdy mamy ju¿
-	 wszystkie potrzebne nam warto¶ci */
+	/* czyï¿½cimy starï¿½ pï¿½tlï¿½ (jeï¿½li jest) tylko w przypadku, gdy mamy juï¿½
+	 wszystkie potrzebne nam wartoï¿½ci */
 	clean_for_loop();
-	/* kopiujemy warto¶ci */
-	/*ustalamy zakres pêtli*/
+	/* kopiujemy wartoï¿½ci */
+	/*ustalamy zakres pï¿½tli*/
 	for_loop.fGods = fGods;
 	for_loop.fMortals = fMortals;
 	for_loop.fMobs = fMobs;
@@ -4986,11 +4834,11 @@ DEF_DO_FUN( for )
 		for_loop.fRoom = fRoom->vnum;
 	if ((fMobs || fMortals || fGods || fAreaMobs) && fVictim)
 		for_loop.fVictim = fVictim;
-	/* ustalamy komendê */
+	/* ustalamy komendï¿½ */
 	STRDUP(for_loop.command, argument);
-	/*w³a¶ciciela*/
+	/*wï¿½aï¿½ciciela*/
 	for_loop.fOwner = ch;
-	/* puszczamy pêtlê */
+	/* puszczamy pï¿½tlï¿½ */
 	for_loop.fStopped = false;
 	send_to_char("Ok. For Loop started." NL, ch);
 	return;
@@ -5138,7 +4986,7 @@ DEF_DO_FUN( cset )
 		return;
 	}
 
-	/*Added by Thanos: czy mud ma logowaæ np. resety krain */
+	/*Added by Thanos: czy mud ma logowaï¿½ np. resety krain */
 	if (!str_cmp(arg, "silent") || !str_cmp(arg, "silent_booting"))
 	{
 		if (sysdata.silent)
@@ -5480,7 +5328,7 @@ DEF_DO_FUN( isolate )
 	STRDUP(victim->pcdata->isolated_by, ch->name);
 	ch_printf(ch, "%s will be unisolted at %24.24s." NL, victim->name,
 			ctime(&victim->pcdata->release_date));
-	act(COL_FORCE, "$n znika zabran$y za spraw± mocy.", victim, NULL, ch,
+	act(COL_FORCE, "$n znika zabran$y za sprawï¿½ mocy.", victim, NULL, ch,
 	TO_NOTVICT);
 	char_from_room(victim);
 	char_to_room(victim, get_room_index(6));
@@ -5488,10 +5336,10 @@ DEF_DO_FUN( isolate )
 	TO_NOTVICT);
 	do_look(victim, (char*) "auto");
 	ch_printf(victim,
-			"Mistrzowie Jedi nie s± zadowoleni z twojego postêpowania." NL
+			"Mistrzowie Jedi nie sï¿½ zadowoleni z twojego postï¿½powania." NL
 			"Zostaniesz w izolatce przez %d %s." NL, time,
-			h_d ? (time == 1 ? "godzinê" : "godzin") : (
-					time == 1 ? "dzieñ" : "dni"));
+			h_d ? (time == 1 ? "godzinï¿½" : "godzin") : (
+					time == 1 ? "dzieï¿½" : "dni"));
 
 	save_char_obj(victim);
 	return;
@@ -5526,11 +5374,11 @@ DEF_DO_FUN( unisolate )
 		location = ch->in_room;
 
 	MOBtrigger = false;
-	act( COL_FORCE, "Moc zabiera st±d $n$3.", victim, NULL, ch, TO_NOTVICT);
+	act( COL_FORCE, "Moc zabiera stï¿½d $n$3.", victim, NULL, ch, TO_NOTVICT);
 	char_from_room(victim);
 	char_to_room(victim, location);
 	send_to_char(
-			"Mistrzowie Jedi przebaczaj± Ci! Wyjdziesz z izolatki wcze¶niej." NL,
+			"Mistrzowie Jedi przebaczajï¿½ Ci! Wyjdziesz z izolatki wczeï¿½niej." NL,
 			victim);
 	do_look(victim, (char*) "auto");
 	send_to_char("Player unisolated." NL, ch);
@@ -5545,7 +5393,7 @@ DEF_DO_FUN( unisolate )
 	}
 
 	MOBtrigger = false;
-	act( COL_FORCE, "Moc zabiera st±d $n$3.", victim, NULL, ch, TO_NOTVICT);
+	act( COL_FORCE, "Moc zabiera stï¿½d $n$3.", victim, NULL, ch, TO_NOTVICT);
 	victim->pcdata->release_date = 0;
 	save_char_obj(victim);
 
@@ -5628,10 +5476,10 @@ DEF_DO_FUN( silence )
 	ch_printf(ch, "%s will be unsilenced at %24.24s." NL, victim->name,
 			ctime(&victim->pcdata->unsilence_date));
 	ch_printf(victim,
-			"Mistrzowie Jedi nie s± zadowoleni z twoich wypowiedzi." NL
-			"Tracisz prawo g³osu na %d %s." NL, time,
-			h_d ? (time == 1 ? "godzinê" : "godzin") : (
-					time == 1 ? "dzieñ" : "dni"));
+			"Mistrzowie Jedi nie sï¿½ zadowoleni z twoich wypowiedzi." NL
+			"Tracisz prawo gï¿½osu na %d %s." NL, time,
+			h_d ? (time == 1 ? "godzinï¿½" : "godzin") : (
+					time == 1 ? "dzieï¿½" : "dni"));
 
 	save_char_obj(victim);
 	return;
@@ -5661,7 +5509,7 @@ DEF_DO_FUN( unsilence )
 		return;
 	}
 
-	send_to_char("Mistrzowie Jedi przebaczaj± Ci! Pozwalaj± Ci przemówiæ." NL,
+	send_to_char("Mistrzowie Jedi przebaczajï¿½ Ci! Pozwalajï¿½ Ci przemï¿½wiï¿½." NL,
 			victim);
 	send_to_char("Player unsilenced." NL, ch);
 
@@ -5684,7 +5532,6 @@ DEF_DO_FUN( vsearch )
 {
 	char arg[MIL];
 	bool found = false;
-	OBJ_DATA *obj;
 	OBJ_DATA *in_obj;
 	int obj_counter = 1;
 	int argi;
@@ -5703,7 +5550,7 @@ DEF_DO_FUN( vsearch )
 		send_to_char("Vnum out of range." NL, ch);
 		return;
 	}
-	for (obj = first_object; obj != NULL; obj = obj->next)
+	for (auto* obj : object_list)
 	{
 		if (!can_see_obj(ch, obj) || !(argi == obj->pIndexData->vnum))
 			continue;
@@ -5759,7 +5606,7 @@ DEF_DO_FUN( sober )
 	if (victim->pcdata)
 		victim->pcdata->condition[COND_DRUNK] = 0;
 	send_to_char("Ok." NL, ch);
-	send_to_char("Wraca ci trze¼we spojrzenie na ¶wiat." NL, victim);
+	send_to_char("Wraca ci trzeï¿½we spojrzenie na ï¿½wiat." NL, victim);
 	return;
 }
 
@@ -5821,31 +5668,31 @@ void add_social(SOCIALTYPE *social)
 //Added by Ratm
 		switch (social->name[0])
 		{
-		case '±':
+		case '\xb1': // Ä… (ISO-8859-2)
 			hash = 1;
 			break;
-		case 'æ':
+		case '\xe6': // Ä‡ (ISO-8859-2)
 			hash = 3;
 			break;
-		case 'ê':
+		case '\xea': // Ä™ (ISO-8859-2)
 			hash = ('e' - 'a') + 1;
 			break;
-		case '³':
+		case '\xb3': // Å‚ (ISO-8859-2)
 			hash = ('l' - 'a') + 1;
 			break;
-		case 'ñ':
+		case '\xf1': // Å„ (ISO-8859-2)
 			hash = ('n' - 'a') + 1;
 			break;
-		case 'ó':
+		case '\xf3': // Ã³ (ISO-8859-2)
 			hash = ('o' - 'a') + 1;
 			break;
-		case '¶':
+		case '\xb6': // Å› (ISO-8859-2)
 			hash = ('s' - 'a') + 1;
 			break;
-		case '¿':
+		case '\xbf': // Å¼ (ISO-8859-2)
 			hash = ('z' - 'a') + 1;
 			break;
-		case '¼':
+		case '\xbc': // Åº (ISO-8859-2)
 			hash = ('z' - 'a') + 1;
 			break;
 		default:
@@ -6506,8 +6353,8 @@ void cedit(DESCRIPTOR_DATA *d, char *argument)
 }
 
 /*
- * Thanos - równie¿ ze Smauga
- * funkcja pokazuje zawarto¶ci ró¿norakich plików
+ * Thanos - rï¿½wnieï¿½ ze Smauga
+ * funkcja pokazuje zawartoï¿½ci rï¿½norakich plikï¿½w
  *
  * Original author: Thoric
  */

@@ -23,8 +23,6 @@
 
 struct	q_action_data
 {
-	QUEST_ACTION_DATA	* next;
-	QUEST_ACTION_DATA	* prev;
 	int					command;
 	int				arg1;
 	int				arg2;

@@ -56,11 +56,9 @@ void	talk_channel	args( ( CHAR_DATA *ch, char *argument,
 
 void sound_to_room( ROOM_INDEX_DATA *room , const char *argument )
 {
-	CHAR_DATA *	vic;
-
 	if ( room == NULL ) return;
 
-	for ( vic = room->first_person; vic; vic = vic->next_in_room )
+	for (auto* vic : room->people)
 		if ( !IS_NPC(vic) && IS_SET( vic->act, PLR_SOUND ) )
 			send_to_char( argument, vic );
 
@@ -86,7 +84,7 @@ DEF_DO_FUN( beep )
 	/*Milczace rasy by Ganis*/
 	if( IS_SET(ch->race->flags, FRACE_MUTE) )
 	{
-		send_to_char("Przecie¿ przedstawiciele Twojej rasy nie umiej± mówiæ!" NL, ch);
+		send_to_char("Przecieï¿½ przedstawiciele Twojej rasy nie umiejï¿½ mï¿½wiï¿½!" NL, ch);
 		return;
 	}
 
@@ -96,19 +94,19 @@ DEF_DO_FUN( beep )
 
 	if ( IS_SET( ch->in_room->room_flags, ROOM_SILENCE ) )
 	{
-		send_to_char( "Nie mo¿esz zrobiæ tego tutaj." NL, ch );
+		send_to_char( "Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch );
 		return;
 	}
 
 	if ( !IS_NPC(ch) && IS_SILENCED( ch ) )
 	{
-		send_to_char( "Nie mo¿esz tego zrobiæ." NL, ch );
+		send_to_char( "Nie moï¿½esz tego zrobiï¿½." NL, ch );
 		return;
 	}
 
 	if ( arg[0] == '\0' )
 	{
-		send_to_char( "Beepn±æ kogo?" NL, ch );
+		send_to_char( "Beepnï¿½ï¿½ kogo?" NL, ch );
 		return;
 	}
 
@@ -121,8 +119,8 @@ DEF_DO_FUN( beep )
 
 	if( is_ignored( victim, ch ) )
 	{
-		ch_printf( ch, "Przecie¿ %s ignorujesz!" NL,
-			MALE(victim)?"go":"j±" );
+		ch_printf( ch, "Przecieï¿½ %s ignorujesz!" NL,
+			MALE(victim)?"go":"jï¿½" );
 
 		if( !IS_ADMIN( ch->name ) )
 			return;
@@ -130,8 +128,8 @@ DEF_DO_FUN( beep )
 
 	if( is_ignored( ch, victim ) )
 	{
-		ch_printf( ch, "Jeste¶ ignorowan%s przez %s." NL,
-		SEX_SUFFIX_YAE( ch ), FEMALE(victim)?"ni±":"niego" );
+		ch_printf( ch, "Jesteï¿½ ignorowan%s przez %s." NL,
+		SEX_SUFFIX_YAE( ch ), FEMALE(victim)?"niï¿½":"niego" );
 
 		if( !IS_ADMIN( ch->name ) )
 			return;
@@ -145,19 +143,19 @@ DEF_DO_FUN( beep )
 
 		if ( !get_comlink( ch ) )
 		{
-			send_to_char( "Potrzebujesz urz±dzenia komunikacyjnego by to zrobiæ!" NL, ch);
+			send_to_char( "Potrzebujesz urzï¿½dzenia komunikacyjnego by to zrobiï¿½!" NL, ch);
 				return;
 		}
 
 		if ( !get_comlink( victim ) )
 		{
-			send_to_char( "Twój rozmówca nie ma urz±dzenia komunikacyjnego!" NL, ch);
+			send_to_char( "Twï¿½j rozmï¿½wca nie ma urzï¿½dzenia komunikacyjnego!" NL, ch);
 			return;
 		}
 
 		if ( ch->gold < 1 )
 		{
-			send_to_char("Nie masz wystarczaj±cej ilo¶ci kredytek!" NL,ch);
+			send_to_char("Nie masz wystarczajï¿½cej iloï¿½ci kredytek!" NL,ch);
 			return;
 		}
 
@@ -167,7 +165,7 @@ DEF_DO_FUN( beep )
 	if ( !IS_NPC( victim ) && ( victim->switched )
 	&& ( get_trust( ch ) > LEVEL_AVATAR ) )
 	{
-		send_to_char( "Ten gracz jest obecnie zajêty." NL, ch );
+		send_to_char( "Ten gracz jest obecnie zajï¿½ty." NL, ch );
 		return;
 	}
 	else if ( !IS_NPC( victim ) && ( !victim->desc ) )
@@ -179,7 +177,7 @@ DEF_DO_FUN( beep )
 	if ( IS_SET( victim->deaf, CHANNEL_TELLS )
 	&& ( !IS_IMMORTAL( ch ) || ( get_trust( ch ) < get_trust( victim ) ) ) )
 	{
-		act( PLAIN, "$E ma wy³±czony kana³ TELLS.", ch, NULL, victim,
+		act( PLAIN, "$E ma wyï¿½ï¿½czony kanaï¿½ TELLS.", ch, NULL, victim,
 			TO_CHAR );
 		return;
 	}
@@ -187,19 +185,19 @@ DEF_DO_FUN( beep )
 	if( !IS_NPC (victim) && IS_SILENCED( victim ) )
 	{
 		send_to_char(
-			"Ten gracz jest UCISZONY. Us³yszy twoj± wiadomo¶æ, ale nie odpowie." NL, ch );
+			"Ten gracz jest UCISZONY. Usï¿½yszy twojï¿½ wiadomoï¿½ï¿½, ale nie odpowie." NL, ch );
 	}
 
 	if ( (!IS_IMMORTAL(ch) && !IS_AWAKE(victim) )
 	|| (!IS_NPC(victim)&&IS_SET(victim->in_room->room_flags, ROOM_SILENCE ) ) )
 	{
-		act( PLAIN, "$E nie mo¿e ciê us³yszeæ.", ch, 0, victim, TO_CHAR );
+		act( PLAIN, "$E nie moï¿½e ciï¿½ usï¿½yszeï¿½.", ch, 0, victim, TO_CHAR );
 		return;
 	}
 
 	argument = drunk_speech( argument, ch );
 	ch_printf(ch , COL_TELL "Beepasz %s: " COL_TELL "%s\a" EOL ,
-	can_see( ch, victim ) ? victim->przypadki[3] : "kogo¶", argument );
+	can_see( ch, victim ) ? victim->przypadki[3] : "kogoï¿½", argument );
 	send_to_char("\a",victim);
 
 	if ( !IS_NPC(ch) || ch->speaking )
@@ -208,13 +206,13 @@ DEF_DO_FUN( beep )
 							knows_language(ch, ch->speaking, victim));
 
 		if ( speakswell < 85 )
-			act( COL_TELL, "$n$R beepa ciê '$t'", ch,
+			act( COL_TELL, "$n$R beepa ciï¿½ '$t'", ch,
 				translate(speakswell, argument, ch->speaking->name), victim, TO_VICT );
 		else
-			act( COL_TELL, "$n$R beepa ciê '$t'", ch, argument, victim, TO_VICT );
+			act( COL_TELL, "$n$R beepa ciï¿½ '$t'", ch, argument, victim, TO_VICT );
 	}
 	else
-		act( COL_TELL, "$n$R beepa ciê '$t'", ch, argument, victim, TO_VICT );
+		act( COL_TELL, "$n$R beepa ciï¿½ '$t'", ch, argument, victim, TO_VICT );
 
 	victim->reply	= ch;
 	ch->retell		= victim;//added by Thanos
@@ -290,7 +288,6 @@ char *scramble( const char *argument, int modifier )
 /* percent = percent knowing the language. */
 char *translate(int percent, const char *in, const char *name)
 {
-	LCNV_DATA		* cnv;
 	LANG_DATA		* lng;
 	const char		* pbuf;
 	static char		buf	[256];
@@ -307,7 +304,8 @@ char *translate(int percent, const char *in, const char *name)
 
 	for (pbuf = in; *pbuf;)
 	{
-		for (cnv = lng->first_precnv; cnv; cnv = cnv->next)
+		bool cnv_found = false;
+		for (auto* cnv : lng->precnv)
 		{
 			if (!str_prefix(cnv->old, pbuf))
 			{
@@ -323,10 +321,11 @@ char *translate(int percent, const char *in, const char *name)
 					pbuf2 += cnv->nlen;
 				}
 				pbuf += cnv->olen;
+				cnv_found = true;
 				break;
 			}
 		}
-		if (!cnv)
+		if (!cnv_found)
 		{
 			if (isalpha(*pbuf) && (!percent || (rand() % 100) > percent) )
 			{
@@ -343,15 +342,17 @@ char *translate(int percent, const char *in, const char *name)
 	*pbuf2 = '\0';
 	for (pbuf = buf2, pbuf2 = buf; *pbuf;)
 	{
-		for (cnv = lng->first_cnv; cnv; cnv = cnv->next)
+		bool cnv_found = false;
+		for (auto* cnv : lng->cnv)
 			if (!str_prefix(cnv->old, pbuf))
 			{
 				strcpy(pbuf2, cnv->_new);
 				pbuf += cnv->olen;
 				pbuf2 += cnv->nlen;
+				cnv_found = true;
 				break;
 			}
-		if (!cnv)
+		if (!cnv_found)
 			*(pbuf2++) = *(pbuf++);
 	}
 	*pbuf2 = '\0';
@@ -422,7 +423,7 @@ char *drunk_speech( const char *argument, CHAR_DATA *ch )
 			else
 				*txt++ = *arg;
 		}
-		else /* Poprzekrêcane numerki by Thanos (z Envy) */
+		else /* Poprzekrï¿½cane numerki by Thanos (z Envy) */
 		if ( ( toupper(*arg) >= '0' ) && ( toupper(*arg) <= '9' ) )
 		{
 			char 	temp;
@@ -522,7 +523,7 @@ char *drunk_speech( const char *argument, CHAR_DATA *ch )
 }
 
 
-/* podmienia przekleñstwa na '³adniejsze' wyrazy 	-- Thanos */
+/* podmienia przekleï¿½stwa na 'ï¿½adniejsze' wyrazy 	-- Thanos */
 char *censore( char *argument )
 {
 	char		arg	[MSL];
@@ -530,11 +531,11 @@ char *censore( char *argument )
 
 const struct uglyword_list uglywords[]=
 {
-	{ "dupa",	{ "odbyt", "kiszka", "pupa", "pupcia", "ty³eczek", "ty³ek", "po¶ladki", "" } },
-	{ "dupe",	{ "odbyt", "kiszkê", "pupê", "pupciê", "ty³eczek", "ty³ek", "po¶ladki", "" } },
-	{ "dupy",	{ "odbytu", "kiszki", "pupy", "pupci", "ty³eczka", "ty³ka", "po¶ladków", "" } },
+	{ "dupa",	{ "odbyt", "kiszka", "pupa", "pupcia", "tyï¿½eczek", "tyï¿½ek", "poï¿½ladki", "" } },
+	{ "dupe",	{ "odbyt", "kiszkï¿½", "pupï¿½", "pupciï¿½", "tyï¿½eczek", "tyï¿½ek", "poï¿½ladki", "" } },
+	{ "dupy",	{ "odbytu", "kiszki", "pupy", "pupci", "tyï¿½eczka", "tyï¿½ka", "poï¿½ladkï¿½w", "" } },
 	{ "cipa",	{ "dziura", "szpara", "szrama","dziura", "" } },
-	{ "pipa",	{ "wnêka", "otwór", "otch³añ", "dziura","" } },
+	{ "pipa",	{ "wnï¿½ka", "otwï¿½r", "otchï¿½aï¿½", "dziura","" } },
 	{ "pizda",	{ "czarna dziura", "picza", "dziura", "" } },
 	{ "chuj",	{ "banan", "trzonek", "siorek", "ogonek", "jasiek", "" } },
 	{ "chuju",	{ "bananq", "trzoneczku", "siorku", "ogonku", "" } },
@@ -547,29 +548,29 @@ const struct uglyword_list uglywords[]=
 	{ "hujowy",	{ "fajfusowaty", "taki sobie", "niezbyt fajny", "nienajlepszy", "" } },
 	{ "hujowa",	{ "fajfusowata", "taka sobie", "niezbyt fajna", "nienajlepsza", "" } },
 	{ "hujowe",	{ "fajfusowate", "takie sobie", "niezbyt fajne", "nienajlepsze", "" } },
-	{ "kurwa",	{ "pani", "prostytutka", "zajêta kobieta", "kobieta pracuj±ca", "panna", "" } },
-	{ "kuwa",	{ "pani", "prostytutka", "zajêta kobieta", "kobieta pracuj±ca", "panna", "" } },
-	{ "qrwa",	{ "pani", "prostytutka", "zajêta kobieta", "kobieta pracuj±ca", "panna", "" } },
-	{ "qwa",	{ "pani", "prostytutka", "zajêta kobieta", "kobieta pracuj±ca", "panna", "" } },
-	{ "shit",	{ "qpa", "kupa", "ojej", "qpeñka","kupka",  "" } },
+	{ "kurwa",	{ "pani", "prostytutka", "zajï¿½ta kobieta", "kobieta pracujï¿½ca", "panna", "" } },
+	{ "kuwa",	{ "pani", "prostytutka", "zajï¿½ta kobieta", "kobieta pracujï¿½ca", "panna", "" } },
+	{ "qrwa",	{ "pani", "prostytutka", "zajï¿½ta kobieta", "kobieta pracujï¿½ca", "panna", "" } },
+	{ "qwa",	{ "pani", "prostytutka", "zajï¿½ta kobieta", "kobieta pracujï¿½ca", "panna", "" } },
+	{ "shit",	{ "qpa", "kupa", "ojej", "qpeï¿½ka","kupka",  "" } },
 	{ "fuck",	{ "jasna ciasna", "duck", "ciak", "siak", "fook", "kciuk", "" } },
-	{ "spierdalaj",{ "id¼ sobie", "odejd¼", "uciekaj", "zostaw mnie", "a we¼ ty",  "" } },
+	{ "spierdalaj",{ "idï¿½ sobie", "odejdï¿½", "uciekaj", "zostaw mnie", "a weï¿½ ty",  "" } },
 	{ "spierdalamy",{ "idziemy sobie", "odchodzimy", "uciekamy", "zostawiamy was", "" } },
-	{ "spierdalajcie",{ "id¼cie sobie", "odejd¼cie", "uciekajcie", "zostawcie mnie", "a we¼cie",  "" } },
+	{ "spierdalajcie",{ "idï¿½cie sobie", "odejdï¿½cie", "uciekajcie", "zostawcie mnie", "a weï¿½cie",  "" } },
 	{ "spierdala",{ "idzie sobie", "odchodzi", "ucieka", "zostawia mnie", "" } },
-	{ "spierdalaja",{ "id± sobie", "odchodz±", "uciekaj±", "zostawiaj± mnie", "" } },
+	{ "spierdalaja",{ "idï¿½ sobie", "odchodzï¿½", "uciekajï¿½", "zostawiajï¿½ mnie", "" } },
 	{ "cholera",{ "no nie", "choroba", "epidemia", "do diaska", "ohoho",  "" } },
-	{ "pierdol",{ "kituj", "¶ciemniaj", "pracuj", "" } },
-	{ "pierdole",{ "kitujê", "¶ciemniam", "pracujê","mam gdzie¶", "" } },
+	{ "pierdol",{ "kituj", "ï¿½ciemniaj", "pracuj", "" } },
+	{ "pierdole",{ "kitujï¿½", "ï¿½ciemniam", "pracujï¿½","mam gdzieï¿½", "" } },
 	{ "pierdolony",{ "przepracowany", "" } },
 	{ "pierdolona",{ "przepracowana", "" } },
 	{ "pierdolone",{ "przepracowane", "" } },
-	{ "jeb",    { "kot³uj", "rad¼", "" } },
-	{ "jebany", { "skot³owany", "" } },
-	{ "jebana", { "skot³owana", "" } },
-	{ "jebane", { "skot³owane", "" } },
-	{ "pieprz", { "sól", "przyprawa", "na ostro", "" } },
-	{ "pieprze",{ "solê","przyprawiam","nie dbam", "mam gdzie¶", "" } },
+	{ "jeb",    { "kotï¿½uj", "radï¿½", "" } },
+	{ "jebany", { "skotï¿½owany", "" } },
+	{ "jebana", { "skotï¿½owana", "" } },
+	{ "jebane", { "skotï¿½owane", "" } },
+	{ "pieprz", { "sï¿½l", "przyprawa", "na ostro", "" } },
+	{ "pieprze",{ "solï¿½","przyprawiam","nie dbam", "mam gdzieï¿½", "" } },
 	{ "" ,    	{ "" } }
 };
 
@@ -612,7 +613,6 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 	char			buf	[MSL];
 	char			buf2[MSL];
 	char			orig_arg[MSL];
-	DESCRIPTOR_DATA	*d;
 	int				position;
 	CLAN_DATA		*clan = NULL;
 	char			nverb[MSL];
@@ -621,7 +621,7 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 	/* milczace rasy by Ganis */
 	if ( IS_SET(ch->race->flags, FRACE_MUTE) )
 	{
-		send_to_char("Przecie¿ przedstawiciele Twojej rasy nie umiej± mówiæ!" NL, ch);
+		send_to_char("Przecieï¿½ przedstawiciele Twojej rasy nie umiejï¿½ mï¿½wiï¿½!" NL, ch);
 		return;
 	}
 
@@ -642,13 +642,13 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 	&&  channel != CHANNEL_CODERTALK
 	&& !get_comlink( ch ) )
 	{
-		send_to_char( "By to zrobiæ potrzebujesz urz±dzenia komunikacyjnego!" NL, ch);
+		send_to_char( "By to zrobiï¿½ potrzebujesz urzï¿½dzenia komunikacyjnego!" NL, ch);
 		return;
 	}
 
 	if ( IS_NPC( ch ) && (channel == CHANNEL_CLAN || channel == CHANNEL_ORDER || channel == CHANNEL_ORDER) )
 	{
-		send_to_char( "Przecie¿ nie jeste¶ w klanie. Jeste¶ mobem, nie masz ¿adnych praw." NL, ch );
+		send_to_char( "Przecieï¿½ nie jesteï¿½ w klanie. Jesteï¿½ mobem, nie masz ï¿½adnych praw." NL, ch );
 		return;
 	}
 
@@ -664,7 +664,7 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 	if ( IS_SET( ch->in_room->room_flags, ROOM_SILENCE )
 	&& channel != CHANNEL_QUEST )/*Thanos*/
 	{
-		send_to_char( "Nie mo¿esz zrobiæ tego tutaj." NL, ch );
+		send_to_char( "Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch );
 		return;
 	}
 
@@ -685,11 +685,11 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 	if( !IS_NPC(ch) && IS_SILENCED( ch )
 	&& channel != CHANNEL_QUEST )/*Thanos*/
 	{
-		ch_printf( ch, "Nie mo¿esz u¿ywaæ kana³ów." NL );
+		ch_printf( ch, "Nie moï¿½esz uï¿½ywaï¿½ kanaï¿½ï¿½w." NL );
 		return;
 	}
 
-	/* A kto to wywali³ ??? 	ubije - Thanos ;) */
+	/* A kto to wywaliï¿½ ??? 	ubije - Thanos ;) */
 	strcpy( orig_arg, argument );
 	argument 	= drunk_speech( argument, ch );
 
@@ -699,9 +699,9 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 	{
 	default:
 		color = FB_CYAN;
-		ch_printf( ch, "%s%ssz przez sieæ publiczn± '%s" RESET FB_CYAN "'" EOL,
+		ch_printf( ch, "%s%ssz przez sieï¿½ publicznï¿½ '%s" RESET FB_CYAN "'" EOL,
 			color, nverb, argument );
-		sprintf( buf, "$n$0 %s przez sieæ publiczn± '$t" RESET "'", verb );
+		sprintf( buf, "$n$0 %s przez sieï¿½ publicznï¿½ '$t" RESET "'", verb );
 		add_to_last_buf( ch, argument, verb, CHANNEL_CHAT );
 
 	break;
@@ -716,25 +716,25 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 
 	case CHANNEL_FLAME:
 		color = FG_BLACK;
-		ch_printf( ch, "%s%ssz przez sieæ publiczn± '%s" RESET FG_BLACK "'" EOL,
+		ch_printf( ch, "%s%ssz przez sieï¿½ publicznï¿½ '%s" RESET FG_BLACK "'" EOL,
 			color, nverb, argument );
-		sprintf( buf,  "$n$0 %s przez sieæ publiczn± '$t" RESET "'", verb );
-		/* NIE DODAWAÆ DO LASTBUFA !!! */
+		sprintf( buf,  "$n$0 %s przez sieï¿½ publicznï¿½ '$t" RESET "'", verb );
+		/* NIE DODAWAï¿½ DO LASTBUFA !!! */
 	break;
 
 	case CHANNEL_CLANTALK:
 		color = FB_WHITE;
-		ch_printf( ch, "%sNadajesz przez prywatn± sieæ %s '%s" RESET FB_WHITE "'" EOL,
+		ch_printf( ch, "%sNadajesz przez prywatnï¿½ sieï¿½ %s '%s" RESET FB_WHITE "'" EOL,
 			color, CLANTYPE( clan, 1 ), argument );
-		sprintf( buf, "$n$0 nadaje przez prywatn± sieæ %s '$t" RESET "'", CLANTYPE( clan, 1 ) );
+		sprintf( buf, "$n$0 nadaje przez prywatnï¿½ sieï¿½ %s '$t" RESET "'", CLANTYPE( clan, 1 ) );
 		add_to_last_ctalk( ch->pcdata->clan, ch, argument );
 	break;
 
 	case CHANNEL_SHIP:
 		color = FG_PINK;
-		ch_printf( ch, "%sNadajesz przez komunikator pok³adowy '%s" RESET FG_PINK "'" EOL,
+		ch_printf( ch, "%sNadajesz przez komunikator pokï¿½adowy '%s" RESET FG_PINK "'" EOL,
 			color, argument );
-		sprintf( buf, "$n$0 nadaje przez komunikator pok³adowy '$t" RESET "'"  );
+		sprintf( buf, "$n$0 nadaje przez komunikator pokï¿½adowy '$t" RESET "'"  );
 	break;
 
 	case CHANNEL_SYSTEM:
@@ -762,7 +762,7 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 		color = FB_PINK;
 		ch_printf( ch, "%s(NEWBIE) %s: %s" RESET EOL, color, ch->name, argument );
 		sprintf( buf, "(NEWBIE) %s: $t" RESET, ch->przypadki[0] );
-			//added by Thanos (dodaje liniê do bufora (do_last) ) Ratma
+			//added by Thanos (dodaje liniï¿½ do bufora (do_last) ) Ratma
 		add_to_last_buf( ch, argument, "(NEWBIE)", CHANNEL_CHAT );
 	break;
 
@@ -775,9 +775,9 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 
 	case CHANNEL_WARTALK:
 		color = FB_RED;
-		ch_printf( ch, "%s%ssz do klanów '%s" RESET "%s" RESET FB_RED "'" EOL,
+		ch_printf( ch, "%s%ssz do klanï¿½w '%s" RESET "%s" RESET FB_RED "'" EOL,
 		color, nverb, argument, color );
-		sprintf( buf,  "$n %s do klanów '$t" RESET "'", verb );
+		sprintf( buf,  "$n %s do klanï¿½w '$t" RESET "'", verb );
 	break;
 
 	case CHANNEL_CODERTALK:
@@ -807,7 +807,7 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 			buf, ch, argument, NULL, TO_CHAR );
 		ch->position	= position;
 
-		// by Ratm Nie wszystkie kana³y powinny pokazywaæ pijack± gadkê
+		// by Ratm Nie wszystkie kanaï¿½y powinny pokazywaï¿½ pijackï¿½ gadkï¿½
 		if ( channel == CHANNEL_IMMTALK ) // na tym moze zostac
 			add_to_last_buf( ch, argument, verb, channel );
 		else	// na reszcie przeszkadza
@@ -822,7 +822,7 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 		append_to_file( LOG_FILE, buf2 );
 	}
 
-	for ( d = first_descriptor; d; d = d->next )
+	for (auto* d : descriptor_list)
 	{
 		CHAR_DATA *och;
 		CHAR_DATA *vch;
@@ -836,7 +836,7 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 		{
 			char *sbuf;
 
-		// by Ratm Nie wszystkie kana³y powinny pokazywaæ pijack± gadkê
+		// by Ratm Nie wszystkie kanaï¿½y powinny pokazywaï¿½ pijackï¿½ gadkï¿½
 		if( channel == CHANNEL_OLCTALK
 		|| channel == CHANNEL_CODERTALK
 		|| channel == CHANNEL_ADMINTALK
@@ -949,9 +949,8 @@ void talk_channel( CHAR_DATA *ch, char *argument, int64 channel, const char *ver
 void to_channel( const char *argument, int64 channel, const char *verb, int level )
 {
 	char			buf[MAX_STRING_LENGTH];
-	DESCRIPTOR_DATA	* d;
 
-	if ( !first_descriptor || argument[0] == '\0' )
+	if ( descriptor_list.empty() || argument[0] == '\0' )
 		return;
 
 	if( isalnum( argument[0] ) || channel == CHANNEL_COMM )
@@ -959,7 +958,7 @@ void to_channel( const char *argument, int64 channel, const char *verb, int leve
 	else
 		sprintf(buf, "%s%s"   EOL, 	verb, 	argument );
 
-	for ( d = first_descriptor; d; d = d->next )
+	for (auto* d : descriptor_list)
 	{
 		CHAR_DATA *och;
 		CHAR_DATA *vch;
@@ -993,7 +992,7 @@ void to_channel( const char *argument, int64 channel, const char *verb, int leve
 
 DEF_DO_FUN( chat )
 {
-	talk_channel( ch, argument, CHANNEL_CHAT, "gawêdzi", "pogawêdziæ" );
+	talk_channel( ch, argument, CHANNEL_CHAT, "gawï¿½dzi", "pogawï¿½dziï¿½" );
 	return;
 }
 
@@ -1001,19 +1000,19 @@ DEF_DO_FUN( flame )
 {
 	if ( ch->gold < 1 )
 	{
-		send_to_char("Nie masz wystarczaj±cej ilo¶ci kredytek!" NL ,ch);
+		send_to_char("Nie masz wystarczajï¿½cej iloï¿½ci kredytek!" NL ,ch);
 		return;
 	}
 
 	ch->gold -= 1;
 
-	talk_channel( ch, argument, CHANNEL_FLAME, "przeklina", "przekl±æ" );
+	talk_channel( ch, argument, CHANNEL_FLAME, "przeklina", "przeklï¿½ï¿½" );
 	return;
 }
 
 DEF_DO_FUN( questchat )
 {
-	talk_channel( ch, argument, CHANNEL_QUEST, "questuje", "questowaæ" );
+	talk_channel( ch, argument, CHANNEL_QUEST, "questuje", "questowaï¿½" );
 	return;
 }
 
@@ -1023,10 +1022,10 @@ DEF_DO_FUN( shiptalk )
 
 	if ( (ship = ship_from_cockpit(ch->in_room)) == NULL )
 	{
-		send_to_char("By to zrobiæ musisz byæ w kokpicie statku!" NL,ch);
+		send_to_char("By to zrobiï¿½ musisz byï¿½ w kokpicie statku!" NL,ch);
 		return;
 	}
-	talk_channel( ch, argument, CHANNEL_SHIP, "nadaje", "nadawaæ" );
+	talk_channel( ch, argument, CHANNEL_SHIP, "nadaje", "nadawaï¿½" );
 	return;
 }
 
@@ -1036,10 +1035,10 @@ DEF_DO_FUN( systemtalk )
 
 	if ( (ship = ship_from_cockpit(ch->in_room)) == NULL )
 	{
-		send_to_char("By to zrobiæ musisz byæ w kokpicie statku!" NL,ch);
+		send_to_char("By to zrobiï¿½ musisz byï¿½ w kokpicie statku!" NL,ch);
 		return;
 	}
-	talk_channel( ch, argument, CHANNEL_SYSTEM, "og³asza", "og³osiæ" );
+	talk_channel( ch, argument, CHANNEL_SYSTEM, "ogï¿½asza", "ogï¿½osiï¿½" );
 	return;
 }
 
@@ -1049,16 +1048,16 @@ DEF_DO_FUN( spacetalk )
 
 	if ( (ship = ship_from_cockpit(ch->in_room)) == NULL )
 	{
-		send_to_char("By to zrobiæ musisz byæ w kokpicie statku!" NL,ch);
+		send_to_char("By to zrobiï¿½ musisz byï¿½ w kokpicie statku!" NL,ch);
 		return;
 	}
-	talk_channel( ch, argument, CHANNEL_SPACE, "nadaje" , "nadawaæ");
+	talk_channel( ch, argument, CHANNEL_SPACE, "nadaje" , "nadawaï¿½");
 	return;
 }
 
 DEF_DO_FUN( ooc )
 {
-	talk_channel( ch, argument, CHANNEL_OOC, "ooc", "mówiæ na kanale OOC" );
+	talk_channel( ch, argument, CHANNEL_OOC, "ooc", "mï¿½wiï¿½ na kanale OOC" );
 	return;
 }
 
@@ -1076,23 +1075,23 @@ DEF_DO_FUN( clantalk )
 		return;
 	}
 
-	talk_channel( ch, argument, CHANNEL_CLAN, "mówi", "mówiæ do klanu" );
-	/* by Ratm Przenios³em poni¿sz± liniê do talk_channel(), tam jej miejsce ;)
+	talk_channel( ch, argument, CHANNEL_CLAN, "mï¿½wi", "mï¿½wiï¿½ do klanu" );
+	/* by Ratm Przeniosï¿½em poniï¿½szï¿½ liniï¿½ do talk_channel(), tam jej miejsce ;)
 	add_to_last_ctalk( ch->pcdata->clan, ch, argument ); */
 	return;
 }
 
 DEF_DO_FUN( newbiechat )
 {
-	//added by Thanos & Trog (immosi & NH mog± gadac na newbie)
+	//added by Thanos & Trog (immosi & NH mogï¿½ gadac na newbie)
 	/*added by Pixel, wszyscy korzystaja z kanalu pomocy, bo sa debilami
 	if ( !IS_NEWBIE( ch ) && !IS_IMMORTAL( ch ) && !IS_NH( ch ) )
 	{
-		send_to_char( "Czy nie za pó¼no ju¿ na ten kana³?" NL, ch );
+		send_to_char( "Czy nie za pï¿½no juï¿½ na ten kanaï¿½?" NL, ch );
 		return;
 	}
 	*/
-	talk_channel( ch, argument, CHANNEL_NEWBIE, "gawêdzi", "pogawêdziæ" );
+	talk_channel( ch, argument, CHANNEL_NEWBIE, "gawï¿½dzi", "pogawï¿½dziï¿½" );
 	return;
 }
 
@@ -1117,22 +1116,22 @@ DEF_DO_FUN( music )
 {
 	if (NOT_AUTHED(ch))
 	{
-		send_to_char("Nie masz jeszcze autoryzacji. Nie mo¿esz korzystaæ z tego kana³u." NL, ch);
+		send_to_char("Nie masz jeszcze autoryzacji. Nie moï¿½esz korzystaï¿½ z tego kanaï¿½u." NL, ch);
 		return;
 	}
-	talk_channel( ch, argument, CHANNEL_MUSIC, "¶piewa", "za¶piewaæ" );
+	talk_channel( ch, argument, CHANNEL_MUSIC, "ï¿½piewa", "zaï¿½piewaï¿½" );
 	return;
 }
 
 DEF_DO_FUN( ask )
 {
-	talk_channel( ch, argument, CHANNEL_ASK, "pyta", "zapytaæ" );
+	talk_channel( ch, argument, CHANNEL_ASK, "pyta", "zapytaï¿½" );
 	return;
 }
 
 DEF_DO_FUN( answer )
 {
-	talk_channel( ch, argument, CHANNEL_ASK, "odpowiada", "odpowiedzieæ" );
+	talk_channel( ch, argument, CHANNEL_ASK, "odpowiada", "odpowiedzieï¿½" );
 	return;
 }
 
@@ -1147,11 +1146,11 @@ DEF_DO_FUN( shout )
 
 	if (NOT_AUTHED(ch))
 	{
-		send_to_char("Nie krzycz. Nie masz autoryzacji, a chcesz ha³asowaæ?" NL, ch);
+		send_to_char("Nie krzycz. Nie masz autoryzacji, a chcesz haï¿½asowaï¿½?" NL, ch);
 		return;
 	}
 
-	talk_channel( ch, argument, CHANNEL_SHOUT, "krzyczy", "krzyczeæ" );
+	talk_channel( ch, argument, CHANNEL_SHOUT, "krzyczy", "krzyczeï¿½" );
 	WAIT_STATE( ch, 12 );
 	return;
 }
@@ -1160,11 +1159,11 @@ DEF_DO_FUN( yell )
 {
 	if(!IS_NPC( ch ) && NOT_AUTHED(ch) )
 	{
-		send_to_char("Nie masz autoryzacji, wiêc nie mo¿esz wrzeszczeæ." NL, ch);
+		send_to_char("Nie masz autoryzacji, wiï¿½c nie moï¿½esz wrzeszczeï¿½." NL, ch);
 		return;
 	}
 
-	talk_channel( ch, argument, CHANNEL_YELL, "wrzeszczy", "wrzeszczeæ"  );
+	talk_channel( ch, argument, CHANNEL_YELL, "wrzeszczy", "wrzeszczeï¿½"  );
 	WAIT_STATE( ch, 10 );
 	return;
 }
@@ -1176,7 +1175,7 @@ DEF_DO_FUN( immtalk )
 		huh( ch );
 		return;
 	}
-	talk_channel( ch, argument, CHANNEL_IMMTALK, "immtalk", "mówiæ na immtalku"  );
+	talk_channel( ch, argument, CHANNEL_IMMTALK, "immtalk", "mï¿½wiï¿½ na immtalku"  );
 	return;
 }
 
@@ -1189,7 +1188,7 @@ DEF_DO_FUN( admintalk )
 		return;
 	}
 
-	talk_channel( ch, argument, CHANNEL_ADMINTALK, "admintalk", "mówiæ na admintalku" );
+	talk_channel( ch, argument, CHANNEL_ADMINTALK, "admintalk", "mï¿½wiï¿½ na admintalku" );
 	return;
 }
 
@@ -1202,7 +1201,7 @@ DEF_DO_FUN( codertalk )
 		return;
 	}
 		talk_channel( ch, argument, CHANNEL_CODERTALK,
-				"codertalk", "kodowaæ (tzn. mówiæ :-)) na codertalku" );
+				"codertalk", "kodowaï¿½ (tzn. mï¿½wiï¿½ :-)) na codertalku" );
 	return;
 }
 
@@ -1216,39 +1215,38 @@ DEF_DO_FUN( olctalk )
 		return;
 	}
 
-	talk_channel( ch, argument, CHANNEL_OLCTALK, "olctalk", "rozmawiaæ na olctalku" );
+	talk_channel( ch, argument, CHANNEL_OLCTALK, "olctalk", "rozmawiaï¿½ na olctalku" );
 	return;
 }
 
 DEF_DO_FUN( say )
 {
 	char			buf [MAX_STRING_LENGTH];
-	CHAR_DATA		* vch;
 	int				actflags;
 
 	/*Milczace rasy by Ganis*/
 	if ( IS_SET(ch->race->flags, FRACE_MUTE) )
 	{
-		send_to_char("Przecie¿ przedstawiciele Twojej rasy nie umiej± mówiæ!" NL, ch);
+		send_to_char("Przecieï¿½ przedstawiciele Twojej rasy nie umiejï¿½ mï¿½wiï¿½!" NL, ch);
 		return;
 	}
 
 	if ( argument[0] == '\0' )
 	{
-		send_to_char( "Powiedzieæ co?" NL, ch );
+		send_to_char( "Powiedzieï¿½ co?" NL, ch );
 		return;
 	}
 
 	if ( IS_SET( ch->in_room->room_flags, ROOM_SILENCE ) )
 	{
-		send_to_char( "Nie mo¿esz zrobiæ tego tutaj." NL, ch );
+		send_to_char( "Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch );
 		return;
 	}
 
 	actflags = ch->act;
 
 	if ( IS_NPC( ch ) ) REMOVE_BIT( ch->act, ACT_SECRETIVE );
-	for ( vch = ch->in_room->first_person; vch; vch = vch->next_in_room )
+	for (auto* vch : ch->in_room->people)
 	{
 		char *sbuf = argument;
 
@@ -1268,15 +1266,15 @@ DEF_DO_FUN( say )
 		MOBtrigger = false;
 
 		if( is_ignored( ch, vch ) )
-			act( COL_SAY, "$n co¶ tam glêdzi.",
+			act( COL_SAY, "$n coï¿½ tam glï¿½dzi.",
 			ch, sbuf, vch, TO_VICT );
 		else
-			act( COL_SAY, "$n mówi '$t'", ch, sbuf, vch, TO_VICT );
+			act( COL_SAY, "$n mï¿½wi '$t'", ch, sbuf, vch, TO_VICT );
 	}
 
 	ch->act = actflags;
 	MOBtrigger = false;
-	act( COL_SAY, "Mówisz '$T'" PLAIN,
+	act( COL_SAY, "Mï¿½wisz '$T'" PLAIN,
 	ch, NULL, drunk_speech( argument, ch ), TO_CHAR );
 
 	if ( IS_SET( ch->in_room->room_flags, ROOM_LOGSPEECH ) )
@@ -1310,7 +1308,7 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 	/*Milczace rasy by Ganis*/
 	if( IS_SET(ch->race->flags, FRACE_MUTE) )
 	{
-		send_to_char("Przecie¿ przedstawiciele Twojej rasy nie umiej± mówiæ!" NL, ch);
+		send_to_char("Przecieï¿½ przedstawiciele Twojej rasy nie umiejï¿½ mï¿½wiï¿½!" NL, ch);
 		return;
 	}
 
@@ -1318,8 +1316,8 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 
 	if( is_ignored( victim, ch ) )
 	{
-		ch_printf( ch, "Przecie¿ %s ignorujesz!" NL,
-			FEMALE(victim) ? "j±" : "go" );
+		ch_printf( ch, "Przecieï¿½ %s ignorujesz!" NL,
+			FEMALE(victim) ? "jï¿½" : "go" );
 
 		if( !IS_ADMIN( ch->name ) )
 			return;
@@ -1327,8 +1325,8 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 
 	if( is_ignored( ch, victim ) )
 	{
-		ch_printf( ch, "Jeste¶ przez %s ignorowan%s." NL,
-		FEMALE( victim ) ? "ni±" : "niego", SEX_SUFFIX_YAE( ch ) );
+		ch_printf( ch, "Jesteï¿½ przez %s ignorowan%s." NL,
+		FEMALE( victim ) ? "niï¿½" : "niego", SEX_SUFFIX_YAE( ch ) );
 
 		if( !IS_ADMIN( ch->name ) )
 			return;
@@ -1337,26 +1335,26 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 	if ( !IS_NPC( ch ) && IS_SET( ch->deaf, CHANNEL_TELLS )
 	&& !IS_IMMORTAL( ch ) )
 	{
-		act( PLAIN, "Masz przecie¿ wy³±czony kana³ TELLS. Spróbuj najpierw 'channels +tells'.", ch, NULL, NULL,
+		act( PLAIN, "Masz przecieï¿½ wyï¿½ï¿½czony kanaï¿½ TELLS. Sprï¿½buj najpierw 'channels +tells'.", ch, NULL, NULL,
 		TO_CHAR );
 		return;
 	}
 
 	if ( IS_SET( ch->in_room->room_flags, ROOM_SILENCE ) && !IS_NPC( ch ) )
 	{
-		send_to_char( "Nie mo¿esz zrobiæ tego tutaj." NL, ch );
+		send_to_char( "Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch );
 		return;
 	}
 
 	if( !IS_NPC(ch) && IS_SILENCED( ch ) )
 	{
-		send_to_char( "Nie mo¿esz tego zrobiæ." NL, ch );
+		send_to_char( "Nie moï¿½esz tego zrobiï¿½." NL, ch );
 		return;
 	}
 
 	if ( argument[0] == '\0' )
 	{
-		send_to_char( "Powiedzieæ komu co?" NL, ch );
+		send_to_char( "Powiedzieï¿½ komu co?" NL, ch );
 		return;
 	}
 
@@ -1368,7 +1366,7 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 
 	if ( ch == victim )
 	{
-		send_to_char( "Prowadzisz ze sob± mi³± i pouczaj±c± konwersacjê." NL, ch );
+		send_to_char( "Prowadzisz ze sobï¿½ miï¿½ï¿½ i pouczajï¿½cï¿½ konwersacjï¿½." NL, ch );
 		return;
 	}
 
@@ -1380,19 +1378,19 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 
 		if ( !get_comlink( ch ) )
 		{
-			send_to_char( "Potrzebujesz urz±dzenia komunikacyjnego by to zrobiæ!" NL, ch);
+			send_to_char( "Potrzebujesz urzï¿½dzenia komunikacyjnego by to zrobiï¿½!" NL, ch);
 			return;
 		}
 
 		if ( !get_comlink( victim ) )
 		{
-			send_to_char( "Twój rozmówca nie ma urz±dzenia komunikacyjnego!" NL, ch);
+			send_to_char( "Twï¿½j rozmï¿½wca nie ma urzï¿½dzenia komunikacyjnego!" NL, ch);
 			return;
 		}
 
 		if ( ch->gold < 1 )
 		{
-				send_to_char("Nie masz wystarczaj±cej ilo¶ci kredytek!" NL,ch);
+				send_to_char("Nie masz wystarczajï¿½cej iloï¿½ci kredytek!" NL,ch);
 				return;
 		}
 
@@ -1405,7 +1403,7 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 		&& !IS_SET(victim->switched->act, ACT_POLYMORPHED)
 		&& !IS_AFFECTED(victim->switched, AFF_POSSESS) )
 	{
-		send_to_char( "Ten gracz nie mo¿e siê z tob± w tej chwili porozumieæ." NL, ch );
+		send_to_char( "Ten gracz nie moï¿½e siï¿½ z tobï¿½ w tej chwili porozumieï¿½." NL, ch );
 		return;
 	}
 	else if ( !IS_NPC( victim ) && ( victim->switched )
@@ -1422,20 +1420,20 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 	if ( IS_SET( victim->deaf, CHANNEL_TELLS )
 		&& ( !IS_IMMORTAL( ch ) || ( get_trust( ch ) < get_trust( victim ) ) ) )
 	{
-		act( PLAIN, "Twój rozmówca ma wy³±czony kana³ TELLS.", ch, NULL, victim,
+		act( PLAIN, "Twï¿½j rozmï¿½wca ma wyï¿½ï¿½czony kanaï¿½ TELLS.", ch, NULL, victim,
 			TO_CHAR );
 		return;
 	}
 
 	if ( !IS_NPC (victim) && IS_SILENCED( victim ) )
-		send_to_char( "Ten gracz jest UCISZONY. Us³yszy twoj± wiadomo¶æ, ale nie odpowie." NL, ch );
+		send_to_char( "Ten gracz jest UCISZONY. Usï¿½yszy twojï¿½ wiadomoï¿½ï¿½, ale nie odpowie." NL, ch );
 
 	if ( ( !IS_IMMORTAL(ch)
 	&&     !IS_AWAKE(victim) )
 	|| (   !IS_NPC(victim)
 		&& IS_SET(victim->in_room->room_flags, ROOM_SILENCE ) ) )
 	{
-		act( PLAIN, "Twój rozmówca nie mo¿e ciê us³yszeæ.", ch, 0, victim, TO_CHAR );
+		act( PLAIN, "Twï¿½j rozmï¿½wca nie moï¿½e ciï¿½ usï¿½yszeï¿½.", ch, 0, victim, TO_CHAR );
 		return;
 	}
 
@@ -1444,10 +1442,10 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 
 	argument = drunk_speech( argument, ch );
 
-	ch_printf( ch, COL_TELL "Mówisz %s" COL_TELL " '%s" COL_TELL "'" EOL,
+	ch_printf( ch, COL_TELL "Mï¿½wisz %s" COL_TELL " '%s" COL_TELL "'" EOL,
 	can_see( ch, victim ) ?
    does_knows(ch, victim) ? victim->przypadki[2] :
-    format_char_attribute(victim,2) : "komu¶", argument );
+    format_char_attribute_wrapper(victim,2) : "komuï¿½", argument );
 	position		= victim->position;
 	victim->position	= POS_STANDING;
 
@@ -1457,13 +1455,13 @@ void ch_tell( CHAR_DATA *ch, CHAR_DATA *victim, char *argument )
 					knows_language(ch, ch->speaking, victim));
 
 		if ( speakswell < 85 )
-			act( COL_TELL, "$n$0 mówi ci '$t'", ch, translate(speakswell,
+			act( COL_TELL, "$n$0 mï¿½wi ci '$t'", ch, translate(speakswell,
 				argument, ch->speaking->name), victim, TO_VICT );
 		else
-			act( COL_TELL, "$n$0 mówi ci '$t'", ch, argument, victim, TO_VICT );
+			act( COL_TELL, "$n$0 mï¿½wi ci '$t'", ch, argument, victim, TO_VICT );
 	}
 	else
-		act( COL_TELL, "$n$0 mówi ci '$t'", ch, argument, victim, TO_VICT );
+		act( COL_TELL, "$n$0 mï¿½wi ci '$t'", ch, argument, victim, TO_VICT );
 
 
 	if( !IS_NPC( ch ) && !IS_NPC( victim ) )
@@ -1517,7 +1515,7 @@ DEF_DO_FUN( reply )
 {
 	if( !ch->reply )
 	{
-		act( PLAIN, "Przecie¿ nikt nic do ciebie nie mówi³ ostatnio.", ch, NULL, NULL,
+		act( PLAIN, "Przecieï¿½ nikt nic do ciebie nie mï¿½wiï¿½ ostatnio.", ch, NULL, NULL,
 			TO_CHAR );
 		return;
 	}
@@ -1531,7 +1529,7 @@ DEF_DO_FUN( retell )
 {
 	if( !ch->retell )
 	{
-		act( PLAIN, "Nie mówi³$a¶ ostatnio do nikogo przecie¿.", ch, NULL, NULL,
+		act( PLAIN, "Nie mï¿½wiï¿½$aï¿½ ostatnio do nikogo przecieï¿½.", ch, NULL, NULL,
 			TO_CHAR );
 		return;
 	}
@@ -1555,7 +1553,7 @@ DEF_DO_FUN( ignore )
 	if ( argument[0] == '\0' )
 	{
 		if( ch->pcdata->ignorelist[0] != '\0' )
-			ch_printf( ch, "Lista ignorowanych przez ciebie osób:" NL "%s" EOL,
+			ch_printf( ch, "Lista ignorowanych przez ciebie osï¿½b:" NL "%s" EOL,
 				ch->pcdata->ignorelist );
 		else
 			ch_printf( ch, "Nie ignorujesz nikogo." NL );
@@ -1573,7 +1571,7 @@ DEF_DO_FUN( ignore )
 		strcpy( buf, ch->pcdata->ignorelist );
 		STRDUP( ch->pcdata->ignorelist, cut_from_string( buf, arg ) );
 
-		ch_printf( ch, "Imiê '%s" PLAIN "' usuniête z listy ignorowanych." NL, arg );
+		ch_printf( ch, "Imiï¿½ '%s" PLAIN "' usuniï¿½te z listy ignorowanych." NL, arg );
 	}
 	else
 	{
@@ -1587,7 +1585,7 @@ DEF_DO_FUN( ignore )
 		}
 		strcat( buf, arg );
 		STRDUP( ch->pcdata->ignorelist, buf );
-		ch_printf( ch, "Imiê '%s" PLAIN "' dodane do listy ignorowanych." NL, arg );
+		ch_printf( ch, "Imiï¿½ '%s" PLAIN "' dodane do listy ignorowanych." NL, arg );
 	}
 	return;
 }
@@ -1600,7 +1598,7 @@ DEF_DO_FUN( emote )
 
 	if ( argument[0] == '\0' )
 	{
-		send_to_char( "Jak± emocjê chcesz okazaæ?" NL, ch );
+		send_to_char( "Jakï¿½ emocjï¿½ chcesz okazaï¿½?" NL, ch );
 		return;
 	}
 
@@ -1635,7 +1633,7 @@ DEF_DO_FUN( rent )
 
 DEF_DO_FUN( qui )
 {
-	send_to_char( FB_RED "Je¶li chcesz wyj¶æ, napisz QUIT w ca³o¶ci." EOL, ch );
+	send_to_char( FB_RED "Jeï¿½li chcesz wyjï¿½ï¿½, napisz QUIT w caï¿½oï¿½ci." EOL, ch );
 	return;
 }
 
@@ -1649,43 +1647,43 @@ DEF_DO_FUN( quit )
 
 	if ( ch->position == POS_FIGHTING )
 	{
-		send_to_char( "Nie ma szans! Przecie¿ walczysz." NL, ch );
+		send_to_char( "Nie ma szans! Przecieï¿½ walczysz." NL, ch );
 		return;
 	}
 
 	if ( ch->position  < POS_STUNNED  )
 	{
-		send_to_char( "Jeszcze ¯YJESZ." NL, ch );
+		send_to_char( "Jeszcze ï¿½YJESZ." NL, ch );
 		return;
 	}
 	if ( !IS_IMMORTAL(ch) && !NOT_AUTHED(ch) && ch->in_room
 		&& !IS_SET( ch->in_room->room_flags , ROOM_HOTEL ))
 	{
-		send_to_char("Nie mo¿esz wyj¶æ z gry tutaj." NL, ch);
-		send_to_char("Musisz znale¼æ bezpieczne miejsce dla twojej postaci takie jak np. hotel..." NL, ch);
-		send_to_char("Mo¿e wezwij sobie taksówkê (wpisz help HAIL)" NL, ch);
+		send_to_char("Nie moï¿½esz wyjï¿½ï¿½ z gry tutaj." NL, ch);
+		send_to_char("Musisz znaleï¿½ï¿½ bezpieczne miejsce dla twojej postaci takie jak np. hotel..." NL, ch);
+		send_to_char("Moï¿½e wezwij sobie taksï¿½wkï¿½ (wpisz help HAIL)" NL, ch);
 		return;
 	}
 	if ( IS_SET( ch->in_room->room_flags , ROOM_EMPTY_HOME ) )
 	{
-		send_to_char("Nie mo¿esz wyj¶æ gry w miejscu, które mo¿e staæ siê czyim¶ mieszkaniem." NL, ch);
+		send_to_char("Nie moï¿½esz wyjï¿½ï¿½ gry w miejscu, ktï¿½re moï¿½e staï¿½ siï¿½ czyimï¿½ mieszkaniem." NL, ch);
 		return;
 	}
 	if ( IS_SET( ch->in_room->room_flags , ROOM_PLR_HOME ) &&
 		 ch->plr_home != ch->in_room )
 	{
-		send_to_char("Nie mo¿esz wyj¶æ z gry w cudzym mieszkaniu!" NL, ch);
+		send_to_char("Nie moï¿½esz wyjï¿½ï¿½ z gry w cudzym mieszkaniu!" NL, ch);
 		return;
 	}
 
 	uncrew( ship_from_room(ch->in_room) ,ch);
 	send_to_char( FB_WHITE
-	"Otoczenie zmienia siê mieni±c milionami barw i odcieni otaczaj±c twoje cia³o..." NL
-	"Kiedy siê budzisz, wiesz, ¿e nic nie bêdzie ju¿ takie samo." EOL, ch );
+	"Otoczenie zmienia siï¿½ mieniï¿½c milionami barw i odcieni otaczajï¿½c twoje ciaï¿½o..." NL
+	"Kiedy siï¿½ budzisz, wiesz, ï¿½e nic nie bï¿½dzie juï¿½ takie samo." EOL, ch );
 
 	act( COL_TELL,
-	"Tajemniczy g³os mówi ci 'Oczekujemy twojego powrotu $n...'", ch, NULL, NULL, TO_CHAR );
-	act( PLAIN, "$n opu¶ci³$o grê.", ch, NULL, NULL, TO_ROOM );
+	"Tajemniczy gï¿½os mï¿½wi ci 'Oczekujemy twojego powrotu $n...'", ch, NULL, NULL, TO_CHAR );
+	act( PLAIN, "$n opuï¿½ciï¿½$o grï¿½.", ch, NULL, NULL, TO_ROOM );
 
 	sprintf( log_buf, "%s has quit.", ch->name );
 	quitting_char = ch;
@@ -1720,7 +1718,7 @@ DEF_DO_FUN( ansi )
 		SET_BIT(ch->act,PLR_ANSI);
 		send_to_char( "Kolory "
 		FB_YELLOW "A" FB_GREEN "N" FB_PINK "S" FB_BLUE "I "
-		MOD_BLINK FB_GREEN "W£¡CZONE" RESET FG_BLUE "!" FB_WHITE "!" FB_RED "!" EOL, ch);
+		MOD_BLINK FB_GREEN "Wï¿½ï¿½CZONE" RESET FG_BLUE "!" FB_WHITE "!" FB_RED "!" EOL, ch);
 		send_to_char( "Ok." NL, ch);
 		return;
 	}
@@ -1728,7 +1726,7 @@ DEF_DO_FUN( ansi )
 	{
 		send_to_char( PLAIN, ch);
 			REMOVE_BIT(ch->act,PLR_ANSI);
-		send_to_char( "Ok... kolory ANSI wy³±czone." NL, ch );
+		send_to_char( "Ok... kolory ANSI wyï¿½ï¿½czone." NL, ch );
 		return;
 	}
 }
@@ -1741,14 +1739,14 @@ DEF_DO_FUN( sound )
 	if( !IS_SET( ch->act, PLR_SOUND ) )
 	{
 		SET_BIT(ch->act,PLR_SOUND);
-		send_to_char( FB_WHITE "D¬WIÊK W£¡CZONY, S£YSZYSZ MNIE?" EOL, ch);
+		send_to_char( FB_WHITE "Dï¿½WIï¿½K Wï¿½ï¿½CZONY, Sï¿½YSZYSZ MNIE?" EOL, ch);
 		send_to_char( "!!SOUND(hopeknow)", ch);
 		return;
 	}
 	else
 	{
 		REMOVE_BIT(ch->act,PLR_SOUND);
-		send_to_char( "Ok... d¼wiêk wy³±czony (Ale cisza...)" NL, ch );
+		send_to_char( "Ok... dï¿½wiï¿½k wyï¿½ï¿½czony (Ale cisza...)" NL, ch );
 		return;
 	}
 }
@@ -1757,13 +1755,13 @@ DEF_DO_FUN( save )
 {
 	if ( IS_NPC(ch) )
 	{
-		send_to_char("Spoko. Ju¿ zapisane." NL, ch);
+		send_to_char("Spoko. Juï¿½ zapisane." NL, ch);
 		return;
 	}
 
 	if ( NOT_AUTHED(ch) )
 	{
-		send_to_char("Nie mo¿esz zapisaæ postaci dopóki nie ukoñczysz szkolenia w akademii." NL, ch);
+		send_to_char("Nie moï¿½esz zapisaï¿½ postaci dopï¿½ki nie ukoï¿½czysz szkolenia w akademii." NL, ch);
 		return;
 	}
 
@@ -1778,8 +1776,8 @@ DEF_DO_FUN( save )
 	save_home( ch );
 	saving_char = NULL;
 
-	send_to_char(IS_HERO(ch) ? "Ok. Zapamiêtywanie twojej wspania³ej egzystencji zakoñczone." NL
-			: "Ok. Gromadzenie danych na temat twojej ¿a³osnej egzystencji zakoñczone." NL, ch);
+	send_to_char(IS_HERO(ch) ? "Ok. Zapamiï¿½tywanie twojej wspaniaï¿½ej egzystencji zakoï¿½czone." NL
+			: "Ok. Gromadzenie danych na temat twojej ï¿½aï¿½osnej egzystencji zakoï¿½czone." NL, ch);
 	return;
 }
 
@@ -1809,7 +1807,7 @@ DEF_DO_FUN( follow )
 
 	if ( arg[0] == '\0' )
 	{
-		send_to_char( "I¶c za kim?" NL, ch );
+		send_to_char( "Iï¿½c za kim?" NL, ch );
 		return;
 	}
 
@@ -1821,7 +1819,7 @@ DEF_DO_FUN( follow )
 
 	if ( IS_AFFECTED(ch, AFF_CHARM) && ch->master )
 	{
-		act( PLAIN, "Przecie¿ wolisz chodziæ za $N$4!", ch, NULL, ch->master, TO_CHAR );
+		act( PLAIN, "Przecieï¿½ wolisz chodziï¿½ za $N$4!", ch, NULL, ch->master, TO_CHAR );
 		return;
 	}
 
@@ -1829,7 +1827,7 @@ DEF_DO_FUN( follow )
 	{
 		if ( !ch->master )
 		{
-			send_to_char( "Ju¿ za sob± chodzisz." NL, ch );
+			send_to_char( "Juï¿½ za sobï¿½ chodzisz." NL, ch );
 			return;
 		}
 		stop_follower( ch );
@@ -1838,7 +1836,7 @@ DEF_DO_FUN( follow )
 
 	if ( circle_follow( ch, victim ) )
 	{
-		send_to_char( "Jak ty sobie wyobra¿asz takie ³a¿enie za sob± ???" NL, ch );
+		send_to_char( "Jak ty sobie wyobraï¿½asz takie ï¿½aï¿½enie za sobï¿½ ???" NL, ch );
 		return;
 	}
 
@@ -1858,9 +1856,9 @@ void add_follower( CHAR_DATA *ch, CHAR_DATA *master )
 	ch->leader        = NULL;
 
 	if ( can_see( master, ch ) )
-		act( COL_ACTION, "$n bêdzie teraz chodzi³$o za tob±.", ch, NULL, master, TO_VICT );
+		act( COL_ACTION, "$n bï¿½dzie teraz chodziï¿½$o za tobï¿½.", ch, NULL, master, TO_VICT );
 
-	act( COL_ACTION, "Bêdziesz teraz chodzi³$o za $N$4.",  ch, NULL, master, TO_CHAR );
+	act( COL_ACTION, "Bï¿½dziesz teraz chodziï¿½$o za $N$4.",  ch, NULL, master, TO_CHAR );
 	return;
 }
 
@@ -1876,8 +1874,8 @@ void stop_follower( CHAR_DATA *ch )
 	}
 
 	if ( can_see( ch->master, ch ) )
-		act( COL_ACTION, "$n przesta³$o chodziæ za tob±.",     ch, NULL, ch->master, TO_VICT    );
-	act( COL_ACTION, "Przesta³$a¶ chodziæ za $N$4.",      ch, NULL, ch->master, TO_CHAR    );
+		act( COL_ACTION, "$n przestaï¿½$o chodziï¿½ za tobï¿½.",     ch, NULL, ch->master, TO_VICT    );
+	act( COL_ACTION, "Przestaï¿½$aï¿½ chodziï¿½ za $N$4.",      ch, NULL, ch->master, TO_CHAR    );
 
 	ch->master = NULL;
 	ch->leader = NULL;
@@ -1886,14 +1884,12 @@ void stop_follower( CHAR_DATA *ch )
 
 void die_follower( CHAR_DATA *ch )
 {
-	CHAR_DATA *fch;
-
 	if ( ch->master )
 		stop_follower( ch );
 
 	ch->leader = NULL;
 
-	for ( fch = first_char; fch; fch = fch->next )
+	for (auto* fch : char_list)
 	{
 		if ( fch->master == ch )
 			stop_follower( fch );
@@ -1907,8 +1903,6 @@ DEF_DO_FUN( order )
 {
 	char		arg[MAX_INPUT_LENGTH];
 	CHAR_DATA	* victim;
-	CHAR_DATA	* och;
-	CHAR_DATA	* och_next;
 	bool		found;
 	bool		fAll;
 
@@ -1916,13 +1910,13 @@ DEF_DO_FUN( order )
 
 	if ( arg[0] == '\0' || argument[0] == '\0' )
 	{
-		send_to_char( "Rozkazaæ komu i co?" NL, ch );
+		send_to_char( "Rozkazaï¿½ komu i co?" NL, ch );
 		return;
 	}
 
 	if ( IS_AFFECTED( ch, AFF_CHARM ) || IS_AFFECTED( ch, AFF_DOMINATED ) )
 	{
-		send_to_char( "Wygl±da na to, ¿e ty s³uchasz, a nie wydajesz rozkazy." NL, ch );
+		send_to_char( "Wyglï¿½da na to, ï¿½e ty sï¿½uchasz, a nie wydajesz rozkazy." NL, ch );
 		return;
 	}
 
@@ -1950,16 +1944,14 @@ DEF_DO_FUN( order )
 		&& !IS_AFFECTED(victim, AFF_DOMINATED) )
 		|| victim->master != ch )
 		{
-			send_to_char( "Ty to zrób!" NL, ch );
+			send_to_char( "Ty to zrï¿½b!" NL, ch );
 			return;
 		}
 	}
 
 	found = false;
-	for ( och = ch->in_room->first_person; och; och = och_next )
+	{ auto snapshot = ch->in_room->people; for (auto* och : snapshot)
 	{
-		och_next = och->next_in_room;
-
 		if ( (IS_AFFECTED(och, AFF_CHARM) || IS_AFFECTED(och, AFF_DOMINATED) )
 		&&   och->master == ch
 		&& ( fAll || och == victim ) )
@@ -1968,7 +1960,7 @@ DEF_DO_FUN( order )
 			act( COL_ACTION, "$n rozkazuje ci '$t'.", ch, argument, och, TO_VICT );
 			interpret( och, argument );
 		}
-	}
+	} }
 
 	if ( found )
 	{
@@ -1976,7 +1968,7 @@ DEF_DO_FUN( order )
 		WAIT_STATE( ch, 12 );
 	}
 	else
-		send_to_char( "Nie ma tu nikogo, kto s³ucha³by twoich rozkazów." NL, ch );
+		send_to_char( "Nie ma tu nikogo, kto sï¿½uchaï¿½by twoich rozkazï¿½w." NL, ch );
 	return;
 }
 
@@ -1988,14 +1980,13 @@ DEF_DO_FUN( group )
 
 	if ( arg[0] == '\0' )
 	{
-		CHAR_DATA *gch;
 		CHAR_DATA *leader;
 
 		leader = ch->leader ? ch->leader : ch;
 		ch_printf( ch, FB_WHITE "Grupka %s:" EOL, PERS(leader, ch, 1) );
 
 		/* Changed so that no info revealed on possess */
-		for ( gch = first_char; gch; gch = gch->next )
+		for (auto* gch : char_list)
 		{
 			if ( is_same_group( gch, ch ) )
 			{
@@ -2033,16 +2024,15 @@ DEF_DO_FUN( group )
 
 	if ( !str_cmp( arg, "disband" ))
 	{
-		CHAR_DATA	* gch;
 		int			count = 0;
 
 		if ( ch->leader || ch->master )
 		{
-			send_to_char( "Nie mo¿esz rozdzieliæ grupy nie bêd±c jej liderem." NL, ch );
+			send_to_char( "Nie moï¿½esz rozdzieliï¿½ grupy nie bï¿½dï¿½c jej liderem." NL, ch );
 			return;
 		}
 
-		for ( gch = first_char; gch; gch = gch->next )
+		for (auto* gch : char_list)
 		{
 			if ( is_same_group( ch, gch )
 			&& ( ch != gch ) )
@@ -2050,24 +2040,23 @@ DEF_DO_FUN( group )
 				gch->leader = NULL;
 				gch->master = NULL;
 				count++;
-				send_to_char( "Twoja grupa zosta³a rozdzielona." NL, gch );
+				send_to_char( "Twoja grupa zostaï¿½a rozdzielona." NL, gch );
 			}
 		}
 
 		if ( count == 0 )
 			send_to_char( "Nie masz grupki. Nici z rozdzielania." NL, ch );
 		else
-			send_to_char( "Twoja grupa zosta³a rozdzielona." NL, ch );
+			send_to_char( "Twoja grupa zostaï¿½a rozdzielona." NL, ch );
 
 		return;
 	}
 
 	if ( !str_cmp( arg, "all" ) )
 	{
-		CHAR_DATA *rch;
 		int count = 0;
 
-		for ( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
+		for (auto* rch : ch->in_room->people)
 		{
 			if ( ch != rch
 			&&   !IS_NPC( rch )
@@ -2082,10 +2071,10 @@ DEF_DO_FUN( group )
 		}
 
 		if ( count == 0 )
-			send_to_char( "Nie widzisz ¿adnych potencjalnych towarzyszy." NL, ch );
+			send_to_char( "Nie widzisz ï¿½adnych potencjalnych towarzyszy." NL, ch );
 		else
 		{
-			act( COL_ACTION, "$n zak³ada grupkê.", ch, NULL, NULL, TO_ROOM );
+			act( COL_ACTION, "$n zakï¿½ada grupkï¿½.", ch, NULL, NULL, TO_ROOM );
 			send_to_char( "Grupujesz swoich towarzyszy." NL, ch );
 		}
 		return;
@@ -2100,13 +2089,13 @@ DEF_DO_FUN( group )
 
 	if ( ch->master || ( ch->leader && ch->leader != ch ) )
 	{
-		send_to_char( "Przecie¿ chodzisz za kim¶ innym!" NL, ch );
+		send_to_char( "Przecieï¿½ chodzisz za kimï¿½ innym!" NL, ch );
 		return;
 	}
 
 	if ( victim->master != ch && ch != victim )
 	{
-		act( PLAIN, "$N nie chodzi za tob±.", ch, NULL, victim, TO_CHAR );
+		act( PLAIN, "$N nie chodzi za tobï¿½.", ch, NULL, victim, TO_CHAR );
 		return;
 	}
 
@@ -2114,15 +2103,15 @@ DEF_DO_FUN( group )
 	{
 		victim->leader = NULL;
 		act( COL_ACTION, "$n usuwa $N$3 ze swojej grupki.",   ch, NULL, victim, TO_NOTVICT );
-		act( COL_ACTION, "$n usuwa ciê ze swojej grupki.",  ch, NULL, victim, TO_VICT    );
+		act( COL_ACTION, "$n usuwa ciï¿½ ze swojej grupki.",  ch, NULL, victim, TO_VICT    );
 		act( COL_ACTION, "Usuwasz $N$3 z grupki.", ch, NULL, victim, TO_CHAR    );
 		return;
 	}
 
 	victim->leader = ch;
 	act( COL_ACTION, "$n przyjmuje $N$3 do swojej grupki.", ch, NULL, victim, TO_NOTVICT );
-	act( COL_ACTION, "$n przyjmuje ciê do swojej grupki.", ch, NULL, victim, TO_VICT    );
-	act( COL_ACTION, "$N do³±cza do twojej grupki.", ch, NULL, victim, TO_CHAR    );
+	act( COL_ACTION, "$n przyjmuje ciï¿½ do swojej grupki.", ch, NULL, victim, TO_VICT    );
+	act( COL_ACTION, "$N doï¿½ï¿½cza do twojej grupki.", ch, NULL, victim, TO_CHAR    );
 	return;
 }
 
@@ -2133,7 +2122,6 @@ DEF_DO_FUN( split )
 {
 	char		buf	[MAX_STRING_LENGTH];
 	char		arg	[MAX_INPUT_LENGTH];
-	CHAR_DATA	* gch;
 	int			members;
 	int			amount;
 	int			share;
@@ -2143,7 +2131,7 @@ DEF_DO_FUN( split )
 
 	if ( arg[0] == '\0' )
 	{
-		send_to_char( "Ile kredytek podzieliæ?" NL, ch );
+		send_to_char( "Ile kredytek podzieliï¿½?" NL, ch );
 		return;
 	}
 
@@ -2151,13 +2139,13 @@ DEF_DO_FUN( split )
 
 	if ( amount < 0 )
 	{
-		send_to_char( "Twojej grupie by siê to nie spodoba³o." NL, ch );
+		send_to_char( "Twojej grupie by siï¿½ to nie spodobaï¿½o." NL, ch );
 		return;
 	}
 
 	if ( amount == 0 )
 	{
-		send_to_char( "Rozdzielasz 0 kredytek. Jako¶ nikt tego nie zauwa¿y³. Mo¿e jeszcze raz?" NL, ch );
+		send_to_char( "Rozdzielasz 0 kredytek. Jakoï¿½ nikt tego nie zauwaï¿½yï¿½. Moï¿½e jeszcze raz?" NL, ch );
 		return;
 	}
 
@@ -2168,7 +2156,7 @@ DEF_DO_FUN( split )
 	}
 
 	members = 0;
-	for ( gch = ch->in_room->first_person; gch; gch = gch->next_in_room )
+	for (auto* gch : ch->in_room->people)
 		if ( is_same_group( gch, ch ) )
 			members++;
 
@@ -2187,7 +2175,7 @@ DEF_DO_FUN( split )
 
 	if ( share == 0 )
 	{
-		send_to_char( "Nie k³opocz siê sk±pcu." NL, ch );
+		send_to_char( "Nie kï¿½opocz siï¿½ skï¿½pcu." NL, ch );
 		return;
 	}
 
@@ -2195,13 +2183,13 @@ DEF_DO_FUN( split )
 	ch->gold += share + extra;
 
 	ch_printf( ch,
-		"Rozdzielasz %d kredytek. twój udzia³ wynosi %d." NL,
+		"Rozdzielasz %d kredytek. twï¿½j udziaï¿½ wynosi %d." NL,
 		amount, share + extra );
 
-	sprintf( buf, "$n rozdziela %d kredytek. Twój udzia³ wynosi %d.",
+	sprintf( buf, "$n rozdziela %d kredytek. Twï¿½j udziaï¿½ wynosi %d.",
 		amount, share );
 
-	for ( gch = ch->in_room->first_person; gch; gch = gch->next_in_room )
+	for (auto* gch : ch->in_room->people)
 	{
 		if ( gch != ch && is_same_group( gch, ch ) )
 		{
@@ -2214,17 +2202,15 @@ DEF_DO_FUN( split )
 
 DEF_DO_FUN( gtell )
 {
-	CHAR_DATA	* gch;
-
 	if( !get_comlink( ch ) )
 	{
-		send_to_char( "Nie masz urz±dzenia komunikacyjnego." NL, ch );
+		send_to_char( "Nie masz urzï¿½dzenia komunikacyjnego." NL, ch );
 		return;
 	}
 
 	if ( argument[0] == '\0' )
 	{
-		send_to_char( "Co chcesz powiedzieæ do grupki?" NL, ch );
+		send_to_char( "Co chcesz powiedzieï¿½ do grupki?" NL, ch );
 		return;
 	}
 
@@ -2234,7 +2220,7 @@ DEF_DO_FUN( gtell )
 	* Note use of send_to_char, so gtell works on sleepers.
 	*/
 /*    sprintf( buf, "%s tells the group '%s'.\n\r", ch->name, argument );*/
-	for ( gch = first_char; gch; gch = gch->next )
+	for (auto* gch : char_list)
 	{
 		if ( is_same_group( gch, ch ) )
 		{
@@ -2247,22 +2233,22 @@ DEF_DO_FUN( gtell )
 							knows_language(ch, ch->speaking, gch));
 
 				if ( speakswell < 85 )
-					ch_printf( gch, FB_CYAN "%s mówi grupie '%s'" RESET
+					ch_printf( gch, FB_CYAN "%s mï¿½wi grupie '%s'" RESET
 						FB_CYAN "." EOL, ch->name, translate(speakswell,
 						argument, ch->speaking->name) );
 				else
-					ch_printf( gch, FB_CYAN "%s mówi grupie '%s" RESET
+					ch_printf( gch, FB_CYAN "%s mï¿½wi grupie '%s" RESET
  						FB_CYAN "'." EOL, ch->name, argument );
 			}
 			else
-				ch_printf( gch, "%s mówi grupie '%s'." NL, ch->name, argument );
+				ch_printf( gch, "%s mï¿½wi grupie '%s'." NL, ch->name, argument );
 	#else
 			if ( knows_language( gch, ch->speaking, gch )
 			||  (IS_NPC(ch) && !ch->speaking) )
-				ch_printf( gch, FB_CYAN "%s mówi grupie '%s'" RESET
+				ch_printf( gch, FB_CYAN "%s mï¿½wi grupie '%s'" RESET
 					FB_CYAN "." EOL, ch->name, argument );
 			else
-			ch_printf( gch, FB_CYAN "%s mówi grupie '%s'" RESET
+			ch_printf( gch, FB_CYAN "%s mï¿½wi grupie '%s'" RESET
 					FB_CYAN "." EOL, ch->name, scramble(argument, ch->speaking) );
 	#endif
 		}
@@ -2294,13 +2280,12 @@ bool is_same_group( CHAR_DATA *ach, CHAR_DATA *bch )
 */
 void talk_auction (char *argument)
 {
-	DESCRIPTOR_DATA	* d;
 	char			buf[MAX_STRING_LENGTH];
 	CHAR_DATA		* original;
 
 	sprintf (buf,"Aukcja: %s", argument); /* last %s to reset color */
 
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		original = d->original ? d->original : d->character; /* if switched */
 
@@ -2325,7 +2310,7 @@ int knows_language( CHAR_DATA *ch, LANG_DATA *language, CHAR_DATA *cch )
 	if ( !IS_NPC(ch) && IS_IMMORTAL(ch) )
 		return 100;
 
-	if ( IS_NPC(ch) && !ch->first_klang ) /* No langs = knows all for npcs */
+	if ( IS_NPC(ch) && ch->klangs.empty() ) /* No langs = knows all for npcs */
 		return 100;
 
 	/* everyone knows Basic */
@@ -2372,15 +2357,9 @@ bool can_learn_lang( CHAR_DATA *ch, LANG_DATA *language )
 }
 
 
-int countlangs( KNOWN_LANG *first_klang )
+int countlangs( const std::list<KNOWN_LANG*>& klangs )
 {
-	KNOWN_LANG	*klang;
-	int			numlangs = 0;
-
-	FOREACH( klang, first_klang )
-		numlangs++;
-
-	return numlangs;
+	return static_cast<int>(klangs.size());
 }
 
 const char * const lang_names[] =
@@ -2400,15 +2379,15 @@ const char * const lang_names[] =
 //added by Thanos
 const char * const lang_names_pl[] =
 {
-	"wspólny", 		"wookieech", 		"twileków",
-	"rodiañski", 	"huttów",		 "mon calamariañski",
-	"noghrich", 	"ewoków", 		"ithorian",
-	"gotalski", 	"devaroñski", 		"droidów",
-	"spiritual",	"magical", 		"gamorreañski",
-	"god", 		"ancient",		 "jawów",
-	"klanu", 		"adariañski", 		"verpiñski",
-	"defeli", 		"trandoshañski", 	"chadra-fanów",
-	"quarreñski", 	"duinuogwuiñski", 	"yuuzhan vongów",
+	"wspï¿½lny", 		"wookieech", 		"twilekï¿½w",
+	"rodiaï¿½ski", 	"huttï¿½w",		 "mon calamariaï¿½ski",
+	"noghrich", 	"ewokï¿½w", 		"ithorian",
+	"gotalski", 	"devaroï¿½ski", 		"droidï¿½w",
+	"spiritual",	"magical", 		"gamorreaï¿½ski",
+	"god", 		"ancient",		 "jawï¿½w",
+	"klanu", 		"adariaï¿½ski", 		"verpiï¿½ski",
+	"defeli", 		"trandoshaï¿½ski", 	"chadra-fanï¿½w",
+	"quarreï¿½ski", 	"duinuogwuiï¿½ski", 	"yuuzhan vongï¿½w",
 	""
 };
 
@@ -2451,7 +2430,7 @@ DEF_DO_FUN( speak )
 	if ( !*argument )
 	{
 		do_languages( ch, (char*)"" );
-		send_to_char( NL "Jakim jêzykiem chcesz siê od teraz pos³ugiwaæ?" NL, ch );
+		send_to_char( NL "Jakim jï¿½zykiem chcesz siï¿½ od teraz posï¿½ugiwaï¿½?" NL, ch );
 		return;
 	}
 
@@ -2459,7 +2438,7 @@ DEF_DO_FUN( speak )
 
 	if( !(lang = find_lang( arg )) )
 	{
-		send_to_char( "Nikt nie s³ysza³ o takim jêzyku." NL, ch );
+		send_to_char( "Nikt nie sï¿½yszaï¿½ o takim jï¿½zyku." NL, ch );
 		return;
 	}
 
@@ -2468,7 +2447,7 @@ DEF_DO_FUN( speak )
 		if( *lang->deny_text )
 			ch_printf( ch, "%s" NL, lang->deny_text );
 		else
-			send_to_char( "Nie mo¿esz mówiæ w tym jêzyku. Mo¿e nie masz odpowiednich czê¶ci cia³a." NL, ch );
+			send_to_char( "Nie moï¿½esz mï¿½wiï¿½ w tym jï¿½zyku. Moï¿½e nie masz odpowiednich czï¿½ci ciaï¿½a." NL, ch );
 		return;
 	}
 
@@ -2476,12 +2455,12 @@ DEF_DO_FUN( speak )
 	{
 		ch->speaking = lang;
 		ch_printf( ch,
-			"Jêzyk " FB_YELLOW "%s" PLAIN " to mowa, któr± siê od teraz pos³ugujesz." NL,
+			"Jï¿½zyk " FB_YELLOW "%s" PLAIN " to mowa, ktï¿½rï¿½ siï¿½ od teraz posï¿½ugujesz." NL,
 			lang->name );
 		return;
 	}
 
-	send_to_char( "Nie znasz tego jêzyka." NL, ch );
+	send_to_char( "Nie znasz tego jï¿½zyka." NL, ch );
 }
 
 DEF_DO_FUN( languages )
@@ -2504,30 +2483,31 @@ DEF_DO_FUN( languages )
 		argument = one_argument( argument, arg2 );
 		if ( !*arg2 )
 		{
-			send_to_char( "Którego jêzyka chcesz siê nauczyæ?" NL, ch );
+			send_to_char( "Ktï¿½rego jï¿½zyka chcesz siï¿½ nauczyï¿½?" NL, ch );
 			return;
 		}
 
 		if( !(lang = find_lang( arg2 )) )
 		{
-			send_to_char( "Nikt nie s³ysza³ o takim jêzyku." NL, ch );
+			send_to_char( "Nikt nie sï¿½yszaï¿½ o takim jï¿½zyku." NL, ch );
 			return;
 		}
 
 		if( ((klang = find_klang( ch, lang )) && klang->learned >= 99)
 		|| ch->race->language == lang )
 		{
-			act( PLAIN, "Przecie¿ ju¿ p³ynnie pos³ugujesz siê jêzykiem $t.", ch,
+			act( PLAIN, "Przecieï¿½ juï¿½ pï¿½ynnie posï¿½ugujesz siï¿½ jï¿½zykiem $t.", ch,
 				lang->name, NULL, TO_CHAR );
 			return;
 		}
 
-		for ( sch = ch->in_room->first_person; sch; sch = sch->next )
-			if( IS_NPC(sch) && IS_SET(sch->act, ACT_SCHOLAR)
-			&&  knows_language( sch, ch->speaking, ch )
-			&&  knows_language( sch, lang, sch )
-			&&	(!sch->speaking || knows_language( ch, sch->speaking, sch )) )
-				break;
+		sch = nullptr;
+		for (auto* s : ch->in_room->people)
+			if( IS_NPC(s) && IS_SET(s->act, ACT_SCHOLAR)
+			&&  knows_language( s, ch->speaking, ch )
+			&&  knows_language( s, lang, s )
+			&&	(!s->speaking || knows_language( ch, s->speaking, s )) )
+				{ sch = s; break; }
 
 		if ( !sch
 		/* Trog: ale te ponizsze blokady trzeba na flagach zrobic */
@@ -2537,13 +2517,13 @@ DEF_DO_FUN( languages )
 		|| !str_cmp( lang->name, "Mando'a" )
 		|| !str_cmp( lang->name, "Olys Corellisi" ) )
 		{
-			send_to_char( "Nie ma tu nikogo, kto móg³by nauczyæ ciê tego jêzyka." NL, ch );
+			send_to_char( "Nie ma tu nikogo, kto mï¿½gï¿½by nauczyï¿½ ciï¿½ tego jï¿½zyka." NL, ch );
 			return;
 		}
 
 		if ( ch->gold < 25 )
 		{
-			send_to_char( "Nauka jêzyków kosztuje 25 kredytek... nie masz tyle." NL, ch );
+			send_to_char( "Nauka jï¿½zykï¿½w kosztuje 25 kredytek... nie masz tyle." NL, ch );
 			return;
 		}
 
@@ -2553,7 +2533,7 @@ DEF_DO_FUN( languages )
 		if( !(klang = find_klang( ch, lang )) )
 		{
 			klang = new_known_lang();
-			LINK( klang, ch->first_klang, ch->last_klang, next, prev );
+			ch->klangs.push_back(klang);
 			klang->language = lang;
 
 		}
@@ -2562,19 +2542,19 @@ DEF_DO_FUN( languages )
 		ch->speaking = lang;
 
 		if ( klang->learned == prct )
-			act( PLAIN, "Zaczynasz poznawaæ jak piêkny jest jêzyk $t.", ch,
+			act( PLAIN, "Zaczynasz poznawaï¿½ jak piï¿½kny jest jï¿½zyk $t.", ch,
 				lang->name, NULL, TO_CHAR );
 		else if ( klang->learned < 60 )
-			act( PLAIN, "Kontynuujesz naukê, a twój jêzyk $t jest coraz lepszy.",
+			act( PLAIN, "Kontynuujesz naukï¿½, a twï¿½j jï¿½zyk $t jest coraz lepszy.",
 				ch, lang->name, NULL, TO_CHAR );
 		else if ( klang->learned < 60 + prct )
-			act( PLAIN, "Czujesz, ¿e nie sprawia ci problemów taki jêzyk jak $t.",
+			act( PLAIN, "Czujesz, ï¿½e nie sprawia ci problemï¿½w taki jï¿½zyk jak $t.",
 				ch, lang->name, NULL, TO_CHAR );
 		else if ( klang->learned < 99 )
-			act( PLAIN, "Twoja znajomo¶æ mowy w jêzyku $t staje siê jeszcze wiêksza.",
+			act( PLAIN, "Twoja znajomoï¿½ï¿½ mowy w jï¿½zyku $t staje siï¿½ jeszcze wiï¿½ksza.",
 				ch, lang->name, NULL, TO_CHAR );
 		else
-			act( PLAIN, "Jêzyk $t nie ma ju¿ przed tob± ¿adnych tajemnic!",
+			act( PLAIN, "Jï¿½zyk $t nie ma juï¿½ przed tobï¿½ ï¿½adnych tajemnic!",
 				ch, lang->name, NULL, TO_CHAR );
 		return;
 	}
@@ -2583,7 +2563,7 @@ DEF_DO_FUN( languages )
 		( ch->speaking == lang_base ) ? FB_WHITE : FG_GREEN,
 		lang_base->name );
 
-	FOREACH( lang, first_lang )
+	for (auto* lang : lang_list)
 	{
 		if( !(klang = find_klang( ch, lang )) )
 			ch_printf( ch, "%s(  0)" PLAIN FG_GREEN " %s" EOL,
@@ -2604,7 +2584,7 @@ DEF_DO_FUN( wartalk )
 		return;
 	}
 
-	talk_channel( ch, argument, CHANNEL_WARTALK, "mówi", "powiedzieæ do klanu" );
+	talk_channel( ch, argument, CHANNEL_WARTALK, "mï¿½wi", "powiedzieï¿½ do klanu" );
 	return;
 }
 

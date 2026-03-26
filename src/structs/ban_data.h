@@ -23,8 +23,6 @@
 
 struct	ban_data
 {
-	BAN_DATA			* next;
-	BAN_DATA			* prev;
 	char				* name;
 	int					level;
 	char				* ban_time;

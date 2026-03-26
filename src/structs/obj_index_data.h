@@ -20,18 +20,14 @@
 #define OBJ_INDEX_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	obj_index_data
 {
-	OBJ_INDEX_DATA		* next;
-	OBJ_INDEX_DATA		* next_sort;
-	EXTRA_DESCR_DATA	* first_extradesc;
-	EXTRA_DESCR_DATA	* last_extradesc;
-	AFFECT_DATA			* first_affect;
-	AFFECT_DATA			* last_affect;
-	REQUIREMENT_DATA	* first_requirement;
-	REQUIREMENT_DATA	* last_requirement;
-	MPROG_DATA			* mudprogs;		  /* objprogs */
+	std::list<EXTRA_DESCR_DATA*> extradesc;
+	std::list<AFFECT_DATA*> affects;
+	std::list<REQUIREMENT_DATA*> requirements;
+	std::list<MPROG_DATA*> mudprogs;		  /* objprogs */
 	int64				progtypes;		/* objprogs */
 	char				* name;
 	char				* description;

@@ -29,8 +29,7 @@
 #include <unistd.h>
 #include "mud.h"
 
-PROJECT_DATA *	first_project;
-PROJECT_DATA *	last_project;
+std::list<PROJECT_DATA *>	project_list;
 
 #define IF_ABORT				\
     if( ch->substate == SUB_TIMER_DO_ABORT )
@@ -58,7 +57,7 @@ DEF_DO_FUN( identify )
 
 	IF_ABORT
 	{
-		break_skill( FB_RED "Przerywasz identyfikacjê." EOL, ch );
+		break_skill( FB_RED "Przerywasz identyfikacjï¿½." EOL, ch );
 		return;
 	}
 
@@ -68,14 +67,14 @@ DEF_DO_FUN( identify )
 	if ( !get_comlink( ch ) )
 	{
 		send_to_char(
-				"Potrzebujesz urz±dzenia komunikacyjnego by to zrobiæ!" NL, ch);
+				"Potrzebujesz urzï¿½dzenia komunikacyjnego by to zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	PREWAIT( 5 )
 	{
-		send_to_char( FB_GREEN "Wysy³asz przez komlink zapytanie..." EOL, ch);
-		act( PLAIN, "$n wciska jakie¶ przyciski na komlinku.", ch, NULL, NULL , TO_ROOM );
+		send_to_char( FB_GREEN "Wysyï¿½asz przez komlink zapytanie..." EOL, ch);
+		act( PLAIN, "$n wciska jakieï¿½ przyciski na komlinku.", ch, NULL, NULL , TO_ROOM );
 		return;
 	}
 
@@ -83,7 +82,7 @@ DEF_DO_FUN( identify )
 
 	if ( arg[0] == '\0' )
 	{
-		send_to_char( "Co chcesz zidentyfikowaæ?" NL, ch );
+		send_to_char( "Co chcesz zidentyfikowaï¿½?" NL, ch );
 		return;
 	}
 
@@ -97,15 +96,15 @@ DEF_DO_FUN( identify )
 	if( ch->gold < credits )
 	{
 		ch_printf( ch,
-				   "Nie staæ ciê na zidentyfikowanie %s. Potrzebujesz %d kredytek." NL,
+				   "Nie staï¿½ ciï¿½ na zidentyfikowanie %s. Potrzebujesz %d kredytek." NL,
 				   obj->przypadki[1], credits);
 		return;
 	}
 	ch->gold -= UMIN( credits, ch->gold );
 	ch_printf( ch,
-			   "P³acisz %d kredyt%s za otrzymanie informacji o %s." NL,
+			   "Pï¿½acisz %d kredyt%s za otrzymanie informacji o %s." NL,
 			   credits,
-			   NUMBER_SUFF( credits, "kê", "ki", "ek" ),
+			   NUMBER_SUFF( credits, "kï¿½", "ki", "ek" ),
 			   obj->przypadki[5] );
 
 	chance = (int) (ch->pcdata->learned[gsn_identify]);
@@ -113,7 +112,7 @@ DEF_DO_FUN( identify )
 	if ( number_percent( ) >= chance )
 	{
 		send_to_char( FB_RED
-				"Nie mo¿esz nic wywnioskowaæ z danych, jakie wy¶wietla twój komlink." EOL,ch);
+				"Nie moï¿½esz nic wywnioskowaï¿½ z danych, jakie wyï¿½wietla twï¿½j komlink." EOL,ch);
 		learn_from_failure( ch, gsn_identify );
 		return;
 	}
@@ -137,14 +136,14 @@ DEF_DO_FUN( identify )
     if ( !get_comlink( ch ) )
 {
 	send_to_char(
-	    "Potrzebujesz urz±dzenia komunikacyjnego by to zrobiæ!" NL, ch);
+	    "Potrzebujesz urzï¿½dzenia komunikacyjnego by to zrobiï¿½!" NL, ch);
 	return;
 }
 
     PREWAIT( 5 )
 {
-	send_to_char( FB_GREEN "Wysy³asz przez komlink zapytanie..." EOL, ch);
-	act( PLAIN, "$n wciska jakie¶ przyciski na komlinku.", ch, NULL, NULL , TO_ROOM );
+	send_to_char( FB_GREEN "Wysyï¿½asz przez komlink zapytanie..." EOL, ch);
+	act( PLAIN, "$n wciska jakieï¿½ przyciski na komlinku.", ch, NULL, NULL , TO_ROOM );
 	return;
 }
 
@@ -152,7 +151,7 @@ DEF_DO_FUN( identify )
 
     if ( arg[0] == '\0' )
 {
-	send_to_char( "Co chcesz zidentyfikowaæ?" NL, ch );
+	send_to_char( "Co chcesz zidentyfikowaï¿½?" NL, ch );
 	return;
 }
 
@@ -166,15 +165,15 @@ DEF_DO_FUN( identify )
     if( ch->gold < credits )
 {
 	ch_printf( ch,
-	"Nie staæ ciê na zidentyfikowanie %s. Potrzebujesz %d kredytek." NL,
+	"Nie staï¿½ ciï¿½ na zidentyfikowanie %s. Potrzebujesz %d kredytek." NL,
 	    obj->przypadki[1], credits);
 	return;
 }
     ch->gold -= UMIN( credits, ch->gold );
     ch_printf( ch,
-    "P³acisz %d kredyt%s za otrzymanie informacji o %s." NL,
+    "Pï¿½acisz %d kredyt%s za otrzymanie informacji o %s." NL,
 	credits,
-	NUMBER_SUFF( credits, "kê", "ki", "ek" ),
+	NUMBER_SUFF( credits, "kï¿½", "ki", "ek" ),
 	obj->przypadki[5] );
 
     chance = (int) (ch->pcdata->learned[gsn_identify]);
@@ -182,7 +181,7 @@ DEF_DO_FUN( identify )
     if ( number_percent( ) >= chance )
 {
         send_to_char( FB_RED
-	"Nie mo¿esz nic wywnioskowaæ z danych, jakie wy¶wietla twój komlink." EOL,ch);
+	"Nie moï¿½esz nic wywnioskowaï¿½ z danych, jakie wyï¿½wietla twï¿½j komlink." EOL,ch);
         learn_from_failure( ch, gsn_identify );
    	return;
 }
@@ -217,8 +216,8 @@ DEF_DO_FUN( hack )
 				send_to_char( "--> Holonet: Niesprecyzowany obiekt." NL, ch );
 				return;
 			}
-			send_to_char( "--> Holonet: Pobieranie danych... Cierpliwo¶ci." NL, ch);
-			act( PLAIN, "$n wciska klawisze komputera mrucz±c co¶ pod nosem.", ch,
+			send_to_char( "--> Holonet: Pobieranie danych... Cierpliwoï¿½ci." NL, ch);
+			act( PLAIN, "$n wciska klawisze komputera mruczï¿½c coï¿½ pod nosem.", ch,
 				 NULL, NULL , TO_ROOM );
 			add_timer ( ch , TIMER_DO_FUN , 3, do_hack , 1 );
 			STRDUP( ch->dest_buf,arg);
@@ -241,15 +240,15 @@ DEF_DO_FUN( hack )
 		return;
 	}
 
-	if( !victim->first_crime || IS_NPC( victim ) )
+	if( victim->crimes.empty() || IS_NPC( victim ) )
 	{
 		ch_printf( ch,
-				   "--> Holonet: Brak wskazañ obiektu '%s' na li¶cie poszukiwanych." NL,
+				   "--> Holonet: Brak wskazaï¿½ obiektu '%s' na liï¿½cie poszukiwanych." NL,
 				   victim->przypadki[0] );
 		return;
 	}
 
-	/* Najpierw sprawd¼my, czy gracz w ogóle bêdzie umia³ siê w³amaæ */
+	/* Najpierw sprawdï¿½my, czy gracz w ogï¿½le bï¿½dzie umiaï¿½ siï¿½ wï¿½amaï¿½ */
 	chance = ch->pcdata->learned[gsn_hacking];
 	if ( number_percent( ) >= chance )
 	{
@@ -258,19 +257,19 @@ DEF_DO_FUN( hack )
 			send_to_char( FB_RED
 					"--> Holonet Alert!" EOL
 					"--> Holonet: Intruz wykryty." 			 NL,ch);
-			/* no có¿ */
-			crime_to_char( ch, first_planet->name, CRIME_HACKING );
+			/* no cï¿½ */
+			crime_to_char( ch, planet_list.front()->name, CRIME_HACKING );
 		}
 		else
 			send_to_char( FB_RED
 					"--> Holonet Alert!" EOL
-					"--> Holonet: Kod dostêpu nieprawid³owy!" 		 NL,ch);
+					"--> Holonet: Kod dostï¿½pu nieprawidï¿½owy!" 		 NL,ch);
 
 		learn_from_failure( ch, gsn_hacking );
 		return;
 	}
 
-	/* Je¶li offiara ma wy¿szy od niego poziom, jest trudniej */
+	/* Jeï¿½li offiara ma wyï¿½szy od niego poziom, jest trudniej */
 	if ( victim->top_level > ch->top_level + number_range( -10, 10 )
 			&&  ch != victim)
 	{
@@ -278,33 +277,33 @@ DEF_DO_FUN( hack )
 		{
 			send_to_char( FB_RED
 					"--> Holonet Alert!" EOL
-					"--> Holonet: Niepoprawna identyfikacja u¿ytkownika."  EOL,ch);
-			/* no có¿ */
-			crime_to_char( ch, first_planet->name, CRIME_HACKING );
+					"--> Holonet: Niepoprawna identyfikacja uï¿½ytkownika."  EOL,ch);
+			/* no cï¿½ */
+			crime_to_char( ch, planet_list.front()->name, CRIME_HACKING );
 		}
 		else
 			send_to_char(
-					"--> Holonet: Za niskie uprawnienia do edycji rejestru u¿ytkownika." EOL, ch);
+					"--> Holonet: Za niskie uprawnienia do edycji rejestru uï¿½ytkownika." EOL, ch);
 
 		learn_from_failure( ch, gsn_hacking );
 		return;
 	}
 
-	/* Ok - uda³o siê, ale... */
-	if( number_percent( ) < victim->first_crime->type )
+	/* Ok - udaï¿½o siï¿½, ale... */
+	if( number_percent( ) < victim->crimes.front()->type )
 	{
 		send_to_char( FB_RED
 				"--> Holonet Alert!" NL
-				"--> Holonet: Wiadomo¶æ od Administratora: WYLOGUJ SIÊ NATYCHMIAST!" EOL,ch);
-		/* no có¿ */
-		crime_to_char( ch, first_planet->name, CRIME_HACKING );
+				"--> Holonet: Wiadomoï¿½ï¿½ od Administratora: WYLOGUJ SIï¿½ NATYCHMIAST!" EOL,ch);
+		/* no cï¿½ */
+		crime_to_char( ch, planet_list.front()->name, CRIME_HACKING );
 		return;
 	}
 
-	send_to_char( "--> Holonet: Wpis w rejestrze zaktualizowany pomy¶lnie." NL, ch );
+	send_to_char( "--> Holonet: Wpis w rejestrze zaktualizowany pomyï¿½lnie." NL, ch );
 	crime_remove( victim,
-				  victim->first_crime->planet,
-				  victim->first_crime->type );
+				  victim->crimes.front()->planet,
+				  victim->crimes.front()->type );
 
 	learn_from_success( ch, gsn_hacking );
 	return;
@@ -316,8 +315,8 @@ DEF_DO_FUN( hack )
 void holonet_done( CHAR_DATA *ch, char *argument )
 {
 	ch->desc->connected   = CON_PLAYING;
-	send_to_char( "--> Holonet: po³±czenie zerwane ze strony zdalnego hosta." NL, ch );
-	act( PLAIN, "$n od³±cza komputer z sieci.", ch, NULL, NULL, TO_ROOM );
+	send_to_char( "--> Holonet: poï¿½ï¿½czenie zerwane ze strony zdalnego hosta." NL, ch );
+	act( PLAIN, "$n odï¿½ï¿½cza komputer z sieci.", ch, NULL, NULL, TO_ROOM );
 	return;
 }
 
@@ -326,7 +325,7 @@ void holonet_show( CHAR_DATA *ch )
 	ch_printf( ch,
 			   "o-----------------------------------------------------._____________ " NL
 					   "|  H O L O N E T                            Galaktyczna Baza Danych |" NL
-					   "|  Nieautoryzowane po³±czenia ZABRONIONE.                           |" NL
+					   "|  Nieautoryzowane poï¿½ï¿½czenia ZABRONIONE.                           |" NL
 					   "`-------------------------------------------------------------------'" NL );
 	return;
 }
@@ -338,12 +337,12 @@ void holonet( DESCRIPTOR_DATA *d, char *argument )
 
 
     /*
-	* Nie ma abortów w holonecie
-	* (chocia¿ ³atwo je wstawiæ wystarczy copy & paste from interp.c)
+	* Nie ma abortï¿½w w holonecie
+	* (chociaï¿½ ï¿½atwo je wstawiï¿½ wystarczy copy & paste from interp.c)
 	*/
 	if( get_timerptr( ch, TIMER_DO_FUN ) )
 	{
-		send_to_char( "--> Holonet: Konsola wykonuje ju¿ polecenie." NL, ch );
+		send_to_char( "--> Holonet: Konsola wykonuje juï¿½ polecenie." NL, ch );
 		return;
 	}
 
@@ -366,7 +365,7 @@ void holonet( DESCRIPTOR_DATA *d, char *argument )
 		holonet_done( ch, (char *)"" );
 		return;
 	}
-	send_to_char( "--> Holonet: Nieznane polecenie. U¿yj 'exit' by wyj¶æ z systemu." NL, ch );
+	send_to_char( "--> Holonet: Nieznane polecenie. Uï¿½yj 'exit' by wyjï¿½ï¿½ z systemu." NL, ch );
 	return;
 }
 
@@ -380,8 +379,9 @@ DEF_DO_FUN( holonet )
 	if( !check_knowledge( ch, gsn_holonet ) )
 		return;
 
-	for ( obj = ch->last_carrying; obj; obj = obj->prev_content )
+	for ( auto it = ch->carrying.rbegin(); it != ch->carrying.rend(); ++it )
 	{
+		obj = *it;
 		if (obj->item_type == ITEM_COMPUTER)
 		{
 			laptop = true;
@@ -394,19 +394,19 @@ DEF_DO_FUN( holonet )
 		default:
 			if ( !get_comlink( ch ) )
 			{
-				send_to_char( "Potrzebujesz urz±dzenia komunikacyjnego by to zrobiæ!" NL, ch);
+				send_to_char( "Potrzebujesz urzï¿½dzenia komunikacyjnego by to zrobiï¿½!" NL, ch);
 				return;
 			}
 
 			if( !laptop )
 			{
-				send_to_char("Niby jak chcesz wpi±æ siê do sieci nie maj±c komputera?" NL, ch);
+				send_to_char("Niby jak chcesz wpiï¿½ï¿½ siï¿½ do sieci nie majï¿½c komputera?" NL, ch);
 				return;
 			}
 
 			if( !get_obj_here( ch, (char *)"terminal" ) )
 			{
-				send_to_char("Musisz jako¶ wpi±æ siê do sieci. Nie widzê tu terminala" NL, ch);
+				send_to_char("Musisz jakoï¿½ wpiï¿½ï¿½ siï¿½ do sieci. Nie widzï¿½ tu terminala" NL, ch);
 				return;
 			}
 
@@ -414,19 +414,19 @@ DEF_DO_FUN( holonet )
 
 			if( ch->gold < credits )
 			{
-				ch_printf( ch, "Nie staæ ciê na po³±czenie. Potrzebujesz %d kredyt%s." NL,
-						   credits, NUMBER_SUFF( credits, "kê", "ki", "ek" ) );
+				ch_printf( ch, "Nie staï¿½ ciï¿½ na poï¿½ï¿½czenie. Potrzebujesz %d kredyt%s." NL,
+						   credits, NUMBER_SUFF( credits, "kï¿½", "ki", "ek" ) );
 				return;
 			}
 
 			ch->gold -= UMIN( credits, ch->gold );
 
-			ch_printf( ch, "P³acisz %d kredyt%s za otrzymanie po³±czenia." NL,
-					   credits, NUMBER_SUFF( credits, "kê", "ki", "ek" ) );
+			ch_printf( ch, "Pï¿½acisz %d kredyt%s za otrzymanie poï¿½ï¿½czenia." NL,
+					   credits, NUMBER_SUFF( credits, "kï¿½", "ki", "ek" ) );
 
-			send_to_char( FB_GREEN "Nawi±zujesz po³±czenie..." EOL, ch);
+			send_to_char( FB_GREEN "Nawiï¿½zujesz poï¿½ï¿½czenie..." EOL, ch);
 			act( PLAIN,
-				 "$n wklepuje jakie¶ znaki na komputerze strasznie siê przy tym poc±c.", ch,
+				 "$n wklepuje jakieï¿½ znaki na komputerze strasznie siï¿½ przy tym pocï¿½c.", ch,
 				 NULL, NULL, TO_ROOM );
 			add_timer ( ch , TIMER_DO_FUN , 5 , do_holonet, 1 );
 			return;
@@ -435,7 +435,7 @@ DEF_DO_FUN( holonet )
 			break;
 
 		case SUB_TIMER_DO_ABORT:
-			break_skill( FB_RED "Roz³±czasz siê." EOL, ch);
+			break_skill( FB_RED "Rozï¿½ï¿½czasz siï¿½." EOL, ch);
 			act( PLAIN, "$n mocnym ruchem wyrywa komputer z sieci.", ch,
 				 NULL, NULL, TO_ROOM );
 			return;
@@ -448,27 +448,27 @@ DEF_DO_FUN( holonet )
 			   "o-----------------------------------------------------._____________ " NL
 					   "|                                                                   |" NL
 					   "|  Witamy w Galaktycznej Bazie Danych   H O L O N E T               |" NL
-					   "|  Nieautoryzowane po³±czenia ZABRONIONE.                           |" NL
+					   "|  Nieautoryzowane poï¿½ï¿½czenia ZABRONIONE.                           |" NL
 					   "|                                                                   |" NL
 					   "|  Login: sw%d                                                    |" NL
-					   "|  Kod wej¶cia: *************                                       |" NL,
+					   "|  Kod wejï¿½cia: *************                                       |" NL,
 			   number_range( 1111, 9999 ) );
 
 
 	if( number_percent( ) > chance )
 	{
 		ch_printf( ch,
-				   "|  Kod wej¶cia b³êdny.                                              |" NL
+				   "|  Kod wejï¿½cia bï¿½ï¿½dny.                                              |" NL
 						   "|                                                                   |" NL
 						   "`-------------------------------------------------------------------|" NL );
 		learn_from_failure( ch, gsn_holonet );
-		send_to_char( FB_RED NL "Roz³±czasz siê." EOL, ch);
+		send_to_char( FB_RED NL "Rozï¿½ï¿½czasz siï¿½." EOL, ch);
 		return;
 	}
 
 	ch_printf( ch,
-			   "|  Kod wej¶cia prawdi³owy.                                          |" NL
-					   "|  Akceptujê login.                                                 |" NL
+			   "|  Kod wejï¿½cia prawdiï¿½owy.                                          |" NL
+					   "|  Akceptujï¿½ login.                                                 |" NL
 					   "`-------------------------------------------------------------------|" NL );
 
 	ch->desc->connected   = CON_HOLONET;
@@ -479,10 +479,9 @@ DEF_DO_FUN( holonet )
 }
 
 
-/* Skill podobny do bashdoor, tylko wymaga ³adunku wybuchowego */
+/* Skill podobny do bashdoor, tylko wymaga ï¿½adunku wybuchowego */
 DEF_DO_FUN( detonate )
 {
-	CHAR_DATA *	gch;
 	EXIT_DATA *	pexit;
 	char       	arg 	[ MAX_INPUT_LENGTH ];
 
@@ -497,32 +496,32 @@ DEF_DO_FUN( detonate )
 
 			if ( ch->fighting )
 			{
-				send_to_char( "Nie mo¿esz przerwaæ walki." NL, ch );
+				send_to_char( "Nie moï¿½esz przerwaï¿½ walki." NL, ch );
 				return;
 			}
 
 			if ( arg[0] == '\0' )
 			{
-				send_to_char( "Które drzwi chcesz wysadziæ?" NL, ch );
+				send_to_char( "Ktï¿½re drzwi chcesz wysadziï¿½?" NL, ch );
 				return;
 			}
 
 			if ( ( pexit = find_door( ch, arg, true ) ) != NULL
 							&&     !IS_SET( pexit->flags, EX_CLOSED) )
 			{
-				send_to_char( "Spokojnie. To jest ju¿ otwarte." NL, ch );
+				send_to_char( "Spokojnie. To jest juï¿½ otwarte." NL, ch );
 				return;
 			}
 
-			send_to_char( FB_GREEN "Ostro¿nie zak³adasz ³adunek..." EOL, ch);
-			act( PLAIN, "$n uzbraja ³adunek wybuchowy...", ch,
+			send_to_char( FB_GREEN "Ostroï¿½nie zakï¿½adasz ï¿½adunek..." EOL, ch);
+			act( PLAIN, "$n uzbraja ï¿½adunek wybuchowy...", ch,
 				 NULL, NULL, TO_ROOM );
 			add_timer ( ch , TIMER_DO_FUN , 5 , do_detonate , 1 );
 			STRDUP( ch->dest_buf,arg);
 			return;
 
 		case SUB_TIMER_DO_ABORT:
-			ch_printf( ch, "Jeste¶ teraz skupion%s na detonowaniu!" NL,
+			ch_printf( ch, "Jesteï¿½ teraz skupion%s na detonowaniu!" NL,
 					   SEX_SUFFIX_YAE( ch ) );
 			ch->substate = SUB_TIMER_CANT_ABORT;
 			return;
@@ -544,7 +543,7 @@ DEF_DO_FUN( detonate )
 		char *			keyword;
 
 		if ( IS_SET( pexit->flags, EX_SECRET ) )
-			keyword = (char *)"¶cianê";
+			keyword = (char *)"ï¿½cianï¿½";
 		else
 			keyword = pexit->keyword;
 
@@ -562,9 +561,9 @@ DEF_DO_FUN( detonate )
 				REMOVE_BIT( pexit->flags, EX_LOCKED );
 			SET_BIT(    pexit->flags, EX_BASHED );
 
-			act(COL_ACTION, "BoOm !!!  $d rozwalaj± siê pod wp³ywem explozji!",
+			act(COL_ACTION, "BoOm !!!  $d rozwalajï¿½ siï¿½ pod wpï¿½ywem explozji!",
 				ch, NULL, keyword, TO_CHAR );
-			act(COL_ACTION, "BoOm !!!  $d rozwalaj± siê pod wp³ywem explozji!",
+			act(COL_ACTION, "BoOm !!!  $d rozwalajï¿½ siï¿½ pod wpï¿½ywem explozji!",
 				ch, NULL, keyword, TO_ROOM );
 
 			/* :) */
@@ -577,16 +576,14 @@ DEF_DO_FUN( detonate )
 						   &&   (pexit_rev = pexit->rexit) != NULL
 						   &&    pexit_rev->to_room	== ch->in_room )
 			{
-				CHAR_DATA *rch;
-
 				REMOVE_BIT( pexit_rev->flags, EX_CLOSED );
 				if( IS_SET( pexit_rev->flags, EX_LOCKED ) )
 					REMOVE_BIT( pexit_rev->flags, EX_LOCKED );
 				SET_BIT(    pexit_rev->flags, EX_BASHED );
 
-				for ( rch = to_room->first_person; rch; rch = rch->next_in_room )
+				for ( auto* rch : to_room->people )
 				{
-					act(COL_ACTION, "S³yszysz potworny HUK! $d Rozpadaj± siê na kawa³ki!",
+					act(COL_ACTION, "Sï¿½yszysz potworny HUK! $d Rozpadajï¿½ siï¿½ na kawaï¿½ki!",
 						rch, NULL, pexit_rev->keyword, TO_CHAR );
 				}
 			}
@@ -594,10 +591,10 @@ DEF_DO_FUN( detonate )
 		else
 		{
 			act(COL_ACTION,
-				"BoOm !!!  Eksplozja nie by³a w stanie rozwaliæ $d. Ale ciebie tak !!!",
+				"BoOm !!!  Eksplozja nie byï¿½a w stanie rozwaliï¿½ $d. Ale ciebie tak !!!",
 				ch, NULL, keyword, TO_CHAR );
 			act(COL_ACTION,
-				"BoOm !!!  $n detonuje ³adunek. $d pozostaj± nietkniête, ale $e obrywa!",
+				"BoOm !!!  $n detonuje ï¿½adunek. $d pozostajï¿½ nietkniï¿½te, ale $e obrywa!",
 				ch, NULL, keyword, TO_ROOM );
 			damage( ch, ch, ( ch->max_hit / 10 ) + 10, gsn_detonate );
 			learn_from_failure(ch, gsn_detonate);
@@ -606,17 +603,17 @@ DEF_DO_FUN( detonate )
 	else
 	{
 		act(COL_ACTION,
-			"BoOm !!! ¦ciana ani drgnie. Za to ty nie¼le obrywasz !!!",
+			"BoOm !!! ï¿½ciana ani drgnie. Za to ty nieï¿½le obrywasz !!!",
 			ch, NULL, NULL, TO_CHAR );
 		act(COL_ACTION,
-			"BoOm !!!  $n detonuje ³adunek. ¦ciana pozostaje nietkniêta, ale $e obrywa.",
+			"BoOm !!!  $n detonuje ï¿½adunek. ï¿½ciana pozostaje nietkniï¿½ta, ale $e obrywa.",
 			ch, NULL, NULL, TO_ROOM );
 		damage( ch, ch, ( ch->max_hit / 20 ) + 10, gsn_bashdoor );
 		learn_from_failure(ch, gsn_detonate);
 	}
 
 	if ( !char_died( ch ) )
-		for ( gch = ch->in_room->first_person; gch; gch = gch->next_in_room )
+		for ( auto* gch : ch->in_room->people )
 	{
 		if ( IS_AWAKE( gch )
 				   && !gch->fighting
@@ -632,10 +629,6 @@ DEF_DO_FUN( detonate )
 /* Tak, jesli dany przedmiot jest uzywany przez projekt */
 bool is_project_part( PROJECT_DATA *proj, OBJ_DATA *obj )
 {
-	PART_DATA *			part;
-	COMPONENT_DATA *	comp;
-	OBJ_DATA *			cont;
-
     // no niestety to jest mozliwe, np. kiedy upgradujemy
     // tarcze, to potrzebujemy np. baterii i przedmiotu
     // o wear_fladze shield.
@@ -648,7 +641,7 @@ bool is_project_part( PROJECT_DATA *proj, OBJ_DATA *obj )
 
 	if( obj->pIndexData->vnum == OBJ_VNUM_UNFINISHED_PART )
 	{
-		for( cont=obj->first_content; cont; cont=cont->next_content )
+		for( auto* cont : obj->contents )
 			if( !is_project_part( proj, cont ) )
 				return false;
 
@@ -656,8 +649,8 @@ bool is_project_part( PROJECT_DATA *proj, OBJ_DATA *obj )
 	}
 	else
 	{
-		for( part=proj->first_part; part; part=part->next )
-			for( comp=part->first_component; comp; comp=comp->next )
+		for( auto* part : proj->parts )
+			for( auto* comp : part->components )
 		{
 			if( comp->type == COMP_VNUM
 						 &&  comp->nr == obj->pIndexData->vnum )
@@ -677,20 +670,19 @@ bool is_project_part( PROJECT_DATA *proj, OBJ_DATA *obj )
 }
 
 
-/* znajduje wszystkie projekty, których czê¶ciami s± obj1 i obj2
-   i nadpisuje eff ilo¶ci± znalezionych projektów */
+/* znajduje wszystkie projekty, ktï¿½rych czï¿½ciami sï¿½ obj1 i obj2
+   i nadpisuje eff iloï¿½ciï¿½ znalezionych projektï¿½w */
 PROJECT_DATA *find_project( OBJ_DATA *obj1, OBJ_DATA *obj2, int *eff )
 {
-	PROJECT_DATA *	pProj;
 	PROJECT_DATA *	OkProj = 0;
 	int			ok = 0;
 
     /*
-	Sprawd¼my, czy kombinacja dwóch przedmiotów jednoznacznie
-	uto¿samia siê z jednym tylko projektem, czy jest jeszcze
+	Sprawdï¿½my, czy kombinacja dwï¿½ch przedmiotï¿½w jednoznacznie
+	utoï¿½samia siï¿½ z jednym tylko projektem, czy jest jeszcze
 	'anonimowa'
 	*/
-	for( pProj = first_project; pProj; pProj = pProj->next )
+	for( auto* pProj : project_list )
 	{
 		if( is_project_part( pProj, obj1 ) &&
 				  is_project_part( pProj, obj2 ) )
@@ -705,7 +697,7 @@ PROJECT_DATA *find_project( OBJ_DATA *obj1, OBJ_DATA *obj2, int *eff )
 	return OkProj;
 }
 
-/* wrzuca sk³adniki do przemiotu wynikowego */
+/* wrzuca skï¿½adniki do przemiotu wynikowego */
 void obj_to_dest( OBJ_DATA *obj, OBJ_DATA *dest )
 {
 	separate_obj( obj );
@@ -724,19 +716,17 @@ void obj_to_dest( OBJ_DATA *obj, OBJ_DATA *dest )
 	return;
 }
 
-/* znajduje w przedmiocie wszystkie odpowiedniki danej czê¶ci */
+/* znajduje w przedmiocie wszystkie odpowiedniki danej czï¿½ci */
 bool find_part( PART_DATA * part, OBJ_DATA *obj )
 {
-	OBJ_DATA  *		con;
-	COMPONENT_DATA *	comp;
 	int			i=0;
 
-	for( con=obj->first_content; con; con=con->next_content )
+	for( auto* con : obj->contents )
 		separate_obj( con );
 
-	for( con=obj->first_content; con; con=con->next_content )
+	for( auto* con : obj->contents )
 	{
-		for( comp=part->first_component; comp; comp=comp->next )
+		for( auto* comp : part->components )
 		{
 			if( ( comp->type == COMP_VNUM
 						   && comp->nr == con->pIndexData->vnum )
@@ -760,26 +750,23 @@ bool find_part( PART_DATA * part, OBJ_DATA *obj )
 /* rozdziela skombinowane przedmioty w inwentory gracza */
 void separate_inv( CHAR_DATA *ch )
 {
-	OBJ_DATA *	obj;
-
-	for( obj = ch->first_carrying; obj; obj = obj->next )
+	for( auto* obj : ch->carrying )
 		if( obj->count )
 			separate_obj( obj );
 }
 
-/* £±czy ze sob± dwa przedmioty (je¶li siê dadz± po³±czyæ)
+/* ï¿½ï¿½czy ze sobï¿½ dwa przedmioty (jeï¿½li siï¿½ dadzï¿½ poï¿½ï¿½czyï¿½)
   i daje wynik graczowi */
 void mont_objects( CHAR_DATA *ch, OBJ_DATA *obj1, OBJ_DATA *obj2 )
 {
 	OBJ_DATA *		tmpObj;
 	OBJ_DATA *		dest;
 	PROJECT_DATA *	proj;
-	PROJECT_DATA *	pProj;
-	PART_DATA *		part;
+	PROJECT_DATA *	pProj = nullptr;
 	int			ok = 0;
 	bool		found = false;
 
-	/* szukamy projektów, których czê¶ciami s± te, ³±czone przez gracza */
+	/* szukamy projektï¿½w, ktï¿½rych czï¿½ciami sï¿½ te, ï¿½ï¿½czone przez gracza */
 	proj = find_project( obj1, obj2, &ok );
 	if( !proj || !ok )
 	{
@@ -795,7 +782,7 @@ void mont_objects( CHAR_DATA *ch, OBJ_DATA *obj1, OBJ_DATA *obj2 )
 	{
 		bug( "OBJ_VNUM_UNFINISHED_PART (#%d) doesn't exist!",
 			 OBJ_VNUM_UNFINISHED_PART );
-		ch_printf( ch, "Jako¶ nie udaje ci siê nic zmontowaæ..." NL );
+		ch_printf( ch, "Jakoï¿½ nie udaje ci siï¿½ nic zmontowaï¿½..." NL );
 		return;
 	}
 
@@ -805,13 +792,14 @@ void mont_objects( CHAR_DATA *ch, OBJ_DATA *obj1, OBJ_DATA *obj2 )
     /* sprawdzamy, czy projekt jest juz skonczony
 	(tzn we wnetrzu tymczasowego przedmiotu znajduja sie wszystkie
 	elementy jakiegos projektu) */
-	for( pProj = first_project; pProj; pProj = pProj->next )
+	for( auto* p : project_list )
 	{
+		pProj = p;
 		found = true;
-		for( part = pProj->first_part; part; part = part->next )
+		for( auto* part : pProj->parts )
 		{
-	    /* jesli w przedmiocie brak którejkolwiek
-			czê¶ci, to znaczy, ze nie skonczylismy */
+	    /* jesli w przedmiocie brak ktï¿½rejkolwiek
+			czï¿½ci, to znaczy, ze nie skonczylismy */
 			if( !find_part( part, tmpObj ) )
 			{
 				found = false;
@@ -835,7 +823,7 @@ void mont_objects( CHAR_DATA *ch, OBJ_DATA *obj1, OBJ_DATA *obj2 )
 		extract_obj( tmpObj );
 
 		act( COL_ACTION,
-			 "Z po³±czenia powstaje $p!", ch, dest, NULL, TO_CHAR);
+			 "Z poï¿½ï¿½czenia powstaje $p!", ch, dest, NULL, TO_CHAR);
 	}
 	else
 	{
@@ -843,7 +831,7 @@ void mont_objects( CHAR_DATA *ch, OBJ_DATA *obj1, OBJ_DATA *obj2 )
 		char	decl	[MSL];
 
 	/* ok == 1 --> to znaczy, ze jest tylkoi jeden taki projekt,
-		który mo¿emy uzyskaæ montuj±c dany klamot */
+		ktï¿½ry moï¿½emy uzyskaï¿½ montujï¿½c dany klamot */
 		if( ok == 1 )
 		{
 			const char *	const inf[6][4]	=
@@ -851,8 +839,8 @@ void mont_objects( CHAR_DATA *ch, OBJ_DATA *obj1, OBJ_DATA *obj2 )
 				{ "gotowe",  "gotowy",  "gotowa", "gotowe" },
 				{ "gotowego","gotowego","gotowej","gotowych" },
 				{ "gotowemu","gotowemu","gotowej","gotowym" },
-				{ "gotowe",  "gotowy",  "gotow±", "gotowe" },
-				{ "gotowym", "gotowym", "gotow±", "gotowymi" },
+				{ "gotowe",  "gotowy",  "gotowï¿½", "gotowe" },
+				{ "gotowym", "gotowym", "gotowï¿½", "gotowymi" },
 				{ "gotowym", "gotowym", "gotowej","gotowych" }
 			};
 
@@ -905,13 +893,12 @@ void mont_objects( CHAR_DATA *ch, OBJ_DATA *obj1, OBJ_DATA *obj2 )
 
 char *show_part( PART_DATA *part )
 {
-	COMPONENT_DATA *	comp;
 	OBJ_INDEX_DATA *	objIndex;
 	static char 	buf	[MSL];
 
 	sprintf( buf, " %dszt. ", part->quantity );
 
-	for( comp = part->first_component; comp; comp = comp->next )
+	for( auto* comp : part->components )
 	{
 		switch( comp->type )
 		{
@@ -933,7 +920,7 @@ char *show_part( PART_DATA *part )
 				break;
 		}
 
-		if( comp->next )
+		if( comp != part->components.back() )
 			strcat( buf, ", lub " );
 	}
 	return buf;
@@ -951,19 +938,16 @@ DEF_DO_FUN( mont )
 
 	if( !*arg1 || !*arg2 )
 	{
-		PROJECT_DATA *pro;
+		send_to_char( "Co chcesz poï¿½ï¿½czyï¿½... I z czym?" NL, ch );
 
-		send_to_char( "Co chcesz po³±czyæ... I z czym?" NL, ch );
-
-		for( pro = first_project; pro; pro = pro->next )
+		for( auto* pro : project_list )
 		{
-			PART_DATA *part;
 			ch_printf( ch,
-					   "Aby otrzymaæ %s (%d) musisz %s ze sob±:" EOL,
+					   "Aby otrzymaï¿½ %s (%d) musisz %s ze sobï¿½:" EOL,
 					   pro->effect->przypadki[3],
 					   pro->effect->vnum,
 					   flag_string( mont_types_list, pro->montage_type ) );
-			for( part = pro->first_part; part; part = part->next )
+			for( auto* part : pro->parts )
 			{
 				ch_printf( ch,
 						   "%s" EOL,
@@ -980,26 +964,26 @@ DEF_DO_FUN( mont )
 	separate_inv( ch );
 	if ( ( obj1 = get_obj_carry( ch, arg1 ) ) == NULL )
 	{
-		ch_printf( ch, "Nie masz ¿adnego %s!" NL, arg1 );
+		ch_printf( ch, "Nie masz ï¿½adnego %s!" NL, arg1 );
 		return;
 	}
 
 	if ( ( obj2 = get_obj_carry( ch, arg2 ) ) == NULL )
 	{
-		ch_printf( ch, "Nie masz ¿adnego %s!" NL, arg2 );
+		ch_printf( ch, "Nie masz ï¿½adnego %s!" NL, arg2 );
 		return;
 	}
 
 	if( obj1 == obj2 )
 	{
-		ch_printf( ch, "No co¶ ty? To ten sam przedmiot!" NL );
+		ch_printf( ch, "No coï¿½ ty? To ten sam przedmiot!" NL );
 		return;
 	}
 
 	act( COL_ACTION,
-		 "£±czysz w skupieniu $p$3 z $P$4...", ch, obj1, obj2, TO_CHAR);
+		 "ï¿½ï¿½czysz w skupieniu $p$3 z $P$4...", ch, obj1, obj2, TO_CHAR);
 	act( COL_ACTION,
-		 "$n ³±czy w skupieniu $p$3 z $P$4...", ch, obj1, obj2, TO_ROOM);
+		 "$n ï¿½ï¿½czy w skupieniu $p$3 z $P$4...", ch, obj1, obj2, TO_ROOM);
 
 	mont_objects( ch, obj1, obj2 );
 	return;
@@ -1072,16 +1056,16 @@ void load_projects()
 								 "Load_project: Unknown Character found '%c'", type );
 						log_string( buf );
 						type = ';';
-						/*break;  -- NIE RUSZAÆ */
+						/*break;  -- NIE RUSZAï¿½ */
 
 						case ';':					/* koniec */
 							fread_to_eol( fp );
 							end = true;
 							break;
 
-							case 'x':		   /* ile sztuk sk³adnika potrzeba */
-								if( project->last_part )
-									project->last_part->quantity = fread_number( fp );
+							case 'x':		   /* ile sztuk skï¿½adnika potrzeba */
+								if( !project->parts.empty() )
+									project->parts.back()->quantity = fread_number( fp );
 								break;
 
 					case '=':
@@ -1099,19 +1083,17 @@ void load_projects()
 									lett =  COMP_VNUM;
 
 								comp_nr = fread_number( fp );
-								if( type != '/' || !project->last_part )
+								if( type != '/' || project->parts.empty() )
 								{
 									CREATE( part, PART_DATA, 1 );
 									part->quantity = 1;
-									LINK( part, project->first_part,
-										  project->last_part, next, prev );
+									project->parts.push_back( part );
 								}
-								part = project->last_part;
+								part = project->parts.back();
 								CREATE( comp, COMPONENT_DATA, 1 );
 								comp->nr 	= comp_nr;
 								comp->type 	= lett;
-								LINK( comp, part->first_component,
-									  part->last_component, next, prev );
+								part->components.push_back( comp );
 								break;
 							}
 				}
@@ -1120,8 +1102,8 @@ void load_projects()
 			}
 
 
-			if( project->first_part )
-				LINK( project, first_project, last_project, next, prev );
+			if( !project->parts.empty() )
+				project_list.push_back( project );
 			else
 			{
 				DISPOSE( project );
@@ -1143,7 +1125,6 @@ void load_projects()
 
 void save_projects( )
 {
-	PROJECT_DATA *	pro;
 	FILE *		fp;
 
 	RESERVE_CLOSE;
@@ -1157,46 +1138,42 @@ void save_projects( )
 
 	fprintf( fp,
 			 "*\n"
-					 "* Sk³adnia: <monta¿><vnum_efektu> = <part> + <part> { + <part> };\n"
-					 "* Monta¿e:\n"
-					 "* A - wkrêcanie       B - lutowanie       C - spawanie\n"
+					 "* Skï¿½adnia: <montaï¿½><vnum_efektu> = <part> + <part> { + <part> };\n"
+					 "* Montaï¿½e:\n"
+					 "* A - wkrï¿½canie       B - lutowanie       C - spawanie\n"
 					 "* D - sklejanie       E - wtykanie        F - nitowanie\n"
-					 "* Sk³adnia parta: <komponent>{ /<komponent> }[ x<quantity> ] \n"
-					 "* Sk³adnia komponentu: <litera><warto¶æ>\n"
+					 "* Skï¿½adnia parta: <komponent>{ /<komponent> }[ x<quantity> ] \n"
+					 "* Skï¿½adnia komponentu: <litera><wartoï¿½ï¿½>\n"
 					 "* Litera:\n"
 					 "* v -- wymagany jest odpowiedni vnum\n"
 					 "* t -- wymagany jest typ\n"
 					 "* w -- wymagana jest wear_flaga\n"
-					 "* Warto¶æ:\n"
-					 "* Numer flagi, typu lub vnumu w zale¿no¶ci od Litery\n"
+					 "* Wartoï¿½ï¿½:\n"
+					 "* Numer flagi, typu lub vnumu w zaleï¿½noï¿½ci od Litery\n"
 					 "*\n"
-					 "* / -- odpowiednik,  x -- quantity (ilo¶æ sztuk)\n"
+					 "* / -- odpowiednik,  x -- quantity (iloï¿½ï¿½ sztuk)\n"
 					 "*\n\n" );
 
-	for( pro = first_project; pro; pro=pro->next )
+	for( auto* pro : project_list )
 	{
-		PART_DATA *	part;
-
 		if( !pro->effect )
 			continue;
 
-		if( !pro->first_part )
+		if( pro->parts.empty() )
 			continue;
 
 		fprintf( fp, "%c%-6d", pro->montage_type, pro->effect->vnum );
 
-		for( part = pro->first_part; part; part = part->next )
+		for( auto* part : pro->parts )
 		{
-			COMPONENT_DATA *	comp;
-
-			if( !part->first_component )
+			if( part->components.empty() )
 				continue;
 
-			for( comp = part->first_component; comp; comp = comp->next )
+			for( auto* comp : part->components )
 			{
 				fprintf( fp, "%s%c%d",
-					comp != part->first_component ? "/" :
-					part == pro->first_part ?  " = "  : " + ",
+					comp != part->components.front() ? "/" :
+					part == pro->parts.front() ?  " = "  : " + ",
 					comp->type,
 					comp->nr );
 			}

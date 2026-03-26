@@ -23,8 +23,6 @@
 
 struct hangar_data
 {
-	HANGAR_DATA			* next;
-	HANGAR_DATA			* prev;
 	int					vnum;
 	float				capacity;
 	int					status;

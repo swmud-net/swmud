@@ -23,8 +23,6 @@
 
 struct smap_data
 {
-	SMAP_DATA			* next;
-	SMAP_DATA			* prev;
 	char				* name;
 	int					a;
 };

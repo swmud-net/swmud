@@ -23,12 +23,10 @@
 
 struct material_data	//Tanglor
 {
-	MATERIAL_DATA			* next; /*!< n±stêpny materia³ na li¶cie*/
-	MATERIAL_DATA			* prev; /*!< poprzedni materia³ na li¶cie*/
-	char					* name; /*!< nazwa materia³u*/
-	char					* desc; /*!< opis materia³u*/
-	material_type			type;	/*!< typ materia³u - ruda, stop, itp*/
-	material_rarity			rarity; /*!< jak czêsto wystêpuje*/
+	char					* name; /*!< nazwa materiaï¿½u*/
+	char					* desc; /*!< opis materiaï¿½u*/
+	material_type			type;	/*!< typ materiaï¿½u - ruda, stop, itp*/
+	material_rarity			rarity; /*!< jak czï¿½sto wystï¿½puje*/
 //  MAT_TYPE		    type;
 //  TRANS_REQ		    trans;
 	bool					can_mine;	/*!< czy jest wydobywany czy produkowany*/

@@ -23,8 +23,6 @@
 
 struct	q_command_data
 {
-	QUEST_CMND_DATA		* next;
-	QUEST_CMND_DATA		* prev;
 	int					command;
 	int				arg1;
 	int				arg2;

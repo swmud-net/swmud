@@ -35,7 +35,7 @@
  * External functions
  */
 
-void show_list_to_char(OBJ_DATA *list, CHAR_DATA *ch, bool fShort, bool fShowNothing);
+void show_list_to_char(const std::list<OBJ_DATA*>& list, CHAR_DATA *ch, bool fShort, bool fShowNothing);
 /*
  * Local functions.
  */
@@ -74,7 +74,7 @@ int get_obj_resistance(OBJ_DATA *obj)
 	if (obj->item_type == ITEM_ARMOR || obj->item_type == ITEM_WEAPON)
 		resist += (obj->value[0]);
 
-	/* Thanos -->   ¿enada, ¿e komlinki rozpadaj± siê jako pierwsze */
+	/* Thanos -->   ï¿½enada, ï¿½e komlinki rozpadajï¿½ siï¿½ jako pierwsze */
 	if (obj->item_type == ITEM_COMLINK)
 		resist *= 2;
 
@@ -87,7 +87,6 @@ int get_obj_resistance(OBJ_DATA *obj)
 
 void show_obj_stats(OBJ_DATA *obj, CHAR_DATA *ch)
 {
-	AFFECT_DATA * paf;
 	SKILLTYPE * sktmp;
 #if defined(ARMAGEDDON)
 	REQUIREMENT_DATA *req;
@@ -104,27 +103,27 @@ void show_obj_stats(OBJ_DATA *obj, CHAR_DATA *ch)
 	{
 	case ITEM_WEAPON:
 		ch_printf(ch, FG_CYAN
-		"Zadawane obra¿enia w walce wrêcz " FB_CYAN "%d" FG_CYAN
-		" do " FB_CYAN "%d" FG_CYAN " (¶rednio " FB_CYAN "%d" FG_CYAN ")." EOL, obj->value[1], obj->value[2],
+		"Zadawane obraï¿½enia w walce wrï¿½cz " FB_CYAN "%d" FG_CYAN
+		" do " FB_CYAN "%d" FG_CYAN " (ï¿½rednio " FB_CYAN "%d" FG_CYAN ")." EOL, obj->value[1], obj->value[2],
 				(obj->value[1] + obj->value[2]) / 2);
 
 		if (obj->value[3] == WEAPON_BLASTER)
 		{
 			if (obj->blaster_setting == BLASTER_FULL)
-				ch_printf(ch, FG_CYAN "Ustawiony na PE£N¡ moc." EOL);
+				ch_printf(ch, FG_CYAN "Ustawiony na PEï¿½Nï¿½ moc." EOL);
 			else if (obj->blaster_setting == BLASTER_HIGH)
 				ch_printf(ch, FG_CYAN "Ustawiony na WYSOKI poziom mocy." EOL);
 			else if (obj->blaster_setting == BLASTER_NORMAL)
 				ch_printf(ch, FG_CYAN "Ustawiony na NORMALNY poziom mocy." EOL);
 			else if (obj->blaster_setting == BLASTER_HALF)
-				ch_printf(ch, FG_CYAN "Ustawiony na PO£OWÊ mocy." EOL);
+				ch_printf(ch, FG_CYAN "Ustawiony na POï¿½OWï¿½ mocy." EOL);
 			else if (obj->blaster_setting == BLASTER_LOW)
 				ch_printf(ch, FG_CYAN "Ustawiony na NISKI poziom mocy." EOL);
 			else if (obj->blaster_setting == BLASTER_STUN)
-				ch_printf(ch, FG_CYAN "Ustawiony na OG£USZANIE." EOL);
+				ch_printf(ch, FG_CYAN "Ustawiony na OGï¿½USZANIE." EOL);
 
 			ch_printf(ch, FG_CYAN
-			"Posiada jeszcze " FB_CYAN "%d" FG_CYAN " na " FB_CYAN "%d" FG_CYAN " pocisków." EOL, obj->value[4],
+			"Posiada jeszcze " FB_CYAN "%d" FG_CYAN " na " FB_CYAN "%d" FG_CYAN " pociskï¿½w." EOL, obj->value[4],
 					obj->value[5]);
 		}
 		else if (obj->value[3] == WEAPON_LIGHTSABER || obj->value[3] == WEAPON_VIBRO_BLADE || obj->value[3]
@@ -138,14 +137,14 @@ void show_obj_stats(OBJ_DATA *obj, CHAR_DATA *ch)
 		{
 			ch_printf(ch, FG_CYAN
 			"Posiada jeszcze " FB_CYAN "%d" FG_CYAN " z " FB_CYAN
-			"%d" FG_CYAN " strza³ energetycznych." NL, obj->value[4], obj->value[5]);
+			"%d" FG_CYAN " strzaï¿½ energetycznych." NL, obj->value[4], obj->value[5]);
 		}
 		break;
 
 	case ITEM_DEVICE:
 		ch_printf(ch, FG_CYAN
 		"Posiada " FB_CYAN "%d" FG_CYAN "(" FB_CYAN "%d" FG_CYAN
-		") ³adunków na poziomie " FB_CYAN "%d ", obj->value[1], obj->value[2], obj->value[0]);
+		") ï¿½adunkï¿½w na poziomie " FB_CYAN "%d ", obj->value[1], obj->value[2], obj->value[0]);
 		if (obj->value[3] >= 0 && (sktmp = get_skilltype(obj->value[3])) != NULL)
 		{
 			send_to_char(" '", ch);
@@ -157,12 +156,12 @@ void show_obj_stats(OBJ_DATA *obj, CHAR_DATA *ch)
 
 	case ITEM_AMMO:
 		ch_printf(ch, FG_CYAN
-		"Posiada " PLAIN "%d" FG_CYAN " pocisków." EOL, obj->value[0]);
+		"Posiada " PLAIN "%d" FG_CYAN " pociskï¿½w." EOL, obj->value[0]);
 		break;
 
 	case ITEM_BOLT:
 		ch_printf(ch, FG_CYAN
-		"Posiada " FB_CYAN "%d" FG_CYAN " strza³ energetycznych." EOL, obj->value[0]);
+		"Posiada " FB_CYAN "%d" FG_CYAN " strzaï¿½ energetycznych." EOL, obj->value[0]);
 		break;
 
 	case ITEM_BATTERY:
@@ -174,7 +173,7 @@ void show_obj_stats(OBJ_DATA *obj, CHAR_DATA *ch)
 		ch_printf(ch, FG_CYAN
 		"Aktualna klasa zbroi: " FB_CYAN "%d" FG_CYAN "/" FB_CYAN "%d" FG_CYAN "." EOL, obj->value[0], obj->value[1]);
 		ch_printf(ch, FG_CYAN
-		"Dodatkowy wp³yw na uzbrojenie: " FB_CYAN "%d" FG_CYAN "." EOL, apply_ac(obj, obj->wear_loc));
+		"Dodatkowy wpï¿½yw na uzbrojenie: " FB_CYAN "%d" FG_CYAN "." EOL, apply_ac(obj, obj->wear_loc));
 		break;
 
 	case ITEM_PILL:
@@ -206,15 +205,15 @@ void show_obj_stats(OBJ_DATA *obj, CHAR_DATA *ch)
 		break;
 	}
 
-	for (paf = obj->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->affects)
 		showaffect(ch, paf);
-	for (paf = obj->pIndexData->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->pIndexData->affects)
 		showaffect(ch, paf);
 
 #if defined(ARMAGEDDON)
-	for( req = obj->first_requirement; req; req=req->next )
+	for (auto* req : obj->requirements)
 	explain( ch, req, obj, true );
-	for( req = obj->pIndexData->first_requirement; req; req=req->next )
+	for (auto* req : obj->pIndexData->requirements)
 	explain( ch, req, obj, true );
 #endif
 	send_to_char(PLAIN, ch);
@@ -228,13 +227,13 @@ void get_obj(CHAR_DATA *ch, OBJ_DATA *obj, OBJ_DATA *container)
 
 	if (!CAN_WEAR(obj, ITEM_TAKE) && (ch->top_level < sysdata.level_getobjnotake))
 	{
-		send_to_char("Nie mo¿esz tego wzi±æ." NL, ch);
+		send_to_char("Nie moï¿½esz tego wziï¿½ï¿½." NL, ch);
 		return;
 	}
 
 	if (IS_OBJ_STAT( obj, ITEM_PROTOTYPE ) && !can_take_proto(ch))
 	{
-		send_to_char("Nieznana moc powstrzymuje ciê przed podej¶ciem by to wzi±æ." NL, ch);
+		send_to_char("Nieznana moc powstrzymuje ciï¿½ przed podejï¿½ciem by to wziï¿½ï¿½." NL, ch);
 		return;
 	}
 
@@ -243,16 +242,16 @@ void get_obj(CHAR_DATA *ch, OBJ_DATA *obj, OBJ_DATA *container)
 	 * listy, znowu tam dochodzimy i tak az do... */
 	if (IS_OBJ_STAT( obj, ITEM_PERSONAL ) && *obj->owner_name && str_cmp(obj->owner_name, ch->name))
 	{
-		ch_printf(ch, "To chyba nie twoje. Spadówa!" NL "Nie mo¿esz tego wzi±æ." NL);
+		ch_printf(ch, "To chyba nie twoje. Spadï¿½wa!" NL "Nie moï¿½esz tego wziï¿½ï¿½." NL);
 		return;
 	}
 
-	/* Thanos -- kasa to raczej jest ma³a i lekka nie ? */
+	/* Thanos -- kasa to raczej jest maï¿½a i lekka nie ? */
 	if (obj->item_type != ITEM_MONEY)
 	{
 		if (ch->carry_number + get_obj_number(obj) > can_carry_n(ch))
 		{
-			act(PLAIN, "$d: Nie mo¿esz nosiæ tylu przedmiotów.", ch, NULL, obj->name, TO_CHAR);
+			act(PLAIN, "$d: Nie moï¿½esz nosiï¿½ tylu przedmiotï¿½w.", ch, NULL, obj->name, TO_CHAR);
 			return;
 		}
 
@@ -263,16 +262,16 @@ void get_obj(CHAR_DATA *ch, OBJ_DATA *obj, OBJ_DATA *container)
 
 		if (ch->carry_weight + weight > can_carry_w(ch) && !is_bounty_object(obj))
 		{
-			act(PLAIN, "$d: Nie uniesiesz takiego ciê¿aru.", ch, NULL, obj->name, TO_CHAR);
+			act(PLAIN, "$d: Nie uniesiesz takiego ciï¿½aru.", ch, NULL, obj->name, TO_CHAR);
 			return;
 		}
 	}
 
 	if (container)
 	{
-		act(PLAIN, IS_OBJ_STAT(container, ITEM_COVERING) ? "Wyci±gasz $p$3 spod $P$1." : "Wyci±gasz $p$3 z $P$1", ch,
+		act(PLAIN, IS_OBJ_STAT(container, ITEM_COVERING) ? "Wyciï¿½gasz $p$3 spod $P$1." : "Wyciï¿½gasz $p$3 z $P$1", ch,
 				obj, container, TO_CHAR);
-		act(PLAIN, IS_OBJ_STAT(container, ITEM_COVERING) ? "$n wyci±ga $p$3 spod $P$1." : "$n wyci±ga $p$3 z $P$1", ch,
+		act(PLAIN, IS_OBJ_STAT(container, ITEM_COVERING) ? "$n wyciï¿½ga $p$3 spod $P$1." : "$n wyciï¿½ga $p$3 z $P$1", ch,
 				obj, container, TO_ROOM);
 		obj_from_obj(obj);
 	}
@@ -312,7 +311,6 @@ DEF_DO_FUN( get )
 	char arg1[MAX_INPUT_LENGTH];
 	char arg2[MAX_INPUT_LENGTH];
 	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	OBJ_DATA *container;
 	int number;
 	bool found;
@@ -323,7 +321,7 @@ DEF_DO_FUN( get )
 		number = atoi(arg1);
 		if (number < 1)
 		{
-			send_to_char("To by³o naprawdê ³atwe..." NL, ch);
+			send_to_char("To byï¿½o naprawdï¿½ ï¿½atwe..." NL, ch);
 			return;
 		}
 		if ((ch->carry_number + number) > can_carry_n(ch))
@@ -343,7 +341,7 @@ DEF_DO_FUN( get )
 	/* Get type. */
 	if (arg1[0] == '\0')
 	{
-		send_to_char("Wzi±æ co?" NL, ch);
+		send_to_char("Wziï¿½ï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -355,10 +353,10 @@ DEF_DO_FUN( get )
 		if (number <= 1 && str_cmp(arg1, "all") && str_prefix("all.", arg1))
 		{
 			/* 'get obj' */
-			obj = get_obj_list(ch, arg1, ch->in_room->first_content);
+			obj = get_obj_list(ch, arg1, ch->in_room->contents);
 			if (!obj)
 			{
-				act(PLAIN, "Nie ma tu ¿adnego $T.", ch, NULL, arg1, TO_CHAR);
+				act(PLAIN, "Nie ma tu ï¿½adnego $T.", ch, NULL, arg1, TO_CHAR);
 				return;
 			}
 			separate_obj(obj);
@@ -376,7 +374,7 @@ DEF_DO_FUN( get )
 
 			if (IS_SET( ch->in_room->room_flags, ROOM_DONATION ))
 			{
-				send_to_char("W³adcy ¶miej± siê z twojej chciwo¶ci!" NL, ch);
+				send_to_char("Wï¿½adcy ï¿½miejï¿½ siï¿½ z twojej chciwoï¿½ci!" NL, ch);
 				return;
 			}
 			if (!str_cmp(arg1, "all"))
@@ -389,9 +387,8 @@ DEF_DO_FUN( get )
 				chk = &arg1[4];
 			/* 'get all' or 'get all.obj' */
 			found = false;
-			for (obj = ch->in_room->first_content; obj; obj = obj_next)
+			{ auto snapshot = ch->in_room->contents; for (auto* obj : snapshot)
 			{
-				obj_next = obj->next_content;
 				if ((fAll || nifty_is_name(chk, obj->name)) && can_see_obj(ch, obj))
 				{
 					found = true;
@@ -410,14 +407,14 @@ DEF_DO_FUN( get )
 						return;
 					}
 				}
-			}
+			} }
 
 			if (!found)
 			{
 				if (fAll)
 					send_to_char("Nic tu nie widzisz." NL, ch);
 				else
-					act(PLAIN, "Nie widzisz tu ¿adnego $T.", ch, NULL, chk, TO_CHAR);
+					act(PLAIN, "Nie widzisz tu ï¿½adnego $T.", ch, NULL, chk, TO_CHAR);
 			}
 			else if (IS_SET( sysdata.save_flags, SV_GET ))
 				save_char_obj(ch);
@@ -428,13 +425,13 @@ DEF_DO_FUN( get )
 		/* 'get ... container' */
 		if (!str_cmp(arg2, "all") || !str_prefix("all.", arg2))
 		{
-			send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 			return;
 		}
 
 		if ((container = get_obj_here(ch, arg2)) == NULL)
 		{
-			act(PLAIN, "Nie widzisz tu ¿adnego $T.", ch, NULL, arg2, TO_CHAR);
+			act(PLAIN, "Nie widzisz tu ï¿½adnego $T.", ch, NULL, arg2, TO_CHAR);
 			return;
 		}
 
@@ -448,7 +445,7 @@ DEF_DO_FUN( get )
 			}
 			if (ch->carry_weight + container->weight > can_carry_w(ch))
 			{
-				send_to_char("Zbyt ciê¿ko by ud¼wign±æ." NL, ch);
+				send_to_char("Zbyt ciï¿½ko by udï¿½wignï¿½ï¿½." NL, ch);
 				return;
 			}
 			break;
@@ -463,7 +460,7 @@ DEF_DO_FUN( get )
 
 		if (!IS_OBJ_STAT(container, ITEM_COVERING ) && IS_SET(container->value[1], CONT_CLOSED))
 		{
-			act(PLAIN, "$d jest zamkniêty.", ch, NULL, container->name, TO_CHAR);
+			act(PLAIN, "$d jest zamkniï¿½ty.", ch, NULL, container->name, TO_CHAR);
 			return;
 		}
 
@@ -496,7 +493,7 @@ DEF_DO_FUN( get )
 			}
 			else
 			{
-				obj = get_obj_list(ch, arg1, container->first_content);
+				obj = get_obj_list(ch, arg1, container->contents);
 				if (!obj)
 				{
 					if (IS_OBJ_STAT(container, ITEM_COVERING))
@@ -528,7 +525,7 @@ DEF_DO_FUN( get )
 			/* 'get all container' or 'get all.obj container' */
 			if (IS_OBJ_STAT( container, ITEM_DONATION ))
 			{
-				send_to_char("Mistrzowie Jedi s± oburzeni twoj± chciwo¶ci±!" NL, ch);
+				send_to_char("Mistrzowie Jedi sï¿½ oburzeni twojï¿½ chciwoï¿½ciï¿½!" NL, ch);
 				return;
 			}
 			if (!str_cmp(arg1, "all"))
@@ -572,9 +569,8 @@ DEF_DO_FUN( get )
 			}
 			else
 			{
-				for (obj = container->first_content; obj; obj = obj_next)
+				{ auto snapshot = container->contents; for (auto* obj : snapshot)
 				{
-					obj_next = obj->next_content;
 					if ((fAll || nifty_is_name(chk, obj->name)) && can_see_obj(ch, obj))
 					{
 						found = true;
@@ -590,7 +586,7 @@ DEF_DO_FUN( get )
 							return;
                         }
 					}
-				}
+				} }
 			}
 
 			if (!found)
@@ -628,7 +624,6 @@ DEF_DO_FUN( put )
 	char arg2[MAX_INPUT_LENGTH];
 	OBJ_DATA *container;
 	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	int count;
 	int number;
 	bool save_char = false;
@@ -639,7 +634,7 @@ DEF_DO_FUN( put )
 		number = atoi(arg1);
 		if (number < 1)
 		{
-			send_to_char("To by³o naprawdê ³atwe..." NL, ch);
+			send_to_char("To byï¿½o naprawdï¿½ ï¿½atwe..." NL, ch);
 			return;
 		}
 		argument = one_argument(argument, arg1);
@@ -654,7 +649,7 @@ DEF_DO_FUN( put )
 
 	if (arg1[0] == '\0' || arg2[0] == '\0')
 	{
-		send_to_char("W³o¿yæ co do czego?" NL, ch);
+		send_to_char("Wï¿½oï¿½yï¿½ co do czego?" NL, ch);
 		return;
 	}
 
@@ -663,13 +658,13 @@ DEF_DO_FUN( put )
 
 	if (!str_cmp(arg2, "all") || !str_prefix("all.", arg2))
 	{
-		send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+		send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 		return;
 	}
 
 	if ((container = get_obj_here(ch, arg2)) == NULL)
 	{
-		act(PLAIN, "Nie widzisz tu ¿adnego $T.", ch, NULL, arg2, TO_CHAR);
+		act(PLAIN, "Nie widzisz tu ï¿½adnego $T.", ch, NULL, arg2, TO_CHAR);
 		return;
 	}
 
@@ -680,7 +675,7 @@ DEF_DO_FUN( put )
 	{
 		if (ch->carry_weight + container->weight > can_carry_w(ch))
 		{
-			send_to_char("Nie uniesiesz takiego ciê¿aru." NL, ch);
+			send_to_char("Nie uniesiesz takiego ciï¿½aru." NL, ch);
 			return;
 		}
 	}
@@ -694,7 +689,7 @@ DEF_DO_FUN( put )
 
 		if (IS_SET(container->value[1], CONT_CLOSED))
 		{
-			act(PLAIN, "$d jest zamkniêty.", ch, NULL, container->name, TO_CHAR);
+			act(PLAIN, "$d jest zamkniï¿½ty.", ch, NULL, container->name, TO_CHAR);
 			return;
 		}
 	}
@@ -710,13 +705,13 @@ DEF_DO_FUN( put )
 
 		if (obj == container)
 		{
-			send_to_char("Hmm.. Nie da siê w³o¿yæ przedmiotu do niego samego." NL, ch);
+			send_to_char("Hmm.. Nie da siï¿½ wï¿½oï¿½yï¿½ przedmiotu do niego samego." NL, ch);
 			return;
 		}
 
 		if (!can_drop_obj(ch, obj))
 		{
-			send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+			send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 			return;
 		}
 
@@ -726,7 +721,7 @@ DEF_DO_FUN( put )
 		 *&& !IS_NPC( ch ) )
 		 *{
 		 *    ch_printf( ch,
-		 *    "Przecie¿ ty i %s" PLAIN " to tak zgrany duet. Nie rozstaniecie siê ani na chwilê!" NL,
+		 *    "Przecieï¿½ ty i %s" PLAIN " to tak zgrany duet. Nie rozstaniecie siï¿½ ani na chwilï¿½!" NL,
 		 *	obj->przypadki[0] );
 		 *    return;
 		 *}
@@ -736,13 +731,13 @@ DEF_DO_FUN( put )
 		if ((IS_OBJ_STAT(container, ITEM_COVERING) && (get_obj_weight(obj) / obj->count) > ((get_obj_weight(container)
 				/ container->count) - container->weight)))
 		{
-			send_to_char("To siê tam nie zmie¶ci." NL, ch);
+			send_to_char("To siï¿½ tam nie zmieï¿½ci." NL, ch);
 			return;
 		}
 
 		if ((get_obj_weight(obj) / obj->count) + (get_obj_weight(container) / container->count) > container->value[0])
 		{
-			send_to_char("To siê nie zmie¶ci." NL, ch);
+			send_to_char("To siï¿½ nie zmieï¿½ci." NL, ch);
 			return;
 		}
 
@@ -758,7 +753,7 @@ DEF_DO_FUN( put )
 				delete card;
 			}
 
-			act(PLAIN, "Wk³adasz $p$3 do $P$1.", ch, obj, container, TO_CHAR);
+			act(PLAIN, "Wkï¿½adasz $p$3 do $P$1.", ch, obj, container, TO_CHAR);
 
 			//because of pazaak, here the obj should be extracted/removed conditionally
 			extract_obj(obj);
@@ -771,9 +766,9 @@ DEF_DO_FUN( put )
 				return;
 			count = obj->count;
 			obj->count = 1;
-			act(PLAIN, IS_OBJ_STAT( container, ITEM_COVERING ) ? "$n chowa $p$3 pod $P$3." : "$n wk³ada $p$3 do $P$1.",
+			act(PLAIN, IS_OBJ_STAT( container, ITEM_COVERING ) ? "$n chowa $p$3 pod $P$3." : "$n wkï¿½ada $p$3 do $P$1.",
 					ch, obj, container, TO_ROOM);
-			act(PLAIN, IS_OBJ_STAT( container, ITEM_COVERING ) ? "Chowasz $p$3 pod $P$3." : "Wk³adasz $p$3 do $P$1.",
+			act(PLAIN, IS_OBJ_STAT( container, ITEM_COVERING ) ? "Chowasz $p$3 pod $P$3." : "Wkï¿½adasz $p$3 do $P$1.",
 					ch, obj, container, TO_CHAR);
 			obj->count = count;
 
@@ -807,10 +802,8 @@ DEF_DO_FUN( put )
 		separate_obj(container);
 		SWDataBase db;
 		/* 'put all container' or 'put all.obj container' */
-		for (obj = ch->first_carrying; obj; obj = obj_next)
+		{ auto snapshot = ch->carrying; for (auto* obj : snapshot)
 		{
-			obj_next = obj->next_content;
-
 			if ((fAll || nifty_is_name(chk, obj->name)) && can_see_obj(ch, obj) && obj->wear_loc == WEAR_NONE && obj
 					!= container && can_drop_obj(ch, obj) && get_obj_weight(obj) + get_obj_weight(container)
 					<= container->value[0])
@@ -819,8 +812,8 @@ DEF_DO_FUN( put )
 					split_obj(obj, number - cnt);
 				cnt += obj->count;
 				obj_from_char(obj);
-				act(COL_ACTION, "$n wk³ada $p$3 do $P$1.", ch, obj, container, TO_ROOM);
-				act(COL_ACTION, "Wk³adasz $p$3 do $P$1.", ch, obj, container, TO_CHAR);
+				act(COL_ACTION, "$n wkï¿½ada $p$3 do $P$1.", ch, obj, container, TO_ROOM);
+				act(COL_ACTION, "Wkï¿½adasz $p$3 do $P$1.", ch, obj, container, TO_CHAR);
 				if (obj->count == 1 && obj->item_type == ITEM_PAZAAK_CARD)
 				{
 					SWPazaakCard *card = SWPazaakCard::newInstance(obj);
@@ -845,7 +838,7 @@ DEF_DO_FUN( put )
 				if (number && cnt >= number)
 					break;
 			}
-		}
+		} }
 
 		/*
 		 * Don't bother to save anything if nothing was dropped   -Thoric
@@ -855,7 +848,7 @@ DEF_DO_FUN( put )
 			if (fAll)
 				act(PLAIN, "Nic nie niesiesz.", ch, NULL, NULL, TO_CHAR);
 			else
-				act(PLAIN, "Nie niesiesz ¿adnego $T.", ch, NULL, chk, TO_CHAR);
+				act(PLAIN, "Nie niesiesz ï¿½adnego $T.", ch, NULL, chk, TO_CHAR);
 			return;
 		}
 
@@ -874,7 +867,6 @@ DEF_DO_FUN( drop )
 {
 	char arg[MAX_INPUT_LENGTH];
 	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	bool found;
 	int number;
 
@@ -884,7 +876,7 @@ DEF_DO_FUN( drop )
 		number = atoi(arg);
 		if (number < 1)
 		{
-			send_to_char("To by³o naprawdê ³atwe..." NL, ch);
+			send_to_char("To byï¿½o naprawdï¿½ ï¿½atwe..." NL, ch);
 			return;
 		}
 		argument = one_argument(argument, arg);
@@ -894,7 +886,7 @@ DEF_DO_FUN( drop )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Odrzuciæ co?" NL, ch);
+		send_to_char("Odrzuciï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -904,9 +896,9 @@ DEF_DO_FUN( drop )
 	if (IS_SET( ch->in_room->room_flags, ROOM_NODROP ) || (!IS_NPC(ch) && IS_SET( ch->act, PLR_LITTERBUG )))
 	{
 		send_to_char(COL_FORCE, ch);
-		send_to_char("Moc powstrzymuje ciê!" EOL, ch);
+		send_to_char("Moc powstrzymuje ciï¿½!" EOL, ch);
 		send_to_char(COL_TELL, ch);
-		send_to_char("Kto¶ mówi ci 'Bez ¶miecenia proszê!'" EOL, ch);
+		send_to_char("Ktoï¿½ mï¿½wi ci 'Bez ï¿½miecenia proszï¿½!'" EOL, ch);
 		return;
 	}
 
@@ -925,10 +917,8 @@ DEF_DO_FUN( drop )
 
 			ch->gold -= number;
 
-			for (obj = ch->in_room->first_content; obj; obj = obj_next)
+			{ auto snapshot = ch->in_room->contents; for (auto* obj : snapshot)
 			{
-				obj_next = obj->next_content;
-
 				switch (obj->pIndexData->vnum)
 				{
 				case OBJ_VNUM_MONEY_ONE:
@@ -941,7 +931,7 @@ DEF_DO_FUN( drop )
 					extract_obj(obj);
 					break;
 				}
-			}
+			} }
 
 			act(PLAIN, "$n odrzuca kilka kredytek.", ch, NULL, NULL, TO_ROOM);
 			obj_to_room(create_money(number), ch->in_room);
@@ -963,7 +953,7 @@ DEF_DO_FUN( drop )
 
 		if (!can_drop_obj(ch, obj))
 		{
-			send_to_char("Nie mo¿esz go odrzuciæ." NL, ch);
+			send_to_char("Nie moï¿½esz go odrzuciï¿½." NL, ch);
 			return;
 		}
 
@@ -998,14 +988,12 @@ DEF_DO_FUN( drop )
 		/* 'drop all' or 'drop all.obj' */
 		if (IS_SET( ch->in_room->room_flags, ROOM_NODROPALL ))
 		{
-			send_to_char("Nie mo¿esz zrobiæ tego tutaj..." NL, ch);
+			send_to_char("Nie moï¿½esz zrobiï¿½ tego tutaj..." NL, ch);
 			return;
 		}
 		found = false;
-		for (obj = ch->first_carrying; obj; obj = obj_next)
+		{ auto snapshot = ch->carrying; for (auto* obj : snapshot)
 		{
-			obj_next = obj->next_content;
-
 			if ((fAll || nifty_is_name(chk, obj->name)) && can_see_obj(ch, obj) && obj->wear_loc == WEAR_NONE
 					&& can_drop_obj(ch, obj))
 			{
@@ -1015,8 +1003,6 @@ DEF_DO_FUN( drop )
 					++cnt;
 					separate_obj(obj);
 					obj_from_char(obj);
-					if (!obj_next)
-						obj_next = ch->first_carrying;
 				}
 				else
 				{
@@ -1034,7 +1020,7 @@ DEF_DO_FUN( drop )
 				if (number && cnt >= number)
 					break;
 			}
-		}
+		} }
 
 		/* Clan storeroom chech here */
 
@@ -1043,7 +1029,7 @@ DEF_DO_FUN( drop )
 			if (fAll)
 				act(PLAIN, "Nic nie niesiesz!", ch, NULL, NULL, TO_CHAR);
 			else
-				act(PLAIN, "Nie niesiesz ¿adnego $T.", ch, NULL, chk, TO_CHAR);
+				act(PLAIN, "Nie niesiesz ï¿½adnego $T.", ch, NULL, chk, TO_CHAR);
 		}
 	}
 	if (ch->in_room && (ch->in_room->room_flags & ROOM_STORAGE)) {
@@ -1072,7 +1058,7 @@ DEF_DO_FUN( give )
 
 	if (arg1[0] == '\0' || arg2[0] == '\0')
 	{
-		send_to_char("Daæ co komu?" NL, ch);
+		send_to_char("Daï¿½ co komu?" NL, ch);
 		return;
 	}
 
@@ -1089,7 +1075,7 @@ DEF_DO_FUN( give )
 				&& str_cmp(arg2, "kredytka") && str_cmp(arg2, "kasa") && str_cmp(arg2, "kasy") && str_cmp(arg2,
 				"pieniadz") && str_cmp(arg2, "pineniadze") && str_cmp(arg2, "money") && str_prefix(arg2, "credits")))
 		{
-			send_to_char("Przykro mi, nie mo¿esz tego zrobiæ." NL, ch);
+			send_to_char("Przykro mi, nie moï¿½esz tego zrobiï¿½." NL, ch);
 			return;
 		}
 
@@ -1098,7 +1084,7 @@ DEF_DO_FUN( give )
 			argument = one_argument(argument, arg2);
 		if (arg2[0] == '\0')
 		{
-			send_to_char("Daæ co komu?" NL, ch);
+			send_to_char("Daï¿½ co komu?" NL, ch);
 			return;
 		}
 
@@ -1110,7 +1096,7 @@ DEF_DO_FUN( give )
 
 		if (ch->gold < amount)
 		{
-			send_to_char("Bardzo mi³o z twojej strony i chojnie, ale nie masz tyle." NL, ch);
+			send_to_char("Bardzo miï¿½o z twojej strony i chojnie, ale nie masz tyle." NL, ch);
 			return;
 		}
 
@@ -1120,7 +1106,7 @@ DEF_DO_FUN( give )
 		 */
 		if (IS_NEWBIE( ch ) && !IS_NPC( victim ))
 		{
-			send_to_char("Póki co sam potrzebujesz tej gotówki. To nie sk±pstwo, to zdrowy rozs±dek!" NL, ch);
+			send_to_char("Pï¿½ki co sam potrzebujesz tej gotï¿½wki. To nie skï¿½pstwo, to zdrowy rozsï¿½dek!" NL, ch);
 			return;
 		}
 
@@ -1128,7 +1114,7 @@ DEF_DO_FUN( give )
 		victim->gold += amount;
 		strcpy(buf, "$n daje ci ");
 		strcat(buf, arg1);
-		strcat(buf, (amount > 1) ? (amount < 5) ? " kredytki." : " kredytek." : " kredytkê.");
+		strcat(buf, (amount > 1) ? (amount < 5) ? " kredytki." : " kredytek." : " kredytkï¿½.");
 
 		act(PLAIN, buf, ch, NULL, victim, TO_VICT);
 		act(PLAIN, "$n daje $N$2 kilka kredytek.", ch, NULL, victim, TO_NOTVICT);
@@ -1151,7 +1137,7 @@ DEF_DO_FUN( give )
 
 	if (obj->wear_loc != WEAR_NONE)
 	{
-		send_to_char("Musisz to najpierw zdj±æ." NL, ch);
+		send_to_char("Musisz to najpierw zdjï¿½ï¿½." NL, ch);
 		return;
 	}
 
@@ -1161,18 +1147,18 @@ DEF_DO_FUN( give )
 		return;
 	}
 
-	/* Thanos: 	questy; (can_drop_obj nie pozwala pozbyæ siê przedmiotu)
-	 Tutaj mo¿emy to zignorowaæ bo odbiorca ¿eby wzi±æ przedmiot
-	 questowy MUSI byæ w que¶cie */
+	/* Thanos: 	questy; (can_drop_obj nie pozwala pozbyï¿½ siï¿½ przedmiotu)
+	 Tutaj moï¿½emy to zignorowaï¿½ bo odbiorca ï¿½eby wziï¿½ï¿½ przedmiot
+	 questowy MUSI byï¿½ w queï¿½cie */
 	if (!obj->inquest && !can_drop_obj(ch, obj))
 	{
-		send_to_char("Nie mo¿esz tego zrobiæ." NL, ch);
+		send_to_char("Nie moï¿½esz tego zrobiï¿½." NL, ch);
 		return;
 	}
 
 	if (victim->carry_number + (get_obj_number(obj) / obj->count) > can_carry_n(victim))
 	{
-		act(PLAIN, "$N ma ju¿ pe³ne rêce.", ch, NULL, victim, TO_CHAR);
+		act(PLAIN, "$N ma juï¿½ peï¿½ne rï¿½ce.", ch, NULL, victim, TO_CHAR);
 		return;
 	}
 
@@ -1181,7 +1167,7 @@ DEF_DO_FUN( give )
 	 * ale jesli to przedmiot bounty, to robimy wyjatek */
 	if (victim->carry_weight + (get_obj_weight(obj) / obj->count) > can_carry_w(victim) && !bounty)
 	{
-		act(PLAIN, "$N nie uniesie takiego ciê¿aru.", ch, NULL, victim, TO_CHAR);
+		act(PLAIN, "$N nie uniesie takiego ciï¿½aru.", ch, NULL, victim, TO_CHAR);
 		return;
 	}
 
@@ -1193,7 +1179,7 @@ DEF_DO_FUN( give )
 
 	if (IS_OBJ_STAT( obj, ITEM_PROTOTYPE ) && !can_take_proto(victim))
 	{
-		act(PLAIN, "Nie mo¿esz daæ $p$1 $N$2!", ch, obj, victim, TO_CHAR);
+		act(PLAIN, "Nie moï¿½esz daï¿½ $p$1 $N$2!", ch, obj, victim, TO_CHAR);
 		return;
 	}
 
@@ -1242,17 +1228,17 @@ obj_ret damage_obj(OBJ_DATA *obj)
 	if (ch)
 		act(COL_OBJECT, obj->gender == GENDER_NEUTRAL ? "$p zostaje uszkodzone"
 				: obj->gender == GENDER_MALE ? "$p zostaje uszkodzony"
-						: obj->gender == GENDER_FEMALE ? "$p zostaje uszkodzona" : "$p zostaj± uszkodzone", ch, obj,
+						: obj->gender == GENDER_FEMALE ? "$p zostaje uszkodzona" : "$p zostajï¿½ uszkodzone", ch, obj,
 				NULL, TO_CHAR);
-	else if (obj->in_room && (ch = obj->in_room->first_person) != NULL)
+	else if (obj->in_room && !obj->in_room->people.empty() && (ch = obj->in_room->people.front()) != NULL)
 	{
 		act(COL_OBJECT, obj->gender == GENDER_NEUTRAL ? "$p zostaje uszkodzone"
 				: obj->gender == GENDER_MALE ? "$p zostaje uszkodzony"
-						: obj->gender == GENDER_FEMALE ? "$p zostaje uszkodzona" : "$p zostaj± uszkodzone", ch, obj,
+						: obj->gender == GENDER_FEMALE ? "$p zostaje uszkodzona" : "$p zostajï¿½ uszkodzone", ch, obj,
 				NULL, TO_ROOM);
 		act(COL_OBJECT, obj->gender == GENDER_NEUTRAL ? "$p zostaje uszkodzone"
 				: obj->gender == GENDER_MALE ? "$p zostaje uszkodzony"
-						: obj->gender == GENDER_FEMALE ? "$p zostaje uszkodzona" : "$p zostaj± uszkodzone", ch, obj,
+						: obj->gender == GENDER_FEMALE ? "$p zostaje uszkodzona" : "$p zostajï¿½ uszkodzone", ch, obj,
 				NULL, TO_CHAR);
 		ch = NULL;
 	}
@@ -1308,7 +1294,7 @@ bool remove_obj(CHAR_DATA *ch, int iWear, bool fReplace)
 
 	if (!fReplace && ch->carry_number + get_obj_number(obj) > can_carry_n(ch))
 	{
-		act(PLAIN, "$d: Nie mo¿esz nie¶æ tylu przedmiotów.", ch, NULL, obj->name, TO_CHAR);
+		act(PLAIN, "$d: Nie moï¿½esz nieï¿½ï¿½ tylu przedmiotï¿½w.", ch, NULL, obj->name, TO_CHAR);
 		return false;
 	}
 
@@ -1317,7 +1303,7 @@ bool remove_obj(CHAR_DATA *ch, int iWear, bool fReplace)
 
 	if (IS_OBJ_STAT(obj, ITEM_NOREMOVE))
 	{
-		act(PLAIN, "Nie mo¿esz zdj±æ $p$1.", ch, obj, NULL, TO_CHAR);
+		act(PLAIN, "Nie moï¿½esz zdjï¿½ï¿½ $p$1.", ch, obj, NULL, TO_CHAR);
 		return false;
 	}
 
@@ -1357,18 +1343,18 @@ bool can_dual(CHAR_DATA *ch)
 
 	if (get_eq_char(ch, WEAR_DUAL_WIELD))
 	{
-		send_to_char("Ju¿ dzier¿ysz dwie broni!" NL, ch);
+		send_to_char("Juï¿½ dzierï¿½ysz dwie broni!" NL, ch);
 		return false;
 	}
 	if (get_eq_char(ch, WEAR_HOLD))
 	{
-		send_to_char("Nie mo¿esz dzier¿yæ dwóch broni nosz±c co¶ w rêku!" NL, ch);
+		send_to_char("Nie moï¿½esz dzierï¿½yï¿½ dwï¿½ch broni noszï¿½c coï¿½ w rï¿½ku!" NL, ch);
 		return false;
 	}
 
 	if ((tmpobj = get_eq_char(ch, WEAR_WIELD)) != NULL && IS_SET( tmpobj->wear_flags, ITEM_DUAL_WIELD ))
 	{
-		send_to_char("Masz zajête obie rêce!" NL, ch);
+		send_to_char("Masz zajï¿½te obie rï¿½ce!" NL, ch);
 		return false;
 	}
 	return true;
@@ -1393,11 +1379,10 @@ bool can_twohanded(CHAR_DATA *ch)
  */
 bool can_layer(CHAR_DATA *ch, OBJ_DATA *obj, int wear_loc)
 {
-	OBJ_DATA *otmp;
 	int bitlayers = 0;
 	int objlayers = obj->pIndexData->layers;
 
-	for (otmp = ch->first_carrying; otmp; otmp = otmp->next_content)
+	for (auto* otmp : ch->carrying)
 		if (otmp->wear_loc == wear_loc)
 		{
 			if (!otmp->pIndexData->layers)
@@ -1424,8 +1409,9 @@ bool isDefelInvisible(CD *ch)
 {
 	if (IS_RACE( ch, "DEFEL" ))
 	{
-		for (OD *obj = ch->last_carrying; obj; obj = obj->prev_content)
+		for (auto rit = ch->carrying.rbegin(); rit != ch->carrying.rend(); ++rit)
 		{
+			OD *obj = *rit;
 			if (isDefelVisible(obj))
 			{
 				return false;
@@ -1463,14 +1449,14 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 				switch (1 << bit)
 				{
 				case ITEM_HOLD:
-					send_to_char("Nie mo¿esz tego trzymaæ." NL, ch);
+					send_to_char("Nie moï¿½esz tego trzymaï¿½." NL, ch);
 					break;
 				case ITEM_WIELD:
 				case ITEM_DUAL_WIELD:
-					send_to_char("Nie mo¿esz tego dzier¿yæ." NL, ch);
+					send_to_char("Nie moï¿½esz tego dzierï¿½yï¿½." NL, ch);
 					break;
 				default:
-					sprintf(buf, "Nie mo¿esz tego za³o¿yæ.\n\r");
+					sprintf(buf, "Nie moï¿½esz tego zaï¿½oï¿½yï¿½.\n\r");
 					send_to_char(buf, ch);
 				}
 			}
@@ -1526,30 +1512,30 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		if (IS_RACE( ch, "DUINUOGWUIN" ))
 		{
 			act(COL_FORCE,
-					"Prawdopodobnie niemo¿liwo¶ci± bêdzie znale¼æ co¶ co pasowa³oby na twoje\n\rnienaturalne cia³o.",
+					"Prawdopodobnie niemoï¿½liwoï¿½ciï¿½ bï¿½dzie znaleï¿½ï¿½ coï¿½ co pasowaï¿½oby na twoje\n\rnienaturalne ciaï¿½o.",
 					ch, NULL, NULL, TO_CHAR);
-			act(PLAIN, "$n próbuje u¿yæ $p$1, ale jest zbyt du¿$y.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n prï¿½buje uï¿½yï¿½ $p$1, ale jest zbyt duï¿½$y.", ch, obj, NULL, TO_ROOM);
 			return;
 		}
 
 		if (IS_OBJ_STAT(obj, ITEM_HUTT_SIZE))
 		{
-			act(COL_FORCE, "Ten przedmiot jest dla ciebie za du¿y.", ch, NULL, NULL, TO_CHAR);
-			act(PLAIN, "$n próbuje u¿yæ $p$1, ale jest za ma³$y.", ch, obj, NULL, TO_ROOM);
+			act(COL_FORCE, "Ten przedmiot jest dla ciebie za duï¿½y.", ch, NULL, NULL, TO_CHAR);
+			act(PLAIN, "$n prï¿½buje uï¿½yï¿½ $p$1, ale jest za maï¿½$y.", ch, obj, NULL, TO_ROOM);
 			return;
 		}
 
 		if (IS_OBJ_STAT(obj, ITEM_LARGE_SIZE) || IS_OBJ_STAT(obj, ITEM_HUMAN_SIZE))
 		{
-			act(COL_FORCE, "To nie twój rozmiar.", ch, NULL, NULL, TO_CHAR);
-			act(PLAIN, "$n próbuje u¿yæ $p$1, ale jako¶ nie mo¿e.", ch, obj, NULL, TO_ROOM);
+			act(COL_FORCE, "To nie twï¿½j rozmiar.", ch, NULL, NULL, TO_CHAR);
+			act(PLAIN, "$n prï¿½buje uï¿½yï¿½ $p$1, ale jakoï¿½ nie moï¿½e.", ch, obj, NULL, TO_ROOM);
 			return;
 		}
 
 		if (IS_OBJ_STAT(obj, ITEM_SMALL_SIZE))
 		{
-			act(COL_FORCE, "Ten przedmiot jest dla ciebie za ma³y.", ch, NULL, NULL, TO_CHAR);
-			act(PLAIN, "$n próbuje u¿yæ $p$1, ale jest zbyt du¿$y.", ch, obj, NULL, TO_ROOM);
+			act(COL_FORCE, "Ten przedmiot jest dla ciebie za maï¿½y.", ch, NULL, NULL, TO_CHAR);
+			act(PLAIN, "$n prï¿½buje uï¿½yï¿½ $p$1, ale jest zbyt duï¿½$y.", ch, obj, NULL, TO_ROOM);
 			return;
 		}
 	}
@@ -1562,11 +1548,11 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Zaczepiasz sobie $p$3 jako ¶wiat³o.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Zaczepiasz sobie $p$3 jako ï¿½wiatï¿½o.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n zaczepia sobie $p$3 jako ¶wiat³o.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n zaczepia sobie $p$3 jako ï¿½wiatï¿½o.", ch, obj, NULL, TO_ROOM);
 		}
 		equip_char(ch, obj, WEAR_LIGHT);
 		oprog_wear_trigger(ch, obj);
@@ -1576,7 +1562,7 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 	if (bit == -1)
 	{
 		if (fReplace)
-			send_to_char("Nie mo¿esz tego za³o¿yæ, dzier¿yæ ani trzymaæ." NL, ch);
+			send_to_char("Nie moï¿½esz tego zaï¿½oï¿½yï¿½, dzierï¿½yï¿½ ani trzymaï¿½." NL, ch);
 		return;
 	}
 
@@ -1585,7 +1571,7 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 	default:
 		bug( "uknown/unused item_wear bit %d (ch=%s)", bit, ch->name );
 		if (fReplace)
-			send_to_char("Nie mo¿esz tego za³o¿yæ, dzier¿yæ ani trzymaæ." NL, ch);
+			send_to_char("Nie moï¿½esz tego zaï¿½oï¿½yï¿½, dzierï¿½yï¿½ ani trzymaï¿½." NL, ch);
 		return;
 
 	case ITEM_WEAR_FINGER:
@@ -1598,11 +1584,11 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 			if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 			{
 				if (!obj->action_desc || obj->action_desc[0] == '\0')
-					act(PLAIN, "Wsuwasz $p$3 na palec lewej rêki.", ch, obj, NULL, TO_CHAR);
+					act(PLAIN, "Wsuwasz $p$3 na palec lewej rï¿½ki.", ch, obj, NULL, TO_CHAR);
 				else
 					actiondesc(ch, obj, NULL);
 
-				act(PLAIN, "$n wsuwa $p$3 na palec lewej rêki.", ch, obj, NULL, TO_ROOM);
+				act(PLAIN, "$n wsuwa $p$3 na palec lewej rï¿½ki.", ch, obj, NULL, TO_ROOM);
 			}
 			equip_char(ch, obj, WEAR_FINGER_L);
 			oprog_wear_trigger(ch, obj);
@@ -1614,11 +1600,11 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 			if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 			{
 				if (!obj->action_desc || obj->action_desc[0] == '\0')
-					act(PLAIN, "Wsuwasz $p$3 na palec prawej rêki.", ch, obj, NULL, TO_CHAR);
+					act(PLAIN, "Wsuwasz $p$3 na palec prawej rï¿½ki.", ch, obj, NULL, TO_CHAR);
 				else
 					actiondesc(ch, obj, NULL);
 
-				act(PLAIN, "$n wsuwa $p$3 na palec prawej rêki.", ch, obj, NULL, TO_ROOM);
+				act(PLAIN, "$n wsuwa $p$3 na palec prawej rï¿½ki.", ch, obj, NULL, TO_ROOM);
 			}
 			equip_char(ch, obj, WEAR_FINGER_R);
 			oprog_wear_trigger(ch, obj);
@@ -1626,7 +1612,7 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		}
 
 		bug( "no free finger." );
-		send_to_char("Masz ju¿ co¶ na obu palcach." NL, ch);
+		send_to_char("Masz juï¿½ coï¿½ na obu palcach." NL, ch);
 		return;
 
 	case ITEM_WEAR_NECK:
@@ -1639,11 +1625,11 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 			if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 			{
 				if (!obj->action_desc || obj->action_desc[0] == '\0')
-					act(PLAIN, "Zak³adasz $p$3 naoko³o szyi.", ch, obj, NULL, TO_CHAR);
+					act(PLAIN, "Zakï¿½adasz $p$3 naokoï¿½o szyi.", ch, obj, NULL, TO_CHAR);
 				else
 					actiondesc(ch, obj, NULL);
 
-				act(PLAIN, "$n zak³ada $p$3 naoko³o szyi.", ch, obj, NULL, TO_ROOM);
+				act(PLAIN, "$n zakï¿½ada $p$3 naokoï¿½o szyi.", ch, obj, NULL, TO_ROOM);
 			}
 			equip_char(ch, obj, WEAR_NECK_1);
 			oprog_wear_trigger(ch, obj);
@@ -1655,11 +1641,11 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 			if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 			{
 				if (!obj->action_desc || obj->action_desc[0] == '\0')
-					act(PLAIN, "Zak³adasz $p$3 naoko³o szyi.", ch, obj, NULL, TO_CHAR);
+					act(PLAIN, "Zakï¿½adasz $p$3 naokoï¿½o szyi.", ch, obj, NULL, TO_CHAR);
 				else
 					actiondesc(ch, obj, NULL);
 
-				act(PLAIN, "$n zak³ada $p$3 naoko³o szyi.", ch, obj, NULL, TO_ROOM);
+				act(PLAIN, "$n zakï¿½ada $p$3 naokoï¿½o szyi.", ch, obj, NULL, TO_ROOM);
 			}
 			equip_char(ch, obj, WEAR_NECK_2);
 			oprog_wear_trigger(ch, obj);
@@ -1667,7 +1653,7 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		}
 
 		bug( "no free neck. (ch=%s)", ch->name );
-		send_to_char("Masz na szyi ju¿ dwa przedmioty." NL, ch);
+		send_to_char("Masz na szyi juï¿½ dwa przedmioty." NL, ch);
 		return;
 
 	case ITEM_WEAR_BODY:
@@ -1677,17 +1663,17 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		 */
 		if (!can_layer(ch, obj, WEAR_BODY))
 		{
-			send_to_char("Nie mo¿esz za³o¿yæ tego na to, co ju¿ nosisz." NL, ch);
+			send_to_char("Nie moï¿½esz zaï¿½oï¿½yï¿½ tego na to, co juï¿½ nosisz." NL, ch);
 			return;
 		}
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Zak³adasz $p$3 na cia³o.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Zakï¿½adasz $p$3 na ciaï¿½o.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n zak³ada $p$3 na cia³o.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n zakï¿½ada $p$3 na ciaï¿½o.", ch, obj, NULL, TO_ROOM);
 		}
 		equip_char(ch, obj, WEAR_BODY);
 		oprog_wear_trigger(ch, obj);
@@ -1696,7 +1682,7 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 	case ITEM_WEAR_HEAD:
 		if (IS_RACE( ch, "VERPINE" ) || IS_RACE( ch, "TWI'LEK" ))
 		{
-			send_to_char("Nie mo¿esz nosiæ nic na g³owie." NL, ch);
+			send_to_char("Nie moï¿½esz nosiï¿½ nic na gï¿½owie." NL, ch);
 			return;
 		}
 		if (!remove_obj(ch, WEAR_HEAD, fReplace))
@@ -1704,11 +1690,11 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Nak³adasz sobie $p$3 na g³owê.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Nakï¿½adasz sobie $p$3 na gï¿½owï¿½.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n nak³ada sobie $p$3 na g³owê.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n nakï¿½ada sobie $p$3 na gï¿½owï¿½.", ch, obj, NULL, TO_ROOM);
 		}
 		equip_char(ch, obj, WEAR_HEAD);
 		oprog_wear_trigger(ch, obj);
@@ -1733,7 +1719,7 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 	case ITEM_WEAR_EARS:
 		if (IS_RACE( ch, "VERPINE" ))
 		{
-			send_to_char("Nie mo¿esz za³o¿yæ tego na uszy bo... nie masz uszu. :(" NL, ch);
+			send_to_char("Nie moï¿½esz zaï¿½oï¿½yï¿½ tego na uszy bo... nie masz uszu. :(" NL, ch);
 			return;
 		}
 		if (!remove_obj(ch, WEAR_EARS, fReplace))
@@ -1758,12 +1744,12 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		 */
 		if (IS_RACE( ch, "HUTT" ))
 		{
-			send_to_char("Wiesz... Huttowie nie maj± nóg, wiêc..." NL, ch);
+			send_to_char("Wiesz... Huttowie nie majï¿½ nï¿½g, wiï¿½c..." NL, ch);
 			return;
 		}
 		if (!can_layer(ch, obj, WEAR_LEGS))
 		{
-			send_to_char("Nie za³o¿ysz tego na co¶ co ju¿ nosisz." NL, ch);
+			send_to_char("Nie zaï¿½oï¿½ysz tego na coï¿½ co juï¿½ nosisz." NL, ch);
 			return;
 		}
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
@@ -1786,22 +1772,22 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		 */
 		if (IS_RACE( ch, "HUTT" ))
 		{
-			send_to_char("Wiesz... Huttowie nie maj± stóp..." NL, ch);
+			send_to_char("Wiesz... Huttowie nie majï¿½ stï¿½p..." NL, ch);
 			return;
 		}
 		if (!can_layer(ch, obj, WEAR_FEET))
 		{
-			send_to_char("Nie za³o¿ysz tego na co¶ co ju¿ nosisz." NL, ch);
+			send_to_char("Nie zaï¿½oï¿½ysz tego na coï¿½ co juï¿½ nosisz." NL, ch);
 			return;
 		}
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Zak³adasz $p$3 na stopy.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Zakï¿½adasz $p$3 na stopy.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n zak³ada $p$3 na stopy.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n zakï¿½ada $p$3 na stopy.", ch, obj, NULL, TO_ROOM);
 		}
 		equip_char(ch, obj, WEAR_FEET);
 		oprog_wear_trigger(ch, obj);
@@ -1814,17 +1800,17 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		 */
 		if (!can_layer(ch, obj, WEAR_HANDS))
 		{
-			send_to_char("Nie mo¿esz za³o¿yæ tego na co¶ co ju¿ nosisz." NL, ch);
+			send_to_char("Nie moï¿½esz zaï¿½oï¿½yï¿½ tego na coï¿½ co juï¿½ nosisz." NL, ch);
 			return;
 		}
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Zak³adasz $p$3 na rêce.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Zakï¿½adasz $p$3 na rï¿½ce.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n zak³ada $p$3 na rêce.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n zakï¿½ada $p$3 na rï¿½ce.", ch, obj, NULL, TO_ROOM);
 		}
 		equip_char(ch, obj, WEAR_HANDS);
 		oprog_wear_trigger(ch, obj);
@@ -1837,17 +1823,17 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		 */
 		if (!can_layer(ch, obj, WEAR_ARMS))
 		{
-			send_to_char("Nie za³o¿ysz tego na co¶ co ju¿ nosisz." NL, ch);
+			send_to_char("Nie zaï¿½oï¿½ysz tego na coï¿½ co juï¿½ nosisz." NL, ch);
 			return;
 		}
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Zak³adasz $p$3 na ramiona.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Zakï¿½adasz $p$3 na ramiona.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n zak³ada $p$3 na ramiona.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n zakï¿½ada $p$3 na ramiona.", ch, obj, NULL, TO_ROOM);
 		}
 		equip_char(ch, obj, WEAR_ARMS);
 		oprog_wear_trigger(ch, obj);
@@ -1860,17 +1846,17 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		 */
 		if (!can_layer(ch, obj, WEAR_ABOUT))
 		{
-			send_to_char("Nie za³o¿ysz tego na co¶ co ju¿ nosisz." NL, ch);
+			send_to_char("Nie zaï¿½oï¿½ysz tego na coï¿½ co juï¿½ nosisz." NL, ch);
 			return;
 		}
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Zarzucasz $p$3 naoko³o cia³a.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Zarzucasz $p$3 naokoï¿½o ciaï¿½a.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n zarzuca $p$3 naoko³o cia³a.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n zarzuca $p$3 naokoï¿½o ciaï¿½a.", ch, obj, NULL, TO_ROOM);
 		}
 		equip_char(ch, obj, WEAR_ABOUT);
 		oprog_wear_trigger(ch, obj);
@@ -1883,7 +1869,7 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		 */
 		if (!can_layer(ch, obj, WEAR_WAIST))
 		{
-			send_to_char("Nie za³o¿ysz tego na co¶ co ju¿ nosisz." NL, ch);
+			send_to_char("Nie zaï¿½oï¿½ysz tego na coï¿½ co juï¿½ nosisz." NL, ch);
 			return;
 		}
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
@@ -1909,11 +1895,11 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 			if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 			{
 				if (!obj->action_desc || obj->action_desc[0] == '\0')
-					act(PLAIN, "Zak³adasz $p$3 na lewy nadgarstek.", ch, obj, NULL, TO_CHAR);
+					act(PLAIN, "Zakï¿½adasz $p$3 na lewy nadgarstek.", ch, obj, NULL, TO_CHAR);
 				else
 					actiondesc(ch, obj, NULL);
 
-				act(PLAIN, "$n zak³ada $p$3 na lewy nadgarstek.", ch, obj, NULL, TO_ROOM);
+				act(PLAIN, "$n zakï¿½ada $p$3 na lewy nadgarstek.", ch, obj, NULL, TO_ROOM);
 			}
 			equip_char(ch, obj, WEAR_WRIST_L);
 			oprog_wear_trigger(ch, obj);
@@ -1925,11 +1911,11 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 			if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 			{
 				if (!obj->action_desc || obj->action_desc[0] == '\0')
-					act(PLAIN, "Zak³adasz $p$3 na prawy nadgarstek.", ch, obj, NULL, TO_CHAR);
+					act(PLAIN, "Zakï¿½adasz $p$3 na prawy nadgarstek.", ch, obj, NULL, TO_CHAR);
 				else
 					actiondesc(ch, obj, NULL);
 
-				act(PLAIN, "$n zak³ada $p$3 na prawy nadgarstek.", ch, obj, NULL, TO_ROOM);
+				act(PLAIN, "$n zakï¿½ada $p$3 na prawy nadgarstek.", ch, obj, NULL, TO_ROOM);
 			}
 			equip_char(ch, obj, WEAR_WRIST_R);
 			oprog_wear_trigger(ch, obj);
@@ -1937,7 +1923,7 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		}
 
 		bug( "no free wrist. (ch=%s)", ch->name );
-		send_to_char("Nosisz ju¿ co¶ na obu nadgarstkach." NL, ch);
+		send_to_char("Nosisz juï¿½ coï¿½ na obu nadgarstkach." NL, ch);
 		return;
 
 	case ITEM_WEAR_SHIELD:
@@ -1946,11 +1932,11 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Zak³adasz $p$3 jako tarczê energetyczn±.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Zakï¿½adasz $p$3 jako tarczï¿½ energetycznï¿½.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n zak³ada $p$3 jako tarczê energetyczn±.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n zakï¿½ada $p$3 jako tarczï¿½ energetycznï¿½.", ch, obj, NULL, TO_ROOM);
 		}
 		equip_char(ch, obj, WEAR_SHIELD);
 		oprog_wear_trigger(ch, obj);
@@ -1959,7 +1945,7 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 	case ITEM_WIELD:
 		if ((tmpobj = get_eq_char(ch, WEAR_WIELD)) != NULL && !could_dual(ch))
 		{
-			send_to_char("Ju¿ dzier¿ysz broñ." NL, ch);
+			send_to_char("Juï¿½ dzierï¿½ysz broï¿½." NL, ch);
 			return;
 		}
 
@@ -1969,17 +1955,17 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 			{
 				if (get_obj_weight(obj) + get_obj_weight(tmpobj) > str_app[get_curr_str(ch)].wield)
 				{
-					send_to_char("Nie uniesiesz takiego ciê¿aru." NL, ch);
+					send_to_char("Nie uniesiesz takiego ciï¿½aru." NL, ch);
 					return;
 				}
 				if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 				{
 					if (!obj->action_desc || obj->action_desc[0] == '\0')
-						act(PLAIN, "Zak³adasz $p$3 jako drug± broñ.", ch, obj, NULL, TO_CHAR);
+						act(PLAIN, "Zakï¿½adasz $p$3 jako drugï¿½ broï¿½.", ch, obj, NULL, TO_CHAR);
 					else
 						actiondesc(ch, obj, NULL);
 
-					act(PLAIN, "$n zak³ada $p$3 jako drug± broñ.", ch, obj, NULL, TO_ROOM);
+					act(PLAIN, "$n zakï¿½ada $p$3 jako drugï¿½ broï¿½.", ch, obj, NULL, TO_ROOM);
 				}
 				equip_char(ch, obj, WEAR_DUAL_WIELD);
 				oprog_wear_trigger(ch, obj);
@@ -1989,18 +1975,18 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 
 		if (get_obj_weight(obj) > str_app[get_curr_str(ch)].wield)
 		{
-			send_to_char("Nie uniesiesz takiego ciê¿aru." NL, ch);
+			send_to_char("Nie uniesiesz takiego ciï¿½aru." NL, ch);
 			return;
 		}
 
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Zaczynasz u¿ywaæ $p$1 jako broni.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Zaczynasz uï¿½ywaï¿½ $p$1 jako broni.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n zaczyna u¿ywaæ $p$1 jako broni.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n zaczyna uï¿½ywaï¿½ $p$1 jako broni.", ch, obj, NULL, TO_ROOM);
 		}
 		equip_char(ch, obj, WEAR_WIELD);
 		oprog_wear_trigger(ch, obj);
@@ -2009,35 +1995,35 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 	case ITEM_DUAL_WIELD:
 		if (!can_twohanded(ch))
 		{
-			send_to_char("Nie umiesz u¿ywaæ broni dwurêcznych." NL, ch);
+			send_to_char("Nie umiesz uï¿½ywaï¿½ broni dwurï¿½cznych." NL, ch);
 			return;
 		}
 
 		if ((tmpobj = get_eq_char(ch, WEAR_WIELD)) != NULL)
 		{
-			send_to_char("Ju¿ dzier¿ysz broñ." NL, ch);
+			send_to_char("Juï¿½ dzierï¿½ysz broï¿½." NL, ch);
 			return;
 		}
 
 		if (get_eq_char(ch, WEAR_HOLD))
 		{
-			send_to_char("Nie mo¿esz dzier¿yæ broni dwurêcznej nosz±c co¶ w rêku!" NL, ch);
+			send_to_char("Nie moï¿½esz dzierï¿½yï¿½ broni dwurï¿½cznej noszï¿½c coï¿½ w rï¿½ku!" NL, ch);
 			return;
 		}
 
 		if (get_obj_weight(obj) > str_app[get_curr_str(ch)].wield)
 		{
-			send_to_char("Nie uniesiesz takiego ciê¿aru." NL, ch);
+			send_to_char("Nie uniesiesz takiego ciï¿½aru." NL, ch);
 			return;
 		}
 		if (!oprog_use_trigger(ch, obj, NULL, NULL, NULL))
 		{
 			if (!obj->action_desc || obj->action_desc[0] == '\0')
-				act(PLAIN, "Zak³adasz $p$3 jako broñ dwurêczn±.", ch, obj, NULL, TO_CHAR);
+				act(PLAIN, "Zakï¿½adasz $p$3 jako broï¿½ dwurï¿½cznï¿½.", ch, obj, NULL, TO_CHAR);
 			else
 				actiondesc(ch, obj, NULL);
 
-			act(PLAIN, "$n zaczyna u¿ywaæ $p$1 jako broni.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "$n zaczyna uï¿½ywaï¿½ $p$1 jako broni.", ch, obj, NULL, TO_ROOM);
 		}
 
 		equip_char(ch, obj, WEAR_WIELD);
@@ -2047,12 +2033,12 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 	case ITEM_HOLD:
 		if (get_eq_char(ch, WEAR_DUAL_WIELD))
 		{
-			send_to_char("Nie mo¿esz nosiæ czego¶ w rêce kiedy dzier¿ysz dwie broni!" NL, ch);
+			send_to_char("Nie moï¿½esz nosiï¿½ czegoï¿½ w rï¿½ce kiedy dzierï¿½ysz dwie broni!" NL, ch);
 			return;
 		}
 		if ((tmpobj = get_eq_char(ch, WEAR_WIELD)) != NULL && IS_SET( tmpobj->wear_flags, ITEM_DUAL_WIELD))
 		{
-			send_to_char("Nie mo¿esz nosiæ czego¶ w rêce kiedy dzier¿ysz broñ dwurêczn±!" NL, ch);
+			send_to_char("Nie moï¿½esz nosiï¿½ czegoï¿½ w rï¿½ce kiedy dzierï¿½ysz broï¿½ dwurï¿½cznï¿½!" NL, ch);
 			return;
 		}
 		if (!remove_obj(ch, WEAR_HOLD, fReplace))
@@ -2062,8 +2048,8 @@ void wear_obj(CHAR_DATA *ch, OBJ_DATA *obj, bool fReplace, int wear_bit)
 				|| obj->item_type == ITEM_SALVE || obj->item_type == ITEM_KEY || !oprog_use_trigger(ch, obj, NULL,
 				NULL, NULL))
 		{
-			act(PLAIN, "$n bierze w rêce $p$3.", ch, obj, NULL, TO_ROOM);
-			act(PLAIN, "Bierzesz w rêce $p$3.", ch, obj, NULL, TO_CHAR);
+			act(PLAIN, "$n bierze w rï¿½ce $p$3.", ch, obj, NULL, TO_ROOM);
+			act(PLAIN, "Bierzesz w rï¿½ce $p$3.", ch, obj, NULL, TO_CHAR);
 		}
 		equip_char(ch, obj, WEAR_HOLD);
 		oprog_wear_trigger(ch, obj);
@@ -2081,12 +2067,12 @@ DEF_DO_FUN( wear )
 	argument = one_argument(argument, arg1);
 	argument = one_argument(argument, arg2);
 	if (((!str_cmp(arg2, "on") || !str_cmp(arg2, "upon") || !str_cmp(arg2, "around") || !str_cmp(arg2, "na")
-			|| !str_cmp(arg2, "w") || !str_cmp(arg2, "wokó³")) && argument[0] != '\0'))
+			|| !str_cmp(arg2, "w") || !str_cmp(arg2, "wokï¿½")) && argument[0] != '\0'))
 		argument = one_argument(argument, arg2);
 
 	if (arg1[0] == '\0')
 	{
-		send_to_char("Za³o¿yæ, ubraæ co?" NL, ch);
+		send_to_char("Zaï¿½oï¿½yï¿½, ubraï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -2095,14 +2081,11 @@ DEF_DO_FUN( wear )
 
 	if (!str_cmp(arg1, "all"))
 	{
-		OBJ_DATA *obj_next;
-
-		for (obj = ch->first_carrying; obj; obj = obj_next)
+		{ auto snapshot = ch->carrying; for (auto* obj : snapshot)
 		{
-			obj_next = obj->next_content;
 			if (obj->wear_loc == WEAR_NONE && can_see_obj(ch, obj))
 				wear_obj(ch, obj, false, -1);
-		}
+		} }
 		return;
 	}
 	else
@@ -2132,7 +2115,7 @@ DEF_DO_FUN( remove )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Zdj±æ co?" NL, ch);
+		send_to_char("Zdjï¿½ï¿½ co?" NL, ch);
 		return;
 	}
 
@@ -2141,12 +2124,11 @@ DEF_DO_FUN( remove )
 
 	if (!str_cmp(arg, "all")) /* SB Remove all */
 	{
-		for (obj = ch->first_carrying; obj != NULL; obj = obj_next)
+		{ auto snapshot = ch->carrying; for (auto* obj : snapshot)
 		{
-			obj_next = obj->next_content;
 			if (obj->wear_loc != WEAR_NONE && can_see_obj(ch, obj))
 				remove_obj(ch, obj->wear_loc, true);
-		}
+		} }
 		return;
 	}
 
@@ -2176,7 +2158,7 @@ DEF_DO_FUN( bury )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Co sobie ¿yczysz zakopaæ?" NL, ch);
+		send_to_char("Co sobie ï¿½yczysz zakopaï¿½?" NL, ch);
 		return;
 	}
 
@@ -2184,14 +2166,14 @@ DEF_DO_FUN( bury )
 		return;
 
 	shovel = false;
-	for (obj = ch->first_carrying; obj; obj = obj->next_content)
+	for (auto* obj : ch->carrying)
 		if (obj->item_type == ITEM_SHOVEL)
 		{
 			shovel = true;
 			break;
 		}
 
-	obj = get_obj_list_rev(ch, arg, ch->in_room->last_content);
+	obj = get_obj_list_rev(ch, arg, ch->in_room->contents);
 	if (!obj)
 	{
 		send_to_char("Nie ma tu takiego przedmiotu." NL, ch);
@@ -2201,7 +2183,7 @@ DEF_DO_FUN( bury )
 	separate_obj(obj);
 	if (!CAN_WEAR(obj, ITEM_TAKE))
 	{
-		act(PLAIN, "Nie mo¿esz zakopaæ $p$1.", ch, obj, 0, TO_CHAR);
+		act(PLAIN, "Nie moï¿½esz zakopaï¿½ $p$1.", ch, obj, 0, TO_CHAR);
 		return;
 	}
 
@@ -2209,12 +2191,12 @@ DEF_DO_FUN( bury )
 	{
 	case SECT_CITY:
 	case SECT_INSIDE:
-		send_to_char("Pod³oga tu jest zbyt twarda. Nie przekopiesz jej." NL, ch);
+		send_to_char("Podï¿½oga tu jest zbyt twarda. Nie przekopiesz jej." NL, ch);
 		return;
 	case SECT_WATER_SWIM:
 	case SECT_WATER_NOSWIM:
 	case SECT_UNDERWATER:
-		send_to_char("Nie mo¿esz zakopaæ czego¶ pod wod±!" NL, ch);
+		send_to_char("Nie moï¿½esz zakopaï¿½ czegoï¿½ pod wodï¿½!" NL, ch);
 		return;
 	case SECT_AIR:
 		send_to_char("Gdzie?  W powietrzu???" NL, ch);
@@ -2223,7 +2205,7 @@ DEF_DO_FUN( bury )
 
 	if (obj->weight > (UMAX(5, (can_carry_w(ch) / 10))) && !shovel)
 	{
-		send_to_char("¯eby zakopaæ co¶ tak wielkiego, potrzebujesz ³opaty." NL, ch);
+		send_to_char("ï¿½eby zakopaï¿½ coï¿½ tak wielkiego, potrzebujesz ï¿½opaty." NL, ch);
 		return;
 	}
 
@@ -2231,7 +2213,7 @@ DEF_DO_FUN( bury )
 	move = URANGE( 2, move, 1000 );
 	if (move > ch->move)
 	{
-		send_to_char("Nie masz w sobie tyle energii by to zakopaæ." NL, ch);
+		send_to_char("Nie masz w sobie tyle energii by to zakopaï¿½." NL, ch);
 		return;
 	}
 	ch->move -= move;
@@ -2261,7 +2243,7 @@ DEF_DO_FUN( sacrifice )
 	if (ms_find_obj(ch))
 		return;
 
-	obj = get_obj_list_rev(ch, arg, ch->in_room->last_content);
+	obj = get_obj_list_rev(ch, arg, ch->in_room->contents);
 	if (!obj)
 	{
 		send_to_char("You can't find it." NL, ch);
@@ -2313,7 +2295,7 @@ DEF_DO_FUN( sacrifice )
  {
  templvl = ch->top_level;
  ch->top_level = LEVEL_HERO;		// make sure EQ doesn't get lost
- contents = ch->in_room->last_content;
+ contents = ch->in_room->contents;
  if (contents)
  fwrite_obj(ch, contents, fp, 0, OS_CARRY );
  fprintf( fp, "#END\n" );
@@ -2363,20 +2345,20 @@ void obj_fall(OBJ_DATA *obj, bool through)
 			return;
 		}
 
-		if (obj->in_room->first_person)
+		if (!obj->in_room->people.empty())
 		{
-			act(PLAIN, "$p spada gdzie¶ w dó³...", obj->in_room->first_person, obj, NULL, TO_ROOM);
-			act(PLAIN, "$p spada gdzie¶ w dó³...", obj->in_room->first_person, obj, NULL, TO_CHAR);
+			act(PLAIN, "$p spada gdzieï¿½ w dï¿½...", obj->in_room->people.front(), obj, NULL, TO_ROOM);
+			act(PLAIN, "$p spada gdzieï¿½ w dï¿½...", obj->in_room->people.front(), obj, NULL, TO_CHAR);
 		}
 		obj_from_room(obj);
 		is_falling = true;
 		obj = obj_to_room(obj, to_room);
 		is_falling = false;
 
-		if (obj->in_room->first_person)
+		if (!obj->in_room->people.empty())
 		{
-			act(PLAIN, "$p spada sk±d¶ z góry...", obj->in_room->first_person, obj, NULL, TO_ROOM);
-			act(PLAIN, "$p spada sk±d¶ z góry...", obj->in_room->first_person, obj, NULL, TO_CHAR);
+			act(PLAIN, "$p spada skï¿½dï¿½ z gï¿½ry...", obj->in_room->people.front(), obj, NULL, TO_ROOM);
+			act(PLAIN, "$p spada skï¿½dï¿½ z gï¿½ry...", obj->in_room->people.front(), obj, NULL, TO_CHAR);
 		}
 
 		if (!IS_SET( obj->in_room->room_flags, ROOM_NOFLOOR ) && through)
@@ -2384,15 +2366,14 @@ void obj_fall(OBJ_DATA *obj, bool through)
 			/*		int dam = (int)9.81*sqrt(fall_count*2/9.81)*obj->weight/2;
 			 */int dam = fall_count * obj->weight / 2;
 			/* Damage players */
-			if (obj->in_room->first_person && number_percent() > 15)
+			if (!obj->in_room->people.empty() && number_percent() > 15)
 			{
-				CHAR_DATA *rch;
 				CHAR_DATA *vch = NULL;
 				int chcnt = 0;
 
-				for (rch = obj->in_room->first_person; rch; rch = rch->next_in_room, chcnt++)
+				for (auto* rch : obj->in_room->people) { chcnt++;
 					if (number_range(0, chcnt) == 0)
-						vch = rch;
+						vch = rch; }
 				act(FB_WHITE, "$p spada na $n$3!", vch, obj, NULL, TO_ROOM);
 				act(FB_WHITE, "$p spada na ciebie!", vch, obj, NULL, TO_CHAR);
 				damage(vch, vch, dam * vch->top_level, TYPE_UNDEFINED);
@@ -2404,10 +2385,10 @@ void obj_fall(OBJ_DATA *obj, bool through)
 			case ITEM_ARMOR:
 				if ((obj->value[0] - dam) <= 0)
 				{
-					if (obj->in_room->first_person)
+					if (!obj->in_room->people.empty())
 					{
-						act(PLAIN, "$p niszczy siê przez upadek!", obj->in_room->first_person, obj, NULL, TO_ROOM);
-						act(PLAIN, "$p niszczy siê przez upadek!", obj->in_room->first_person, obj, NULL, TO_CHAR);
+						act(PLAIN, "$p niszczy siï¿½ przez upadek!", obj->in_room->people.front(), obj, NULL, TO_ROOM);
+						act(PLAIN, "$p niszczy siï¿½ przez upadek!", obj->in_room->people.front(), obj, NULL, TO_CHAR);
 					}
 					make_scraps(obj);
 				}
@@ -2417,10 +2398,10 @@ void obj_fall(OBJ_DATA *obj, bool through)
 			default:
 				if ((dam * 15) > get_obj_resistance(obj))
 				{
-					if (obj->in_room->first_person)
+					if (!obj->in_room->people.empty())
 					{
-						act(PLAIN, "$p niszczy siê przez upadek!", obj->in_room->first_person, obj, NULL, TO_ROOM);
-						act(PLAIN, "$p niszczy siê przez upadek!", obj->in_room->first_person, obj, NULL, TO_CHAR);
+						act(PLAIN, "$p niszczy siï¿½ przez upadek!", obj->in_room->people.front(), obj, NULL, TO_ROOM);
+						act(PLAIN, "$p niszczy siï¿½ przez upadek!", obj->in_room->people.front(), obj, NULL, TO_CHAR);
 					}
 					make_scraps(obj);
 				}

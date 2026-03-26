@@ -33,18 +33,18 @@ void string_edit( CHAR_DATA *ch, char **prdesc )
 {
     if ( ch->substate == SUB_RESTRICTED )
     {
-        send_to_char( NL FB_WHITE "Nie mo¿esz w³±czaæ edytora z wewn±trz edytora !!!" EOL, ch );
-	//musimy wywaliæ by oczy¶ciæ ¶mieci
-        send_to_char( "Za karê wylatujesz z edytora!" NL, ch );
+        send_to_char( NL FB_WHITE "Nie moï¿½esz wï¿½ï¿½czaï¿½ edytora z wewnï¿½trz edytora !!!" EOL, ch );
+	//musimy wywaliï¿½ by oczyï¿½ciï¿½ ï¿½mieci
+        send_to_char( "Za karï¿½ wylatujesz z edytora!" NL, ch );
         ch->desc->str_editing = NULL;
         return;
     }
 
     send_to_char( FB_WHITE
-    "Edytor w³±czony" PLAIN " (Wpisz "
+    "Edytor wï¿½ï¿½czony" PLAIN " (Wpisz "
 	FB_WHITE "/?" PLAIN "=pomoc "
 	FB_WHITE "@" PLAIN "=stop "
-	FB_WHITE "/c" PLAIN "=czy¶æ "
+	FB_WHITE "/c" PLAIN "=czyï¿½ï¿½ "
 	FB_WHITE "/l" PLAIN "=listuj "
 	FB_WHITE "/f" PLAIN "=formatuj)" NL
     "--------------------------------------------------------------------------" NL, ch );
@@ -63,18 +63,18 @@ void string_append( CHAR_DATA *ch, char **prdesc )
 {
     if ( ch->substate == SUB_RESTRICTED )
     {
-        send_to_char( NL FB_WHITE "Nie mo¿esz w³±czaæ edytora z wewn±trz edytora !!!" EOL, ch );
-	//musimy wywaliæ by oczy¶ciæ ¶mieci
-        send_to_char( "Za karê wylatujesz z edytora!\n\r", ch );
+        send_to_char( NL FB_WHITE "Nie moï¿½esz wï¿½ï¿½czaï¿½ edytora z wewnï¿½trz edytora !!!" EOL, ch );
+	//musimy wywaliï¿½ by oczyï¿½ciï¿½ ï¿½mieci
+        send_to_char( "Za karï¿½ wylatujesz z edytora!\n\r", ch );
         ch->desc->str_editing = NULL;
         return;
     }
 
     send_to_char( FB_WHITE
-    "Edytor w³±czony" PLAIN " (Wpisz "
+    "Edytor wï¿½ï¿½czony" PLAIN " (Wpisz "
 	FB_WHITE "/?" PLAIN "=pomoc "
 	FB_WHITE "@" PLAIN "=stop "
-	FB_WHITE "/c" PLAIN "=czy¶æ "
+	FB_WHITE "/c" PLAIN "=czyï¿½ï¿½ "
 	FB_WHITE "/l" PLAIN "=listuj "
 	FB_WHITE "/f" PLAIN "=formatuj)" NL
     "--------------------------------------------------------------------------" NL, ch );
@@ -269,12 +269,12 @@ void string_add( CHAR_DATA *ch, char *argument )
             {
         	*ch->desc->str_editing =
 		    string_delete_last_line( *ch->desc->str_editing );
-		send_to_char( "Ostatnia linia usuniêta.\n\r", ch );
+		send_to_char( "Ostatnia linia usuniï¿½ta.\n\r", ch );
             }
 	    else
 	    if( !is_number (arg2) )
 	    {
-		send_to_char ( "Sk³adnia:  /d [nr_linii]\n\r", ch);
+		send_to_char ( "Skï¿½adnia:  /d [nr_linii]\n\r", ch);
 	        return;
 	    }
 	    else
@@ -290,7 +290,7 @@ void string_add( CHAR_DATA *ch, char *argument )
 	{
 	   if (arg2[0] == '\0' || !is_number (arg2))
 	   {
-	      send_to_char ( "Sk³adnia:  /i <nr_linii> <text>\n\r", ch);
+	      send_to_char ( "Skï¿½adnia:  /i <nr_linii> <text>\n\r", ch);
 	      return;
 	   }
 	   smash_tilde (arg3);
@@ -301,7 +301,7 @@ void string_add( CHAR_DATA *ch, char *argument )
 
         if ( !str_cmp( arg1, "/c" ) )
         {
-            send_to_char( "Ca³o¶æ usuniêta.\n\r", ch );
+            send_to_char( "Caï¿½oï¿½ï¿½ usuniï¿½ta.\n\r", ch );
             STRDUP( *ch->desc->str_editing, "" );
 	    return;
         }
@@ -343,7 +343,7 @@ void string_add( CHAR_DATA *ch, char *argument )
             if ( arg2[0] == '\0' )
             {
                 send_to_char(
-                    "Sk³adnia:  /r 'stare pole tekstowe' \"nowe pole tekstowe\"\n\r", ch );
+                    "Skï¿½adnia:  /r 'stare pole tekstowe' \"nowe pole tekstowe\"\n\r", ch );
                 return;
             }
 
@@ -364,8 +364,8 @@ void string_add( CHAR_DATA *ch, char *argument )
 	    if( linelen < 40 )
 		linelen = 77;
 
-	    *ch->desc->str_editing = format_string( *ch->desc->str_editing, linelen );
-	    send_to_char( "Ca³o¶æ zagêszczona.\n\r", ch );
+	    *ch->desc->str_editing = ::format_string( *ch->desc->str_editing, linelen );
+	    send_to_char( "Caï¿½oï¿½ï¿½ zagï¿½szczona.\n\r", ch );
             return;
         }
 
@@ -373,23 +373,23 @@ void string_add( CHAR_DATA *ch, char *argument )
         {
 	    ch_printf( ch, "Komendy Edytora:" NL
 	    FB_WHITE ".----------------------------------------------------------------------." EOL
-	    FB_WHITE "|" PLAIN "   /l                     wy¶wietl tekst                              " FB_WHITE "|" EOL
-	    FB_WHITE "|" PLAIN "   /c                     czy¶æ tekst                                 " FB_WHITE "|" EOL
-	    FB_WHITE "|" PLAIN "   /d [linia]             skasuj liniê numer [linia]                  " FB_WHITE "|" EOL
-	    FB_WHITE "|" PLAIN "   /i <linia> ['<tekst>'] wstaw liniê                                 " FB_WHITE "|" EOL
-	    FB_WHITE "|" PLAIN "   /r '<stare>' \"<nowe>\"  zamieñ <stare> na <nowe> (wymaga ''i \"\")    " FB_WHITE "|" EOL
-	    FB_WHITE "|" PLAIN "   /f [d³ugo¶æ]           sformatuj tekst (dopasuj do d³ugo¶ci)       " FB_WHITE "|" EOL
+	    FB_WHITE "|" PLAIN "   /l                     wyï¿½wietl tekst                              " FB_WHITE "|" EOL
+	    FB_WHITE "|" PLAIN "   /c                     czyï¿½ï¿½ tekst                                 " FB_WHITE "|" EOL
+	    FB_WHITE "|" PLAIN "   /d [linia]             skasuj liniï¿½ numer [linia]                  " FB_WHITE "|" EOL
+	    FB_WHITE "|" PLAIN "   /i <linia> ['<tekst>'] wstaw liniï¿½                                 " FB_WHITE "|" EOL
+	    FB_WHITE "|" PLAIN "   /r '<stare>' \"<nowe>\"  zamieï¿½ <stare> na <nowe> (wymaga ''i \"\")    " FB_WHITE "|" EOL
+	    FB_WHITE "|" PLAIN "   /f [dï¿½ugoï¿½ï¿½]           sformatuj tekst (dopasuj do dï¿½ugoï¿½ci)       " FB_WHITE "|" EOL
 	    "%s"
-	    FB_WHITE "|" PLAIN "   @                      wyj¶cie z edytora                           " FB_WHITE "|" EOL
+	    FB_WHITE "|" PLAIN "   @                      wyjï¿½cie z edytora                           " FB_WHITE "|" EOL
 	    FB_WHITE "`----------------------------------------------------------------------'" EOL,
 	    (get_trust(ch) > LEVEL_IMMORTAL) ?
-	    FB_WHITE "|" PLAIN "   /! <komenda>           wykonaj komendê zewnêtrzn± (Ostro¿nie!)     " FB_WHITE "|" EOL :
+	    FB_WHITE "|" PLAIN "   /! <komenda>           wykonaj komendï¿½ zewnï¿½trznï¿½ (Ostroï¿½nie!)     " FB_WHITE "|" EOL :
 	    FB_WHITE "|" PLAIN "                                                                      " FB_WHITE "|" EOL );
             return;
         }
 
 
-        send_to_char( "B³±d:  Nieznana komenda (u¿yj /?)" NL, ch );
+        send_to_char( "Bï¿½ï¿½d:  Nieznana komenda (uï¿½yj /?)" NL, ch );
         return;
     }
 
@@ -402,7 +402,7 @@ void string_add( CHAR_DATA *ch, char *argument )
 
     if ( strlen( buf ) + strlen( argument ) >= ( MAX_STRING_LENGTH - 4 ) )
     {
-        send_to_char( "Za d³uga linia.\n\r", ch );
+        send_to_char( "Za dï¿½uga linia.\n\r", ch );
         ch->desc->str_editing = NULL;
         return;
     }
@@ -632,7 +632,7 @@ char * string_proper( char * argument )
 }
 
 
-/* F-cja ¶cina znaki kolorków w stringu  (chyba by Ackbar)*/
+/* F-cja ï¿½cina znaki kolorkï¿½w w stringu  (chyba by Ackbar)*/
 char *nocolor( const char *src )
 {
   /* This function will remove all & color codes out of a string */
@@ -686,7 +686,7 @@ char *nocolor( const char *src )
 }
 
 
-/* f - cja dopasowuje kolorowego stringa do d³ugo¶ci len */
+/* f - cja dopasowuje kolorowego stringa do dï¿½ugoï¿½ci len */
 const char *strip_colors( const char *str, int length )
 {
     int		len	= 0;
@@ -711,7 +711,7 @@ const char *strip_colors( const char *str, int length )
 	    len++;
 	str++; rlen++;
     }
-    /* resztê (je¶li jest dope³niamy spacjami */
+    /* resztï¿½ (jeï¿½li jest dopeï¿½niamy spacjami */
     while( len < length )
     {
 	strout[rlen] = ' ';
@@ -722,8 +722,8 @@ const char *strip_colors( const char *str, int length )
     return strout;
 }
 
-/* wycina ze stringa lub wciska do niego wyraz w zale¿no¶ci czy odpowiednio
-  by³ on jego czê¶ci± czy nie  -- Allokuje! */
+/* wycina ze stringa lub wciska do niego wyraz w zaleï¿½noï¿½ci czy odpowiednio
+  byï¿½ on jego czï¿½ciï¿½ czy nie  -- Allokuje! */
 void toggle_string( char **string, char *flag )
 {
     char	buf	[MSL];
@@ -753,7 +753,7 @@ void toggle_string( char **string, char *flag )
 }
 
 
-//funkcja wycina ze stringa jedno wybrane s³owo - u¿ywane do zdejmowania flag
+//funkcja wycina ze stringa jedno wybrane sï¿½owo - uï¿½ywane do zdejmowania flag
 char *cut_from_string( char *s_flag, const char *name )
 {
     static char buf	[MAX_STRING_LENGTH];
@@ -793,9 +793,13 @@ int swsnprintf(char *str, size_t size, const char *format, ...)
 
 char *swstrncpy(char *dest, const char *src, size_t n)
 {
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-truncation"
+#endif
     return strncpy(dest, src, n);
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
 }
 

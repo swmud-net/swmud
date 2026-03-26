@@ -39,12 +39,12 @@ void pedit_dock( PLANET_DATA *pPlanet, CHAR_DATA *ch, char *argument )
     	if ( !str_cmp( arg1, "add" ) )
     	{
 		CREATE( dock, DOCK_DATA, 1 );
-		sprintf(buf , "L±dowisko");
+		sprintf(buf , "Lï¿½dowisko");
 		STRDUP( dock->name, buf );
 		dock->vnum = 0;
 		dock->hidden = 0;
 		dock->capacity = 1000;
-		LINK( dock, pPlanet->first_dock, pPlanet->last_dock, next, prev );
+		pPlanet->docks.push_back( dock );
     	}
     	else
     	if ( is_number(arg1) )
@@ -89,7 +89,7 @@ void pedit_dock( PLANET_DATA *pPlanet, CHAR_DATA *ch, char *argument )
 	    			return;
 			}
 
-			UNLINK( dock, pPlanet->first_dock, pPlanet->last_dock, next, prev );
+			pPlanet->docks.remove( dock );
 			free_dock( dock );
    		}
 		else
@@ -123,13 +123,13 @@ void pedit_deposit( PLANET_DATA *pPlanet, CHAR_DATA *ch, char *argument )
 		pMat = get_material( arg2, U_ORE_FORM );
 		if (!pMat)
 		{
-			ch_printf( ch, "Nie ma takiego materia³u" NL);
+			ch_printf( ch, "Nie ma takiego materiaï¿½u" NL);
 			return;
 		}
 		pDeposit = new_deposit();
 		STRDUP( pDeposit->material_name, pMat->name );
 		pDeposit->daily_mining = 0;
-		LINK( pDeposit, pPlanet->first_deposit, pPlanet->last_deposit, next, prev );
+		pPlanet->deposits.push_back( pDeposit );
 	}
 	else if ( is_number(arg1) )
 	{
@@ -156,8 +156,7 @@ void pedit_deposit( PLANET_DATA *pPlanet, CHAR_DATA *ch, char *argument )
 		else if(!str_cmp( arg2, "delete")
 			   || !str_cmp( arg2, "remove" ) )
 		{
-			UNLINK( pDeposit, pPlanet->first_deposit,
-					pPlanet->last_deposit, next,prev);
+			pPlanet->deposits.remove( pDeposit );
 			free_deposit(pDeposit);
 		}
 		else
@@ -190,12 +189,12 @@ void pedit_warehouse( PLANET_DATA *pPlanet, CHAR_DATA *ch, char *argument )
 		if ( is_number( arg2 ) )
 		{
 			pPlanet->pWarehouse->max_capacity = atoi( arg2 );
-			send_to_char( "Pojemno¶æ magazynów zmieniona" NL, ch );
+			send_to_char( "Pojemnoï¿½ï¿½ magazynï¿½w zmieniona" NL, ch );
 			return;
 		}
 		else
 		{
-			send_to_char( "Podaj pojemno¶æ magazynów" NL, ch );
+			send_to_char( "Podaj pojemnoï¿½ï¿½ magazynï¿½w" NL, ch );
 			return;
 		}
 	}
@@ -223,15 +222,9 @@ bool pedit_create( CHAR_DATA *ch, char *argument )
     one_argument( argument, arg );
 
     CREATE( pPlanet, PLANET_DATA, 1 );
-    LINK( pPlanet, first_planet, last_planet, next, prev );
+    planet_list.push_back( pPlanet );
     pPlanet->governed_by 	= NULL;
-    pPlanet->next_in_system 	= NULL;
-    pPlanet->prev_in_system 	= NULL;
     pPlanet->starsystem 	= NULL ;
-    pPlanet->first_area 	= NULL;
-    pPlanet->last_area 		= NULL;
-    pPlanet->first_guard 	= NULL;
-    pPlanet->last_guard 	= NULL;
     STRDUP( pPlanet->filename, 		arg );
     STRDUP( pPlanet->name, 		"New Planet" );
     STRDUP( pPlanet->description, 	"Planeta jak planeta" );
@@ -244,7 +237,7 @@ bool pedit_create( CHAR_DATA *ch, char *argument )
     pPlanet->monthlen		= 30;
 
     season = new_season( pPlanet, "no_name" );
-    LINK( season, pPlanet->first_season, pPlanet->last_season, next, prev );
+    pPlanet->seasons.push_back( season );
 
     reset_planet( pPlanet );
 
@@ -257,9 +250,8 @@ bool pedit_create( CHAR_DATA *ch, char *argument )
 SEASON_DATA *get_season( PLANET_DATA *planet, int nr )
 {
     int 		i=1;
-    SEASON_DATA *	season;
 
-    for( season = planet->first_season; season; season = season->next )
+    for( auto* season : planet->seasons )
     {
 	if( i == nr )
 	    return season;
@@ -418,11 +410,11 @@ void pedit( DESCRIPTOR_DATA *d, char *argument )
         SPACE_DATA *starsystem;
 
         if ((starsystem=pPlanet->starsystem) != NULL)
-          UNLINK(pPlanet, starsystem->first_planet, starsystem->last_planet, next_in_system, prev_in_system);
+          starsystem->planets.remove(pPlanet);
 	if ( (pPlanet->starsystem = starsystem_from_name(argument)) )
         {
            starsystem = pPlanet->starsystem;
-           LINK(pPlanet, starsystem->first_planet, starsystem->last_planet, next_in_system, prev_in_system);
+           starsystem->planets.push_back(pPlanet);
            send_to_char( "Starsystem set." NL, ch );
 	}
 	else
@@ -681,8 +673,7 @@ void pedit( DESCRIPTOR_DATA *d, char *argument )
 	if( !str_cmp( arg2, "add" ) )
 	{
 	    season = new_season( pPlanet, (const char *)arg3 );
-	    LINK( season, pPlanet->first_season,
-			  pPlanet->last_season, next, prev );
+	    pPlanet->seasons.push_back( season );
 	    send_to_char( "Season added." NL, ch );
 	    return;
 	}
@@ -695,14 +686,12 @@ void pedit( DESCRIPTOR_DATA *d, char *argument )
 
 	if( !str_cmp( arg3, "delete" ) )
 	{
-	    if( season == pPlanet->first_season
-	    &&  season == pPlanet->last_season )
+	    if( pPlanet->seasons.size() <= 1 )
 	    {
 		send_to_char( "You cannot delete the only season of this planet." NL, ch );
 		return;
 	    }
-	    UNLINK( season, pPlanet->first_season,
-			    pPlanet->last_season, next, prev );
+	    pPlanet->seasons.remove( season );
 	    free_season( season );
 	    reset_planet( pPlanet );
 	    send_to_char( "Season deleted. Planet has been reset." NL, ch );
@@ -822,10 +811,6 @@ DEF_DO_FUN( pedit )
 DEF_DO_FUN( ssindex )
 {
     SPACE_DATA *	starsystem;
-    MOON_DATA *		moon;
-    PLANET_DATA *	planet;
-    STAR_DATA *		star;
-    RESET_DATA *	reset;
     int 		stars, moons, planets, resets;
 
     starsystem = starsystem_from_name( argument );
@@ -846,10 +831,10 @@ DEF_DO_FUN( ssindex )
 		starsystem->flags > 0 ?
 		flag_string( ssystem_flags_list, starsystem->flags):
 		"none");
-    for( stars=0,star = starsystem->first_star; star; star = star->next,stars++ );
-    for( planets=0,planet = starsystem->first_planet ; planet; planet = planet->next_in_system,planets++ );
-    for( moons=0,moon = starsystem->first_moon; moon ; moon = moon->next,moons++ );
-    for( resets=0,reset = starsystem->first_reset; reset; reset = reset->next,resets++ );
+    stars = starsystem->stars.size();
+    planets = starsystem->planets.size();
+    moons = starsystem->moons.size();
+    resets = starsystem->resets.size();
 
     ch_printf( ch, FG_CYAN
 	  "Stars:  " FB_WHITE "%d" FG_CYAN "  Planets: " FB_WHITE "%d" FG_CYAN
@@ -895,7 +880,7 @@ bool ssedit_create( CHAR_DATA *ch, char *argument )
     }
 
     CREATE( starsystem, SPACE_DATA, 1 );
-    LINK( starsystem, first_starsystem, last_starsystem, next, prev );
+    starsystem_list.push_back( starsystem );
 
     STRDUP( starsystem->name, argument );
 
@@ -954,12 +939,13 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 
     if ( !str_cmp( arg1, "next" ) || !str_cmp( arg1, ">" ) )
     {
-	if( !pStarsystem->next )
+	auto it = std::find(starsystem_list.begin(), starsystem_list.end(), pStarsystem);
+	if( it == starsystem_list.end() || std::next(it) == starsystem_list.end() )
 	{
 	    send_to_char( "No next starsystem." NL, ch );
 	    return;
 	}
-	ch->desc->olc_editing = ( void * ) pStarsystem->next;
+	ch->desc->olc_editing = ( void * ) *std::next(it);
 	ssedit( ch->desc, (char *)"show" );
 	send_to_char( "Editing next starsystem." NL, ch );
 	return;
@@ -967,12 +953,13 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 
     if ( !str_cmp( arg1, "prev" ) || !str_cmp( arg1, "<" ) )
     {
-	if( !pStarsystem->prev )
+	auto it = std::find(starsystem_list.begin(), starsystem_list.end(), pStarsystem);
+	if( it == starsystem_list.end() || it == starsystem_list.begin() )
 	{
 	    send_to_char( "No prev starsystem." NL, ch );
 	    return;
 	}
-	ch->desc->olc_editing = ( void * ) pStarsystem->prev;
+	ch->desc->olc_editing = ( void * ) *std::prev(it);
 	ssedit( ch->desc, (char *)"show" );
 	send_to_char( "Editing prev starsystem." NL, ch );
 	return;
@@ -980,8 +967,6 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 
     if( !str_cmp( arg1, "delete" ) )
     {
-	int 		count;
-	SHIP_DATA *	ship;
 	SPACE_DATA *	jump;
 
 	argument = one_argument( argument, arg2 );
@@ -997,23 +982,25 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 	   return;
 	}
 
-        for( count=0, ship = pStarsystem->first_ship; ship; ship = ship->next_in_starsystem, count++ ){}
-	if ( count != 0 )
+        if ( !pStarsystem->ships.empty() )
 	{
 	   send_to_char( "Cannot delete. There are ships parked in this system." NL, ch );
 	   return;
 	}
 
-	if( !pStarsystem->next && !pStarsystem->prev )
+	if( starsystem_list.size() <= 1 )
 	{
 	   send_to_char( "Cannot delete. It is the last starsystem in galaxy." NL, ch );
 	   return;
 	}
 
-	if( pStarsystem->prev )
-	    jump = pStarsystem->prev;
-	else
-	    jump = pStarsystem->next;
+	{
+	    auto it = std::find(starsystem_list.begin(), starsystem_list.end(), pStarsystem);
+	    if( it != starsystem_list.begin() )
+	        jump = *std::prev(it);
+	    else
+	        jump = *std::next(it);
+	}
 
 	extract_starsystem(pStarsystem);
 	write_starsystem_list();
@@ -1037,7 +1024,7 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 
 	if( !str_cmp( arg2, "list" ) )
 	{
-	    if( pStarsystem->first_reset )
+	    if( !pStarsystem->resets.empty() )
 		display_space_resets( pStarsystem, ch );
 	    else
 		send_to_char( "Starsystem has no reset" NL, ch );
@@ -1065,7 +1052,7 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 	    }
 	    insert_loc = atoi( arg3 );
 
-	    if ( !pStarsystem->first_reset )
+	    if ( pStarsystem->resets.empty() )
 	    {
 		send_to_char( "There are no resets in this starsystem." NL, ch );
 		return;
@@ -1180,11 +1167,11 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
     	{
 	    pager_printf( ch, FB_CYAN
 	        "[Nr] [        Name        ] [ Xpos  ] [ Ypos  ] [ Zpos   ] [Gravity ] [Radius  ]" EOL );
-	    for( i=0,star=pStarsystem->first_star; star; star=star->next,i++ )
+	    i = 0; for( auto* star : pStarsystem->stars )
 	    {
 		pager_printf( ch, FG_CYAN
 		    "[" FB_CYAN "%2d" FG_CYAN "] [" FB_WHITE "%-20s" FG_CYAN "] [%-7.0f] [%-7.0f] [%-8.0f] [%-8.0f] [%8.0f]" EOL,
-			i, star->name, star->xpos, star->ypos, star->zpos,
+			i++, star->name, star->xpos, star->ypos, star->zpos,
 			star->gravity, star->radius);
 	    }
 	    return;
@@ -1208,7 +1195,7 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 	    star->radius = 1000;
 	    star->star_radius = sqrtf(  ( star->xpos * star->xpos ) +
 					( star->ypos * star->ypos ) );
-	    LINK( star, pStarsystem->first_star, pStarsystem->last_star, next, prev );
+	    pStarsystem->stars.push_back( star );
 	    send_to_char( "Star added." NL, ch );
     	}
     	else
@@ -1225,7 +1212,7 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 	    	return;
 	    }
 
-	    UNLINK( star, pStarsystem->first_star, pStarsystem->last_star, next, prev );
+	    pStarsystem->stars.remove( star );
 	    free_star( star );
 	    send_to_char( "Star deleted." NL, ch );
    	}
@@ -1282,17 +1269,15 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 
     if ( !str_cmp( arg1, "planet" ) )
     {
-	PLANET_DATA * planet;
-
     	if ( !str_cmp( arg2, "list" ) )
     	{
 	    pager_printf( ch, FB_CYAN
 	        "[Nr] [        Name        ] [ Xpos  ] [ Ypos  ] [ Zpos   ] [Gravity ] [Radius  ]" EOL );
-	    for( i=0,planet=pStarsystem->first_planet; planet; planet=planet->next_in_system,i++ )
+	    i = 0; for( auto* planet : pStarsystem->planets )
 	    {
 		pager_printf( ch, FG_CYAN
 		    "[" FB_CYAN "%2d" FG_CYAN "] [" FB_WHITE "%-20s" FG_CYAN "] [%-7.0f] [%-7.0f] [%-8.0f] [%-8.0f] [%8.0f]" EOL,
-			i, planet->name,
+			i++, planet->name,
 			planet->xpos, planet->ypos, planet->zpos,
 			planet->gravity, planet->radius);
 	    }
@@ -1344,14 +1329,14 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
     	{
 	    pager_printf( ch, FB_CYAN
 	        "Nr[    Name    ][ Xpos  ][ Ypos  ][ Zpos   ][Grav.][Radius ][Vnum][Capacity]Type" EOL );
-	    for( i=0,moon=pStarsystem->first_moon; moon; moon=moon->next,i++ )
+	    i = 0; for( auto* moon : pStarsystem->moons )
 	    {
 		pager_printf( ch, FG_CYAN
 		    FB_CYAN "%2d" FG_CYAN "[" FB_WHITE "%-12s" FG_CYAN "]"
 		    "[%-7.0f][%-7.0f][%-8.0f]"
 		    "[%-5.0f][%7.0f]"
 		    "[%4d][%3.f/%-4.0f][%-2d]" EOL,
-			i, moon->name,
+			i++, moon->name,
 			moon->xpos, moon->ypos, moon->zpos,
 			moon->gravity, moon->radius,
 			moon->vnum, check_capacity(moon->vnum), moon->capacity, moon->type );
@@ -1379,7 +1364,7 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 	    moon->radius = 30;
 	    moon->star_radius = sqrtf( ( moon->xpos * moon->xpos ) +
 	                               ( moon->ypos * moon->ypos ) );
-	    LINK( moon, pStarsystem->first_moon, pStarsystem->last_moon, next, prev );
+	    pStarsystem->moons.push_back( moon );
 	    send_to_char( "Moon added." NL, ch );
     	}
     	else
@@ -1396,7 +1381,7 @@ void ssedit( DESCRIPTOR_DATA *d, char *argument )
 	    	return;
 	    }
 
-	    UNLINK( moon, pStarsystem->first_moon, pStarsystem->last_moon, next, prev );
+	    pStarsystem->moons.remove( moon );
 	    free_moon( moon );
 	    send_to_char( "Moon deleted." NL, ch );
    	}
@@ -1487,7 +1472,7 @@ DEF_DO_FUN( ssedit )
         pager_printf( ch, FB_CYAN
 	    "[NR] Name                 [Filename            ]    X       Y     Tmp  Age" EOL );
 
-	for ( starsystem = first_starsystem; starsystem; starsystem = starsystem->next )
+	for ( auto* starsystem : starsystem_list )
 	{
 	    count++;
             pager_printf( ch,
@@ -1540,10 +1525,6 @@ DEF_DO_FUN( shstat )
 {
     char            	arg  [ MAX_INPUT_LENGTH ];
     SHIP_INDEX_DATA *	ship;
-    TURRET_DATA *	turret;
-    HANGAR_DATA *	hangar;
-    SHIPDOCK_DATA *	dock;
-    MODULE_DATA *	module;
     int			a;
 
     argument = one_argument( argument, arg );
@@ -1625,7 +1606,7 @@ DEF_DO_FUN( shstat )
 	    ship->maxenergy,   	    ship->maxchaff,
 	    ship->maxcloack );
 
-    for( a=0,module = ship->first_module; module ; module = module->next)
+    a = 0; for( auto* module : ship->modules )
     	    a += module->size;
     pager_printf( ch,
 	PLAIN "Speed: " FB_WHITE "%.0f "
@@ -1658,14 +1639,14 @@ DEF_DO_FUN( shstat )
 //    if( ship->first_reset )
 //    pager_printf( ch, PLAIN "ResetCount: " FB_WHITE "%d " EOL,  ship->resetcount );
 
-    if( ship->first_room )
+    if( !ship->rooms.empty() )
     {
     pager_printf( ch,
 	PLAIN "sRooms: 	" FB_WHITE "%d "
 	PLAIN "First:    " FB_WHITE "%d "
 	PLAIN "Last:     " FB_WHITE "%d" EOL,
-	    ship->roomcount, ship->first_room->vnum,
-			     ship->last_room->vnum );
+	    ship->roomcount, ship->rooms.front()->vnum,
+			     ship->rooms.back()->vnum );
     }
     else
     if( ship->first_dumped )
@@ -1680,16 +1661,16 @@ DEF_DO_FUN( shstat )
     pager_printf( ch,
 	PLAIN "Rooms: " FB_WHITE "0" EOL );
 
-    if( ship->first_module )
+    if( !ship->modules.empty() )
     {
 	pager_printf( ch, FB_CYAN
 	"  type        val    v2     v3   size  st  cost    vnum" EOL );
 
-	for( a=0,module = ship->first_module; module ; module = module->next,a++ )
+	a = 0; for( auto* module : ship->modules )
 	{
 	    pager_printf( ch,
 		FB_CYAN "Module %-3d " PLAIN "%-11s %-6d %-6d %-4d %-5d %-3d %-7d %-6d %s" EOL,
-			a, module_type_name[module->type],
+			a++, module_type_name[module->type],
 			module->value , module->value2,
 			module->value3, module->size,
 			module->crs*100/module->status,
@@ -1699,43 +1680,43 @@ DEF_DO_FUN( shstat )
     }
 
 
-    if( ship->first_turret )
+    if( !ship->turrets.empty() )
     {
     	pager_printf( ch,
 		FB_CYAN "           Vnum     Type  Status  Gunner" EOL );
 
-	for( a=0,turret = ship->first_turret; turret ; turret = turret->next,a++ )
+	a = 0; for( auto* turret : ship->turrets )
 	{
 	    pager_printf( ch,
 		FB_RED "Turret %-3d " PLAIN "%-8d %-5d %-7d %s" EOL,
-			a, turret->vnum, turret->type, turret->status,
+			a++, turret->vnum, turret->type, turret->status,
 			turret->gunner ? turret->gunner->name : "-" );
 	}
     }
 
-    if( ship->first_hangar )
+    if( !ship->hangars.empty() )
     {
 	pager_printf( ch,
 	    FB_CYAN "           Vnum           Status  Capacity  Type" EOL );
-	for( a=0,hangar = ship->first_hangar; hangar ; hangar = hangar->next,a++ )
+	a = 0; for( auto* hangar : ship->hangars )
 	{
 	    pager_printf( ch,
 		FB_GREEN "Hanger %-3d " PLAIN "%-14d %-7d %.0f/%-6.0f %d" EOL,
-			a, hangar->vnum, hangar->status,
+			a++, hangar->vnum, hangar->status,
 			check_capacity( hangar->vnum ),
 			hangar->capacity, hangar->type );
 
 	}
     }
 
-    if( ship->first_dock )
+    if( !ship->docks.empty() )
     {
 	pager_printf( ch, FB_CYAN "           Type           Vnum" EOL );
-	for( a=0,dock = ship->first_dock; dock ; dock = dock->next,a++ )
+	a = 0; for( auto* dock : ship->docks )
 	{
 	    pager_printf( ch,
 	    FB_CYAN "Dock %-3d" PLAIN "   %-14d %-7d %s %-9d %s" EOL,
-			a, dock->type, dock->vnum,
+			a++, dock->type, dock->vnum,
 			dock->target != NULL ? dock->target->name : "N.D.",
 			dock->targetvnum, dock->master_slave == -1 ? "" :
 			(dock->master_slave == 0 ? "Slave" : "Master"));
@@ -1772,13 +1753,12 @@ void shedit_done( CHAR_DATA *ch )
 
 
 /*
- * Zrzuca pokoje statku (sRooms) do jakiej¶ fizycznej krainki, by
- * mo¿naby³o je edytowaæ. Kiedy builder koñczy edycjê pokoi, u¿ywa
- * roomcopy, by pobraæ zmienione lokacje znów do statku.
+ * Zrzuca pokoje statku (sRooms) do jakiejï¿½ fizycznej krainki, by
+ * moï¿½nabyï¿½o je edytowaï¿½. Kiedy builder koï¿½czy edycjï¿½ pokoi, uï¿½ywa
+ * roomcopy, by pobraï¿½ zmienione lokacje znï¿½w do statku.
  */
 int shedit_roomdump( CHAR_DATA *ch, SHIP_INDEX_DATA *ship )
 {
-    SHIP_ROOM_DATA *	sRoom;
     ROOM_INDEX_DATA *	pRoom;
     int			start;
     int			vector;
@@ -1788,18 +1768,12 @@ int shedit_roomdump( CHAR_DATA *ch, SHIP_INDEX_DATA *ship )
 	send_to_char( "Not enough free vnums in ship_area to edit ship!" NL, ch );
 	return 0;
     }
-    vector = ship->first_room->vnum;
+    vector = ship->rooms.front()->vnum;
 
     log_string( "starting ship_room dumping..." );
 
-    for( sRoom = ship->first_room; sRoom; sRoom = sRoom->next )
+    for( auto* sRoom : ship->rooms )
     {
-	EXTRA_DESCR_DATA *	sEd;
-	EXTRA_DESCR_DATA *	ed;
-	MPROG_DATA *		sPrg;
-	MPROG_DATA *		pPrg;
-	RESET_DATA *		sRes;
-
 	pRoom 		= make_room( start+(sRoom->vnum-vector), 0 );
 	pRoom->area	= shipTmpArea;
 
@@ -1830,26 +1804,27 @@ int shedit_roomdump( CHAR_DATA *ch, SHIP_INDEX_DATA *ship )
 	REMOVE_BIT( pRoom->room_flags, 	ROOM_PLR_HOME );
 
     	//eds
-	for( sEd = sRoom->first_extradesc; sEd; sEd = sEd->next )
+	for( auto* sEd : sRoom->extradesc )
 	{
-	    ed = SetRExtra( pRoom, sEd->keyword );
+	    auto* ed = SetRExtra( pRoom, sEd->keyword );
 	    STRDUP( ed->description, sEd->description );
 	}
 
 	//progs
-	for( sPrg = sRoom->mudprogs; sPrg; sPrg = sPrg->next )
+	for( auto* sPrg : sRoom->mudprogs )
 	{
-	    CREATE( pRoom->mudprogs,MPROG_DATA,1 );
-	    pPrg		= pRoom->mudprogs;
+	    MPROG_DATA* pPrg;
+	    CREATE( pPrg, MPROG_DATA, 1 );
 	    pPrg->type		= sPrg->type;
 	    pRoom->progtypes 	= pRoom->progtypes | pPrg->type;
 	    STRDUP( pPrg->comlist, sPrg->comlist );
 	    STRDUP( pPrg->arglist, sPrg->arglist );
+	    pRoom->mudprogs.push_back( pPrg );
 	}
 
-	for( sRes = sRoom->first_reset; sRes; sRes = sRes->next )
+	for( auto* sRes : sRoom->resets )
 	{
-	    // szybka konwersja resetów
+	    // szybka konwersja resetï¿½w
 	    switch( sRes->command )
 	    {
 		default:
@@ -1872,13 +1847,11 @@ int shedit_roomdump( CHAR_DATA *ch, SHIP_INDEX_DATA *ship )
 
     // drzwi generujemy w oddzielnej petli -- mamy wiec pewnosc, ze
     // wszystkie potrzebne lokacje zostaly juz stworzone
-    for( sRoom = ship->first_room; sRoom; sRoom = sRoom->next )
+    for( auto* sRoom : ship->rooms )
     {
-	SHIP_EXIT_DATA   *sExit;
-	EXIT_DATA        *pExit;
-
-	for( sExit = sRoom->first_exit; sExit; sExit = sExit->next )
+	for( auto* sExit : sRoom->exits )
 	{
+	    EXIT_DATA *pExit;
 	    pExit = make_exit( 	get_room_index( start+(sRoom->vnum-vector) ),
 				get_room_index( start+(sExit->vnum-vector) ),
 				sExit->vdir );
@@ -1914,7 +1887,7 @@ int shedit_roomdump( CHAR_DATA *ch, SHIP_INDEX_DATA *ship )
 
 
 /*
- * Ci±gnie z fizycznej krainy okre¶lon± ilo¶æ lokacji z resetami,
+ * Ciï¿½gnie z fizycznej krainy okreï¿½lonï¿½ iloï¿½ï¿½ lokacji z resetami,
  * extradescriptionami, progami i innymi bzdetami.
  */
 void ship_room_copy( SHIP_INDEX_DATA *shrec, int start, int end )
@@ -1922,17 +1895,11 @@ void ship_room_copy( SHIP_INDEX_DATA *shrec, int start, int end )
     int i;
     ROOM_INDEX_DATA *	pRoom;
     SHIP_ROOM_DATA *	sRoom;
-    RESET_DATA *	res;
-    RESET_DATA *	res_next;
 
     for( i = start; i <= end; i++ )
     {
 	SHIP_EXIT_DATA *	sExit;
-	EXIT_DATA *		pExit;
 	EXTRA_DESCR_DATA *	sEd;
-	EXTRA_DESCR_DATA *	pEd;
-	MPROG_DATA *		pProg;
-	MPROG_DATA *		sProg;
 
 	if( !(pRoom = get_room_index( i ) ) )
 	    continue;
@@ -1950,7 +1917,7 @@ void ship_room_copy( SHIP_INDEX_DATA *shrec, int start, int end )
 	sRoom->tele_delay	= 	pRoom->tele_delay;
 	sRoom->tunnel		= 	pRoom->tunnel;
 
-	for( pExit = pRoom->first_exit; pExit; pExit = pExit->next )
+	for( auto* pExit : pRoom->exits )
 	{
 	    CREATE( sExit, SHIP_EXIT_DATA, 1 );
 	    STRDUP( sExit->keyword, 	pExit->keyword 		);
@@ -1961,51 +1928,42 @@ void ship_room_copy( SHIP_INDEX_DATA *shrec, int start, int end )
 	    sExit->vdir		=	pExit->vdir;
 	    sExit->distance	=	pExit->distance;
 	    sExit->flags	= 	pExit->orig_flags;
-	    LINK( sExit, sRoom->first_exit, sRoom->last_exit, next, prev );
+	    sRoom->exits.push_back( sExit );
 	}
 
-	for( pEd = pRoom->first_extradesc; pEd; pEd = pEd->next )
+	for( auto* pEd : pRoom->extradesc )
 	{
 	    CREATE( sEd, EXTRA_DESCR_DATA, 1 );
 	    STRDUP( sEd->keyword, 	pEd->keyword 		);
 	    STRDUP( sEd->description, 	pEd->description 	);
-	    LINK( sEd, sRoom->first_extradesc, sRoom->last_extradesc, next, prev );
+	    sRoom->extradesc.push_back( sEd );
 	}
 
-	if( pRoom->mudprogs )
+	for( auto* pProg : pRoom->mudprogs )
 	{
-	    CREATE( sRoom->mudprogs, MPROG_DATA, 1 );
-	    sProg = sRoom->mudprogs;
-	    for( pProg = pRoom->mudprogs; pProg;
-					  pProg = pProg->next,
-					  sProg = sProg->next )
-	    {
-		sProg->type 	= 	pProg->type;
-		STRDUP( sProg->arglist, pProg->arglist );
-		STRDUP( sProg->comlist, pProg->comlist );
+	    MPROG_DATA* sProg;
+	    CREATE( sProg, MPROG_DATA, 1 );
+	    sProg->type 	= 	pProg->type;
+	    STRDUP( sProg->arglist, pProg->arglist );
+	    STRDUP( sProg->comlist, pProg->comlist );
+	    sRoom->mudprogs.push_back( sProg );
+	}
 
-		if ( pProg->next )
-		    CREATE( sProg->next,MPROG_DATA,1 );
-		else
-		    sProg->next = NULL;
+
+	//resety wrzucamy znï¿½w na statek
+	{
+	    auto snapshot = pRoom->resets;
+	    for( auto* res : snapshot )
+	    {
+	        pRoom->resets.remove( res );
+	        sRoom->resets.push_back( res );
+	        --top_reset;
 	    }
 	}
 
 
-	//resety wrzucamy znów na statek
-	for( res = pRoom->first_reset; res; res = res_next )
-	{
-	    res_next = res->next;
-
-	    UNLINK( res, pRoom->first_reset, pRoom->last_reset,
-		    next, prev );
-	    LINK( res, sRoom->first_reset, sRoom->last_reset, next, prev );
-	    --top_reset;
-	}
-
-
 	shrec->roomcount++;
-	LINK( sRoom, shrec->first_room, shrec->last_room, next, prev );
+	shrec->rooms.push_back( sRoom );
     }
 
     return;
@@ -2024,13 +1982,13 @@ bool shedit_create( CHAR_DATA *ch, char *argument )
 
     if ( arg1[0] == '\0' || (value = atoi( arg1 ))==0 )
     {
-	send_to_char( "Sk³adnia: create <vnum>" NL, ch );
+	send_to_char( "Skï¿½adnia: create <vnum>" NL, ch );
 	return false;
     }
 
     if ( get_ship_index( arg1 ) )
     {
-	send_to_char( "Taki prototyp statku ju¿ istnieje." NL, ch );
+	send_to_char( "Taki prototyp statku juï¿½ istnieje." NL, ch );
 	return false;
     }
 
@@ -2044,7 +2002,7 @@ bool shedit_create( CHAR_DATA *ch, char *argument )
     }
 
     pShrec->vnum	= value;
-    LINK( pShrec, first_ship_index, last_ship_index, next, prev );
+    ship_index_list.push_back( pShrec );
 
     start_shedit( ch, pShrec );
     send_to_char( "Prototyp statku stworzony." NL, ch );
@@ -2086,9 +2044,7 @@ DEF_DO_FUN( shedit )
 
 SHIP_INDEX_DATA *get_ship_index_fn( char *fn )
 {
-    SHIP_INDEX_DATA *    shp;
-
-    for( shp = first_ship_index; shp; shp = shp->next )
+    for( auto* shp : ship_index_list )
     {
 	if( !str_cmp( shp->filename, fn ) )
 	    return shp;
@@ -2178,7 +2134,7 @@ void shedit( DESCRIPTOR_DATA *d, char *argument )
     {
 	int	svnum, evnum;
 
-	if( !shrec->first_room )
+	if( shrec->rooms.empty() )
 	{
 	    send_to_char( "This ship has no location yet!!!" NL, ch );
 	    return;
@@ -2205,7 +2161,7 @@ void shedit( DESCRIPTOR_DATA *d, char *argument )
         argument = one_argument( argument, arg1 );
         argument = one_argument( argument, arg2 );
 
-	if( shrec->first_room
+	if( !shrec->rooms.empty()
 	&&( !*argument || str_cmp( argument, "sure" ) ) )
 	{
 	    send_to_char(
@@ -2403,7 +2359,7 @@ void shedit( DESCRIPTOR_DATA *d, char *argument )
 
         if ( arg2[0] == '\0' )
         {
-           send_to_char( "Mo¿liwe flagi: metaaggressive aggressive nowander wimpy hidden descless done" NL, ch );
+           send_to_char( "Moï¿½liwe flagi: metaaggressive aggressive nowander wimpy hidden descless done" NL, ch );
            return;
         }
 

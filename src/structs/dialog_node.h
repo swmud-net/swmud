@@ -20,37 +20,20 @@
 #define DIALOG_NODE_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct dialog_node
 {
-	/*! wska¿nik na strukture ca³ego dialogu */
+	/*! wskaï¿½nik na strukture caï¿½ego dialogu */
 	DIALOG_DATA			* pBase;
-	/*! wska¿niki do listy struktur dialogowych
-	* wi±¿amy wszystkie struktury bior±ce udzia³
-	* w tym dialogu w³a¶nie tymi dwoma wska¿nikami
-	*/
-	DIALOG_NODE			* next;
-	/*! wska¿niki do listy struktur dialogowych
-	* wi±¿amy wszystkie struktury bior±ce udzia³
-	* w tym dialogu w³a¶nie tymi dwoma wska¿nikami
-	*/
-	DIALOG_NODE			* prev;
 
-	/*! pierwszy tekst jaki gracz moze wystosowac do moba*/
-	DIALOG_NODE			* first;
-	/*! ostatni tekst jaki gracz mo¿e powiedzieæ do moba */
-	DIALOG_NODE			* last;
-
-	/*! wska¿nik na nastêpny teskt na tym etapie dialogu */
-	DIALOG_NODE			* next_in_dialog;
-	/*! wska¿nik na poprzedni teskt na tym etapie dialogu */
-	DIALOG_NODE			* prev_in_dialog;
-	/*! program który ma zadecydowaæ czy pokazaæ ten tekst */
+	std::list<DIALOG_NODE*> children;
+	/*! program ktï¿½ry ma zadecydowaï¿½ czy pokazaï¿½ ten tekst */
 	MPROG_DATA			* prog;
-	/*! tekst jaki mo¿emy skierowaæ do moba */
+	/*! tekst jaki moï¿½emy skierowaï¿½ do moba */
 	char				* text;
 	char				* mob_answer;
-	/*! nr porz±dkowy tej struktury w liscie */
+	/*! nr porzï¿½dkowy tej struktury w liscie */
 	int					nr;
 	/*! nr docelowy struktury - etapu do jakiej kieruje nas ten tekst */
 	int					target_nr;

@@ -23,10 +23,6 @@
 
 struct missile_data
 {
-	MISSILE_DATA		* next;
-	MISSILE_DATA		* prev;
-	MISSILE_DATA		* next_in_starsystem;
-	MISSILE_DATA		* prev_in_starsystem;
 	SPACE_DATA			* starsystem;
 	SHIP_DATA			* target;
 	SHIP_DATA			* fired_from;

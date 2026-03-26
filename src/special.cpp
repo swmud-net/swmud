@@ -132,20 +132,17 @@ const char* lookup_spec(SPEC_FUN *spec)
 bool spec_newbie_pilot(CHAR_DATA *ch)
 {
 	int home = 32149;
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	bool diploma = false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 
 		if ( IS_NPC(victim) || victim->position == POS_FIGHTING)
 			continue;
 
-		for (obj = victim->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : victim->carrying)
 			if (obj->pIndexData->vnum == OBJ_VNUM_SCHOOL_DIPLOMA)
 				diploma = true;
 
@@ -244,15 +241,12 @@ bool spec_jedi(CHAR_DATA *ch)
 
 bool spec_clan_guard(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-
 	if (!IS_AWAKE(ch) || ch->fighting)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 		if (!can_see(ch, victim))
 			continue;
 		if (get_timer(victim, TIMER_RECENTFIGHT) > 0)
@@ -272,23 +266,20 @@ bool spec_clan_guard(CHAR_DATA *ch)
 
 bool spec_customs_smut(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	long ch_exp;
 
 	if (!IS_AWAKE(ch) || ch->position == POS_FIGHTING)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 
 		if ( IS_NPC(victim) || victim->position == POS_FIGHTING)
 			continue;
 
-		for (obj = victim->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : victim->carrying)
 		{
 			if (obj->pIndexData->item_type == ITEM_SMUT)
 			{
@@ -351,9 +342,7 @@ bool spec_customs_smut(CHAR_DATA *ch)
 			}
 			else if (obj->item_type == ITEM_CONTAINER)
 			{
-				OBJ_DATA *content;
-				for (content = obj->first_content; content;
-						content = content->next_content)
+				for (auto* content : obj->contents)
 				{
 					if (content->pIndexData->item_type
 							== ITEM_SMUT && !IS_SET( content->extra_flags , ITEM_CONTRABAND ))
@@ -379,18 +368,15 @@ bool spec_customs_smut(CHAR_DATA *ch)
 
 bool spec_customs_weapons(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	long ch_exp;
 
 	if (!IS_AWAKE(ch) || ch->position == POS_FIGHTING)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 
 		if ( IS_NPC(victim) || victim->position == POS_FIGHTING)
 			continue;
@@ -399,7 +385,7 @@ bool spec_customs_weapons(CHAR_DATA *ch)
 				&& !str_cmp(victim->pcdata->clan->name, ch->mob_clan))
 			continue;
 
-		for (obj = victim->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : victim->carrying)
 		{
 			if (obj->pIndexData->item_type
 					== ITEM_WEAPON && obj->value[3] != WEAPON_LIGHTSABER)
@@ -462,9 +448,7 @@ bool spec_customs_weapons(CHAR_DATA *ch)
 			}
 			else if (obj->item_type == ITEM_CONTAINER)
 			{
-				OBJ_DATA *content;
-				for (content = obj->first_content; content;
-						content = content->next_content)
+				for (auto* content : obj->contents)
 				{
 					if (content->pIndexData->item_type
 							== ITEM_WEAPON && !IS_SET( content->extra_flags , ITEM_CONTRABAND ))
@@ -488,9 +472,6 @@ bool spec_customs_weapons(CHAR_DATA *ch)
 
 bool spec_customs_alcohol(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	int liquid;
 	long ch_exp;
@@ -498,14 +479,14 @@ bool spec_customs_alcohol(CHAR_DATA *ch)
 	if (!IS_AWAKE(ch) || ch->position == POS_FIGHTING)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 
 		if ( IS_NPC(victim) || victim->position == POS_FIGHTING)
 			continue;
 
-		for (obj = victim->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : victim->carrying)
 		{
 			if (obj->pIndexData->item_type == ITEM_DRINK_CON)
 			{
@@ -575,9 +556,7 @@ bool spec_customs_alcohol(CHAR_DATA *ch)
 			}
 			else if (obj->item_type == ITEM_CONTAINER)
 			{
-				OBJ_DATA *content;
-				for (content = obj->first_content; content;
-						content = content->next_content)
+				for (auto* content : obj->contents)
 				{
 					if (content->pIndexData->item_type
 							== ITEM_DRINK_CON && !IS_SET( content->extra_flags , ITEM_CONTRABAND ))
@@ -607,23 +586,20 @@ bool spec_customs_alcohol(CHAR_DATA *ch)
 
 bool spec_customs_spice(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-	OBJ_DATA *obj;
 	char buf[MAX_STRING_LENGTH];
 	long ch_exp;
 
 	if (!IS_AWAKE(ch) || ch->position == POS_FIGHTING)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 
 		if ( IS_NPC(victim) || victim->position == POS_FIGHTING)
 			continue;
 
-		for (obj = victim->last_carrying; obj; obj = obj->prev_content)
+		for (auto* obj : victim->carrying)
 		{
 			if (obj->pIndexData->item_type == ITEM_SPICE
 					|| obj->pIndexData->item_type == ITEM_RAWSPICE)
@@ -686,9 +662,7 @@ bool spec_customs_spice(CHAR_DATA *ch)
 			}
 			else if (obj->item_type == ITEM_CONTAINER)
 			{
-				OBJ_DATA *content;
-				for (content = obj->first_content; content;
-						content = content->next_content)
+				for (auto* content : obj->contents)
 				{
 					if (content->pIndexData->item_type
 							== ITEM_SPICE && !IS_SET( content->extra_flags , ITEM_CONTRABAND ))
@@ -714,9 +688,7 @@ bool spec_customs_spice(CHAR_DATA *ch)
 
 SUSPECT_DATA* get_suspect(CHAR_DATA *victim, CHAR_DATA *ch)
 {
-	SUSPECT_DATA *sus;
-
-	for (sus = ch->first_suspect; sus; sus = sus->next)
+	for (auto* sus : ch->suspects)
 		if (!str_cmp(sus->name, victim->name))
 			return sus;
 
@@ -733,7 +705,7 @@ void start_suspecting(CHAR_DATA *ch, CHAR_DATA *victim, int status,
 	sus->age = 2 + number_range(0, 1);
 	sus->status = status;
 	sus->crime = crime;
-	LINK(sus, ch->first_suspect, ch->last_suspect, next, prev);
+	ch->suspects.push_back(sus);
 	return;
 }
 
@@ -792,12 +764,10 @@ void police_bribe_trigger(CHAR_DATA *mob, CHAR_DATA *ch, int amount)
 
 void end_hunting(CHAR_DATA *victim, CHAR_DATA *ch, CRIME_DATA *crime)
 {
-	CHAR_DATA *hch;
-
 	jail_char(victim, ch, crime);
 
 	/* alarm odwo�any */
-	for (hch = first_char; hch; hch = hch->next)
+	for (auto* hch : char_list)
 	{
 		SUSPECT_DATA *hsus;
 
@@ -819,8 +789,6 @@ void end_hunting(CHAR_DATA *victim, CHAR_DATA *ch, CRIME_DATA *crime)
 bool spec_police(CHAR_DATA *ch)
 {
 	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-	PLANET_DATA *planet;
 	SUSPECT_DATA *sus;
 	char buf[MAX_STRING_LENGTH];
 
@@ -828,7 +796,7 @@ bool spec_police(CHAR_DATA *ch)
 		return false;
 
 	/* najpierw update ewentualnych spraw do wyja�nienia */
-	for (sus = ch->first_suspect; sus; sus = sus->next)
+	for (auto* sus : ch->suspects)
 	{
 		if (sus->status == SUS_FINED || sus->status == SUS_CRITICAL)
 			continue;
@@ -844,11 +812,10 @@ bool spec_police(CHAR_DATA *ch)
 			/* a gracz zwia�??? */
 			if ((victim = get_char_room(ch, sus->name)) == NULL)
 			{
-				OBJ_DATA *obj;
 				bool got_comlink = false;
 
 				/* czy policjant ma komlink ? */
-				for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+				for (auto* obj : ch->carrying)
 				{
 					if (obj->pIndexData->item_type == ITEM_COMLINK)
 					{
@@ -860,9 +827,6 @@ bool spec_police(CHAR_DATA *ch)
 				/* farciarz - wyszed� z gry (to na d�u�sz� met� nic nie da) */
 				if ((victim = get_char_world(ch, sus->name)))
 				{
-
-					CHAR_DATA *hch;
-
 					sprintf(buf, "%s do wszystkich jednostek!" NL
 					"Cel akcji %s!" NL
 					"Uwaga! Przeciwnik mo�e by� uzbrojony!" NL, NAME(ch, 0),
@@ -876,7 +840,7 @@ bool spec_police(CHAR_DATA *ch)
 					/* ma komlink? no to meldujemy */
 					if (got_comlink) /* Je�li policjant ma nadajnik
 					 alarmuje innych */
-						for (hch = first_char; hch; hch = hch->next)
+						for (auto* hch : char_list)
 						{
 							if (!IS_NPC(hch) || !hch->in_room
 									|| !hch->in_room->area
@@ -916,22 +880,21 @@ bool spec_police(CHAR_DATA *ch)
 		return false;
 
 	/* poszukajny nowych podejrzanych */
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot2 = ch->in_room->people;
+	for (auto* victim : people_snapshot2)
 	{
 		CRIME_DATA *crime;
-
-		v_next = victim->next_in_room;
 
 		if (IS_NPC(victim))
 			continue;
 
-		if (!victim->first_crime)
+		if (victim->crimes.empty())
 			continue;
 
 		if (!can_see(ch, victim))
 			continue;
 
-		for (planet = first_planet; planet; planet = planet->next)
+		for (auto* planet : planet_list)
 		{
 			if ( IS_VIP2(ch, planet)
 					&& (crime = find_crime(victim, planet)) != NULL)
@@ -978,9 +941,6 @@ bool spec_police(CHAR_DATA *ch)
 
 bool spec_police_attack(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-	PLANET_DATA *planet;
 	char buf[MAX_STRING_LENGTH];
 
 	if (!IS_AWAKE(ch) || ch->fighting)
@@ -989,16 +949,15 @@ bool spec_police_attack(CHAR_DATA *ch)
 	if (!IS_VIP1(ch))
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
 		CRIME_DATA *crime;
-
-		v_next = victim->next_in_room;
 
 		if (IS_NPC(victim))
 			continue;
 
-		if (!victim->first_crime)
+		if (victim->crimes.empty())
 			continue;
 
 		if (!can_see(ch, victim))
@@ -1007,7 +966,7 @@ bool spec_police_attack(CHAR_DATA *ch)
 		if (number_bits(1) == 0)
 			continue;
 
-		for (planet = first_planet; planet; planet = planet->next)
+		for (auto* planet : planet_list)
 		{
 			if ( IS_VIP2(ch, planet)
 					&& (crime = find_crime(victim, planet)) != NULL)
@@ -1029,7 +988,6 @@ bool spec_police_attack(CHAR_DATA *ch)
 /*Przerobione zupe�nie przez Ganisa*/
 bool spec_police_fine(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
 	char buf[MAX_STRING_LENGTH];
 	map<SWString, bool> *my_memory;
 	map<SWString, bool>::iterator it;
@@ -1047,13 +1005,12 @@ bool spec_police_fine(CHAR_DATA *ch)
 	if (!IS_AWAKE(ch) || ch->fighting)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim;
-			victim = victim->next_in_room)
+	for (auto* victim : ch->in_room->people)
 	{
 		if (IS_NPC(victim))
 			continue;
 
-		if (!victim->first_crime)
+		if (victim->crimes.empty())
 			continue;
 
 		if (!can_see(ch, victim))
@@ -1100,9 +1057,6 @@ bool spec_police_fine(CHAR_DATA *ch)
 
 bool spec_police_jail(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-	PLANET_DATA *planet;
 	char buf[MAX_STRING_LENGTH];
 
 	if (!IS_AWAKE(ch) || ch->fighting)
@@ -1111,16 +1065,15 @@ bool spec_police_jail(CHAR_DATA *ch)
 	if (!IS_VIP1(ch))
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
 		CRIME_DATA *crime;
-
-		v_next = victim->next_in_room;
 
 		if (IS_NPC(victim))
 			continue;
 
-		if (!victim->first_crime)
+		if (victim->crimes.empty())
 			continue;
 
 		if (!can_see(ch, victim))
@@ -1129,7 +1082,7 @@ bool spec_police_jail(CHAR_DATA *ch)
 		if (number_bits(1) == 0)
 			continue;
 
-		for (planet = first_planet; planet; planet = planet->next)
+		for (auto* planet : planet_list)
 		{
 			if ( IS_VIP2(ch, planet)
 					&& (crime = find_crime(victim, planet)) != NULL)
@@ -1152,17 +1105,18 @@ bool spec_police_jail(CHAR_DATA *ch)
 
 bool spec_jedi_healer(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
+	CHAR_DATA *victim = nullptr;
 
 	if (!IS_AWAKE(ch))
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	for (auto* vch : ch->in_room->people)
 	{
-		v_next = victim->next_in_room;
-		if (victim != ch && can_see(ch, victim) && number_bits(1) == 0)
+		if (vch != ch && can_see(ch, vch) && number_bits(1) == 0)
+		{
+			victim = vch;
 			break;
+		}
 	}
 
 	if (!victim)
@@ -1215,19 +1169,20 @@ bool spec_jedi_healer(CHAR_DATA *ch)
 
 bool spec_dark_jedi(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
+	CHAR_DATA *victim = nullptr;
 	const char *spell;
 	int sn;
 
 	if (ch->position != POS_FIGHTING)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	for (auto* vch : ch->in_room->people)
 	{
-		v_next = victim->next_in_room;
-		if (who_fighting(victim) && number_bits(2) == 0)
+		if (who_fighting(vch) && number_bits(2) == 0)
+		{
+			victim = vch;
 			break;
+		}
 	}
 
 	if (!victim || victim == ch)
@@ -1295,25 +1250,20 @@ bool spec_dark_jedi(CHAR_DATA *ch)
 
 bool spec_fido(CHAR_DATA *ch)
 {
-	OBJ_DATA *corpse;
-	OBJ_DATA *c_next;
-	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
-
 	if (!IS_AWAKE(ch))
 		return false;
 
-	for (corpse = ch->in_room->first_content; corpse; corpse = c_next)
+	auto contents_snapshot = ch->in_room->contents;
+	for (auto* corpse : contents_snapshot)
 	{
-		c_next = corpse->next_content;
 		if (corpse->item_type != ITEM_CORPSE_NPC)
 			continue;
 
 		act( COL_ACTION, "$n �apczywie rozszarpuje cia�o.", ch, NULL, NULL,
 				TO_ROOM);
-		for (obj = corpse->first_content; obj; obj = obj_next)
+		auto corpse_contents_snapshot = corpse->contents;
+		for (auto* obj : corpse_contents_snapshot)
 		{
-			obj_next = obj->next_content;
 			obj_from_obj(obj);
 			obj_to_room(obj, ch->in_room);
 		}
@@ -1326,15 +1276,12 @@ bool spec_fido(CHAR_DATA *ch)
 
 bool spec_stormtrooper(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-
 	if (!IS_AWAKE(ch) || ch->fighting)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 		if (!can_see(ch, victim))
 			continue;
 		if (get_timer(victim, TIMER_RECENTFIGHT) > 0)
@@ -1360,15 +1307,12 @@ bool spec_stormtrooper(CHAR_DATA *ch)
 
 bool spec_new_republic_trooper(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
-
 	if (!IS_AWAKE(ch) || ch->fighting)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 		if (!can_see(ch, victim))
 			continue;
 		if (get_timer(victim, TIMER_RECENTFIGHT) > 0)
@@ -1395,8 +1339,7 @@ bool spec_new_republic_trooper(CHAR_DATA *ch)
 bool spec_guardian(CHAR_DATA *ch)
 {
 	char buf[MAX_STRING_LENGTH];
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
+	CHAR_DATA *victim = nullptr;
 	CHAR_DATA *ech;
 	const char *crime;
 	int max_evil;
@@ -1408,9 +1351,8 @@ bool spec_guardian(CHAR_DATA *ch)
 	ech = NULL;
 	crime = "";
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	for (auto* victim : ch->in_room->people)
 	{
-		v_next = victim->next_in_room;
 		if (victim->fighting && who_fighting(victim) != ch
 				&& victim->alignment < max_evil)
 		{
@@ -1449,15 +1391,12 @@ bool spec_guardian(CHAR_DATA *ch)
 
 bool spec_janitor(CHAR_DATA *ch)
 {
-	OBJ_DATA *trash;
-	OBJ_DATA *trash_next;
-
 	if (!IS_AWAKE(ch))
 		return false;
 
-	for (trash = ch->in_room->first_content; trash; trash = trash_next)
+	auto contents_snapshot = ch->in_room->contents;
+	for (auto* trash : contents_snapshot)
 	{
-		trash_next = trash->next_content;
 		if (!IS_SET(trash->wear_flags, ITEM_TAKE)
 				|| IS_OBJ_STAT(trash, ITEM_BURRIED) || trash->inquest)/* <-- bug fix by Thanos */
 			continue;
@@ -1492,16 +1431,14 @@ bool spec_poison(CHAR_DATA *ch)
 
 bool spec_thief(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
 	int gold, maxgold;
 
 	if (ch->position != POS_STANDING)
 		return false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 
 		if ( IS_NPC(victim) || get_trust(victim) >= LEVEL_IMMORTAL
 				|| number_bits(2) != 0 || !can_see(ch, victim)) /* Thx Glop */
@@ -1536,24 +1473,21 @@ bool spec_thief(CHAR_DATA *ch)
 
 bool spec_auth(CHAR_DATA *ch)
 {
-	CHAR_DATA *victim;
-	CHAR_DATA *v_next;
 	char buf[MAX_STRING_LENGTH];
 	OBJ_INDEX_DATA *pObjIndex;
 	OBJ_DATA *obj;
 	bool hasdiploma;
-	BAN_DATA *pban;
 	bool ban = false;
 
-	for (victim = ch->in_room->first_person; victim; victim = v_next)
+	auto people_snapshot = ch->in_room->people;
+	for (auto* victim : people_snapshot)
 	{
-		v_next = victim->next_in_room;
 
 		if (!victim->desc)
 			continue;
 
 		/* Thanos:          wieczni newbie za kar� */
-		for (pban = first_ban; pban; pban = pban->next)
+		for (auto* pban : ban_list)
 		{
 			if ((!str_suffix(pban->name, victim->desc->host))
 					&& pban->level == BAN_SOFT)
@@ -1574,7 +1508,7 @@ bool spec_auth(CHAR_DATA *ch)
 		{
 			hasdiploma = false;
 
-			for (obj = victim->last_carrying; obj; obj = obj->prev_content)
+			for (auto* obj : victim->carrying)
 				if (obj->pIndexData == get_obj_index( OBJ_VNUM_SCHOOL_DIPLOMA))
 					hasdiploma = true;
 

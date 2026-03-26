@@ -40,10 +40,9 @@ extern FILE *			fpArea;
 
 COMPLAIN_DATA *get_complain( int type, int nr )
 {
-    COMPLAIN_DATA *	comp;
     int			i = 1;
 
-    for( comp = first_complain; comp; comp = comp->next )
+    for( auto* comp : complain_list )
     {
 	if( comp->type != type )
 	    continue;
@@ -99,7 +98,7 @@ DEF_DO_FUN( fix )
     // zapisujemy plik <arg1>.fixed
     save_complains( true );
     // usuwamy <arg1>
-    UNLINK( comp, first_complain, last_complain, next, prev );
+    complain_list.remove( comp );
     free_complain( comp );
     // zapisujemy nowy stan <arg1>
     save_complains( false );
@@ -208,7 +207,7 @@ void fread_complains(const char *filename)
 	{
 	    COMPLAIN_DATA *	comp;
 	    comp = fread_complain( fpArea );
-	    LINK( comp, first_complain, last_complain, next, prev );
+	    complain_list.push_back( comp );
 	}
 	else
 	{
@@ -266,7 +265,6 @@ void fwrite_complain( COMPLAIN_DATA *comp, int type, bool fixed, FILE *fp )
 
 void save_bugs( bool fixed )
 {
-    COMPLAIN_DATA *	comp;
     FILE *		fp;
     char *		fname = (char *)(fixed ? PBUG_FIX_FILE : PBUG_FILE);
 
@@ -280,7 +278,7 @@ void save_bugs( bool fixed )
         return;
     }
 
-    for( comp = first_complain; comp; comp = comp->next )
+    for( auto* comp : complain_list )
     {
 	if( comp->type != complain_data::COMPLAIN_BUG )
 	    continue;
@@ -295,7 +293,6 @@ void save_bugs( bool fixed )
 
 void save_typos( bool fixed )
 {
-    COMPLAIN_DATA *	comp;
     FILE *		fp;
     char *		fname = (char *)(fixed ? PTYPO_FIX_FILE : PTYPO_FILE);
 
@@ -309,7 +306,7 @@ void save_typos( bool fixed )
         return;
     }
 
-    for( comp = first_complain; comp; comp = comp->next )
+    for( auto* comp : complain_list )
     {
 	if( comp->type != complain_data::COMPLAIN_TYPO )
 	    continue;
@@ -324,7 +321,6 @@ void save_typos( bool fixed )
 
 void save_ideas( bool fixed )
 {
-    COMPLAIN_DATA *	comp;
     FILE *		fp;
     char *		fname = (char *)(fixed ? PIDEA_FIX_FILE : PIDEA_FILE);
 
@@ -338,7 +334,7 @@ void save_ideas( bool fixed )
         return;
     }
 
-    for( comp = first_complain; comp; comp = comp->next )
+    for( auto* comp : complain_list )
     {
 	if( comp->type != complain_data::COMPLAIN_IDEA )
 	    continue;
@@ -368,8 +364,6 @@ COMPLAIN_DATA * new_complain( CHAR_DATA *ch, complain_data::Type type, char *txt
 
     CREATE( comp, COMPLAIN_DATA, 1 );
     clear_complain( comp );
-    comp->next = NULL;
-    comp->prev = NULL;
     STRDUP( comp->author, ch->name );
     STRDUP( comp->text, txt );
     STRDUP( comp->date, strtime );
@@ -380,10 +374,9 @@ COMPLAIN_DATA * new_complain( CHAR_DATA *ch, complain_data::Type type, char *txt
 
 void show_complains( CHAR_DATA *ch, int type )
 {
-    COMPLAIN_DATA *	comp;
     int 		i = 1;
 
-    for( comp = first_complain; comp; comp = comp->next )
+    for( auto* comp : complain_list )
     {
 	if( comp->type != type )
 	    continue;
@@ -399,9 +392,9 @@ void show_complains( CHAR_DATA *ch, int type )
 
 DEF_DO_FUN( ide )
 {
-    send_to_char("Je¶li masz jaki¶ pomys³, który chcesz zg³osiæ administratorom,napisz" NL, ch);
-    send_to_char("'idea <tre¶æ_pomys³u>', a je¶li chcesz zidentyfikowaæ przedmiot... có¿..." NL, ch);
-    send_to_char("wymy¶l co¶ :>." NL, ch);
+    send_to_char("Jeï¿½li masz jakiï¿½ pomysï¿½, ktï¿½ry chcesz zgï¿½osiï¿½ administratorom,napisz" NL, ch);
+    send_to_char("'idea <treï¿½ï¿½_pomysï¿½u>', a jeï¿½li chcesz zidentyfikowaï¿½ przedmiot... cï¿½..." NL, ch);
+    send_to_char("wymyï¿½l coï¿½ :>." NL, ch);
     return;
 }
 
@@ -412,19 +405,19 @@ DEF_DO_FUN( idea )
 
     if ( argument[0] == '\0' )
     {
-	send_to_char( "Jakim pomys³em chcesz siê podzieliæ z kochanymi administratorami?" NL, ch );
+	send_to_char( "Jakim pomysï¿½em chcesz siï¿½ podzieliï¿½ z kochanymi administratorami?" NL, ch );
 	return;
     }
 
     comp = new_complain( ch, complain_data::COMPLAIN_IDEA, argument );
-    LINK( comp, first_complain, last_complain, next, prev );
+    complain_list.push_back( comp );
     save_complains( false );
 
     sprintf( buf, FB_YELLOW "%s ->" PLAIN " %s",
 	ch->name, argument );
     to_channel( buf, CHANNEL_MONITOR, "P_IDEA ", 1);
 
-    send_to_char( "Ok. Dziêki." NL, ch );
+    send_to_char( "Ok. Dziï¿½ki." NL, ch );
     return;
 }
 
@@ -435,19 +428,19 @@ DEF_DO_FUN( bug )
 
     if ( argument[0] == '\0' )
     {
-	send_to_char( "O jakim b³êdzie chcesz poinformowaæ kochanych administratorów?" NL, ch );
+	send_to_char( "O jakim bï¿½ï¿½dzie chcesz poinformowaï¿½ kochanych administratorï¿½w?" NL, ch );
 	return;
     }
 
     comp = new_complain( ch, complain_data::COMPLAIN_BUG, argument );
-    LINK( comp, first_complain, last_complain, next, prev );
+    complain_list.push_back( comp );
     save_complains( false );
 
     sprintf( buf, FB_YELLOW "%s ->" PLAIN " %s",
 	ch->name, argument );
     to_channel( buf, CHANNEL_MONITOR, "P_BUG ", 1);
 
-    send_to_char( "Ok. Dziêki." NL, ch );
+    send_to_char( "Ok. Dziï¿½ki." NL, ch );
     return;
 }
 
@@ -460,19 +453,19 @@ DEF_DO_FUN( typo )
 
     if ( argument[0] == '\0' )
     {
-	send_to_char( "Jak± usterkê chcesz zg³osiæ kochanym administratorom?" NL, ch );
+	send_to_char( "Jakï¿½ usterkï¿½ chcesz zgï¿½osiï¿½ kochanym administratorom?" NL, ch );
 	return;
     }
 
     comp = new_complain( ch, complain_data::COMPLAIN_TYPO, argument );
-    LINK( comp, first_complain, last_complain, next, prev );
+    complain_list.push_back( comp );
     save_complains( false );
 
     sprintf( buf, FB_YELLOW "%s ->" PLAIN " %s",
 	ch->name, argument );
     to_channel( buf, CHANNEL_MONITOR, "P_TYPO ", 1);
 
-    send_to_char( "Ok. Dziêki." NL, ch );
+    send_to_char( "Ok. Dziï¿½ki." NL, ch );
     return;
 }
 

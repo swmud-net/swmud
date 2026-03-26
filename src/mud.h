@@ -40,6 +40,9 @@
 #endif
 #include <string.h>
 #include <regex.h>
+#include <list>
+#include <forward_list>
+#include <algorithm>
 
 #ifdef DMALLOC			/* Thanos  -- to dla mnie */
 #include <dmalloc.h>
@@ -227,7 +230,7 @@
 #define MAX_LAST_TELL	15 /*Added by Thanos (do last_tell'a)*/
 #define MAX_LAST_CTALK	20 /*Added by Thanos*/
 #define MAX_ALIAS	20 /*added by Thanos*/
-#define MAX_SCRIPTS	30 /*added by Thanos ile skryptów naraz mo¿e mieæ mob*/
+#define MAX_SCRIPTS	30 /*added by Thanos ile skryptï¿½w naraz moï¿½e mieï¿½ mob*/
 
 #define MAX_VNUM	131070 /*128k*/
 
@@ -287,7 +290,7 @@
 #define PULSE_AREA			(	120	* PULSE_PER_SECOND	) /*60*/
 #define PULSE_TAXES			(	60	* PULSE_MINUTE		)
 #define PULSE_CLAN			(	60	* PULSE_MINUTE		)
-//added by Thanos (potrzebne do for i rat, mo¿na bêdzie to potem zwolniæ)
+//added by Thanos (potrzebne do for i rat, moï¿½na bï¿½dzie to potem zwolniï¿½)
 #define PULSE_FOR			(	PULSE_PER_SECOND / 2	)
 #define PULSE_AUCTION		(	30	* PULSE_PER_SECOND	)
 
@@ -378,13 +381,13 @@ extern	const	struct	command_type	action_command_table	[ ];
 * Structure used to build wizlist
 */
 /* Added by Thanos
-ulepszy³em dzia³anie f-cji 'for' i 'rat' tak, by dzia³a³y
-jak skrypt, czyli wykonywa³y pojedyncz± czynno¶æ na jeden puls muda
-stare 'for' i 'rat' robi³y wszystko w jednej ramce, co opó¼nia³o a nawet
-wywala³o muda
+ulepszyï¿½em dziaï¿½anie f-cji 'for' i 'rat' tak, by dziaï¿½aï¿½y
+jak skrypt, czyli wykonywaï¿½y pojedynczï¿½ czynnoï¿½ï¿½ na jeden puls muda
+stare 'for' i 'rat' robiï¿½y wszystko w jednej ramce, co opï¿½niaï¿½o a nawet
+wywalaï¿½o muda
 */
-/* Te boole to dlatego, ¿e nie chce mi siê definiowaæ kolejnych sta³ych, a
-tak, ³atwo jest dodaæ nastêpne fukcje dla for */
+/* Te boole to dlatego, ï¿½e nie chce mi siï¿½ definiowaï¿½ kolejnych staï¿½ych, a
+tak, ï¿½atwo jest dodaï¿½ nastï¿½pne fukcje dla for */
 /*
 * Descriptor (channel) structure.
 */
@@ -393,7 +396,7 @@ tak, ³atwo jest dodaæ nastêpne fukcje dla for */
 * Attribute bonus structures.
 */
 /* By Ratm. Makro do sprawdzania czy ch jest rasy rozumnej.
-Innymi s³owy czy nie jest przedmiotem, ro¶lin±, owadem itp. */
+Innymi sï¿½owy czy nie jest przedmiotem, roï¿½linï¿½, owadem itp. */
 #define IS_INTELLIGENT( ch )	(!(IS_RACE( ch, "Plant" ) || IS_RACE( ch, "Object" )	\
 								|| IS_RACE( ch, "Insect" ) || IS_RACE( ch, "Animal" )))
 
@@ -470,9 +473,9 @@ U mobow robimy tak, ze zna (100%) albo nie zna (nie ma na liscie first,last_lang
 #define DEFAULT_ESCAPE_POD	1//index defaultowej kapsuly
 
 //added by Aldegard ( cargo ze snipeta jest dretwe wiec przerabiam na Listy)
-//szczego³y danego materia³u - nazwa, opis, wystêpowalno¶æ, cena,
-//wyamagania przewozowa, postaæ
-//mozna dorzucic specjalne wla¶ciwo¶ci materia³u
+//szczegoï¿½y danego materiaï¿½u - nazwa, opis, wystï¿½powalnoï¿½ï¿½, cena,
+//wyamagania przewozowa, postaï¿½
+//mozna dorzucic specjalne wlaï¿½ciwoï¿½ci materiaï¿½u
 
 //added by Aldegard (objecty w przestrzeni np wraki i asteroidy)
 /*
@@ -488,9 +491,9 @@ U mobow robimy tak, ze zna (100%) albo nie zna (nie ma na liscie first,last_lang
 */
 
 /*
-Thanos:	 wymagania przedmiotu. Np. nie za³o¿ysz tarczy co wymaga 40 si³y
-Kod niemal¿e zer¿niêty z AFFECT_DATA, a pomys³ na wymagania ca³kowicie
-zer¿niêty z Diablo :P
+Thanos:	 wymagania przedmiotu. Np. nie zaï¿½oï¿½ysz tarczy co wymaga 40 siï¿½y
+Kod niemalï¿½e zerï¿½niï¿½ty z AFFECT_DATA, a pomysï¿½ na wymagania caï¿½kowicie
+zerï¿½niï¿½ty z Diablo :P
 */
 /*! Trog: do list XML'owych */
 /***************************************************************************
@@ -588,7 +591,7 @@ zer¿niêty z Diablo :P
 #define ROOM_CORUSCANT_SHUTTLE		199
 #define ROOM_SENATE_SHUTTLE			10197
 
-/* vnumy domy¶lnego wiêzienia */
+/* vnumy domyï¿½lnego wiï¿½zienia */
 #define ROOM_VNUM_FIRST_JAIL		33000
 #define ROOM_VNUM_LAST_JAIL			33004
 #define ROOM_VNUM_DEFAULT_OFFICE	33000
@@ -603,7 +606,7 @@ zer¿niêty z Diablo :P
 ***************************************************************************/
 
 
-/* Thanos   -- pojemno¶æ ¿o³±dka gracza */
+/* Thanos   -- pojemnoï¿½ï¿½ ï¿½oï¿½ï¿½dka gracza */
 #define COND_MAX					80
 
 
@@ -616,13 +619,13 @@ zer¿niêty z Diablo :P
 
 /* Prototyp questa */
 /* Trog */
-/* Dwie poni¿sze listy pomagaj± w oczyszczaniu questu, przydaj±
-siê te¿ przy zapisie do pliq, gdy gracz wychodzi z gry */
+/* Dwie poniï¿½sze listy pomagajï¿½ w oczyszczaniu questu, przydajï¿½
+siï¿½ teï¿½ przy zapisie do pliq, gdy gracz wychodzi z gry */
 
 
 
 
-/* Thanos&Onyx -- projekty Techników */
+/* Thanos&Onyx -- projekty Technikï¿½w */
 /*
 * Prototype for a mob.
 * This is the in-memory version of #MOBILES.
@@ -645,18 +648,18 @@ siê te¿ przy zapisie do pliq, gdy gracz wychodzi z gry */
 
 
 
-/* Added by Thanos --> przestêpstwa gracza */
+/* Added by Thanos --> przestï¿½pstwa gracza */
 /* Thanos */
 
-// Ratm - struktura zawiera tablice zmiennych dla progów
+// Ratm - struktura zawiera tablice zmiennych dla progï¿½w
 
 /*! Trog: Force Events (pomysl Thanos'a) */
 
 // Tanglor - struktur zapamietujaca poznane przez gracza postacie
 #define IS_DESCRIBED( ch ) ( (ch->attribute1 >=0) || (ch->attribute2 >=0))
 
-//koñcówki fleksyjne przy odmianie przymiotników mêskich i ¿eñskich
-//odmiany sa uzale¿nione od ostatniego znaku podstawy
+//koï¿½cï¿½wki fleksyjne przy odmianie przymiotnikï¿½w mï¿½skich i ï¿½eï¿½skich
+//odmiany sa uzaleï¿½nione od ostatniego znaku podstawy
 extern const char				* male_desc_y[6];
 extern const char				* male_desc_i[6];
 extern const char				* female_desc_y[6];
@@ -664,7 +667,7 @@ extern const char				* female_desc_i[6];
 extern const char				* category_desc[10];
 
 //caly dialog
-/*! jeden ekran dialogu zawieraj±cy wybrane teksty jakimi moze posluzyc
+/*! jeden ekran dialogu zawierajï¿½cy wybrane teksty jakimi moze posluzyc
  * sie gracz
  */
 /*
@@ -895,7 +898,7 @@ extern	int		gsn_grip;
 
 
 
-/* Added by Thanos ( Ratm: zmieni³em 2 nastepne makra tak aby dzialaly z
+/* Added by Thanos ( Ratm: zmieniï¿½em 2 nastepne makra tak aby dzialaly z
 polskimi literami (patrz funkcja shiftpl() w ciapek.c) */
 #define LOWER( c )		( ( c ) >= 'A' && ( c ) <= 'Z'		      \
 						? ( c ) + 'a' - 'A' : ( shiftpl(0,c) ) )
@@ -1005,150 +1008,6 @@ else free((point));						\
 
 #define __strdup( pnt ) strdup( pnt )
 
-/* Trog */
-#define LINK1( link, first, last, next )	\
-do											\
-{											\
-	if( !(first) && !(last) )				\
-	{										\
-		(first) = (link);					\
-		(last) = (link);					\
-	}										\
-	else									\
-	{										\
-		(last)->next = (link);				\
-		(last) = (link);					\
-	}										\
-	(link)->next = NULL;					\
-} while(0)
-
-/* double-linked list handling macros -Thoric */
-
-#define LINK(link, first, last, next, prev)			\
-do													\
-{													\
-													\
-if( ((first) && !(last)) || (!(first) && (last)) ) 	\
-{													\
-	bug("(LINK) do Trog'a z tym - juz!"); 			\
-}													\
-													\
-	if ( !(first) )									\
-		(first)	= (link);							\
-	else											\
-	(last)->next		= (link);					\
-	(link)->next		= NULL;						\
-	(link)->prev		= (last);					\
-	(last)				= (link);					\
-} while(0)
-
-#define INSERT(link, insert, first, next, prev)		\
-do													\
-{													\
-	(link)->prev		= (insert)->prev;			\
-	if ( !(insert)->prev )							\
-	(first)			= (link);						\
-	else											\
-	(insert)->prev->next	= (link);				\
-	(insert)->prev		= (link);					\
-	(link)->next		= (insert);					\
-} while(0)
-
-#define UNLINK(link, first, last, next, prev)			\
-do								\
-{								\
-\
-	if( ((first) && !(last)) || (!(first) && (last)) )\
-{\
-	CHAR_DATA *ch_bt01 = NULL;\
-	bug("(preUNLINK) do Trog'a z tym - juz!");\
-	ch_bt01 = ch_bt01->next_in_room;/*Trog: tu celowo wywalam muda, zeby miec core*/\
-}\
-\
-	if ( !(link)->prev )					\
-	(first)			= (link)->next;			\
-	else							\
-	(link)->prev->next	= (link)->next;			\
-	if ( !(link)->next )					\
-	(last)			= (link)->prev;			\
-	else							\
-	(link)->next->prev	= (link)->prev;			\
-\
-	if( ((first) && !(last)) || (!(first) && (last)) )\
-{\
-	bug("(postUNLINK) do Trog'a z tym - juz!");\
-	CHAR_DATA *ch_bt02 = NULL;\
-	ch_bt02 = ch_bt02->next_in_room;/*Trog: tu celowo wywalam muda, zeby miec core*/\
-}\
-\
-} while(0)
-
-
-#if defined( WIN32 )
-#define CHECK_LINKS(first, last, next, prev, type)		\
-do {								\
-} while(0)
-#else
-#define CHECK_LINKS(first, last, next, prev, type)		\
-do {								\
-type *ptr, *pptr = NULL;					\
-if ( !(first) && !(last) )					\
-	break;							\
-if ( !(first) )						\
-{								\
-	bug( "CHECK_LINKS: last with NULL first!  %s.",		\
-		__STRING(first) );					\
-	for ( ptr = (last); ptr->prev; ptr = ptr->prev );		\
-	(first) = ptr;						\
-}								\
-else if ( !(last) )						\
-{								\
-	bug( "CHECK_LINKS: first with NULL last!  %s.",		\
-		__STRING(first) );					\
-	for ( ptr = (first); ptr->next; ptr = ptr->next );		\
-	(last) = ptr;						\
-}								\
-if ( (first) )						\
-{								\
-	for ( ptr = (first); ptr; ptr = ptr->next )			\
-	{								\
-	if ( ptr->prev != pptr )					\
-	{								\
-		bug( "CHECK_LINKS(%s): %p:->prev != %p.	 Fixing.",	\
-			__STRING(first), ptr, pptr );			\
-		ptr->prev = pptr;					\
-	}								\
-	if ( ptr->prev && ptr->prev->next != ptr )		\
-	{								\
-		bug( "CHECK_LINKS(%s): %p:->prev->next != %p.  Fixing.",\
-			__STRING(first), ptr, ptr );			\
-		ptr->prev->next = ptr;					\
-	}								\
-	pptr = ptr;						\
-	}								\
-	pptr = NULL;						\
-}								\
-if ( (last) )							\
-{								\
-	for ( ptr = (last); ptr; ptr = ptr->prev )			\
-	{								\
-	if ( ptr->next != pptr )					\
-	{								\
-		bug( "CHECK_LINKS (%s): %p:->next != %p.  Fixing.",	\
-			__STRING(first), ptr, pptr );			\
-		ptr->next = pptr;					\
-	}								\
-	if ( ptr->next && ptr->next->prev != ptr )		\
-	{								\
-		bug( "CHECK_LINKS(%s): %p:->next->prev != %p.  Fixing.",\
-			__STRING(first), ptr, ptr );			\
-		ptr->next->prev = ptr;					\
-	}								\
-	pptr = ptr;						\
-	}								\
-}								\
-} while(0)
-#endif //win32
 
 #define ASSIGN_GSN(gsn, skill)					\
 do								\
@@ -1195,7 +1054,7 @@ do								\
 #define GET_PLANET(ch)	(ch->in_room && ch->in_room->area	\
 			&& ch->in_room->area->planet	)	\
 			?  ch->in_room->area->planet	:	\
-				first_planet
+				planet_list.front()
 
 /*
 Thanos -> fajne makro zalatwilem :P
@@ -1208,7 +1067,7 @@ I think that it was Tom Adriansen (sp?)
 				(descriptor)->character	 )
 
 /*
-* A te sam wymy¶li³em --> przydaj± siê		Thanos
+* A te sam wymyï¿½liï¿½em --> przydajï¿½ siï¿½		Thanos
 */
 #define	 FEMALE( ch )		( ch )->sex == SEX_FEMALE
 #define	   MALE( ch )		( ch )->sex == SEX_MALE
@@ -1230,11 +1089,11 @@ I think that it was Tom Adriansen (sp?)
 #define OPLURAL( obj )				( obj )->gender == GENDER_PLURAL
 #define OSEX_SUFFIX_YAEE( obj )		( OMALE( obj ) ? "y" : OFEMALE( obj ) ? "a" : "e" )
 
-/* number_suffix  by m±dry Thanos
+/* number_suffix  by mï¿½dry Thanos
 * np.
 *   ch_printf( ch, "%d liter%s", nr, NUMBER_SUFF( nr, "ka", "ki", "ek" ) );
-* zwróci:
-* '1 literka', '2 literki', lub '135 literek' w zale¿no¶ci od watro¶ci.
+* zwrï¿½ci:
+* '1 literka', '2 literki', lub '135 literek' w zaleï¿½noï¿½ci od watroï¿½ci.
 */
 #define NUMBER_SUFF( nr, for1, for2, for3 )				\
 				( ::abs(nr)==1 ? for1 :			\
@@ -1317,12 +1176,12 @@ I think that it was Tom Adriansen (sp?)
 				&& is_name( ch->s_vip_flags, planet->name ) )
 #endif
 
-/* zwraca ilo¶æ ugranych sekund na mudzie			-- Thanos */
+/* zwraca iloï¿½ï¿½ ugranych sekund na mudzie			-- Thanos */
 #define SEC_PLAYED( ch )	( IS_NPC( ch ) ? 0			\
 				: ( (int) ch->played +			\
 					(int) ( current_time - ch->logon ) ) )
 
-/* i ilo¶æ minut */
+/* i iloï¿½ï¿½ minut */
 #define MIN_PLAYED( ch )	( IS_NPC( ch ) ? 0			\
 				: ( (int) ch->played +			\
 					(int) ( current_time - ch->logon ) ) / 60 )
@@ -1466,11 +1325,6 @@ Will need to add some || stuff for spells that need a special GSN. */
 #define MEMBER_BESTOW( member, cmd ) ( (member)->status == CLAN_LEADER \
 									|| is_name( (cmd), (member)->bestowments ) )
 
-/* Trog: przechodzi po liscie od pierwszego */
-#define FOREACH( pVar, first ) for( (pVar) = (first); (pVar); (pVar) = (pVar)->next )
-
-/* Trog: jak wyzej, tylko odwrotnie */
-#define FOREACHR( pVar, last ) for( (pVar) = (last); (pVar); (pVar) = (pVar)->prev )
 
 /** Trog: In Vnum Range - sprawdza czy vnum jest w zakresie vnumow z krainki */
 #define IVR( vnum, area )	( (vnum) >= (area)->lvnum && (vnum) <= (area)->uvnum )
@@ -1483,7 +1337,7 @@ Will need to add some || stuff for spells that need a special GSN. */
 	(i >=0 && i <=5) ? \
 		( ( IS_AFFECTED(ch, AFF_DISGUISE) && ch->pcdata ) ?	\
 			ch->pcdata->fake_infl[i] : \
-			( ch->przypadki[i] ) ) : "kto¶"
+			( ch->przypadki[i] ) ) : "ktoï¿½"
 
 
 //#if defined (FAMILIARITY)	//Tanglor makro odpowiada za info o postaci
@@ -1561,9 +1415,8 @@ do									\
 /* Ratm: makro przeszukuje wszystkie progi i dodaje ich typy do listy typow */
 #define BUILD_PROG_TYPES( obj ) \
 { \
-	MPROG_DATA* mprg = (obj)->mudprogs; \
 	(obj)->progtypes = 0; \
-	for ( ; mprg; mprg = mprg->next ) \
+	for ( auto* mprg : (obj)->mudprogs ) \
 	{ \
 	SET_BIT( (obj)->progtypes, mprg->type ); \
 	} \
@@ -1647,18 +1500,12 @@ extern char const iso_table [];
 /*
 * Global variables.
 */
-extern LAST_DATA				* first_last_wiztalk;	//added by Thanos
-extern LAST_DATA				* last_last_wiztalk;	//added by Thanos
-extern LAST_DATA				* first_last_chat;		//zmienne do do_last (Ratma)
-extern LAST_DATA				* last_last_chat;		//zmienne do do_last (Ratma)
-extern LAST_DATA				* first_last_admin;		//by Trog
-extern LAST_DATA				* last_last_admin;		//by Trog
-extern LAST_DATA				* first_last_olctalk;	//by Trog
-extern LAST_DATA				* last_last_olctalk;	//by Trog
-extern LAST_DATA				* first_last_codertalk; //by Trog
-extern LAST_DATA				* last_last_codertalk;	//by Trog
-extern SCRIPT_DATA				* first_script_prog;	/* Thanos */
-extern SCRIPT_DATA				* last_script_prog;		/* Thanos */
+extern std::list<LAST_DATA*>		last_wiztalk_list;
+extern std::list<LAST_DATA*>		last_chat_list;
+extern std::list<LAST_DATA*>		last_admin_list;
+extern std::list<LAST_DATA*>		last_olctalk_list;
+extern std::list<LAST_DATA*>		last_codertalk_list;
+extern std::list<SCRIPT_DATA*>		script_prog_list;
 
 
 extern	bool			fCopyOver;
@@ -1667,7 +1514,7 @@ extern	bool			fCopyOver;
 #else
 	extern	u_short			port; /* potrzebne do copyover */
 #endif
-extern	int				control; /* i to te¿ */
+extern	int				control; /* i to teï¿½ */
 extern	int				control6; /* i jeszcze to ;) */
 extern	pid_t			pid;
 extern	int				numobjsloaded;
@@ -1697,115 +1544,56 @@ extern	int				cur_obj_serial;
 extern	bool			cur_obj_extracted;
 extern	obj_ret			global_objcode;
 
-extern	HELPS_FILE		* first_helps_file;
-extern	HELPS_FILE		* last_helps_file;
-extern	SHOP_DATA		* first_shop;
-extern	SHOP_DATA		* last_shop;
-extern	REPAIR_DATA	* first_repair;
-extern	REPAIR_DATA	* last_repair;
-
-extern	BAN_DATA		* first_ban;
-extern	BAN_DATA		* last_ban;
-extern	CHAR_DATA		* first_char;
-extern	CHAR_DATA		* last_char;
-extern	DESCRIPTOR_DATA * first_descriptor;
-extern	DESCRIPTOR_DATA * last_descriptor;
-extern	BOARD_DATA		* first_board;
-extern	BOARD_DATA		* last_board;
-extern	OBJ_DATA		* first_object;
-extern	OBJ_DATA		* last_object;
-extern	CLAN_DATA		* first_clan;
-extern	CLAN_DATA		* last_clan;
-extern	HQ_ROOM_DESC	* first_hq_room_desc;
-extern	HQ_ROOM_DESC	* last_hq_room_desc;
-extern	GUARD_DATA		* first_guard;
-extern	GUARD_DATA		* last_guard;
-extern	SHIP_DATA		* first_ship;
-extern	SHIP_DATA		* last_ship;
-extern	SHIP_DATA		* first_free_ship;// Thanos
-extern	SHIP_DATA		* last_free_ship;
-extern	ASTRO_DATA		* first_astro;/*Alde*/
-extern	ASTRO_DATA		* last_astro;
-
-extern	MISSILE_DATA	* first_missile;
-extern	MISSILE_DATA	* last_missile;
-extern	HANGAR_DATA		* first_hangar;
-extern	HANGAR_DATA		* last_hangar;
-extern	TURRET_DATA		* first_turret;
-extern	TURRET_DATA		* last_turret;
-extern	MODULE_DATA		* first_module;
-extern	MODULE_DATA		* last_module;
-
-extern	CREW_DATA		* first_cmember;
-extern	CREW_DATA		* last_cmember;
-extern	SPACE_DATA		* first_starsystem;
-extern	SPACE_DATA		* last_starsystem;
-extern	PLANET_DATA		* first_planet;
-extern	PLANET_DATA		* last_planet;
-extern	BOUNTY_DATA		* first_bounty;
-extern	BOUNTY_DATA		* last_bounty;
-extern	BOUNTY_DATA		* first_disintigration;
-extern	BOUNTY_DATA		* last_disintigration;
-extern	AREA_DATA		* first_area;
-extern	AREA_DATA		* last_area;
-extern	AREA_DATA		* first_build;
-extern	AREA_DATA		* last_build;
-extern	AREA_DATA		* first_asort;
-extern	AREA_DATA		* last_asort;
-extern	AREA_DATA		* first_bsort;
-extern	AREA_DATA		* last_bsort;
-extern	AREA_DATA		* first_uarea; /* Trog: uninstalled area */
-extern	AREA_DATA		* last_uarea;
-extern	TELEPORT_DATA	* first_teleport;
-extern	TELEPORT_DATA	* last_teleport;
-extern	LANG_DATA		* first_lang; /* jêzyki */
-extern	LANG_DATA		* last_lang;
-extern	INFORM_DATA		* first_inform;
-extern	INFORM_DATA		* last_inform;
-
-
-extern	QUEST_INDEX_DATA* first_quest_index;
-extern	QUEST_INDEX_DATA* last_quest_index;
-extern	QUEST_DATA		* first_quest;
-extern	QUEST_DATA		* last_quest;
-/* Thanos&Onyx */
-extern	PROJECT_DATA	* first_project;
-extern	PROJECT_DATA	* last_project;
-/*Thanos*/
-extern	CLONING_DATA	* first_cloning;
-extern	CLONING_DATA	* last_cloning;
-
-//Thanos for Aldegard
-extern	SHIP_INDEX_DATA * first_ship_index;
-extern	SHIP_INDEX_DATA * last_ship_index;
-
-extern	COMPLAIN_DATA	* first_complain;
-extern	COMPLAIN_DATA	* last_complain;
-
-//Tanglor - aukcje
-extern	STOCK_EXCHANGE_DATA * first_stock_exchange;
-extern	STOCK_EXCHANGE_DATA	* last_stock_exchange;
+extern	std::list<HELPS_FILE*>		helps_file_list;
+extern	std::list<SHOP_DATA*>		shop_list;
+extern	std::list<REPAIR_DATA*>		repair_list;
+extern	std::list<BAN_DATA*>		ban_list;
+extern	std::list<CHAR_DATA*>		char_list;
+extern	std::list<DESCRIPTOR_DATA*>	descriptor_list;
+extern	std::list<BOARD_DATA*>		board_list;
+extern	std::list<OBJ_DATA*>		object_list;
+extern	std::list<CLAN_DATA*>		clan_list;
+extern	std::list<HQ_ROOM_DESC*>	hq_room_desc_list;
+extern	std::list<GUARD_DATA*>		guard_list;
+extern	std::list<SHIP_DATA*>		ship_list;
+extern	std::list<SHIP_DATA*>		free_ship_list;
+extern	std::list<ASTRO_DATA*>		astro_list;
+extern	std::list<MISSILE_DATA*>	missile_list;
+extern	std::list<HANGAR_DATA*>		hangar_list;
+extern	std::list<TURRET_DATA*>		turret_list;
+extern	std::list<MODULE_DATA*>		module_list;
+extern	std::list<CREW_DATA*>		cmember_list;
+extern	std::list<SPACE_DATA*>		starsystem_list;
+extern	std::list<PLANET_DATA*>		planet_list;
+extern	std::list<BOUNTY_DATA*>		bounty_list;
+extern	std::list<BOUNTY_DATA*>		disintigration_list;
+extern	std::list<AREA_DATA*>		area_list;
+extern	std::list<AREA_DATA*>		build_list;
+extern	std::list<AREA_DATA*>		asort_list;
+extern	std::list<AREA_DATA*>		bsort_list;
+extern	std::list<AREA_DATA*>		uarea_list;
+extern	std::list<TELEPORT_DATA*>	teleport_list;
+extern	std::list<LANG_DATA*>		lang_list;
+extern	std::list<INFORM_DATA*>		inform_list;
+extern	std::list<QUEST_INDEX_DATA*>	quest_index_list;
+extern	std::list<QUEST_DATA*>		quest_list;
+extern	std::list<PROJECT_DATA*>	project_list;
+extern	std::list<CLONING_DATA*>	cloning_list;
+extern	std::list<SHIP_INDEX_DATA*>	ship_index_list;
+extern	std::list<COMPLAIN_DATA*>	complain_list;
+extern	std::list<STOCK_EXCHANGE_DATA*>	stock_exchange_list;
 extern	time_t			auction_pulse;
 
-//Tanglor - dialogi
-extern	DIALOG_DATA		* first_dialog;
-extern	DIALOG_DATA		* last_dialog;
-
-//Tanglor - materialy do handlowania
-extern	MATERIAL_DATA	* first_material;
-extern	MATERIAL_DATA	* last_material;
-
-
-/* Trog */
-extern	RACE_DATA		* first_race;
-extern	RACE_DATA		* last_race;
+extern	std::list<DIALOG_DATA*>		dialog_list;
+extern	std::list<MATERIAL_DATA*>	material_list;
+extern	std::list<RACE_DATA*>		race_list;
 extern	RACE_DATA		* base_race;
 extern	const	RACE_DATA	human_race;
 extern	LANG_DATA		* lang_base;
 extern	const	LANG_DATA	lang_common;
 
-extern	OBJ_DATA		* extracted_obj_queue;
-extern	EXTRACT_CHAR_DATA* extracted_char_queue;
+extern	std::list<OBJ_DATA*>		extracted_obj_queue;
+extern	std::list<EXTRACT_CHAR_DATA>	extracted_char_queue;
 extern	OBJ_DATA		* save_equipment[MAX_WEAR][MAX_LAYERS];
 extern	CHAR_DATA		* quitting_char;
 extern	CHAR_DATA		* loading_char;
@@ -1820,7 +1608,9 @@ extern	FILE			* fpLOG;
 extern	char			log_buf [ ];
 
 extern	AUCTION_DATA	* auction;
-extern	struct	act_prog_data * mob_act_list;
+extern	std::list<act_prog_data*> mob_act_list;
+extern	std::list<act_prog_data*> obj_act_list;
+extern	std::list<act_prog_data*> room_act_list;
 
 //added by Thanos
 extern	FOR_DATA		for_loop;
@@ -1828,13 +1618,11 @@ extern	RAT_DATA		rat_loop;
 extern	CHAR_DATA		* Quest_Master;
 extern	int				area_id;
 
-/* Trog */
-extern	TURBOCAR		*first_turbocar;
-extern	TURBOCAR		*last_turbocar;
+extern	std::list<TURBOCAR*>		turbocar_list;
 
-extern	MOB_INDEX_DATA	*mob_index_hash[MAX_KEY_HASH];
-extern	OBJ_INDEX_DATA	*obj_index_hash[MAX_KEY_HASH];
-extern	ROOM_INDEX_DATA *room_index_hash[MAX_KEY_HASH];
+extern	std::forward_list<MOB_INDEX_DATA*>	mob_index_hash[MAX_KEY_HASH];
+extern	std::forward_list<OBJ_INDEX_DATA*>	obj_index_hash[MAX_KEY_HASH];
+extern	std::forward_list<ROOM_INDEX_DATA*>	room_index_hash[MAX_KEY_HASH];
 
 extern	int			top_affect;
 extern	int			top_area;

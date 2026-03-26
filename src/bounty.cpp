@@ -36,8 +36,7 @@
 
 using namespace std;
 
-INFORM_DATA * first_inform;
-INFORM_DATA * last_inform;
+std::list<INFORM_DATA*> inform_list;
 list<SWBounty *> bounties;
 
 void load_informs()
@@ -46,8 +45,7 @@ void load_informs()
 	char * target;
 	INFORM_DATA * inform;
 
-	first_inform = NULL;
-	last_inform = NULL;
+	inform_list.clear();
 
 	RESERVE_CLOSE;
 	if ((fp = fopen(INFORM_LIST, "r")) == NULL)
@@ -69,7 +67,7 @@ void load_informs()
 		STRDUP( inform->victim, fread_word( fp ) );
 		inform->time = fread_number(fp);
 		inform->reported = fread_number(fp);
-		LINK( inform, first_inform, last_inform, next, prev );
+		inform_list.push_back(inform);
 	}
 	fclose(fp);
 	if (!sysdata.silent)
@@ -80,7 +78,6 @@ void load_informs()
 
 void save_informs()
 {
-	INFORM_DATA * inform;
 	FILE *fpout;
 
 	fpout = fopen(INFORM_LIST, "w");
@@ -90,7 +87,7 @@ void save_informs()
 		perror(INFORM_LIST);
 		return;
 	}
-	for (inform = first_inform; inform; inform = inform->next)
+	for (auto* inform : inform_list)
 	{
 		fprintf(fpout, "%s %s %ld %d\n", inform->attacker, inform->victim,
 				(unsigned long) inform->time, inform->reported);
@@ -101,9 +98,7 @@ void save_informs()
 
 INFORM_DATA *get_inform(char *attacker, char *vict)
 {
-	INFORM_DATA * inf;
-
-	for (inf = first_inform; inf; inf = inf->next)
+	for (auto* inf : inform_list)
 		if (!str_cmp(inf->attacker, attacker) && !str_cmp(inf->victim, vict))
 			return inf;
 
@@ -181,7 +176,7 @@ INFORM_DATA *add_inform(CHAR_DATA *victim, CHAR_DATA *attacker)
 	if (get_inform(attacker->name, victim->name))
 		return NULL;
 
-	ch_printf(attacker, "Mo¿esz teraz zostaæ uznan%s MORDERC¡ !!!" NL,
+	ch_printf(attacker, "Moï¿½esz teraz zostaï¿½ uznan%s MORDERCï¿½ !!!" NL,
 			SEX_SUFFIX_YAE( attacker ));
 
 	CREATE( inform, INFORM_DATA, 1 );
@@ -190,7 +185,7 @@ INFORM_DATA *add_inform(CHAR_DATA *victim, CHAR_DATA *attacker)
 
 	inform->time = current_time;
 	inform->reported = false;
-	LINK( inform, first_inform, last_inform, next, prev );
+	inform_list.push_back(inform);
 
 	log_string( "Adding inform to list" );
 	save_informs();
@@ -204,7 +199,7 @@ DEF_DO_FUN( inform )
 	if (IS_NPC( ch ))
 	{
 		send_to_char(
-				"A co ty chcesz donosiæ? Po to tu jeste¶ by ciê zabito ;-)." NL,
+				"A co ty chcesz donosiï¿½? Po to tu jesteï¿½ by ciï¿½ zabito ;-)." NL,
 				ch);
 		return;
 	}
@@ -214,18 +209,18 @@ DEF_DO_FUN( inform )
 		if ((inf = get_inform(argument, ch->name)) == NULL)
 		{
 			send_to_char(
-					"Nikt taki ciê ostatnio nie skrzywdzi³. Panikujesz..." NL,
+					"Nikt taki ciï¿½ ostatnio nie skrzywdziï¿½. Panikujesz..." NL,
 					ch);
 			return;
 		}
 		if (inf->reported)
-			send_to_char("Spokojnie. To jest ju¿ zg³oszone." NL, ch);
+			send_to_char("Spokojnie. To jest juï¿½ zgï¿½oszone." NL, ch);
 		else
 		{
 			inf->reported = true;
-			/* reszt± zajmie siê update_informs() */
+			/* resztï¿½ zajmie siï¿½ update_informs() */
 			send_to_char(
-					"Ok. Mistrz Gry w³a¶nie dowiedzia³ siê o tym wystêpku." NL,
+					"Ok. Mistrz Gry wï¿½aï¿½nie dowiedziaï¿½ siï¿½ o tym wystï¿½pku." NL,
 					ch);
 			save_informs();
 		}
@@ -236,20 +231,20 @@ DEF_DO_FUN( inform )
 		int i = 0;
 
 		send_to_char(
-				"Oto lista osób, które ostatnio próbowa³y ciê atakowaæ:" NL, ch);
+				"Oto lista osï¿½b, ktï¿½re ostatnio prï¿½bowaï¿½y ciï¿½ atakowaï¿½:" NL, ch);
 
-		for (inf = first_inform; inf; inf = inf->next)
+		for (auto* inf : inform_list)
 		{
 			if (!str_cmp(inf->victim, ch->name))
 			{
 				i++;
 				ch_printf(ch, "   " FB_CYAN "%s" PLAIN ": (%s) %s", inf->attacker,
-						inf->reported ? "zg³oszone" : "nie zg³oszone", SWTimeStamp(inf->time).getDescriptive().c_str());
+						inf->reported ? "zgï¿½oszone" : "nie zgï¿½oszone", SWTimeStamp(inf->time).getDescriptive().c_str());
 			}
 		}
 
 		if (!i)
-			send_to_char("   Nikt ciê nie atakowa³ ostatnio." NL, ch);
+			send_to_char("   Nikt ciï¿½ nie atakowaï¿½ ostatnio." NL, ch);
 	}
 
 	return;
@@ -271,7 +266,7 @@ DEF_DO_FUN( garota )
 	default:
 		if (arg[0] == '\0')
 		{
-			send_to_char("Kogo chcesz udusiæ?" NL, ch);
+			send_to_char("Kogo chcesz udusiï¿½?" NL, ch);
 			return;
 		}
 
@@ -284,13 +279,13 @@ DEF_DO_FUN( garota )
 		if (IS_NPC( ch ))
 		{
 			send_to_char(
-					"Mob nie mo¿e dusiæ, ale za to mo¿e byæ uduszony :P" NL, ch);
+					"Mob nie moï¿½e dusiï¿½, ale za to moï¿½e byï¿½ uduszony :P" NL, ch);
 			return;
 		}
 
 		if (ch == victim)
 		{
-			send_to_char("Chcesz pope³niæ samobójstwo ???" NL, ch);
+			send_to_char("Chcesz popeï¿½niï¿½ samobï¿½jstwo ???" NL, ch);
 			return;
 		}
 
@@ -308,7 +303,7 @@ DEF_DO_FUN( garota )
 		if (ch->mount)
 		{
 			send_to_char(
-					"Nie mo¿esz tego zrobiæ nie stoj±c o w³asnych si³ach." NL,
+					"Nie moï¿½esz tego zrobiï¿½ nie stojï¿½c o wï¿½asnych siï¿½ach." NL,
 					ch);
 			return;
 		}
@@ -316,7 +311,7 @@ DEF_DO_FUN( garota )
 		if (victim->top_level + 10 >= ch->top_level)
 		{
 			sprintf(buf,
-					"Nie uda ci siê podej¶æ %s. Za ma³o jeszcze umiesz..." NL,
+					"Nie uda ci siï¿½ podejï¿½ï¿½ %s. Za maï¿½o jeszcze umiesz..." NL,
 					PERS(victim, ch,1));
 			send_to_char(buf, ch);
 			return;
@@ -324,25 +319,25 @@ DEF_DO_FUN( garota )
 
 		if (ch->fighting)
 		{
-			send_to_char("Przecie¿ teraz walczysz!" NL, ch);
+			send_to_char("Przecieï¿½ teraz walczysz!" NL, ch);
 			return;
 		}
 
 		if (victim->fighting)
 		{
 			send_to_char(
-					"Nie mo¿esz tego zrobiæ. Twoja ofiara ju¿ ma z kim walczyæ." NL,
+					"Nie moï¿½esz tego zrobiï¿½. Twoja ofiara juï¿½ ma z kim walczyï¿½." NL,
 					ch);
 			return;
 		}
 
 		act(FG_BLACK,
-				"Przygotowujesz siê do zaci¶niêcia drutu na szyi $N$1...", ch,
+				"Przygotowujesz siï¿½ do zaciï¿½niï¿½cia drutu na szyi $N$1...", ch,
 				NULL, victim, TO_CHAR);
 		act(FG_BLACK,
-				"$n stara siê zacisn±æ drut na twojej szyi! Bêdzie bola³o!!!",
+				"$n stara siï¿½ zacisnï¿½ï¿½ drut na twojej szyi! Bï¿½dzie bolaï¿½o!!!",
 				ch, NULL, victim, TO_VICT);
-		act(FG_BLACK, "$n próbuje zacisn±æ drut na szyi $N$1.", ch, NULL,
+		act(FG_BLACK, "$n prï¿½buje zacisnï¿½ï¿½ drut na szyi $N$1.", ch, NULL,
 				victim, TO_NOTVICT);
 
 		add_timer(ch, TIMER_DO_FUN, 3, do_garota, 1);
@@ -350,7 +345,7 @@ DEF_DO_FUN( garota )
 		return;
 
 	case SUB_TIMER_DO_ABORT:
-		ch_printf(ch, "Za pó¼no! Czujesz, ¿e musisz ju¿ zaatakowaæ!" NL);
+		ch_printf(ch, "Za pï¿½no! Czujesz, ï¿½e musisz juï¿½ zaatakowaï¿½!" NL);
 		ch->substate = SUB_TIMER_CANT_ABORT;
 		return;
 
@@ -371,14 +366,14 @@ DEF_DO_FUN( garota )
 	if (!IS_NPC( victim ))
 	{
 		send_to_char(
-				"Zabicie gracza w taki sposób mog³oby mu siê nie spodobaæ..." NL,
+				"Zabicie gracza w taki sposï¿½b mogï¿½oby mu siï¿½ nie spodobaï¿½..." NL,
 				ch);
 		return;
 	}
 
 	if (number_percent() > ch->pcdata->learned[gsn_garota])
 	{
-		send_to_char("Nie uda³o siê." NL, ch);
+		send_to_char("Nie udaï¿½o siï¿½." NL, ch);
 		learn_from_failure(ch, gsn_garota);
 		multi_hit(victim, ch, gsn_garota);
 		return;
@@ -386,8 +381,8 @@ DEF_DO_FUN( garota )
 	ch->substate = SUB_NONE;
 
 	learn_from_success(ch, gsn_garota);
-	act(FB_RED, "S³yszysz ¶miertelny jêk $N$1.", ch, NULL, victim, TO_CHAR);
-	act(FB_RED, "S³yszysz ¶miertelny jêk $N$1.", ch, NULL, victim, TO_NOTVICT);
+	act(FB_RED, "Sï¿½yszysz ï¿½miertelny jï¿½k $N$1.", ch, NULL, victim, TO_CHAR);
+	act(FB_RED, "Sï¿½yszysz ï¿½miertelny jï¿½k $N$1.", ch, NULL, victim, TO_NOTVICT);
 	set_cur_char(victim);
 	check_killer(ch, victim);
 	raw_kill(ch, victim, 0);
@@ -458,7 +453,7 @@ DEF_DO_FUN( bounties )
 {
 	if (!*argument)
 	{
-		send_to_char("Sk³adnia: bounties <oficer_bounty>" NL, ch);
+		send_to_char("Skï¿½adnia: bounties <oficer_bounty>" NL, ch);
 		return;
 	}
 
@@ -487,7 +482,7 @@ DEF_DO_FUN( bounties )
 	if (!found)
 	{
 		ch_tell(officer, ch,
-				"Aktualnie nie mam ¿adnych zleceñ godnych twojego czasu.");
+				"Aktualnie nie mam ï¿½adnych zleceï¿½ godnych twojego czasu.");
 		return;
 	}
 
@@ -537,7 +532,7 @@ DEF_DO_FUN( allbounties )
 {
 	if (bounties.size() < 1)
 	{
-		send_to_char("Aktualnie nie ma ¿adnych zleceñ." NL, ch);
+		send_to_char("Aktualnie nie ma ï¿½adnych zleceï¿½." NL, ch);
 		return;
 	}
 
@@ -569,20 +564,18 @@ DEF_DO_FUN( addbounty )
 			< SWMobBounty::MIN_MOB_VNUM_TO_BOUNTY))
 	{
 		send_to_char(
-				"Sk³adnia: addbounty <oficer_bounty> <nagroda> [ofiara]" NL, ch);
+				"Skï¿½adnia: addbounty <oficer_bounty> <nagroda> [ofiara]" NL, ch);
 		return;
 	}
 
-	bool found = false;
-	CHAR_DATA *officer;
-	for (officer = ch->in_room->first_person; officer; officer
-			= officer->next_in_room)
+	CHAR_DATA *officer = nullptr;
+	for (auto* och : ch->in_room->people)
 	{
-		if (nifty_is_name_prefix(arg, officer->name))
+		if (nifty_is_name_prefix(arg, och->name))
 		{
-			if (is_bounty_officer(officer))
+			if (is_bounty_officer(och))
 			{
-				found = true;
+				officer = och;
 				break;
 			}
 			else
@@ -591,28 +584,28 @@ DEF_DO_FUN( addbounty )
 				sprintf(
 						buf,
 						"Nie jestem zainteresowan%s takimi czarnymi, niehumanitarnymi interesami!",
-						SEX_SUFFIX_YAE(officer));
-				ch_tell(officer, ch, buf);
+						SEX_SUFFIX_YAE(och));
+				ch_tell(och, ch, buf);
 				return;
 			}
 		}
 	}
 
-	if (!found)
+	if (!officer)
 	{
-		send_to_char("Zlecic bounty mo¿na jedynie oficerowi bounty." NL, ch);
+		send_to_char("Zlecic bounty moï¿½na jedynie oficerowi bounty." NL, ch);
 		return;
 	}
 
 	int ammount = SWInt::fromString(arg1);
 	if (ammount <= 0)
 	{
-		send_to_char("Pewnie! Tyle to jest warta TWOJA g³owa!!!" NL, ch);
+		send_to_char("Pewnie! Tyle to jest warta TWOJA gï¿½owa!!!" NL, ch);
 		return;
 	}
 	if (ammount < SWBounty::MIN_REWARD)
 	{
-		ch_printf(ch, "Bounty musi byæ warte przynajmniej %d kredytek." NL,
+		ch_printf(ch, "Bounty musi byï¿½ warte przynajmniej %d kredytek." NL,
 				(int) SWBounty::MIN_REWARD);
 		return;
 	}
@@ -626,13 +619,13 @@ DEF_DO_FUN( addbounty )
 		}
 		else
 		{
-			send_to_char("Nie staæ ciê na prowizjê!" NL, ch);
+			send_to_char("Nie staï¿½ ciï¿½ na prowizjï¿½!" NL, ch);
 		}
 		return;
 	}
 	ch->gold -= ammount + agio;
 
-	found = false;
+	bool found = false;
 	SWBounty *bounty = 0;
 	SWString placedBy(ch->name);
 	/* nie pozawlajmy na wystawianie bounty za moby, ktorych vnum < 11 */
@@ -680,13 +673,13 @@ DEF_DO_FUN( addbounty )
 	{
 		bounties.push_back(bounty);
 		add_bounty(bounty);
-		ch_printf(ch, "Wystawiasz %d kredyt%s za g³owê: %s." NL, (int) ammount,
+		ch_printf(ch, "Wystawiasz %d kredyt%s za gï¿½owï¿½: %s." NL, (int) ammount,
 				NUMBER_SUFF( (int)ammount, "ek", "ki", "ek" ),
 				*argument ? SWString(argument).makePersonName().c_str() : arg1);
 		ch_printf(ch, "%s pobiera %d kredyt%s prowizji." NL,
 				officer->przypadki[0], agio,
 				NUMBER_SUFF(agio, "ek", "ki", "ek"));
-		ch_tell(officer, ch, "Mamy umowê...");
+		ch_tell(officer, ch, "Mamy umowï¿½...");
 	}
 	else
 	{
@@ -708,7 +701,7 @@ DEF_DO_FUN( delbounty )
 {
 	if (!*argument)
 	{
-		send_to_char("Sk³adnia: delbounty <id>" NL, ch);
+		send_to_char("Skï¿½adnia: delbounty <id>" NL, ch);
 		return;
 	}
 
@@ -789,12 +782,12 @@ void finalize_bounty(SWBounty *bounty, CHAR_DATA *ch, CHAR_DATA *victim,
 			&& bounty->getPlacedBy().find(ch->name) == string::npos)
 	{
 		gain_exp(ch, xp, HUNTING_ABILITY);
-		sprintf(buf, "Zdobywasz %d punkt%s do¶wiadczenia w ³owieniu nagród." NL,
-				xp, NUMBER_SUFF(xp, "", "y", "ów"));
+		sprintf(buf, "Zdobywasz %d punkt%s doï¿½wiadczenia w ï¿½owieniu nagrï¿½d." NL,
+				xp, NUMBER_SUFF(xp, "", "y", "ï¿½w"));
 		send_to_char(buf, ch);
 	}
 	sprintf(buf,
-			"Zadanie wykonane. Nagroda wysoko¶ci %ld kredytek jest twoja.",
+			"Zadanie wykonane. Nagroda wysokoï¿½ci %ld kredytek jest twoja.",
 			bounty->getReward());
 	ch_tell(victim, ch, buf);
 	ch->gold += bounty->getReward();

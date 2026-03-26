@@ -9,12 +9,12 @@
 #include <cstring>
 
 const SWString SWDate::WEEK_DAY_NAME[MAX_WEEK_DAYS] =
-{ "Niedziela", "Poniedzia³ek", "Wtorek", "¦roda", "Czwartek", "Pi±tek", "Sobota" };
+{ "Niedziela", "Poniedzia\xb3" "ek", "Wtorek", "\xa6roda", "Czwartek", "Pi\xb1tek", "Sobota" };
 const SWString SWDate::MONTH_NAME[MAX_MONTHS] =
-{ "Styczeñ", "Luty", "Marzec", "Kwiecieñ", "Maj", "Czerwiec", "Lipiec", "Sierpieñ", "Wrzesieñ", "Pa¼dziernik",
-		"Listopad", "Grudzieñ" };
+{ "Stycze\xf1", "Luty", "Marzec", "Kwiecie\xf1", "Maj", "Czerwiec", "Lipiec", "Sierpie\xf1", "Wrzesie\xf1", "Pa\xbc" "dziernik",
+		"Listopad", "Grudzie\xf1" };
 const SWString SWDate::MONTH_NAME2[MAX_MONTHS] =
-{ "Stycznia", "Lutego", "Marca", "Kwietnia", "Maja", "Czerwca", "Lipca", "Sierpnia", "Wrze¶nia", "Pa¼dziernika",
+{ "Stycznia", "Lutego", "Marca", "Kwietnia", "Maja", "Czerwca", "Lipca", "Sierpnia", "Wrze\xb6nia", "Pa\xbc" "dziernika",
 		"Listopada", "Grudnia" };
 
 SWDate::operator SWString()

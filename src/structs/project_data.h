@@ -20,13 +20,11 @@
 #define PROJECT_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct project_data
 {
-	PROJECT_DATA		* next;
-	PROJECT_DATA		* prev;
-	PART_DATA			* first_part;
-	PART_DATA			* last_part;
+	std::list<PART_DATA*> parts;
 	OBJ_INDEX_DATA		* effect;
 	OBJ_INDEX_DATA		* formula;
 	int					montage_type;

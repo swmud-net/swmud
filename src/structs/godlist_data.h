@@ -23,8 +23,6 @@
 
 struct	godlist_data
 {
-	GOD_DATA			* next;
-	GOD_DATA			* prev;
 	int					level;
 	int					low_r_vnum;
 	int					hi_r_vnum;

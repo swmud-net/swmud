@@ -23,8 +23,6 @@
 
 struct	extra_descr_data
 {
-	EXTRA_DESCR_DATA	* next; /* Next in list			    */
-	EXTRA_DESCR_DATA	* prev; /* Previous in list		    */
 	char				* keyword;/* Keyword in look/examine	      */
 	char				* description; /* What to see		      */
 };

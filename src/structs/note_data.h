@@ -23,10 +23,8 @@
 
 struct	note_data
 {
-	NOTE_DATA			* next;
-	NOTE_DATA			* prev;
 	char				* sender;
-	char				* real_sender;	// jesli inny ni¿ nick sendera (Thanos)
+	char				* real_sender;	// jesli inny niï¿½ nick sendera (Thanos)
 	char				* date;
 	char				* to_list;
 	char				* subject;

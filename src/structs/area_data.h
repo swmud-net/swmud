@@ -23,13 +23,7 @@
 
 struct	area_data
 {
-	AREA_DATA			* next;
-	AREA_DATA			* prev;
-	AREA_DATA			* next_sort;
-	AREA_DATA			* prev_sort;
 	PLANET_DATA			* planet;
-	AREA_DATA			* next_on_planet;
-	AREA_DATA			* prev_on_planet;
 	char				* name;
 	char				* filename;
 	int64				flags;

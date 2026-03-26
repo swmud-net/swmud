@@ -20,27 +20,18 @@
 #define ROOM_INDEX_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	room_index_data
 {
-	ROOM_INDEX_DATA		* next;
-	ROOM_INDEX_DATA		* next_sort;
-	ROOM_INDEX_DATA		* next_on_ship;		//Thanos
-	ROOM_INDEX_DATA		* prev_on_ship;		//Thanos
 	SHIP_DATA			* ship;		//Thanos
-	CHAR_DATA			* first_person;
-	CHAR_DATA			* last_person;
-	OBJ_DATA			* first_content;
-	OBJ_DATA			* last_content;
-	EXTRA_DESCR_DATA	* first_extradesc;
-	EXTRA_DESCR_DATA	* last_extradesc;
+	std::list<CHAR_DATA*> people;
+	std::list<OBJ_DATA*> contents;
+	std::list<EXTRA_DESCR_DATA*> extradesc;
 	AREA_DATA			* area;
-	EXIT_DATA			* first_exit;
-	EXIT_DATA			* last_exit;
-	SHIP_DATA			* first_ship;
-	SHIP_DATA			* last_ship;
-	RESET_DATA			* first_reset;
-	RESET_DATA			* last_reset;
+	std::list<EXIT_DATA*> exits;
+	std::list<SHIP_DATA*> ships;
+	std::list<RESET_DATA*> resets;
 	VAR_DATA			* variables; /* Ratm - zmienne do mob_programow */
 	char				* name;
 	char				* homename;
@@ -51,17 +42,15 @@ struct	room_index_data
 	int64				room_flags;
 	MPROG_ACT_LIST		* mpact;	       /* mudprogs */
 	int					mpactnum;	     /* mudprogs */
-	MPROG_DATA			* mudprogs;	       /* mudprogs */
+	std::list<MPROG_DATA*> mudprogs;	       /* mudprogs */
 	int64				progtypes;	     /* mudprogs */
-	int					mpscriptrun;		/* Thanos - latwiej szukaæ proga */
+	int					mpscriptrun;		/* Thanos - latwiej szukaï¿½ proga */
 	int					light;
 	int					sector_type;
 	int					tele_vnum;
 	int					tele_delay;
 	int					tunnel;		/* max people that will fit */
 	/* Trog: clan stuff */
-	RID					* next_in_hq;
-	RID					* prev_in_hq;
 	HQ_ROOM				clan_room;
 };
 

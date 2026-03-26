@@ -20,18 +20,16 @@
 #define MOB_INDEX_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	mob_index_data
 {
-	MOB_INDEX_DATA		* next;
-	MOB_INDEX_DATA		* next_sort;
 	SPEC_FUN			* spec_fun;
 	SPEC_FUN			* spec_2;
 	SHOP_DATA			* pShop;
 	REPAIR_DATA			* rShop;
-	MPROG_DATA			* mudprogs;
-	NAMESLIST_DATA		* first_nameslist;
-	NAMESLIST_DATA		* last_nameslist;
+	std::list<MPROG_DATA*> mudprogs;
+	std::list<NAMESLIST_DATA*> nameslists;
 	NAMESLIST_DATA		* nameslist;
 	AREA_DATA			* in_area;
 	RACE_DATA			* race;

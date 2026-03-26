@@ -23,8 +23,6 @@
 
 struct cargo_data
 {
-	CARGO_DATA			* next;
-	CARGO_DATA			* prev;
 	int					amount;
 	int					type;
 	int					prise;

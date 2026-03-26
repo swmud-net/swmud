@@ -23,8 +23,6 @@
 
 struct nameslist_data
 {
-	NAMESLIST_DATA		* next;
-	NAMESLIST_DATA		* prev;
 	char				* name;
 };
 

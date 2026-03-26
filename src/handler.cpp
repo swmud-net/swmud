@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <unistd.h>
+#include <algorithm>
 #include "mud.h"
 
 #define BFS_MARK		BV63
@@ -35,8 +36,6 @@ extern int top_ed;
 extern int top_affect;
 extern int cur_qobjs;
 extern int cur_qchars;
-extern CHAR_DATA *gch_prev;
-extern OBJ_DATA *gobj_prev;
 
 CHAR_DATA *cur_char;
 ROOM_INDEX_DATA *cur_room;
@@ -82,7 +81,6 @@ void explode(OBJ_DATA *obj)
 	if (obj->armed_by && obj->value[4] != 1)
 	{
 		ROOM_INDEX_DATA *room;
-		CHAR_DATA *xch;
 		bool held = false;
 		/* Lomion: moje zmienne */
 		SHIP_DATA *ship;
@@ -91,13 +89,13 @@ void explode(OBJ_DATA *obj)
 		/* by Lomion */
 		obj->value[4] = 1;
 
-		for (xch = first_char; xch; xch = xch->next)
+		for (auto* xch : char_list)
 			if (!IS_NPC(xch) && nifty_is_name(obj->armed_by, xch->name))
 			{
 				if (obj->carried_by)
 				{
-					act(FB_WHITE, "$p EXPLODUJE w rêkach $n$1!", obj->carried_by, obj, NULL, TO_ROOM);
-					act(FB_WHITE, "$p EXPLODUJE w twoich rêkach!", obj->carried_by, obj, NULL, TO_CHAR);
+					act(FB_WHITE, "$p EXPLODUJE w rï¿½kach $n$1!", obj->carried_by, obj, NULL, TO_ROOM);
+					act(FB_WHITE, "$p EXPLODUJE w twoich rï¿½kach!", obj->carried_by, obj, NULL, TO_CHAR);
 					room = obj->carried_by->in_room;
 					held = true;
 
@@ -127,7 +125,7 @@ void explode(OBJ_DATA *obj)
 					ship = ship_from_room(room);
 					damage = number_range(obj->value[0] / 2, obj->value[0]);
 
-					// Thanos: tylko granaty wybuchowe mog± udzkodziæ statek
+					// Thanos: tylko granaty wybuchowe mogï¿½ udzkodziï¿½ statek
 					if (ship && obj->value[3] == GRANADE_EXPLOSIVE)
 					{
 						buf.clear();
@@ -161,9 +159,9 @@ void explode(OBJ_DATA *obj)
 					}
 					/* koniec eksplozji statku */
 
-					if (!held && room->first_person)
+					if (!held && !room->people.empty())
 					{
-						act(FB_WHITE, "$p EXPLODUJE!", room->first_person, obj, NULL, TO_ROOM);
+						act(FB_WHITE, "$p EXPLODUJE!", room->people.front(), obj, NULL, TO_ROOM);
 					}
 
 					room_explode(obj, xch, room);
@@ -204,14 +202,10 @@ void room_explode(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room)
 	room_explode_2(room, blast);
 }
 
-// Wybucha pokój i s±siaduj±ce z nim te¿ (w zale¿no¶ci od si³y eksplozji)
-// ka¿dy pokój jest zaznaczany (BFS_MARK), ¿eby nie pêtliæ
+// Wybucha pokï¿½j i sï¿½siadujï¿½ce z nim teï¿½ (w zaleï¿½noï¿½ci od siï¿½y eksplozji)
+// kaï¿½dy pokï¿½j jest zaznaczany (BFS_MARK), ï¿½eby nie pï¿½tliï¿½
 void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int blast)
 {
-	CHAR_DATA *rch;
-	CHAR_DATA *rnext;
-	OBJ_DATA *robj;
-	OBJ_DATA *robj_next;
 	AFFECT_DATA af;
 	int dam;
 	int chance;
@@ -226,20 +220,20 @@ void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int bl
 	logExplosion(buf);
 
 	// bugfix by Thanos -- nie ma explozji w saferoomach.
-	for (rch = room->first_person; rch; rch = rnext)
+	auto people_snapshot = room->people;
+	for (auto* rch : people_snapshot)
 	{
-		rnext = rch->next_in_room;
 
 		if (is_safe_grenade(rch, xch))
 		{
-			send_to_char( FB_WHITE "Potê¿na EXPLOZJA wstrz±sa okolic±!" EOL, rch);
+			send_to_char( FB_WHITE "Potï¿½na EXPLOZJA wstrzï¿½sa okolicï¿½!" EOL, rch);
 			continue;
 		}
 
 		switch (obj->value[3])
 		{
 		default:
-			act( FB_WHITE, "Fala uderzeniowa olbrzymiej eksplozji przechodzi przez twoje cia³o!", rch, obj, NULL, TO_CHAR);
+			act( FB_WHITE, "Fala uderzeniowa olbrzymiej eksplozji przechodzi przez twoje ciaï¿½o!", rch, obj, NULL, TO_CHAR);
 			if (blast > 1)
 				dam = number_range(obj->value[0] / blast, obj->value[0] / (blast - 1));
 			else
@@ -248,17 +242,17 @@ void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int bl
 			break;
 		case GRANADE_POISON:
 		{
-			bool first;
+			bool first = true;
 
-			act( FB_WHITE, "Fala uderzeniowa olbrzymiej eksplozji truj±cego gazu"
-					" przechodzi przez twoje cia³o!", rch, obj, NULL,
+			act( FB_WHITE, "Fala uderzeniowa olbrzymiej eksplozji trujï¿½cego gazu"
+					" przechodzi przez twoje ciaï¿½o!", rch, obj, NULL,
 			TO_CHAR);
 			if (blast > 1)
 				dam = number_range(obj->value[0] / blast, obj->value[0] / (blast - 1));
 			else
 				dam = obj->value[0];
 
-			/* ten kod jest wyciêty z spell_poison */
+			/* ten kod jest wyciï¿½ty z spell_poison */
 			chance = ris_save(rch, obj->level, RIS_POISON);
 			if (chance == 1000 || saves_poison_death(chance, rch))
 				break;
@@ -271,12 +265,12 @@ void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int bl
 			af.bitvector = AFF_POISON;
 			affect_join(rch, &af);
 			send_to_char( COL_FORCE, rch);
-			send_to_char("Czujesz, ¿e jest ci bardzo niedobrze." NL, rch);
+			send_to_char("Czujesz, ï¿½e jest ci bardzo niedobrze." NL, rch);
 			rch->mental_state = URANGE(20, rch->mental_state + (first ? 5 : 0), 100);
 		}
 			break;
 		case GRANADE_STUN:
-			act( FB_WHITE, "Huk o niezwykle wysokiej czêstotliwo¶ci wwierca siê w twój mózg!", rch, obj, NULL, TO_CHAR);
+			act( FB_WHITE, "Huk o niezwykle wysokiej czï¿½stotliwoï¿½ci wwierca siï¿½ w twï¿½j mï¿½zg!", rch, obj, NULL, TO_CHAR);
 			if (blast > 1)
 				dam = number_range(obj->value[0] / blast, obj->value[0] / (blast - 1));
 			else
@@ -294,7 +288,7 @@ void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int bl
 			}
 			break;
 		case GRANADE_BLIND:
-			act( FB_WHITE, "B³ysk jasny jak wybuch supernovej o¶lepia ciê!", rch, obj, NULL, TO_CHAR);
+			act( FB_WHITE, "Bï¿½ysk jasny jak wybuch supernovej oï¿½lepia ciï¿½!", rch, obj, NULL, TO_CHAR);
 			if (blast > 1)
 				dam = number_range(obj->value[0] / blast, obj->value[0] / (blast - 1));
 			else
@@ -316,7 +310,7 @@ void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int bl
 
 		if (!char_died(rch))
 		{
-			// huntuj± tylko moby w promieniu 3 lokacji od centrum wybuchu
+			// huntujï¿½ tylko moby w promieniu 3 lokacji od centrum wybuchu
 			// -- Thanos
 			if (IS_NPC( rch ) && blast < 3)
 			{
@@ -331,11 +325,11 @@ void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int bl
 		}
 	}
 
-	// na przedmioty mo¿e mieæ wp³yw jedynie explozja dynamitu,
+	// na przedmioty moï¿½e mieï¿½ wpï¿½yw jedynie explozja dynamitu,
 	// albo trucizna (fontanny i drink_containers)  -- Thanos
-	for (robj = room->first_content; robj; robj = robj_next)
+	auto contents_snapshot = room->contents;
+	for (auto* robj : contents_snapshot)
 	{
-		robj_next = robj->next_content;
 		separate_obj(robj); /* by Lomion */
 
 		if (robj != obj && robj->item_type != ITEM_SHIPMODULE && robj->item_type != ITEM_SCRAPS && robj->item_type != ITEM_CORPSE_NPC
@@ -367,11 +361,9 @@ void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int bl
 	/* other rooms */
 	SET_BIT(room->room_flags, BFS_MARK);
 
-	if (room->first_exit)
+	if (!room->exits.empty())
 	{
-		EXIT_DATA *pexit;
-
-		for (pexit = room->first_exit; pexit; pexit = pexit->next)
+		for (auto* pexit : room->exits)
 		{
 			if (pexit->to_room && pexit->to_room != room)
 			{
@@ -383,13 +375,13 @@ void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int bl
 				}
 				else if (!IS_SET(pexit->to_room->room_flags, BFS_MARK))
 					echo_to_room(pexit->to_room,
-					FB_WHITE "S³yszysz potworn± EXPLOZJÊ gdzie¶ niedaleko!");
+					FB_WHITE "Sï¿½yszysz potwornï¿½ EXPLOZJï¿½ gdzieï¿½ niedaleko!");
 			}
 		}
 	}
 }
 
-// Sprz±ta zaznaczenia (BFS_MARK) z pokoi dotkniêtych wybuchem
+// Sprzï¿½ta zaznaczenia (BFS_MARK) z pokoi dotkniï¿½tych wybuchem
 void room_explode_2(ROOM_INDEX_DATA *room, int blast)
 {
 	if (!IS_SET(room->room_flags, BFS_MARK))
@@ -400,9 +392,8 @@ void room_explode_2(ROOM_INDEX_DATA *room, int blast)
 	if (blast > 0)
 	{
 		int roomblast;
-		EXIT_DATA *pexit;
 
-		for (pexit = room->first_exit; pexit; pexit = pexit->next)
+		for (auto* pexit : room->exits)
 		{
 			if (pexit->to_room && pexit->to_room != room)
 			{
@@ -1484,8 +1475,8 @@ void affect_modify(CHAR_DATA *ch, AFFECT_DATA *paf, bool fAdd)
 		if (depth == 0)
 		{
 			depth++;
-			act( COL_ACTION, "Nie masz ju¿ si³y by d¼wigaæ $p$3.", ch, wield, NULL, TO_CHAR);
-			act( COL_ACTION, "$n przestaje u¿ywaæ $p$3.", ch, wield, NULL,
+			act( COL_ACTION, "Nie masz juï¿½ siï¿½y by dï¿½wigaï¿½ $p$3.", ch, wield, NULL, TO_CHAR);
+			act( COL_ACTION, "$n przestaje uï¿½ywaï¿½ $p$3.", ch, wield, NULL,
 			TO_ROOM);
 			unequip_char(ch, wield);
 			depth--;
@@ -1509,7 +1500,7 @@ void affect_to_char(CHAR_DATA *ch, AFFECT_DATA *paf)
 		return;
 
 	CREATE(paf_new, AFFECT_DATA, 1);
-	LINK(paf_new, ch->first_affect, ch->last_affect, next, prev);
+	ch->affects.push_back(paf_new);
 	paf_new->type = paf->type;
 	paf_new->duration = paf->duration;
 	paf_new->location = paf->location;
@@ -1525,12 +1516,12 @@ void affect_to_char(CHAR_DATA *ch, AFFECT_DATA *paf)
  */
 void affect_remove(CHAR_DATA *ch, AFFECT_DATA *paf)
 {
-	IF_BUG(ch->first_affect == NULL, "(ch:%s)", ch->name)
+	IF_BUG(ch->affects.empty(), "(ch:%s)", ch->name)
 		return;
 
 	affect_modify(ch, paf, false);
 
-	UNLINK(paf, ch->first_affect, ch->last_affect, next, prev);
+	ch->affects.remove(paf);
 	DISPOSE(paf);
 	return;
 }
@@ -1540,12 +1531,10 @@ void affect_remove(CHAR_DATA *ch, AFFECT_DATA *paf)
  */
 void affect_strip(CHAR_DATA *ch, int sn)
 {
-	AFFECT_DATA *paf;
-	AFFECT_DATA *paf_next;
-
-	for (paf = ch->first_affect; paf; paf = paf_next)
+	for (auto it = ch->affects.begin(); it != ch->affects.end(); )
 	{
-		paf_next = paf->next;
+		AFFECT_DATA *paf = *it;
+		++it;
 		if (paf->type == sn)
 			affect_remove(ch, paf);
 	}
@@ -1558,9 +1547,7 @@ void affect_strip(CHAR_DATA *ch, int sn)
  */
 bool is_affected(CHAR_DATA *ch, int sn)
 {
-	AFFECT_DATA *paf;
-
-	for (paf = ch->first_affect; paf; paf = paf->next)
+	for (auto* paf : ch->affects)
 		if (paf->type == sn)
 			return true;
 
@@ -1574,19 +1561,23 @@ bool is_affected(CHAR_DATA *ch, int sn)
  */
 void affect_join(CHAR_DATA *ch, AFFECT_DATA *paf)
 {
-	AFFECT_DATA *paf_old;
+	AFFECT_DATA *paf_old = nullptr;
 
-	for (paf_old = ch->first_affect; paf_old; paf_old = paf_old->next)
-		if (paf_old->type == paf->type)
+	for (auto* a : ch->affects)
+		if (a->type == paf->type)
 		{
-			paf->duration = UMIN(1000000, paf->duration + paf_old->duration);
-			if (paf->modifier)
-				paf->modifier = UMIN(5000, paf->modifier + paf_old->modifier);
-			else
-				paf->modifier = paf_old->modifier;
-			affect_remove(ch, paf_old);
+			paf_old = a;
 			break;
 		}
+	if (paf_old)
+	{
+		paf->duration = UMIN(1000000, paf->duration + paf_old->duration);
+		if (paf->modifier)
+			paf->modifier = UMIN(5000, paf->modifier + paf_old->modifier);
+		else
+			paf->modifier = paf_old->modifier;
+		affect_remove(ch, paf_old);
+	}
 
 	affect_to_char(ch, paf);
 	return;
@@ -1614,15 +1605,13 @@ void char_from_room(CHAR_DATA *ch)
 	if ((obj = get_eq_char(ch, WEAR_LIGHT)) != NULL && obj->item_type == ITEM_LIGHT && obj->value[2] != 0 && ch->in_room->light > 0)
 		--ch->in_room->light;
 
-	UNLINK(ch, ch->in_room->first_person, ch->in_room->last_person, next_in_room, prev_in_room);
+	ch->in_room->people.remove(ch);
 
-	/*Jesli opuszcza swoje mieszkanie to wypraszamy go¶ci - Ganis*/
+	/*Jesli opuszcza swoje mieszkanie to wypraszamy goï¿½ci - Ganis*/
 	if (ch->plr_home && ch->plr_home == ch->in_room)
 		evacuate_guests(ch->plr_home);
 
 	ch->in_room = NULL;
-	ch->next_in_room = NULL;
-	ch->prev_in_room = NULL;
 
 	if (!IS_NPC(ch) && get_timer(ch, TIMER_SHOVEDRAG) > 0)
 		remove_timer(ch, TIMER_SHOVEDRAG);
@@ -1639,7 +1628,6 @@ void char_from_room(CHAR_DATA *ch)
 void char_to_room(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoomIndex)
 {
 	OBJ_DATA *obj;
-	CHAR_DATA *vch;
 
 	IF_BUG(ch == NULL, "")
 		return;
@@ -1660,11 +1648,11 @@ void char_to_room(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoomIndex)
 	ch->in_room = pRoomIndex;
 
 	if (ch == supermob)
-		for (vch = pRoomIndex->first_person; vch; vch = vch->next_in_room)
+		for (auto* vch : pRoomIndex->people)
 			if (vch == ch)
 				return;
 
-	LINK(ch, pRoomIndex->first_person, pRoomIndex->last_person, next_in_room, prev_in_room);
+	pRoomIndex->people.push_back(ch);
 
 	if (!IS_NPC(ch))
 	{
@@ -1684,14 +1672,13 @@ void char_to_room(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoomIndex)
 	 */
 	if ( IS_SET(ch->in_room->room_flags, ROOM_TELEPORT) && ch->in_room->tele_delay > 0)
 	{
-		TELEPORT_DATA *tele;
-
-		for (tele = first_teleport; tele; tele = tele->next)
+		for (auto* tele : teleport_list)
 			if (tele->room == pRoomIndex)
 				return;
 
+		TELEPORT_DATA *tele;
 		CREATE(tele, TELEPORT_DATA, 1);
-		LINK(tele, first_teleport, last_teleport, next, prev);
+		teleport_list.push_back(tele);
 		tele->room = pRoomIndex;
 		tele->timer = pRoomIndex->tele_delay;
 	}
@@ -1707,7 +1694,7 @@ void obj_personalize(CHAR_DATA *ch, OBJ_DATA *obj)
 		return;
 
 	if (loading_char != ch)
-		ch_printf(ch, "Czujesz, ¿e pokocha³%s¶ %s, ju¿ nigdy siê nie rozstaniecie!" NL, SEX_SUFFIX_EAE(ch), obj->przypadki[3]);
+		ch_printf(ch, "Czujesz, ï¿½e pokochaï¿½%sï¿½ %s, juï¿½ nigdy siï¿½ nie rozstaniecie!" NL, SEX_SUFFIX_EAE(ch), obj->przypadki[3]);
 
 	STRDUP(obj->owner_name, ch->name);
 	return;
@@ -1718,7 +1705,6 @@ void obj_personalize(CHAR_DATA *ch, OBJ_DATA *obj)
  */
 OBJ_DATA* obj_to_char(OBJ_DATA *obj, CHAR_DATA *ch)
 {
-	OBJ_DATA *otmp;
 	OBJ_DATA *oret = obj;
 	bool skipgroup, grouped;
 	int oweight = get_obj_weight(obj);
@@ -1755,23 +1741,23 @@ OBJ_DATA* obj_to_char(OBJ_DATA *obj, CHAR_DATA *ch)
 			if (!planet)
 			{
 				bug("Guy trying to steal deposit, and jail has no PLANET !!! (ch:%s)", ch->name);
-				planet = first_planet;
+				planet = planet_list.front();
 			}
 
 			if ((crime = find_crime(ch, planet)) != NULL)
 				ch_printf(ch, FG_YELLOW
-				"Pope³niaj±c kradzie¿e na %s pogarszasz swoj± sytuacjê." EOL, capitalize(planet->name));
+				"Popeï¿½niajï¿½c kradzieï¿½e na %s pogarszasz swojï¿½ sytuacjï¿½." EOL, capitalize(planet->name));
 			else
 				ch_printf(ch, FG_YELLOW
-				"Jeste¶ teraz poszukiwan%s na %s." EOL,
+				"Jesteï¿½ teraz poszukiwan%s na %s." EOL,
 				MALE( ch ) ? "y" : FEMALE(ch) ? "a" : "e", capitalize(planet->name));
 			crime_to_char(ch, planet->name, CRIME_STEAL);
 		}
 
-		ch_printf(ch, "Dziwnym trafem %s wy¶lizguje ci siê z r±k i spada na ziemiê" NL
-		" rozpadaj±c siê na kawa³eczki..." NL, obj->przypadki[0]);
+		ch_printf(ch, "Dziwnym trafem %s wyï¿½lizguje ci siï¿½ z rï¿½k i spada na ziemiï¿½" NL
+		" rozpadajï¿½c siï¿½ na kawaï¿½eczki..." NL, obj->przypadki[0]);
 
-		if (obj->first_content)
+		if (!obj->contents.empty())
 			empty_obj(obj, NULL, ch->in_room);
 
 		if (owner)
@@ -1793,9 +1779,9 @@ OBJ_DATA* obj_to_char(OBJ_DATA *obj, CHAR_DATA *ch)
 			 * wyrzuci (czyli idzie na koniec listy) i spowrotem wezmie i... */
 			char buf[MSL];
 
-			ch_printf(ch, "To chyba nie twoje. Spadówa!" NL);
+			ch_printf(ch, "To chyba nie twoje. Spadï¿½wa!" NL);
 
-			sprintf(buf, "%s" PLAIN " upad%s na ziemiê.", obj->przypadki[0], obj->gender > GENDER_FEMALE ? "aj±" : "a");
+			sprintf(buf, "%s" PLAIN " upad%s na ziemiï¿½.", obj->przypadki[0], obj->gender > GENDER_FEMALE ? "ajï¿½" : "a");
 			act( PLAIN, buf, ch, NULL, NULL, TO_ROOM);
 			act( PLAIN, buf, ch, obj, NULL, TO_CHAR);
 
@@ -1816,7 +1802,7 @@ OBJ_DATA* obj_to_char(OBJ_DATA *obj, CHAR_DATA *ch)
 	}
 
 	if (!skipgroup)
-		for (otmp = ch->first_carrying; otmp; otmp = otmp->next_content)
+		for (auto* otmp : ch->carrying)
 			if ((oret = group_object(otmp, obj)) == otmp)
 			{
 				grouped = true;
@@ -1825,7 +1811,7 @@ OBJ_DATA* obj_to_char(OBJ_DATA *obj, CHAR_DATA *ch)
 
 	if (!grouped)
 	{
-		LINK(obj, ch->first_carrying, ch->last_carrying, next_content, prev_content);
+		ch->carrying.push_back(obj);
 		obj->carried_by = ch;
 		obj->in_room = NULL;
 		obj->in_obj = NULL;
@@ -1863,9 +1849,9 @@ void obj_from_char(OBJ_DATA *obj)
 	if (!obj->carried_by)
 		return;
 
-	UNLINK(obj, ch->first_carrying, ch->last_carrying, next_content, prev_content);
+	ch->carrying.remove(obj);
 
-	if ( IS_OBJ_STAT( obj, ITEM_COVERING ) && obj->first_content)
+	if ( IS_OBJ_STAT( obj, ITEM_COVERING ) && !obj->contents.empty())
 		empty_obj(obj, NULL, NULL);
 
 	obj->in_room = NULL;
@@ -1933,9 +1919,9 @@ int apply_ac(OBJ_DATA *obj, int iWear)
  */
 OBJ_DATA* get_eq_char(CHAR_DATA *ch, int iWear)
 {
-	OBJ_DATA *obj, *maxobj = NULL;
+	OBJ_DATA *maxobj = NULL;
 
-	for (obj = ch->first_carrying; obj; obj = obj->next_content)
+	for (auto* obj : ch->carrying)
 		if (obj->wear_loc == iWear)
 		{
 			if (!obj->pIndexData->layers)
@@ -1951,7 +1937,6 @@ OBJ_DATA* get_eq_char(CHAR_DATA *ch, int iWear)
  */
 void equip_char(CHAR_DATA *ch, OBJ_DATA *obj, int iWear)
 {
-	AFFECT_DATA *paf;
 	OBJ_DATA *otmp;
 
 	IF_BUG(ch == NULL, "")
@@ -1996,9 +1981,9 @@ void equip_char(CHAR_DATA *ch, OBJ_DATA *obj, int iWear)
 	if (IS_SET(obj->extra_flags, ITEM_FORCE))
 		ch->carry_weight -= get_obj_weight(obj);
 
-	for (paf = obj->pIndexData->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->pIndexData->affects)
 		affect_modify(ch, paf, true);
-	for (paf = obj->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->affects)
 		affect_modify(ch, paf, true);
 
 	if (obj->item_type == ITEM_LIGHT && obj->value[2] != 0 && ch->in_room)
@@ -2017,8 +2002,6 @@ void equip_char(CHAR_DATA *ch, OBJ_DATA *obj, int iWear)
  */
 void unequip_char(CHAR_DATA *ch, OBJ_DATA *obj)
 {
-	AFFECT_DATA *paf;
-
 	if (obj->wear_loc == WEAR_NONE)
 	{
 		bug("already unequipped.", 0);
@@ -2032,10 +2015,10 @@ void unequip_char(CHAR_DATA *ch, OBJ_DATA *obj)
 	ch->armor += apply_ac(obj, obj->wear_loc);
 	obj->wear_loc = WEAR_NONE;
 
-	for (paf = obj->pIndexData->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->pIndexData->affects)
 		affect_modify(ch, paf, false);
 	if (obj->carried_by)
-		for (paf = obj->first_affect; paf; paf = paf->next)
+		for (auto* paf : obj->affects)
 			affect_modify(ch, paf, false);
 
 	if (isDefelInvisible(ch))
@@ -2059,13 +2042,12 @@ void unequip_char(CHAR_DATA *ch, OBJ_DATA *obj)
 /*
  * Count occurrences of an obj in a list.
  */
-int count_obj_list(OBJ_INDEX_DATA *pObjIndex, OBJ_DATA *list)
+int count_obj_list(OBJ_INDEX_DATA *pObjIndex, const std::list<OBJ_DATA*>& list)
 {
-	OBJ_DATA *obj;
 	int nMatch;
 
 	nMatch = 0;
-	for (obj = list; obj; obj = obj->next_content)
+	for (auto* obj : list)
 		if (obj->pIndexData == pObjIndex)
 			nMatch++;
 
@@ -2090,12 +2072,12 @@ void obj_from_room(OBJ_DATA *obj)
 	IF_BUG(in_room == NULL, "(obj:%d)", obj->pIndexData->vnum)
 		return;
 
-	UNLINK(obj, in_room->first_content, in_room->last_content, next_content, prev_content);
+	in_room->contents.remove(obj);
 
-	if ( IS_OBJ_STAT( obj, ITEM_COVERING ) && obj->first_content)
+	if ( IS_OBJ_STAT( obj, ITEM_COVERING ) && !obj->contents.empty())
 		empty_obj(obj, NULL, obj->in_room);
 
-	if (IS_OBJ_STAT(obj, ITEM_GLOW))   // Thanos: glow dzia³a na ¶wiat³o
+	if (IS_OBJ_STAT(obj, ITEM_GLOW))   // Thanos: glow dziaï¿½a na ï¿½wiatï¿½o
 		obj->in_room->light -= obj->count;
 
 	obj->carried_by = NULL;
@@ -2112,20 +2094,20 @@ void obj_from_room(OBJ_DATA *obj)
  */
 OBJ_DATA* obj_to_room(OBJ_DATA *obj, ROOM_INDEX_DATA *pRoomIndex)
 {
-	OBJ_DATA *otmp, *oret;
+	OBJ_DATA *oret;
 	int count = obj->count;
 
-	for (otmp = pRoomIndex->first_content; otmp; otmp = otmp->next_content)
+	for (auto* otmp : pRoomIndex->contents)
 		if ((oret = group_object(otmp, obj)) == otmp)
 			return oret;
 
-	LINK(obj, pRoomIndex->first_content, pRoomIndex->last_content, next_content, prev_content);
+	pRoomIndex->contents.push_back(obj);
 
 	obj->in_room = pRoomIndex;
 	obj->carried_by = NULL;
 	obj->in_obj = NULL;
 
-	if (IS_OBJ_STAT(obj, ITEM_GLOW))   // Thanos: glow dzia³a na ¶wiat³o
+	if (IS_OBJ_STAT(obj, ITEM_GLOW))   // Thanos: glow dziaï¿½a na ï¿½wiatï¿½o
 		pRoomIndex->light += count;
 
 	falling++;
@@ -2143,7 +2125,7 @@ OBJ_DATA* obj_to_room(OBJ_DATA *obj, ROOM_INDEX_DATA *pRoomIndex)
  */
 OBJ_DATA* obj_to_obj(OBJ_DATA *obj, OBJ_DATA *obj_to)
 {
-	OBJ_DATA *otmp, *oret;
+	OBJ_DATA *oret;
 
 	IF_BUG(obj == NULL, "")
 		return NULL;
@@ -2163,11 +2145,11 @@ OBJ_DATA* obj_to_obj(OBJ_DATA *obj, OBJ_DATA *obj_to)
 			obj_to->carried_by->carry_weight += get_obj_weight(obj);
 	}
 
-	for (otmp = obj_to->first_content; otmp; otmp = otmp->next_content)
+	for (auto* otmp : obj_to->contents)
 		if ((oret = group_object(otmp, obj)) == otmp)
 			return oret;
 
-	LINK(obj, obj_to->first_content, obj_to->last_content, next_content, prev_content);
+	obj_to->contents.push_back(obj);
 	obj->in_obj = obj_to;
 	obj->in_room = NULL;
 	obj->carried_by = NULL;
@@ -2189,9 +2171,9 @@ void obj_from_obj(OBJ_DATA *obj)
 	IF_BUG(obj_from == NULL, "(obj:%d)", obj->pIndexData->vnum)
 		return;
 
-	UNLINK(obj, obj_from->first_content, obj_from->last_content, next_content, prev_content);
+	obj_from->contents.remove(obj);
 
-	if ( IS_OBJ_STAT( obj, ITEM_COVERING ) && obj->first_content)
+	if ( IS_OBJ_STAT( obj, ITEM_COVERING ) && !obj->contents.empty())
 		empty_obj(obj, obj->in_obj, NULL);
 
 	obj->in_obj = NULL;
@@ -2234,9 +2216,10 @@ void extract_obj(OBJ_DATA *obj)
 	else if ((inobj = obj->in_obj))
 		obj_from_obj(obj);
 
-	while ((obj_content = obj->last_content) != NULL)
+	while (!obj->contents.empty())
 	{
-		/* Je¶li przedmiot by³ questowy, 'wypada' z pojemnika  -- Thanos */
+		obj_content = obj->contents.back();
+		/* Jeï¿½li przedmiot byï¿½ questowy, 'wypada' z pojemnika  -- Thanos */
 		if (obj_content->inquest)
 		{
 			obj_from_obj(obj_content);
@@ -2255,54 +2238,38 @@ void extract_obj(OBJ_DATA *obj)
 	}
 
 	{
-		AFFECT_DATA *paf;
-		AFFECT_DATA *paf_next;
-
-		for (paf = obj->first_affect; paf; paf = paf_next)
+		for (auto* paf : obj->affects)
 		{
-			paf_next = paf->next;
 			DISPOSE(paf);
 		}
-		obj->first_affect = obj->last_affect = NULL;
+		obj->affects.clear();
 	}
 
 	{
-		REQUIREMENT_DATA *req;
-		REQUIREMENT_DATA *req_next;
-
-		for (req = obj->first_requirement; req; req = req_next)
+		for (auto* req : obj->requirements)
 		{
-			req_next = req->next;
 			DISPOSE(req);
 		}
-		obj->first_requirement = obj->last_requirement = NULL;
+		obj->requirements.clear();
 	}
 
 	{
-		EXTRA_DESCR_DATA *ed;
-		EXTRA_DESCR_DATA *ed_next;
-
-		for (ed = obj->first_extradesc; ed; ed = ed_next)
+		for (auto* ed : obj->extradesc)
 		{
-			ed_next = ed->next;
 			free_ed(ed);
 		}
-		obj->first_extradesc = obj->last_extradesc = NULL;
+		obj->extradesc.clear();
 	}
-
-	if (obj == gobj_prev)
-		gobj_prev = obj->prev;
 
 	/* Thanos 	- quest cleanup */
 	if (obj->inquest)
 	{
 		QUEST_DATA *quest = obj->inquest;
-		QUEST_OBJ_DATA *qObj;
 
-		for (qObj = quest->first_obj; qObj; qObj = qObj->next)
+		for (auto* qObj : quest->objs)
 			if (qObj->obj && qObj->obj == obj)
 			{
-				UNLINK(qObj, quest->first_obj, quest->last_obj, next, prev);
+				quest->objs.remove(qObj);
 				DISPOSE(qObj);
 				break;
 			}
@@ -2310,12 +2277,9 @@ void extract_obj(OBJ_DATA *obj)
 	/* Thanos 	- script cleanup */
 	if (obj->mpscriptrun)
 	{
-		SCRIPT_DATA *script;
-		SCRIPT_DATA *script_next;
-
-		for (script = first_script_prog; script; script = script_next)
+		auto scripts_snapshot = script_prog_list;
+		for (auto* script : scripts_snapshot)
 		{
-			script_next = script->next;
 			if (script->o_owner && script->o_owner == obj)
 				stopscript(script);
 		}
@@ -2323,7 +2287,7 @@ void extract_obj(OBJ_DATA *obj)
 
 	/* Thanos -- personale */
 
-	UNLINK(obj, first_object, last_object, next, prev);
+	object_list.remove(obj);
 	/* shove onto extraction queue */
 	queue_extracted_obj(obj);
 
@@ -2344,8 +2308,6 @@ void extract_obj(OBJ_DATA *obj)
  */
 void extract_char(CHAR_DATA *ch, bool fPull)
 {
-	CHAR_DATA *wch;
-	OBJ_DATA *obj;
 	ROOM_INDEX_DATA *location;
 
 	IF_BUG(ch == NULL, "")
@@ -2366,14 +2328,11 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 		return;
 	}
 
-	if (ch->first_suspect)
+	if (!ch->suspects.empty())
 	{
-		SUSPECT_DATA *sus;
-		SUSPECT_DATA *sus_next;
-
-		for (sus = ch->first_suspect; sus; sus = sus_next)
+		auto suspects_snapshot = ch->suspects;
+		for (auto* sus : suspects_snapshot)
 		{
-			sus_next = sus->next;
 			free_suspect(ch, sus);
 		}
 	}
@@ -2382,13 +2341,12 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 	{
 		if (IS_NPC(ch))
 		{
-			QUEST_MOB_DATA *qMob;
 			QUEST_DATA *quest = ch->inquest;
 
-			for (qMob = quest->first_mob; qMob; qMob = qMob->next)
+			for (auto* qMob : quest->mobs)
 				if (qMob->mob && qMob->mob == ch)
 				{
-					UNLINK(qMob, quest->first_mob, quest->last_mob, next, prev);
+					quest->mobs.remove(qMob);
 					DISPOSE(qMob);
 					break;
 				}
@@ -2399,12 +2357,9 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 
 	/* Thanos 	- script cleanup */
 	{
-		SCRIPT_DATA *script;
-		SCRIPT_DATA *script_next;
-
-		for (script = first_script_prog; script; script = script_next)
+		auto scripts_snapshot = script_prog_list;
+		for (auto* script : scripts_snapshot)
 		{
-			script_next = script->next;
 			if ((script->m_owner && script->m_owner == ch) || (script->victim && script->victim == ch))
 				stopscript(script);
 		}
@@ -2414,9 +2369,6 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 		cur_char_died = true;
 	/* shove onto extraction queue */
 	queue_extracted_char(ch, fPull);
-
-	if (gch_prev == ch)
-		gch_prev = ch->prev;
 
 	if (fPull && !IS_SET(ch->act, ACT_POLYMORPHED))
 		die_follower(ch);
@@ -2432,7 +2384,7 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 	}
 
 	if ( IS_NPC(ch) && IS_SET(ch->act, ACT_MOUNTED))
-		for (wch = first_char; wch; wch = wch->next)
+		for (auto* wch : char_list)
 			if (wch->mount == ch)
 			{
 				wch->mount = NULL;
@@ -2441,8 +2393,8 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 
 	REMOVE_BIT(ch->act, ACT_MOUNTED);
 
-	while ((obj = ch->last_carrying) != NULL)
-		extract_obj(obj);
+	while (!ch->carrying.empty())
+		extract_obj(ch->carrying.back());
 
 	if (!IS_NPC(ch) && ch->deposit)
 	{
@@ -2463,7 +2415,7 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 
 		char_to_room(ch, location);
 
-		act( COL_FORCE, "$n wy³ania siê z wiruj±cej mg³y!", ch, NULL, NULL,
+		act( COL_FORCE, "$n wyï¿½ania siï¿½ z wirujï¿½cej mgï¿½y!", ch, NULL, NULL,
 		TO_ROOM);
 		ch->position = POS_RESTING;
 		return;
@@ -2481,15 +2433,15 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 	if (ch->desc && ch->desc->original)
 		do_return(ch, (char*) "");
 
-	for (wch = first_char; wch; wch = wch->next)
+	for (auto* wch : char_list)
 		if (wch->reply == ch)
 			wch->reply = NULL;
 	//added by Thanos
-	for (wch = first_char; wch; wch = wch->next)
+	for (auto* wch : char_list)
 		if (wch->retell == ch)
 			wch->retell = NULL;
 
-	UNLINK(ch, first_char, last_char, next, prev);
+	char_list.remove(ch);
 
 	if (ch->desc)
 	{
@@ -2511,7 +2463,6 @@ void extract_char(CHAR_DATA *ch, bool fPull)
 CHAR_DATA* get_char_room(CHAR_DATA *ch, char *argument)
 {
 	char arg[MAX_INPUT_LENGTH];
-	CHAR_DATA *rch;
 	int number, count, vnum;
 	char *name = NULL;
 
@@ -2526,7 +2477,7 @@ CHAR_DATA* get_char_room(CHAR_DATA *ch, char *argument)
 
 	count = 0;
 
-	for (rch = ch->in_room->first_person; rch; rch = rch->next_in_room)
+	for (auto* rch : ch->in_room->people)
 	{
 		const SWString &attrib = format_char_attribute(rch, 0);
 		if (IS_NPC(ch) || IS_NPC(rch) || does_knows(ch, rch))
@@ -2552,7 +2503,7 @@ CHAR_DATA* get_char_room(CHAR_DATA *ch, char *argument)
 	 Added by Narn, Sept/96
 	 */
 	count = 0;
-	for (rch = ch->in_room->first_person; rch; rch = rch->next_in_room)
+	for (auto* rch : ch->in_room->people)
 	{
 		const SWString &attrib = format_char_attribute(rch, 0);
 		if (IS_NPC(ch) || IS_NPC(rch) || does_knows(ch, rch))
@@ -2576,7 +2527,6 @@ CHAR_DATA* get_char_room(CHAR_DATA *ch, char *argument)
 CHAR_DATA* get_char_world(CHAR_DATA *ch, char *argument)
 {
 	char arg[MAX_INPUT_LENGTH];
-	CHAR_DATA *wch;
 	int number, count, vnum;
 	char *name = NULL;
 
@@ -2594,7 +2544,7 @@ CHAR_DATA* get_char_world(CHAR_DATA *ch, char *argument)
 		vnum = -1;
 
 	/* check the room for an exact match */
-	for (wch = ch->in_room->first_person; wch; wch = wch->next_in_room)
+	for (auto* wch : ch->in_room->people)
 	{
 		const SWString &attrib = format_char_attribute(wch, 0);
 		if (IS_NPC(ch) || IS_NPC(wch) || does_knows(ch, wch))
@@ -2613,7 +2563,7 @@ CHAR_DATA* get_char_world(CHAR_DATA *ch, char *argument)
 	count = 0;
 
 	/* check the world for an exact match */
-	for (wch = first_char; wch; wch = wch->next)
+	for (auto* wch : char_list)
 	{
 		const SWString &attrib = format_char_attribute(wch, 0);
 		if (IS_NPC(ch) || IS_NPC(wch) || does_knows(ch, wch))
@@ -2639,7 +2589,7 @@ CHAR_DATA* get_char_world(CHAR_DATA *ch, char *argument)
 	 * Added by Narn, Sept/96
 	 */
 	count = 0;
-	for (wch = ch->in_room->first_person; wch; wch = wch->next_in_room)
+	for (auto* wch : ch->in_room->people)
 	{
 		const SWString &attrib = format_char_attribute(wch, 0);
 		if (IS_NPC(ch) || IS_NPC(wch) || does_knows(ch, wch))
@@ -2660,7 +2610,7 @@ CHAR_DATA* get_char_world(CHAR_DATA *ch, char *argument)
 	 * Added by Narn, Sept/96
 	 */
 	count = 0;
-	for (wch = first_char; wch; wch = wch->next)
+	for (auto* wch : char_list)
 	{
 		const SWString &attrib = format_char_attribute(wch, 0);
 		if (IS_NPC(ch) || IS_NPC(wch) || does_knows(ch, wch))
@@ -2686,7 +2636,6 @@ CHAR_DATA* get_char_world(CHAR_DATA *ch, char *argument)
 //Trog: zle dzialalo, wiec poprawilem
 CHAR_DATA* get_player_world(CHAR_DATA *ch, char *argument)
 {
-	DESCRIPTOR_DATA *d;
 	CHAR_DATA *wch;
 	char arg[MIL];
 	int number, count;
@@ -2702,7 +2651,7 @@ CHAR_DATA* get_player_world(CHAR_DATA *ch, char *argument)
 	/* check the world for an exact match */
 	if (number == 1)
 	{
-		FOREACH( d, first_descriptor )
+		for (auto* d : descriptor_list)
 		{
 			if (!(wch = CH(d)) || IS_NPC(wch))
 				continue;
@@ -2715,7 +2664,7 @@ CHAR_DATA* get_player_world(CHAR_DATA *ch, char *argument)
 
 	/* now the prefixes */
 	count = 1;
-	FOREACH( d, first_descriptor )
+	for (auto* d : descriptor_list)
 	{
 		if (!(wch = CH(d)) || IS_NPC(wch))
 			continue;
@@ -2736,11 +2685,9 @@ CHAR_DATA* get_player_world(CHAR_DATA *ch, char *argument)
  */
 OBJ_DATA* get_obj_type(OBJ_INDEX_DATA *pObjIndex)
 {
-	OBJ_DATA *obj;
-
-	for (obj = last_object; obj; obj = obj->prev)
-		if (obj->pIndexData == pObjIndex)
-			return obj;
+	for (auto it = object_list.rbegin(); it != object_list.rend(); ++it)
+		if ((*it)->pIndexData == pObjIndex)
+			return *it;
 
 	return NULL;
 }
@@ -2748,16 +2695,15 @@ OBJ_DATA* get_obj_type(OBJ_INDEX_DATA *pObjIndex)
 /*
  * Find an obj in a list.
  */
-OBJ_DATA* get_obj_list(CHAR_DATA *ch, char *argument, OBJ_DATA *list)
+OBJ_DATA* get_obj_list(CHAR_DATA *ch, char *argument, const std::list<OBJ_DATA*>& list)
 {
 	char arg[MAX_INPUT_LENGTH];
-	OBJ_DATA *obj;
 	int number;
 	int count;
 
 	number = number_argument(argument, arg);
 	count = 0;
-	for (obj = list; obj; obj = obj->next_content)
+	for (auto* obj : list)
 		if (can_see_obj(ch, obj) && nifty_is_name(arg, obj->name))
 			if ((count += obj->count) >= number)
 				return obj;
@@ -2767,7 +2713,7 @@ OBJ_DATA* get_obj_list(CHAR_DATA *ch, char *argument, OBJ_DATA *list)
 	 Added by Narn, Sept/96
 	 */
 	count = 0;
-	for (obj = list; obj; obj = obj->next_content)
+	for (auto* obj : list)
 		if (can_see_obj(ch, obj) && nifty_is_name_prefix(arg, obj->name))
 			if ((count += obj->count) >= number)
 				return obj;
@@ -2778,29 +2724,34 @@ OBJ_DATA* get_obj_list(CHAR_DATA *ch, char *argument, OBJ_DATA *list)
 /*
  * Find an obj in a list...going the other way			-Thoric
  */
-OBJ_DATA* get_obj_list_rev(CHAR_DATA *ch, char *argument, OBJ_DATA *list)
+OBJ_DATA* get_obj_list_rev(CHAR_DATA *ch, char *argument, std::list<OBJ_DATA*>& list)
 {
 	char arg[MAX_INPUT_LENGTH];
-	OBJ_DATA *obj;
 	int number;
 	int count;
 
 	number = number_argument(argument, arg);
 	count = 0;
-	for (obj = list; obj; obj = obj->prev_content)
+	for (auto it = list.rbegin(); it != list.rend(); ++it)
+	{
+		auto* obj = *it;
 		if (can_see_obj(ch, obj) && nifty_is_name(arg, obj->name))
 			if ((count += obj->count) >= number)
 				return obj;
+	}
 
 	/* If we didn't find an exact match, run through the list of objects
 	 again looking for prefix matching, ie swo == sword.
 	 Added by Narn, Sept/96
 	 */
 	count = 0;
-	for (obj = list; obj; obj = obj->prev_content)
+	for (auto it = list.rbegin(); it != list.rend(); ++it)
+	{
+		auto* obj = *it;
 		if (can_see_obj(ch, obj) && nifty_is_name_prefix(arg, obj->name))
 			if ((count += obj->count) >= number)
 				return obj;
+	}
 
 	return NULL;
 }
@@ -2821,10 +2772,13 @@ OBJ_DATA* get_obj_carry(CHAR_DATA *ch, char *argument)
 		vnum = -1;
 
 	count = 0;
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto it = ch->carrying.rbegin(); it != ch->carrying.rend(); ++it)
+	{
+		obj = *it;
 		if (obj->wear_loc == WEAR_NONE && can_see_obj(ch, obj) && (nifty_is_name(arg, obj->name) || obj->pIndexData->vnum == vnum))
 			if ((count += obj->count) >= number)
 				return obj;
+	}
 
 	if (vnum != -1)
 		return NULL;
@@ -2834,10 +2788,13 @@ OBJ_DATA* get_obj_carry(CHAR_DATA *ch, char *argument)
 	 Added by Narn, Sept/96
 	 */
 	count = 0;
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto it = ch->carrying.rbegin(); it != ch->carrying.rend(); ++it)
+	{
+		obj = *it;
 		if (obj->wear_loc == WEAR_NONE && can_see_obj(ch, obj) && nifty_is_name_prefix(arg, obj->name))
 			if ((count += obj->count) >= number)
 				return obj;
+	}
 
 	return NULL;
 }
@@ -2862,10 +2819,13 @@ OBJ_DATA* get_obj_wear(CHAR_DATA *ch, char *argument)
 		vnum = -1;
 
 	count = 0;
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto it = ch->carrying.rbegin(); it != ch->carrying.rend(); ++it)
+	{
+		obj = *it;
 		if (obj->wear_loc != WEAR_NONE && can_see_obj(ch, obj) && (nifty_is_name(arg, obj->name) || obj->pIndexData->vnum == vnum))
 			if (++count == number)
 				return obj;
+	}
 
 	if (vnum != -1)
 		return NULL;
@@ -2875,10 +2835,13 @@ OBJ_DATA* get_obj_wear(CHAR_DATA *ch, char *argument)
 	 Added by Narn, Sept/96
 	 */
 	count = 0;
-	for (obj = ch->last_carrying; obj; obj = obj->prev_content)
+	for (auto it = ch->carrying.rbegin(); it != ch->carrying.rend(); ++it)
+	{
+		obj = *it;
 		if (obj->wear_loc != WEAR_NONE && can_see_obj(ch, obj) && nifty_is_name_prefix(arg, obj->name))
 			if (++count == number)
 				return obj;
+	}
 
 	return NULL;
 }
@@ -2893,7 +2856,7 @@ OBJ_DATA* get_obj_here(CHAR_DATA *ch, char *argument)
 	if (!ch || !ch->in_room)
 		return NULL;
 
-	obj = get_obj_list_rev(ch, argument, ch->in_room->last_content);
+	obj = get_obj_list_rev(ch, argument, ch->in_room->contents);
 	if (obj)
 		return obj;
 
@@ -2932,7 +2895,7 @@ OBJ_DATA* get_obj_world(CHAR_DATA *ch, char *argument)
 		vnum = -1;
 
 	count = 0;
-	for (obj = first_object; obj; obj = obj->next)
+	for (auto* obj : object_list)
 		if (can_see_obj(ch, obj) && (nifty_is_name(arg, obj->name) || vnum == obj->pIndexData->vnum))
 			if ((count += obj->count) >= number)
 				return obj;
@@ -2946,7 +2909,7 @@ OBJ_DATA* get_obj_world(CHAR_DATA *ch, char *argument)
 	 Added by Narn, Sept/96
 	 */
 	count = 0;
-	for (obj = first_object; obj; obj = obj->next)
+	for (auto* obj : object_list)
 		if (can_see_obj(ch, obj) && nifty_is_name_prefix(arg, obj->name))
 			if ((count += obj->count) >= number)
 				return obj;
@@ -2965,8 +2928,8 @@ bool ms_find_obj(CHAR_DATA *ch)
 	int drunk = IS_NPC(ch) ? 0 : ch->pcdata->condition[COND_DRUNK];
 	const char *t;
 
-	//added by Thanos BUG!!! supermob czêsto bywa w takim stanie
-	// (jak siê okazuje) a nie powinien
+	//added by Thanos BUG!!! supermob czï¿½sto bywa w takim stanie
+	// (jak siï¿½ okazuje) a nie powinien
 	if (ch == supermob)
 		return false;
 
@@ -2984,64 +2947,64 @@ bool ms_find_obj(CHAR_DATA *ch)
 		{
 		default:
 		case 1:
-			t = "Zaraz zaraz. Ale co to mia³o byæ?" NL;
+			t = "Zaraz zaraz. Ale co to miaï¿½o byï¿½?" NL;
 			break;
 		case 2:
-			t = "Ju¿ ju¿ to masz, ale... co¶ ciê powstrzyma³o." NL;
+			t = "Juï¿½ juï¿½ to masz, ale... coï¿½ ciï¿½ powstrzymaï¿½o." NL;
 			break;
 		case 3:
-			t = "Ju¿ siêgasz, ale co to? To siê rusza!" NL;
+			t = "Juï¿½ siï¿½gasz, ale co to? To siï¿½ rusza!" NL;
 			break;
 		case 4:
-			t = "Hmmm... jako¶ nie mo¿esz tego utrzymaæ w rêkach.NL ";
+			t = "Hmmm... jakoï¿½ nie moï¿½esz tego utrzymaï¿½ w rï¿½kach.NL ";
 			break;
 		case 5:
-			t = "Ju¿ to masz, a potem nie masz..." NL;
+			t = "Juï¿½ to masz, a potem nie masz..." NL;
 			break;
 		case 6:
-			t = "Nie mo¿esz jako¶ staæ prosto by to zrobiæ!" NL;
+			t = "Nie moï¿½esz jakoï¿½ staï¿½ prosto by to zrobiï¿½!" NL;
 			break;
 		case 7:
-			t = "£aaa! To jest ca³e we krwi! Pfuj! Bleh!" NL;
+			t = "ï¿½aaa! To jest caï¿½e we krwi! Pfuj! Bleh!" NL;
 			break;
 		case 8:
-			t = "Wow... Ale masz jazdê!" NL;
+			t = "Wow... Ale masz jazdï¿½!" NL;
 			break;
 		case 9:
-			t = "W miarê jak po to siêgasz, dostrzegasz, ¿e na twojej d³oni co¶ wyrasta! Co to?" NL;
+			t = "W miarï¿½ jak po to siï¿½gasz, dostrzegasz, ï¿½e na twojej dï¿½oni coï¿½ wyrasta! Co to?" NL;
 			break;
 		case 10:
-			t = "Obserwujesz jak wszystko doko³a ciebie zamienia siê w olbrzymie stado maleñkich robaków!" NL;
+			t = "Obserwujesz jak wszystko dokoï¿½a ciebie zamienia siï¿½ w olbrzymie stado maleï¿½kich robakï¿½w!" NL;
 			break;
 		case 11:
-			t = "A co powiesz temu wielkiemu droidowi stoj±cemu za twoimi plecami?" NL;
+			t = "A co powiesz temu wielkiemu droidowi stojï¿½cemu za twoimi plecami?" NL;
 			break;
 		case 12:
-			t = "Bu! Co to by³o ???" NL;
+			t = "Bu! Co to byï¿½o ???" NL;
 			break;
 		case 13:
-			t = "Ale przecie¿ teraz trzymasz w d³oni losy wszech¶wiata. Od³ó¿ je najpierw gdzie¶." NL;
+			t = "Ale przecieï¿½ teraz trzymasz w dï¿½oni losy wszechï¿½wiata. Odï¿½ï¿½ je najpierw gdzieï¿½." NL;
 			break;
 		case 14:
-			t = "Za bardzo siê boisz..." NL;
+			t = "Za bardzo siï¿½ boisz..." NL;
 			break;
 		case 15:
-			t = "Twoja mama karci ciê mówi±c 'Nie ma mowy!'" NL;
+			t = "Twoja mama karci ciï¿½ mï¿½wiï¿½c 'Nie ma mowy!'" NL;
 			break;
 		case 16:
 			t = "Co? Ale o co chodzi?" NL;
 			break;
 		case 17:
-			t = "Rezygnujesz, gdy tylko widzisz, ¿e to ¿yje! I b³aga ciê o lito¶æ!" NL;
+			t = "Rezygnujesz, gdy tylko widzisz, ï¿½e to ï¿½yje! I bï¿½aga ciï¿½ o litoï¿½ï¿½!" NL;
 			break;
 		case 18:
-			t = "A co z tym milionem ma³ych robaków pa³aszuj±cych twoje ramiê?!?!" NL;
+			t = "A co z tym milionem maï¿½ych robakï¿½w paï¿½aszujï¿½cych twoje ramiï¿½?!?!" NL;
 			break;
 		case 19:
-			t = "Eee tam, to ju¿ niewa¿ne. Znasz odpowied¼ na ka¿de pytanie!" NL;
+			t = "Eee tam, to juï¿½ niewaï¿½ne. Znasz odpowiedï¿½ na kaï¿½de pytanie!" NL;
 			break;
 		case 20:
-			t = "Ehh. Przecie¿ w³adca wszech¶wiata nie musi zajmowaæ siê takimi b³ahostkami." NL;
+			t = "Ehh. Przecieï¿½ wï¿½adca wszechï¿½wiata nie musi zajmowaï¿½ siï¿½ takimi bï¿½ahostkami." NL;
 			break;
 		}
 	else
@@ -3051,22 +3014,22 @@ bool ms_find_obj(CHAR_DATA *ch)
 		{
 		default:
 		case 1:
-			t = "Tak Tak, ju¿ momencik..." NL;
+			t = "Tak Tak, juï¿½ momencik..." NL;
 			break;
 		case 2:
-			t = "Jako¶ nie mo¿esz tego znale¼æ, a mo¿e mo¿esz..." NL;
+			t = "Jakoï¿½ nie moï¿½esz tego znaleï¿½ï¿½, a moï¿½e moï¿½esz..." NL;
 			break;
 		case 3:
 			t = "To poza twoimi aspiracjami..." NL;
 			break;
 		case 4:
-			t = "...ale czym jest jaka¶ tam g³upia rzecz w porównaniu..." NL;
+			t = "...ale czym jest jakaï¿½ tam gï¿½upia rzecz w porï¿½wnaniu..." NL;
 			break;
 		case 5:
-			t = "Ju¿ to masz... Masz? Nie masz." NL;
+			t = "Juï¿½ to masz... Masz? Nie masz." NL;
 			break;
 		case 6:
-			t = "Które?!? Tu s± dwa... nie, trzy..." NL;
+			t = "Ktï¿½re?!? Tu sï¿½ dwa... nie, trzy..." NL;
 			break;
 		}
 	}
@@ -3099,7 +3062,7 @@ OBJ_DATA* find_obj(CHAR_DATA *ch, char *argument, bool carryonly)
 		}
 		else if (!carryonly && (obj = get_obj_here(ch, arg1)) == NULL)
 		{
-			act( PLAIN, "Nie widzê tu $T.", ch, NULL, arg1, TO_CHAR);
+			act( PLAIN, "Nie widzï¿½ tu $T.", ch, NULL, arg1, TO_CHAR);
 			return NULL;
 		}
 		return obj;
@@ -3115,31 +3078,31 @@ OBJ_DATA* find_obj(CHAR_DATA *ch, char *argument, bool carryonly)
 		}
 		if (!carryonly && (container = get_obj_here(ch, arg2)) == NULL)
 		{
-			act( PLAIN, "Nie widzê tu $T.", ch, NULL, arg2, TO_CHAR);
+			act( PLAIN, "Nie widzï¿½ tu $T.", ch, NULL, arg2, TO_CHAR);
 			return NULL;
 		}
 
 		if (!IS_OBJ_STAT(container, ITEM_COVERING) && IS_SET(container->value[1], CONT_CLOSED))
 		{
 			if (container->gender == GENDER_MALE)
-				act( PLAIN, "$d jest zamkniêty.", ch, NULL, container->name,
+				act( PLAIN, "$d jest zamkniï¿½ty.", ch, NULL, container->name,
 				TO_CHAR);
 			else if (container->gender == GENDER_FEMALE)
-				act( PLAIN, "$d jest zamkniêta.", ch, NULL, container->name,
+				act( PLAIN, "$d jest zamkniï¿½ta.", ch, NULL, container->name,
 				TO_CHAR);
 			else if (container->gender == GENDER_NEUTRAL)
-				act( PLAIN, "$d jest zamkniête.", ch, NULL, container->name,
+				act( PLAIN, "$d jest zamkniï¿½te.", ch, NULL, container->name,
 				TO_CHAR);
 			else
-				act( PLAIN, "$d s± zamkniête.", ch, NULL, container->name,
+				act( PLAIN, "$d sï¿½ zamkniï¿½te.", ch, NULL, container->name,
 				TO_CHAR);
 			return NULL;
 		}
 
-		obj = get_obj_list(ch, arg1, container->first_content);
+		obj = get_obj_list(ch, arg1, container->contents);
 		if (!obj)
 			act( PLAIN,
-			IS_OBJ_STAT(container, ITEM_COVERING) ? "Nie widzê nic takiego pod $p$4." : "Nie widzê nic takiego w $p$5.", ch, container,
+			IS_OBJ_STAT(container, ITEM_COVERING) ? "Nie widzï¿½ nic takiego pod $p$4." : "Nie widzï¿½ nic takiego w $p$5.", ch, container,
 					NULL, TO_CHAR);
 		return obj;
 	}
@@ -3159,8 +3122,8 @@ int get_obj_weight(OBJ_DATA *obj)
 	int weight;
 
 	weight = obj->count * obj->weight;
-	for (obj = obj->first_content; obj; obj = obj->next_content)
-		weight += get_obj_weight(obj);
+	for (auto* child : obj->contents)
+		weight += get_obj_weight(child);
 
 	return weight;
 }
@@ -3194,7 +3157,6 @@ bool room_is_dark(ROOM_INDEX_DATA *pRoomIndex)
  */
 bool room_is_private(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoomIndex)
 {
-	CHAR_DATA *rch;
 	int count;
 
 	IF_BUG(ch == NULL, "")
@@ -3206,10 +3168,7 @@ bool room_is_private(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoomIndex)
 	if ( IS_SET(pRoomIndex->room_flags, ROOM_PLR_HOME) && ch->plr_home != pRoomIndex)
 		return true;
 
-	count = 0;
-
-	for (rch = pRoomIndex->first_person; rch; rch = rch->next_in_room)
-		count++;
+	count = pRoomIndex->people.size();
 
 	if ( IS_SET(pRoomIndex->room_flags, ROOM_PRIVATE) && count >= 2)
 		return true;
@@ -3228,7 +3187,7 @@ bool can_see(CHAR_DATA *ch, CHAR_DATA *victim)
 	if (ch == victim)
 		return true;
 
-	if (ch == supermob) /* Ostro¿nie z tym --Thanos */
+	if (ch == supermob) /* Ostroï¿½nie z tym --Thanos */
 		return true;
 
 	/* Trog, prototypow gracze nie widza. */
@@ -3247,18 +3206,18 @@ bool can_see(CHAR_DATA *ch, CHAR_DATA *victim)
 	}
 
 	/* Thanos */
-	/* mob questowy widzi tylko gracza bior±cego udzia³ w jego que¶cie */
+	/* mob questowy widzi tylko gracza biorï¿½cego udziaï¿½ w jego queï¿½cie */
 	if (IS_NPC( ch ) && ch->inquest)
 	{
 		if (IS_NPC( victim ) || ch->inquest != victim->inquest)
 			return false;
 	}
 
-	/* gracze spoza questu nie widz± questowych mobów */
+	/* gracze spoza questu nie widzï¿½ questowych mobï¿½w */
 	if (!IS_NPC(ch))
 	{
 		if (IS_NPC(
-				victim) && victim->inquest && victim->inquest != ch->inquest && get_trust(ch) < LEVEL_QUESTSEE) /* no tam jeden wyj±tek ;) */
+				victim) && victim->inquest && victim->inquest != ch->inquest && get_trust(ch) < LEVEL_QUESTSEE) /* no tam jeden wyjï¿½tek ;) */
 			return false;
 	}
 
@@ -3345,12 +3304,12 @@ bool can_see_obj(CHAR_DATA *ch, OBJ_DATA *obj)
 	if (!IS_NPC(ch) && IS_OBJ_STAT(obj, ITEM_PROTOTYPE) && !IS_OLCMAN(ch) && get_trust(ch) < 103)
 		return false;
 
-	/* Thanos: gracze i moby spoza questu nie widz± questowych obj */
+	/* Thanos: gracze i moby spoza questu nie widzï¿½ questowych obj */
 	if (IS_NPC( ch ) && obj->inquest && belongs_to_quest(ch, obj->inquest))
 		; // tutaj jest specjalnie pusto!!!
 	// ponizszy warunek ma omijac questora i inne zaproszone
 	// mobki
-	else if (obj->inquest != NULL && obj->inquest != ch->inquest && get_trust(ch) < LEVEL_QUESTSEE) /* no tam jeden wyj±tek ;) */
+	else if (obj->inquest != NULL && obj->inquest != ch->inquest && get_trust(ch) < LEVEL_QUESTSEE) /* no tam jeden wyjï¿½tek ;) */
 		return false;
 
 	if (!IS_NPC(ch) && IS_SET(ch->act, PLR_HOLYLIGHT))
@@ -3385,12 +3344,12 @@ bool can_see_obj(CHAR_DATA *ch, OBJ_DATA *obj)
  */
 bool can_drop_obj(CHAR_DATA *ch, OBJ_DATA *obj)
 {
-	/* Thanos   -- nie pozbywamy siê przedmiotów questowych. Trog - BZDURA!!!, wycialem
+	/* Thanos   -- nie pozbywamy siï¿½ przedmiotï¿½w questowych. Trog - BZDURA!!!, wycialem
 	 if( obj->inquest )
 	 {
 	 send_to_char(
-	 "Ten przedmiot jest wa¿nym elementem twojego zadania." NL
-	 "Nie chcesz chyba straciæ go z oczu?" NL, ch );
+	 "Ten przedmiot jest waï¿½nym elementem twojego zadania." NL
+	 "Nie chcesz chyba straciï¿½ go z oczu?" NL, ch );
 	 return false;
 	 }
 	 */
@@ -3400,7 +3359,7 @@ bool can_drop_obj(CHAR_DATA *ch, OBJ_DATA *obj)
 	 && !IS_NPC( ch ) )
 	 {
 	 ch_printf( ch,
-	 "Przecie¿ ty i %s" PLAIN " to tak zgrany duet. Nie rozstaniecie siê ani na chwilê!" NL,
+	 "Przecieï¿½ ty i %s" PLAIN " to tak zgrany duet. Nie rozstaniecie siï¿½ ani na chwilï¿½!" NL,
 	 obj->przypadki[0] );
 	 return false;
 	 }
@@ -3418,9 +3377,9 @@ bool can_drop_obj(CHAR_DATA *ch, OBJ_DATA *obj)
 }
 
 //added by Thanos (potrzebne np. do identify)
-//Nie chcê tutaj celowo korzystaæ z tablicy o_types
-// bo a. nie mam ochoty robiæ kolejnej tak wielkiej tablicy
-//    b. interesuj± nas tylko niektóre jej elementy
+//Nie chcï¿½ tutaj celowo korzystaï¿½ z tablicy o_types
+// bo a. nie mam ochoty robiï¿½ kolejnej tak wielkiej tablicy
+//    b. interesujï¿½ nas tylko niektï¿½re jej elementy
 char* item_type_name(OBJ_DATA *obj)
 {
 	static char buf[MAX_STRING_LENGTH];
@@ -3434,10 +3393,10 @@ char* item_type_name(OBJ_DATA *obj)
 		sprintf(buf, "granat");
 		break;
 	case ITEM_LIGHT:
-		sprintf(buf, "¶wiat³o");
+		sprintf(buf, "ï¿½wiatï¿½o");
 		break;
 	case ITEM_WEAPON:
-		sprintf(buf, "broñ");
+		sprintf(buf, "broï¿½");
 		break;
 	case ITEM_MISSILE:
 		sprintf(buf, "pocisk");
@@ -3455,13 +3414,13 @@ char* item_type_name(OBJ_DATA *obj)
 		sprintf(buf, "mebel");
 		break;
 	case ITEM_TRASH:
-		sprintf(buf, "¶mieæ");
+		sprintf(buf, "ï¿½mieï¿½");
 		break;
 	case ITEM_CONTAINER:
 		sprintf(buf, "pojemnik");
 		break;
 	case ITEM_DRINK_CON:
-		sprintf(buf, "pojemnik na napój");
+		sprintf(buf, "pojemnik na napï¿½j");
 		break;
 	case ITEM_KEY:
 		sprintf(buf, "klucz");
@@ -3470,31 +3429,31 @@ char* item_type_name(OBJ_DATA *obj)
 		sprintf(buf, "jedzenie");
 		break;
 	case ITEM_MONEY:
-		sprintf(buf, "pieni±dze");
+		sprintf(buf, "pieniï¿½dze");
 		break;
 	case ITEM_PEN:
 		sprintf(buf, "pisak");
 		break;
 	case ITEM_CORPSE_NPC:
-		sprintf(buf, "cia³o");
+		sprintf(buf, "ciaï¿½o");
 		break;
 	case ITEM_CORPSE_PC:
-		sprintf(buf, "cia³o");
+		sprintf(buf, "ciaï¿½o");
 		break;
 	case ITEM_FOUNTAIN:
 		sprintf(buf, "fontanna");
 		break;
 	case ITEM_PILL:
-		sprintf(buf, "pigu³ka");
+		sprintf(buf, "piguï¿½ka");
 		break;
 	case ITEM_SCRAPS:
 		sprintf(buf, "resztki");
 		break;
 	case ITEM_SWITCH:
-		sprintf(buf, "prze³±cznik");
+		sprintf(buf, "przeï¿½ï¿½cznik");
 		break;
 	case ITEM_LEVER:
-		sprintf(buf, "d¼wignia");
+		sprintf(buf, "dï¿½wignia");
 		break;
 	case ITEM_BUTTON:
 		sprintf(buf, "przycisk");
@@ -3503,7 +3462,7 @@ char* item_type_name(OBJ_DATA *obj)
 		sprintf(buf, "komunikator");
 		break;	//?????
 	case ITEM_TRAP:
-		sprintf(buf, "pu³apka");
+		sprintf(buf, "puï¿½apka");
 		break;
 	case ITEM_MAP:
 		sprintf(buf, "mapa");
@@ -3521,7 +3480,7 @@ char* item_type_name(OBJ_DATA *obj)
 		sprintf(buf, "amunicja");
 		break;
 	case ITEM_SHOVEL:
-		sprintf(buf, "³opata");
+		sprintf(buf, "ï¿½opata");
 		break;
 	case ITEM_SALVE:
 		sprintf(buf, "salve");
@@ -3533,7 +3492,7 @@ char* item_type_name(OBJ_DATA *obj)
 		sprintf(buf, "soczewka");
 		break;
 	case ITEM_CRYSTAL:
-		sprintf(buf, "kryszta³");
+		sprintf(buf, "krysztaï¿½");
 		break;
 	case ITEM_DURAPLAST:
 		sprintf(buf, "duraplast");
@@ -3542,7 +3501,7 @@ char* item_type_name(OBJ_DATA *obj)
 		sprintf(buf, "bateria");
 		break;
 	case ITEM_TOOLKIT:
-		sprintf(buf, "niezbêdnik");
+		sprintf(buf, "niezbï¿½dnik");
 		break;	// ;)
 	case ITEM_DURASTEEL:
 		sprintf(buf, "durastal");
@@ -3554,13 +3513,13 @@ char* item_type_name(OBJ_DATA *obj)
 		sprintf(buf, "lustro");
 		break;
 	case ITEM_CIRCUIT:
-		sprintf(buf, "obwód");
+		sprintf(buf, "obwï¿½d");
 		break;
 	case ITEM_SUPERCONDUCTOR:
 		sprintf(buf, "nadprzewodnik");
 		break;
 	case ITEM_COMLINK:
-		sprintf(buf, "urz±dzenie komunikacyjne");
+		sprintf(buf, "urzï¿½dzenie komunikacyjne");
 		break;
 	case ITEM_MEDPAC:
 		sprintf(buf, "medpak");
@@ -3575,7 +3534,7 @@ char* item_type_name(OBJ_DATA *obj)
 		sprintf(buf, "magnet");
 		break;	//?????
 	case ITEM_THREAD:
-		sprintf(buf, "ig³a z nitk±");
+		sprintf(buf, "igï¿½a z nitkï¿½");
 		break;
 	case ITEM_PIECE:
 		sprintf(buf, "czesc");
@@ -3729,21 +3688,21 @@ const char* affect_loc_name_pl(int location)
 	case APPLY_NONE:
 		return "nic";
 	case APPLY_STR:
-		return "si³ê";
+		return "siï¿½ï¿½";
 	case APPLY_DEX:
-		return "zrêczno¶æ";
+		return "zrï¿½cznoï¿½ï¿½";
 	case APPLY_INT:
-		return "inteligencjê";
+		return "inteligencjï¿½";
 	case APPLY_WIS:
-		return "m±dro¶æ";
+		return "mï¿½droï¿½ï¿½";
 	case APPLY_CON:
-		return "kondycjê";
+		return "kondycjï¿½";
 	case APPLY_CHA:
-		return "charyzmê";
+		return "charyzmï¿½";
 	case APPLY_LCK:
-		return "szczê¶cie";
+		return "szczï¿½cie";
 	case APPLY_SEX:
-		return "p³eæ";
+		return "pï¿½eï¿½";
 	case APPLY_LEVEL:
 		return "poziom";
 	case APPLY_AGE:
@@ -3755,39 +3714,39 @@ const char* affect_loc_name_pl(int location)
 	case APPLY_MOVE:
 		return "mv";
 	case APPLY_GOLD:
-		return "ilo¶æ kredytek";
+		return "iloï¿½ï¿½ kredytek";
 	case APPLY_EXP:
-		return "do¶wiadczenie";
+		return "doï¿½wiadczenie";
 	case APPLY_AC:
-		return "klasê zbroi";
+		return "klasï¿½ zbroi";
 	case APPLY_HITROLL:
 		return "hitroll";
 	case APPLY_DAMROLL:
 		return "damroll";
 	case APPLY_SAVING_POISON:
-		return "odporno¶æ na trucizny";
+		return "odpornoï¿½ï¿½ na trucizny";
 	case APPLY_SAVING_ROD:
-		return "odporno¶æ na rod";
+		return "odpornoï¿½ï¿½ na rod";
 	case APPLY_SAVING_PARA:
-		return "odporno¶æ na parali¿";
+		return "odpornoï¿½ï¿½ na paraliï¿½";
 	case APPLY_SAVING_BREATH:
-		return "odporno¶æ na gaz";
+		return "odpornoï¿½ï¿½ na gaz";
 	case APPLY_SAVING_SPELL:
-		return "ochronê przed moc±";
+		return "ochronï¿½ przed mocï¿½";
 	case APPLY_HEIGHT:
-		return "wysoko¶æ";
+		return "wysokoï¿½ï¿½";
 	case APPLY_WEIGHT:
-		return "wagê";
+		return "wagï¿½";
 	case APPLY_AFFECT:
-		return "wp³ywy";
+		return "wpï¿½ywy";
 	case APPLY_RESISTANT:
-		return "odporno¶æ na moc";
+		return "odpornoï¿½ï¿½ na moc";
 	case APPLY_IMMUNE:
-		return "nietykalno¶æ";
+		return "nietykalnoï¿½ï¿½";
 	case APPLY_SUSCEPTIBLE:
-		return "podatno¶æ";
+		return "podatnoï¿½ï¿½";
 	case APPLY_WEAPONSPELL:
-		return "pos³ugiwanie siê broni±";
+		return "posï¿½ugiwanie siï¿½ broniï¿½";
 	case APPLY_BACKSTAB:
 		return "backstab";
 	case APPLY_PICK:
@@ -3839,7 +3798,7 @@ const char* affect_loc_name_pl(int location)
 	case APPLY_WEARSPELL:
 		return "moc ubrania";
 	case APPLY_REMOVESPELL:
-		return "usuniêcie mocy";
+		return "usuniï¿½cie mocy";
 	case APPLY_EMOTION:
 		return "stan emocjonalny";
 	case APPLY_MENTALSTATE:
@@ -3849,7 +3808,7 @@ const char* affect_loc_name_pl(int location)
 	case APPLY_DIG:
 		return "dig";
 	case APPLY_FULL:
-		return "g³ód";
+		return "gï¿½ï¿½d";
 	case APPLY_THIRST:
 		return "pragnienie";
 	case APPLY_DRUNK:
@@ -3872,16 +3831,16 @@ char* weapon_type_pl(int value)
 		sprintf(buf, "nieznany typ");
 		break;
 	case WEAPON_NONE:
-		sprintf(buf, "zwyk³a broñ");
+		sprintf(buf, "zwykï¿½a broï¿½");
 		break;
 	case WEAPON_VIBRO_AXE:
-		sprintf(buf, "wibrotopór");
+		sprintf(buf, "wibrotopï¿½r");
 		break;
 	case WEAPON_VIBRO_BLADE:
 		sprintf(buf, "wibroostrze");
 		break;
 	case WEAPON_LIGHTSABER:
-		sprintf(buf, "miecz ¶wietlny");
+		sprintf(buf, "miecz ï¿½wietlny");
 		break;
 	case WEAPON_WHIP:
 		sprintf(buf, "bicz");
@@ -3899,7 +3858,7 @@ char* weapon_type_pl(int value)
 		sprintf(buf, "kusza energetyczna");
 		break;
 	case WEAPON_FORCE_PIKE:
-		sprintf(buf, "pika ¶wietlna");
+		sprintf(buf, "pika ï¿½wietlna");
 		break;
 	}
 
@@ -3939,53 +3898,53 @@ ch_ret spring_trap(CHAR_DATA *ch, OBJ_DATA *obj)
 	switch (typ)
 	{
 	default:
-		txt = "zranion$y w py³apce";
+		txt = "zranion$y w pyï¿½apce";
 		break;
 	case TRAP_TYPE_POISON_GAS:
-		txt = "otoczon$y przez zielon± chmurê gazu";
+		txt = "otoczon$y przez zielonï¿½ chmurï¿½ gazu";
 		break;
 	case TRAP_TYPE_POISON_DART:
-		txt = "trafion$y truj±c± strza³k±";
+		txt = "trafion$y trujï¿½cï¿½ strzaï¿½kï¿½";
 		break;
 	case TRAP_TYPE_POISON_NEEDLE:
-		txt = "uk³ut$y truj±c± ig³±";
+		txt = "ukï¿½ut$y trujï¿½cï¿½ igï¿½ï¿½";
 		break;
 	case TRAP_TYPE_POISON_DAGGER:
 		txt = "zaatakowan$y sztyletem";
 		break;
 	case TRAP_TYPE_POISON_ARROW:
-		txt = "trafion$y strza³±";
+		txt = "trafion$y strzaï¿½ï¿½";
 		break;
 	case TRAP_TYPE_BLINDNESS_GAS:
-		txt = "otoczon$y przez czerwon± chmurê gazu";
+		txt = "otoczon$y przez czerwonï¿½ chmurï¿½ gazu";
 		break;
 	case TRAP_TYPE_SLEEPING_GAS:
-		txt = "otoczon$y przez zó³t± chmurê gazu";
+		txt = "otoczon$y przez zï¿½tï¿½ chmurï¿½ gazu";
 		break;
 	case TRAP_TYPE_FLAME:
-		txt = "oparzon$y strumieniem p³omieni";
+		txt = "oparzon$y strumieniem pï¿½omieni";
 		break;
 	case TRAP_TYPE_EXPLOSION:
-		txt = "uderzon$y eksplozj±";
+		txt = "uderzon$y eksplozjï¿½";
 		break;
 	case TRAP_TYPE_ACID_SPRAY:
 		txt = "ochlapan$y strumieniem kwasu";
 		break;
 	case TRAP_TYPE_ELECTRIC_SHOCK:
-		txt = "pora¿on$y pr±dem";
+		txt = "poraï¿½on$y prï¿½dem";
 		break;
 	case TRAP_TYPE_BLADE:
 		txt = "okaleczon$y ostrzem";
 		break;
 	case TRAP_TYPE_SEX_CHANGE:
-		txt = "otoczon$y dziwn± mgie³k±";
+		txt = "otoczon$y dziwnï¿½ mgieï¿½kï¿½";
 		break;
 	}
 
 	dam = number_range(obj->value[2], obj->value[2] * 2);
-	sprintf(buf, "Zosta³$o¶ %s!", txt);
+	sprintf(buf, "Zostaï¿½$oï¿½ %s!", txt);
 	act( COL_HITME, buf, ch, NULL, NULL, TO_CHAR);
-	sprintf(buf, "$n zosta³$o %s.", txt);
+	sprintf(buf, "$n zostaï¿½$o %s.", txt);
 	act( COL_ACTION, buf, ch, NULL, NULL, TO_ROOM);
 	--obj->value[0];
 	if (obj->value[0] <= 0)
@@ -4035,15 +3994,14 @@ ch_ret spring_trap(CHAR_DATA *ch, OBJ_DATA *obj)
  */
 ch_ret check_for_trap(CHAR_DATA *ch, OBJ_DATA *obj, int flag)
 {
-	OBJ_DATA *check;
 	ch_ret retcode;
 
-	if (!obj->first_content)
+	if (obj->contents.empty())
 		return rNONE;
 
 	retcode = rNONE;
 
-	for (check = obj->first_content; check; check = check->next_content)
+	for (auto* check : obj->contents)
 		if (check->item_type == ITEM_TRAP && IS_SET(check->value[3], flag))
 		{
 			retcode = spring_trap(ch, check);
@@ -4058,17 +4016,16 @@ ch_ret check_for_trap(CHAR_DATA *ch, OBJ_DATA *obj, int flag)
  */
 ch_ret check_room_for_traps(CHAR_DATA *ch, int flag)
 {
-	OBJ_DATA *check;
 	ch_ret retcode;
 
 	retcode = rNONE;
 
 	if (!ch)
 		return rERROR;
-	if (!ch->in_room || !ch->in_room->first_content)
+	if (!ch->in_room || ch->in_room->contents.empty())
 		return rNONE;
 
-	for (check = ch->in_room->first_content; check; check = check->next_content)
+	for (auto* check : ch->in_room->contents)
 	{
 		if (check->item_type == ITEM_LANDMINE && flag == TRAP_ENTER_ROOM)
 		{
@@ -4090,12 +4047,10 @@ ch_ret check_room_for_traps(CHAR_DATA *ch, int flag)
  */
 bool is_trapped(OBJ_DATA *obj)
 {
-	OBJ_DATA *check;
-
-	if (!obj->first_content)
+	if (obj->contents.empty())
 		return false;
 
-	for (check = obj->first_content; check; check = check->next_content)
+	for (auto* check : obj->contents)
 		if (check->item_type == ITEM_TRAP)
 			return true;
 
@@ -4107,12 +4062,10 @@ bool is_trapped(OBJ_DATA *obj)
  */
 OBJ_DATA* get_trap(OBJ_DATA *obj)
 {
-	OBJ_DATA *check;
-
-	if (!obj->first_content)
+	if (obj->contents.empty())
 		return NULL;
 
-	for (check = obj->first_content; check; check = check->next_content)
+	for (auto* check : obj->contents)
 		if (check->item_type == ITEM_TRAP)
 			return check;
 
@@ -4124,7 +4077,7 @@ OBJ_DATA* get_trap(OBJ_DATA *obj)
  */
 void extract_exit(ROOM_INDEX_DATA *room, EXIT_DATA *pexit)
 {
-	UNLINK(pexit, room->first_exit, room->last_exit, next, prev);
+	room->exits.remove(pexit);
 	if (pexit->rexit)
 		pexit->rexit->rexit = NULL;
 	free_exit(pexit);
@@ -4147,38 +4100,21 @@ void extract_room(ROOM_INDEX_DATA *room)
  */
 void clean_room(ROOM_INDEX_DATA *room)
 {
-	EXTRA_DESCR_DATA *ed, *ed_next;
-	EXIT_DATA *pexit, *pexit_next;
-	MPROG_DATA *rprg, *rprg_next;
-
 	STRDUP(room->name, "");
 	STRDUP(room->description, "");
 	STRDUP(room->nightdesc, "");
 
-	for (ed = room->first_extradesc; ed; ed = ed_next)
-	{
-		ed_next = ed->next;
-		UNLINK(ed, room->first_extradesc, room->last_extradesc, next, prev);
+	for (auto* ed : room->extradesc)
 		free_ed(ed);
-	}
-	room->first_extradesc = NULL;
-	room->last_extradesc = NULL;
+	room->extradesc.clear();
 
-	for (pexit = room->first_exit; pexit; pexit = pexit_next)
-	{
-		pexit_next = pexit->next;
-		UNLINK(pexit, room->first_exit, room->last_exit, next, prev);
+	for (auto* pexit : room->exits)
 		free_exit(pexit);
-	}
-	room->first_exit = NULL;
-	room->last_exit = NULL;
+	room->exits.clear();
 
-	for (rprg = room->mudprogs; rprg; rprg = rprg_next)
-	{
-		rprg_next = rprg->next;
+	for (auto* rprg : room->mudprogs)
 		free_mprog(rprg);
-	}
-	room->mudprogs = NULL;
+	room->mudprogs.clear();
 
 	room->room_flags = 0;
 	room->sector_type = 0;
@@ -4191,11 +4127,6 @@ void clean_room(ROOM_INDEX_DATA *room)
 void clean_obj(OBJ_INDEX_DATA *obj)
 {
 	int i;
-	AFFECT_DATA *paf;
-	AFFECT_DATA *paf_next;
-	EXTRA_DESCR_DATA *ed;
-	EXTRA_DESCR_DATA *ed_next;
-
 	STRDUP(obj->name, "");
 	for (i = 0; i < 6; i++)
 		STRDUP(obj->przypadki[i], "");
@@ -4216,22 +4147,16 @@ void clean_obj(OBJ_INDEX_DATA *obj)
 	obj->value[4] = 0;
 	obj->value[5] = 0;
 
-	for (paf = obj->first_affect; paf; paf = paf_next)
+	for (auto* paf : obj->affects)
 	{
-		paf_next = paf->next;
 		DISPOSE(paf);
 		top_affect--;
 	}
-	obj->first_affect = NULL;
-	obj->last_affect = NULL;
+	obj->affects.clear();
 
-	for (ed = obj->first_extradesc; ed; ed = ed_next)
-	{
-		ed_next = ed->next;
+	for (auto* ed : obj->extradesc)
 		free_ed(ed);
-	}
-	obj->first_extradesc = NULL;
-	obj->last_extradesc = NULL;
+	obj->extradesc.clear();
 }
 
 /*
@@ -4240,7 +4165,6 @@ void clean_obj(OBJ_INDEX_DATA *obj)
 void clean_mob(MOB_INDEX_DATA *mob)
 {
 	int i;
-	MPROG_DATA *mprog, *mprog_next;
 
 	STRDUP(mob->player_name, "");
 //added by Thanos
@@ -4258,11 +4182,9 @@ void clean_mob(MOB_INDEX_DATA *mob)
 	mob->rShop = NULL;
 	mob->progtypes = 0;
 
-	for (mprog = mob->mudprogs; mprog; mprog = mprog_next)
-	{
-		mprog_next = mprog->next;
-		free_mprog(mprog);
-	}
+	for (auto* mp : mob->mudprogs)
+		free_mprog(mp);
+	mob->mudprogs.clear();
 	mob->count = 0;
 	mob->killed = 0;
 	mob->sex = 0;
@@ -4292,7 +4214,6 @@ extern int top_reset;
  */
 void fix_char(CHAR_DATA *ch)
 {
-	AFFECT_DATA *aff;
 	OBJ_DATA *carry[MAX_LEVEL * 200];
 	OBJ_DATA *obj;
 	int x, ncarry;
@@ -4300,13 +4221,14 @@ void fix_char(CHAR_DATA *ch)
 	de_equip_char(ch);
 
 	ncarry = 0;
-	while ((obj = ch->first_carrying) != NULL)
+	while (!ch->carrying.empty())
 	{
+		obj = ch->carrying.front();
 		carry[ncarry++] = obj;
 		obj_from_char(obj);
 	}
 
-	for (aff = ch->first_affect; aff; aff = aff->next)
+	for (auto* aff : ch->affects)
 		affect_modify(ch, aff, false);
 
 	ch->affected_by = ch->race->affected;
@@ -4334,7 +4256,7 @@ void fix_char(CHAR_DATA *ch)
 	ch->carry_weight = 0;
 	ch->carry_number = 0;
 
-	for (aff = ch->first_affect; aff; aff = aff->next)
+	for (auto* aff : ch->affects)
 		affect_modify(ch, aff, true);
 
 	for (x = 0; x < ncarry; x++)
@@ -4361,23 +4283,23 @@ void showaffect(CHAR_DATA *ch, AFFECT_DATA *paf)
 		default:
 			sprintf(buf,
 			FG_CYAN
-			"Wp³ywa na " FB_CYAN "%s" FG_CYAN " o " FB_CYAN "%d" FG_CYAN "." EOL, affect_loc_name_pl(paf->location), paf->modifier);
+			"Wpï¿½ywa na " FB_CYAN "%s" FG_CYAN " o " FB_CYAN "%d" FG_CYAN "." EOL, affect_loc_name_pl(paf->location), paf->modifier);
 			break;
 		case APPLY_AFFECT:
-			sprintf(buf, "Wp³ywa na " FB_CYAN "%s" FG_CYAN " o " FB_CYAN, affect_loc_name_pl(paf->location));
+			sprintf(buf, "Wpï¿½ywa na " FB_CYAN "%s" FG_CYAN " o " FB_CYAN, affect_loc_name_pl(paf->location));
 			strcat(buf, flag_string(aff_flags_list, paf->modifier));
 			strcat(buf, EOL);
 			break;
 		case APPLY_WEAPONSPELL:
 		case APPLY_WEARSPELL:
 		case APPLY_REMOVESPELL:
-			sprintf(buf, "Potrafi wykonaæ '" FB_CYAN "%s" FG_CYAN "'" EOL,
+			sprintf(buf, "Potrafi wykonaï¿½ '" FB_CYAN "%s" FG_CYAN "'" EOL,
 			IS_VALID_SN(paf->modifier) ? skill_table[paf->modifier]->name : "nie wiadomo co");
 			break;
 		case APPLY_RESISTANT:
 		case APPLY_IMMUNE:
 		case APPLY_SUSCEPTIBLE:
-			sprintf(buf, "Wp³ywa na " FB_CYAN "%s" FG_CYAN " o " FB_CYAN, affect_loc_name_pl(paf->location));
+			sprintf(buf, "Wpï¿½ywa na " FB_CYAN "%s" FG_CYAN " o " FB_CYAN, affect_loc_name_pl(paf->location));
 			for (x = 0; x < 32; x++)
 				if (IS_SET(paf->modifier, 1 << x))
 				{
@@ -4406,15 +4328,13 @@ void set_cur_obj(OBJ_DATA *obj)
  */
 bool obj_extracted(OBJ_DATA *obj)
 {
-	OBJ_DATA *cod;
-
 	if (!obj)
 		return true;
 
 	if (obj->serial == cur_obj && cur_obj_extracted)
 		return true;
 
-	for (cod = extracted_obj_queue; cod; cod = cod->next)
+	for (auto* cod : extracted_obj_queue)
 		if (obj == cod)
 			return true;
 	return false;
@@ -4427,8 +4347,7 @@ void queue_extracted_obj(OBJ_DATA *obj)
 {
 
 	++cur_qobjs;
-	obj->next = extracted_obj_queue;
-	extracted_obj_queue = obj;
+	extracted_obj_queue.push_front(obj);
 }
 
 /*
@@ -4438,10 +4357,10 @@ void clean_obj_queue()
 {
 	OBJ_DATA *obj;
 
-	while (extracted_obj_queue)
+	while (!extracted_obj_queue.empty())
 	{
-		obj = extracted_obj_queue;
-		extracted_obj_queue = extracted_obj_queue->next;
+		obj = extracted_obj_queue.front();
+		extracted_obj_queue.pop_front();
 		free_obj(obj);
 		--cur_qobjs;
 	}
@@ -4463,13 +4382,11 @@ void set_cur_char(CHAR_DATA *ch)
  */
 bool char_died(CHAR_DATA *ch)
 {
-	EXTRACT_CHAR_DATA *ccd;
-
 	if (ch == cur_char && cur_char_died)
 		return true;
 
-	for (ccd = extracted_char_queue; ccd; ccd = ccd->next)
-		if (ccd->ch == ch)
+	for (auto& ccd : extracted_char_queue)
+		if (ccd.ch == ch)
 			return true;
 	return false;
 }
@@ -4479,21 +4396,18 @@ bool char_died(CHAR_DATA *ch)
  */
 void queue_extracted_char(CHAR_DATA *ch, bool extract)
 {
-	EXTRACT_CHAR_DATA *ccd;
-
 	IF_BUG(ch == NULL, "")
 		return;
 
-	CREATE(ccd, EXTRACT_CHAR_DATA, 1);
-	ccd->ch = ch;
-	ccd->room = ch->in_room;
-	ccd->extract = extract;
+	EXTRACT_CHAR_DATA ecd;
+	ecd.ch = ch;
+	ecd.room = ch->in_room;
+	ecd.extract = extract;
 	if (ch == cur_char)
-		ccd->retcode = global_retcode;
+		ecd.retcode = global_retcode;
 	else
-		ccd->retcode = rCHAR_DIED;
-	ccd->next = extracted_char_queue;
-	extracted_char_queue = ccd;
+		ecd.retcode = rCHAR_DIED;
+	extracted_char_queue.push_front(ecd);
 	cur_qchars++;
 
 }
@@ -4503,14 +4417,12 @@ void queue_extracted_char(CHAR_DATA *ch, bool extract)
  */
 void clean_char_queue()
 {
-	EXTRACT_CHAR_DATA *ccd;
-
-	for (ccd = extracted_char_queue; ccd; ccd = extracted_char_queue)
+	while (!extracted_char_queue.empty())
 	{
-		extracted_char_queue = ccd->next;
-		if (ccd->extract)
-			free_char(ccd->ch);
-		DISPOSE(ccd);
+		auto& ccd = extracted_char_queue.front();
+		if (ccd.extract)
+			free_char(ccd.ch);
+		extracted_char_queue.pop_front();
 		--cur_qchars;
 	}
 }
@@ -4523,30 +4435,25 @@ void add_timer(CHAR_DATA *ch, int type, int count, DO_FUN *fun, int value)
 {
 	TIMER *timer;
 
-	for (timer = ch->first_timer; timer; timer = timer->next)
-		if (timer->type == type)
+	for (auto* t : ch->timers)
+		if (t->type == type)
 		{
-			timer->count = count;
-			timer->do_fun = fun;
-			timer->value = value;
-			break;
+			t->count = count;
+			t->do_fun = fun;
+			t->value = value;
+			return;
 		}
-	if (!timer)
-	{
-		CREATE(timer, TIMER, 1);
-		timer->count = count;
-		timer->type = type;
-		timer->do_fun = fun;
-		timer->value = value;
-		LINK(timer, ch->first_timer, ch->last_timer, next, prev);
-	}
+	CREATE(timer, TIMER, 1);
+	timer->count = count;
+	timer->type = type;
+	timer->do_fun = fun;
+	timer->value = value;
+	ch->timers.push_back(timer);
 }
 
 TIMER* get_timerptr(CHAR_DATA *ch, int type)
 {
-	TIMER *timer;
-
-	for (timer = ch->first_timer; timer; timer = timer->next)
+	for (auto* timer : ch->timers)
 		if (timer->type == type)
 			return timer;
 	return NULL;
@@ -4570,21 +4477,19 @@ void extract_timer(CHAR_DATA *ch, TIMER *timer)
 	IF_BUG(timer == NULL, "(ch:%s)", ch->name)
 		return;
 
-	UNLINK(timer, ch->first_timer, ch->last_timer, next, prev);
+	ch->timers.remove(timer);
 	DISPOSE(timer);
 	return;
 }
 
 void remove_timer(CHAR_DATA *ch, int type)
 {
-	TIMER *timer;
-
-	for (timer = ch->first_timer; timer; timer = timer->next)
-		if (timer->type == type)
-			break;
-
-	if (timer)
-		extract_timer(ch, timer);
+	for (auto* t : ch->timers)
+		if (t->type == type)
+		{
+			extract_timer(ch, t);
+			return;
+		}
 }
 
 bool in_level_range(CHAR_DATA *ch, AREA_DATA *tarea)
@@ -4697,7 +4602,7 @@ OBJ_DATA* clone_object(OBJ_DATA *obj)
 	++physicalobjects;
 	cur_obj_serial = UMAX((cur_obj_serial + 1 ) & (BV30-1), 1);
 	clone->serial = clone->pIndexData->serial = cur_obj_serial;
-	LINK(clone, first_object, last_object, next, prev);
+	object_list.push_back(clone);
 	return clone;
 }
 
@@ -4732,8 +4637,8 @@ OBJ_DATA* group_object(OBJ_DATA *obj1, OBJ_DATA *obj2)
 			&& obj1->weight == obj2->weight && obj1->cost == obj2->cost && obj1->gender == obj2->gender /*added by Thanos*/
 			&& obj1->level == obj2->level && obj1->timer == obj2->timer && obj1->value[0] == obj2->value[0]
 			&& obj1->value[1] == obj2->value[1] && obj1->value[2] == obj2->value[2] && obj1->value[3] == obj2->value[3]
-			&& obj1->value[4] == obj2->value[4] && obj1->value[5] == obj2->value[5] && !obj1->first_extradesc && !obj2->first_extradesc
-			&& !obj1->first_affect && !obj2->first_affect && !obj1->first_content && !obj2->first_content)
+			&& obj1->value[4] == obj2->value[4] && obj1->value[5] == obj2->value[5] && obj1->extradesc.empty() && obj2->extradesc.empty()
+			&& obj1->affects.empty() && obj2->affects.empty() && obj1->contents.empty() && obj2->contents.empty())
 	{
 		obj1->count += obj2->count;
 		obj1->pIndexData->count += obj2->count; /* to be decremented in */
@@ -4769,21 +4674,21 @@ void split_obj(OBJ_DATA *obj, int num)
 
 	if (obj->carried_by)
 	{
-		LINK(rest, obj->carried_by->first_carrying, obj->carried_by->last_carrying, next_content, prev_content);
+		obj->carried_by->carrying.push_back(rest);
 		rest->carried_by = obj->carried_by;
 		rest->in_room = NULL;
 		rest->in_obj = NULL;
 	}
 	else if (obj->in_room)
 	{
-		LINK(rest, obj->in_room->first_content, obj->in_room->last_content, next_content, prev_content);
+		obj->in_room->contents.push_back(rest);
 		rest->carried_by = NULL;
 		rest->in_room = obj->in_room;
 		rest->in_obj = NULL;
 	}
 	else if (obj->in_obj)
 	{
-		LINK(rest, obj->in_obj->first_content, obj->in_obj->last_content, next_content, prev_content);
+		obj->in_obj->contents.push_back(rest);
 		rest->in_obj = obj->in_obj;
 		rest->in_room = NULL;
 		rest->carried_by = NULL;
@@ -4800,7 +4705,6 @@ void separate_obj(OBJ_DATA *obj)
  */
 bool empty_obj(OBJ_DATA *obj, OBJ_DATA *destobj, ROOM_INDEX_DATA *destroom)
 {
-	OBJ_DATA *otmp, *otmp_next;
 	CHAR_DATA *ch = obj->carried_by;
 	bool movedsome = false;
 
@@ -4809,9 +4713,9 @@ bool empty_obj(OBJ_DATA *obj, OBJ_DATA *destobj, ROOM_INDEX_DATA *destroom)
 
 	if (destobj || (!destroom && !ch && (destobj = obj->in_obj) != NULL))
 	{
-		for (otmp = obj->first_content; otmp; otmp = otmp_next)
+		auto snapshot = obj->contents;
+		for (auto* otmp : snapshot)
 		{
-			otmp_next = otmp->next_content;
 			if (destobj->item_type == ITEM_CONTAINER && get_obj_weight(otmp) + get_obj_weight(destobj) > destobj->value[0])
 				continue;
 			obj_from_obj(otmp);
@@ -4822,15 +4726,13 @@ bool empty_obj(OBJ_DATA *obj, OBJ_DATA *destobj, ROOM_INDEX_DATA *destroom)
 	}
 	if (destroom || (!ch && (destroom = obj->in_room) != NULL))
 	{
-		for (otmp = obj->first_content; otmp; otmp = otmp_next)
+		auto snapshot = obj->contents;
+		for (auto* otmp : snapshot)
 		{
-			otmp_next = otmp->next_content;
 			if (ch && (otmp->pIndexData->progtypes & DROP_PROG) && otmp->count > 1)
 			{
 				separate_obj(otmp);
 				obj_from_obj(otmp);
-				if (!otmp_next)
-					otmp_next = obj->first_content;
 			}
 			else
 				obj_from_obj(otmp);
@@ -4847,9 +4749,9 @@ bool empty_obj(OBJ_DATA *obj, OBJ_DATA *destobj, ROOM_INDEX_DATA *destroom)
 	}
 	if (ch)
 	{
-		for (otmp = obj->first_content; otmp; otmp = otmp_next)
+		auto snapshot = obj->contents;
+		for (auto* otmp : snapshot)
 		{
-			otmp_next = otmp->next_content;
 			obj_from_obj(otmp);
 			obj_to_char(otmp, ch);
 			movedsome = true;
@@ -5038,9 +4940,6 @@ char* get_race(CHAR_DATA *ch)
 
 void rename_char(CHAR_DATA *old, CHAR_DATA *tmp)
 {
-	INFORM_DATA *inform;
-	SHIP_DATA *ship;
-	OBJ_DATA *obj;
 	char buf[MIL];
 	char buf2[MIL];
 	int i;
@@ -5077,7 +4976,7 @@ void rename_char(CHAR_DATA *old, CHAR_DATA *tmp)
 	sprintf(buf2, "%s%s", CLONE_DIR, capitalize(tmp->przypadki[0]));
 	rename(buf, buf2);
 
-	FOREACH( inform, first_inform )
+	for (auto* inform : inform_list)
 	{
 		if (!str_cmp(inform->attacker, old->name))
 			STRDUP(inform->attacker, capitalize(tmp->przypadki[0]));
@@ -5087,7 +4986,7 @@ void rename_char(CHAR_DATA *old, CHAR_DATA *tmp)
 	}
 	save_informs();
 
-	FOREACH( ship, first_ship )
+	for (auto* ship : ship_list)
 	{
 		bool found = false;
 
@@ -5116,7 +5015,7 @@ void rename_char(CHAR_DATA *old, CHAR_DATA *tmp)
 	/* Trog: w klanach */
 	rename_member(old->name, capitalize(tmp->przypadki[0]));
 
-	FOREACH( obj, first_object )
+	for (auto* obj : object_list)
 	{
 		if (obj->armed_by && !str_cmp(obj->armed_by, old->name))
 			STRDUP(obj->armed_by, capitalize(tmp->przypadki[0]));
@@ -5137,13 +5036,11 @@ void destroy_char(char *name)
 {
 	char buf[MSL];
 	char buf2[MSL];
-	SHIP_DATA *ship;
-	CLAN_DATA *clan;
 
 	sprintf(buf, "Deleting char: %s", capitalize(name));
 	log_string(buf);
 
-	/* Questy i Depozyt gin± nieodwracalnie niezale¿nie od klona */
+	/* Questy i Depozyt ginï¿½ nieodwracalnie niezaleï¿½nie od klona */
 	sprintf(buf2, "%s%s", DEPOSIT_DIR, capitalize(name));
 	unlink(buf2);
 	sprintf(buf2, "%s%s", QDATA_DIR, capitalize(name));
@@ -5173,10 +5070,10 @@ void destroy_char(char *name)
 	}
 
 	/*
-	 *	Tutaj umie¶ciæ f-cje do zwalniania statków i klanów
-	 *  Po graczu, którego ju¿ nie ma.
+	 *	Tutaj umieï¿½ciï¿½ f-cje do zwalniania statkï¿½w i klanï¿½w
+	 *  Po graczu, ktï¿½rego juï¿½ nie ma.
 	 */
-	for (ship = first_ship; ship; ship = ship->next)
+	for (auto* ship : ship_list)
 		if (!str_cmp(ship->owner, name))
 		{
 			STRDUP(ship->owner, "");
@@ -5186,7 +5083,7 @@ void destroy_char(char *name)
 			save_ship(ship);
 		}
 
-	for (clan = first_clan; clan; clan = clan->next)
+	for (auto* clan : clan_list)
 		remove_member(clan, name);
 
 	return;
@@ -5195,16 +5092,16 @@ void destroy_char(char *name)
 /*
  R E Q U I R E M E N T S
 
- Sprawdzenie, czy gracz spe³nia wymagania by u¿yæ odpowiedniego klamotu.
+ Sprawdzenie, czy gracz speï¿½nia wymagania by uï¿½yï¿½ odpowiedniego klamotu.
  (c) Thanos
  */
 
-#define REQ_LT 	-1		//czy cecha gracza ma byæ MNIEJSZA NI¯ wymagana
-#define REQ_EQ 	 0		//czy cecha gracza ma byæ RÓWNA wymaganej
-#define REQ_GT 	 1		//czy cecha gracza ma byæ MNIEJSZA NI¯ wymagana
-#define REQ_BOOL 2		//czy ma poprostu istnieæ
+#define REQ_LT 	-1		//czy cecha gracza ma byï¿½ MNIEJSZA NIï¿½ wymagana
+#define REQ_EQ 	 0		//czy cecha gracza ma byï¿½ Rï¿½WNA wymaganej
+#define REQ_GT 	 1		//czy cecha gracza ma byï¿½ MNIEJSZA NIï¿½ wymagana
+#define REQ_BOOL 2		//czy ma poprostu istnieï¿½
 
-/* zwraca warto¶æ cechy w zale¿no¶ci od zapytania */
+/* zwraca wartoï¿½ï¿½ cechy w zaleï¿½noï¿½ci od zapytania */
 int req_query(CHAR_DATA *ch, REQUIREMENT_DATA *req)
 {
 	switch (req->location)
@@ -5264,19 +5161,19 @@ int req_query(CHAR_DATA *ch, REQUIREMENT_DATA *req)
 	}
 }
 
-/* sprawdza typ porównania */
+/* sprawdza typ porï¿½wnania */
 int req_eq(REQUIREMENT_DATA *req)
 {
 	switch (req->location)
 	{
 	case REQ_AC:
-		return REQ_LT; /* musisz mieæ mniej */
+		return REQ_LT; /* musisz mieï¿½ mniej */
 	case REQ_SEX:
 	case REQ_CLASS:
 	case REQ_RACE:
-		return REQ_EQ; /* musisz mieæ dok³adnie takie*/
+		return REQ_EQ; /* musisz mieï¿½ dokï¿½adnie takie*/
 	case REQ_AFFECT:
-		return REQ_BOOL;/* wystarczy, ¿e masz */
+		return REQ_BOOL;/* wystarczy, ï¿½e masz */
 	default:
 		return REQ_GT; /* dla reszty: wiecej */
 	}
@@ -5285,9 +5182,9 @@ int req_eq(REQUIREMENT_DATA *req)
 void explain(CHAR_DATA *ch, REQUIREMENT_DATA *req, OBJ_DATA *obj, bool iden)
 {
 	const char *expl_table[] =
-	{ "", "si³y", "zrêczno¶ci", "inteligencji", "m±dro¶ci", "kondycji", "charyzmy", "szczê¶cia", "mocy", "p³ci", "kredytek", "lat",
-			"punktów uderzeniowych", "punktów mocy", "punktów ruchu", "poziomu", "klasy zbroi", "hitrolla", "damrolla", "poziomu g³odu",
-			"poziomu pragnienia", "poziomu upicia", "rasy", "znajomo¶ci umiejêtno¶ci", "bycia pod wp³ywem", "profesji podstawowej" };
+	{ "", "siï¿½y", "zrï¿½cznoï¿½ci", "inteligencji", "mï¿½droï¿½ci", "kondycji", "charyzmy", "szczï¿½cia", "mocy", "pï¿½ci", "kredytek", "lat",
+			"punktï¿½w uderzeniowych", "punktï¿½w mocy", "punktï¿½w ruchu", "poziomu", "klasy zbroi", "hitrolla", "damrolla", "poziomu gï¿½odu",
+			"poziomu pragnienia", "poziomu upicia", "rasy", "znajomoï¿½ci umiejï¿½tnoï¿½ci", "bycia pod wpï¿½ywem", "profesji podstawowej" };
 
 	char expl[MSL];
 
@@ -5296,9 +5193,9 @@ void explain(CHAR_DATA *ch, REQUIREMENT_DATA *req, OBJ_DATA *obj, bool iden)
 	default:
 		if (iden)
 			sprintf(expl,
-			FB_CYAN "%s" FG_CYAN " (" FB_CYAN "%d lub wiêcej" FG_CYAN ")", expl_table[req->location], req->modifier);
+			FB_CYAN "%s" FG_CYAN " (" FB_CYAN "%d lub wiï¿½cej" FG_CYAN ")", expl_table[req->location], req->modifier);
 		else
-			sprintf(expl, "Masz za ma³o %s", expl_table[req->location]);
+			sprintf(expl, "Masz za maï¿½o %s", expl_table[req->location]);
 		break;
 	case REQ_SEX:
 	case REQ_RACE:
@@ -5309,7 +5206,7 @@ void explain(CHAR_DATA *ch, REQUIREMENT_DATA *req, OBJ_DATA *obj, bool iden)
 //			req->location == REQ_RACE ? race_table[req->modifier].przypadki[0] :
 					req->location == REQ_CLASS ? class_table[req->modifier].przypadki[0] :
 					/* Trog: powyzsze (rasy) nie bedzie dzialac */
-					(req->modifier == SEX_MALE ? "mêskiej" : req->modifier == SEX_FEMALE ? "¿eñskiej" : "nijakiej"));
+					(req->modifier == SEX_MALE ? "mï¿½skiej" : req->modifier == SEX_FEMALE ? "ï¿½eï¿½skiej" : "nijakiej"));
 		}
 		else
 			sprintf(expl, "Nie masz odpowiedniej %s", expl_table[req->location]);
@@ -5317,9 +5214,9 @@ void explain(CHAR_DATA *ch, REQUIREMENT_DATA *req, OBJ_DATA *obj, bool iden)
 	case REQ_LEVEL:
 		if (iden)
 			sprintf(expl,
-			FB_CYAN "%s " FG_CYAN "(" FB_CYAN "%d lub wiêcej" FG_CYAN ")", expl_table[req->location], req->modifier);
+			FB_CYAN "%s " FG_CYAN "(" FB_CYAN "%d lub wiï¿½cej" FG_CYAN ")", expl_table[req->location], req->modifier);
 		else
-			sprintf(expl, "Musisz byæ conajmniej %d %s", req->modifier, expl_table[req->location]);
+			sprintf(expl, "Musisz byï¿½ conajmniej %d %s", req->modifier, expl_table[req->location]);
 		break;
 	case REQ_SKILL:
 		if (iden)
@@ -5327,13 +5224,13 @@ void explain(CHAR_DATA *ch, REQUIREMENT_DATA *req, OBJ_DATA *obj, bool iden)
 			FB_CYAN "%s " FG_CYAN "'" FB_CYAN "%s" FG_CYAN "' (" FB_CYAN "%d%%" FG_CYAN ")", expl_table[req->location],
 					skill_table[req->type]->name, req->modifier);
 		else
-			sprintf(expl, "Za s³abo znasz umiejêtno¶æ '%s'", skill_table[req->type]->name);
+			sprintf(expl, "Za sï¿½abo znasz umiejï¿½tnoï¿½ï¿½ '%s'", skill_table[req->type]->name);
 		break;
 	case REQ_AFFECT:
 		if (iden)
 			sprintf(expl, FB_CYAN "%s %s", expl_table[req->location], flag_string(aff_flags_list, req->modifier));
 		else
-			sprintf(expl, "Musisz byæ pod wp³ywem %s", flag_string(aff_flags_list, req->modifier));
+			sprintf(expl, "Musisz byï¿½ pod wpï¿½ywem %s", flag_string(aff_flags_list, req->modifier));
 		break;
 	case REQ_AC:
 		if (iden)
@@ -5349,14 +5246,14 @@ void explain(CHAR_DATA *ch, REQUIREMENT_DATA *req, OBJ_DATA *obj, bool iden)
 	}
 	else
 	{
-		ch_printf(ch, FB_CYAN "%s by u¿ywaæ %s %s." EOL, expl,
+		ch_printf(ch, FB_CYAN "%s by uï¿½ywaï¿½ %s %s." EOL, expl,
 				obj->gender == GENDER_NEUTRAL ? "tego" : obj->gender == GENDER_MALE ? "tego" :
 				obj->gender == GENDER_FEMALE ? "tej" : "tych", obj->przypadki[1]);
 	}
 	return;
 }
 /*
- przeszukuje wszystkie wymogi klamota i jak znajdzie pierwszy niespe³niony
+ przeszukuje wszystkie wymogi klamota i jak znajdzie pierwszy niespeï¿½niony
  zwraca false
  */
 #if defined (ARMAGEDDON)
@@ -5366,7 +5263,7 @@ bool req_check( CHAR_DATA *ch, OBJ_DATA *obj )
 	int			eq;
 
 	/* wymogi aktualne klamota */
-	for( req = obj->first_requirement; req; req=req->next )
+	for( auto* req : obj->requirements )
 	{
 	eq = req_eq( req );
 
@@ -5381,7 +5278,7 @@ bool req_check( CHAR_DATA *ch, OBJ_DATA *obj )
 	}
 
 	/* wymogi indexu */
-	for( req = obj->pIndexData->first_requirement; req; req=req->next )
+	for( auto* req : obj->pIndexData->requirements )
 	{
 	eq = req_eq( req );
 
@@ -5477,7 +5374,7 @@ bool adv_is_number(char *arg)
 	return true;
 }
 
-/* doda³em tutaj obs³ugê '+' i '-' bo nie by³o */
+/* dodaï¿½em tutaj obsï¿½ugï¿½ '+' i '-' bo nie byï¿½o */
 int adv_atoi(char *s)
 {
 	int number = 0;
@@ -5492,7 +5389,7 @@ int adv_atoi(char *s)
 			++s;
 		}
 		else /* plusik niby nam nie zmienia znaku */
-		if (s[0] == '+') /* ale wska¼nik musimy przesun±æ     */
+		if (s[0] == '+') /* ale wskaï¿½nik musimy przesunï¿½ï¿½     */
 		{
 			minus = false;
 			++s;
@@ -5534,7 +5431,7 @@ int adv_atoi(char *s)
 		return 0;
 
 	/*
-	 hmmm, a mo¿e by daæ '0 - abs( number )' ?
+	 hmmm, a moï¿½e by daï¿½ '0 - abs( number )' ?
 	 Eeeee tam :>
 	 */
 	if (minus)
@@ -5559,7 +5456,7 @@ int64 atoi64(char *s)
 			++s;
 		}
 		else /* plusik niby nam nie zmienia znaku */
-		if (s[0] == '+') /* ale wska¼nik musimy przesun±æ     */
+		if (s[0] == '+') /* ale wskaï¿½nik musimy przesunï¿½ï¿½     */
 		{
 			minus = false;
 			++s;
@@ -5601,7 +5498,7 @@ int64 atoi64(char *s)
 		return 0;
 
 	/*
-	 hmmm, a mo¿e by daæ '0 - abs( number )' ?
+	 hmmm, a moï¿½e by daï¿½ '0 - abs( number )' ?
 	 Eeeee tam :>
 	 */
 	if (minus)

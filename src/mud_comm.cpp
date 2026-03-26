@@ -100,7 +100,6 @@ const char *mprog_type_to_name( int64 type )
 DEF_DO_FUN( mpstat )
 {
     char        arg[MAX_INPUT_LENGTH];
-    MPROG_DATA *mprg;
     CHAR_DATA  *victim;
     int		i;
 
@@ -149,12 +148,16 @@ DEF_DO_FUN( mpstat )
 	victim->top_level,        victim->alignment,
 	GET_AC( victim ),    victim->gold);
 
-    for ( i=1,mprg = victim->pIndexData->mudprogs; mprg; i++,mprg = mprg->next )
+    i = 1;
+    for ( auto* mprg : victim->pIndexData->mudprogs )
+    {
 	ch_printf( ch, "[" FB_WHITE "%d" PLAIN "]>%s %s" NL
 		       "%s" NL, i,
 		mprog_type_to_name( mprg->type ),
 		mprg->arglist,
 		mprg->comlist );
+	i++;
+    }
     return;
 }
 
@@ -162,7 +165,6 @@ DEF_DO_FUN( mpstat )
 DEF_DO_FUN( opstat )
 {
     char        arg[MAX_INPUT_LENGTH];
-    MPROG_DATA *mprg;
     OBJ_DATA   *obj;
     int		i;
 
@@ -198,12 +200,16 @@ DEF_DO_FUN( opstat )
 	    obj->przypadki[4],
 	    obj->przypadki[5]    );
 
-    for ( i=1,mprg = obj->pIndexData->mudprogs; mprg;i++, mprg = mprg->next )
+    i = 1;
+    for ( auto* mprg : obj->pIndexData->mudprogs )
+    {
 	ch_printf( ch, "[" FB_WHITE "%d" PLAIN "]>%s %s" NL
 		       "%s" NL, i,
 		mprog_type_to_name( mprg->type ),
 		mprg->arglist,
 		mprg->comlist );
+	i++;
+    }
 
     return;
 
@@ -212,7 +218,6 @@ DEF_DO_FUN( opstat )
 /* Rpstat - Scryn 8/12 */
 DEF_DO_FUN( rpstat )
 {
-    MPROG_DATA *mprg;
     int		i;
 
     if ( !( ch->in_room->progtypes ) )
@@ -224,12 +229,16 @@ DEF_DO_FUN( rpstat )
     ch_printf( ch, "Name: %s.  Vnum: %d." NL,
 	ch->in_room->name, ch->in_room->vnum );
 
-    for ( i=1,mprg = ch->in_room->mudprogs; mprg;i++, mprg = mprg->next )
+    i = 1;
+    for ( auto* mprg : ch->in_room->mudprogs )
+    {
 	ch_printf( ch, "[" FB_WHITE "%d" PLAIN "]>%s %s" NL
 		       "%s" NL, i,
 		mprog_type_to_name( mprg->type ),
 		mprg->arglist,
 		mprg->comlist );
+	i++;
+    }
     return;
 }
 
@@ -239,7 +248,6 @@ DEF_DO_FUN( rpstat )
 DEF_DO_FUN( mpasound )
 {
     ROOM_INDEX_DATA *was_in_room;
-    EXIT_DATA       *pexit;
     int		     actflags;
 
     MPCOMMAND; //do_mpasound" );
@@ -253,7 +261,7 @@ DEF_DO_FUN( mpasound )
     actflags = ch->act;
     REMOVE_BIT(ch->act, ACT_SECRETIVE);
     was_in_room = ch->in_room;
-    for ( pexit = was_in_room->first_exit; pexit; pexit = pexit->next )
+    for ( auto* pexit : was_in_room->exits )
     {
 	if ( pexit->to_room
 	&&   pexit->to_room != was_in_room )
@@ -322,7 +330,6 @@ DEF_DO_FUN( mpjunk )
 {
     char      arg[ MAX_INPUT_LENGTH ];
     OBJ_DATA *obj;
-    OBJ_DATA *obj_next;
 
     MPCOMMAND; //do_mpjunk" );
 
@@ -347,14 +354,16 @@ DEF_DO_FUN( mpjunk )
 	extract_obj( obj );
     }
     else
-    for ( obj = ch->first_carrying; obj; obj = obj_next )
     {
-	obj_next = obj->next_content;
-	if ( arg[3] == '\0' || is_name( &arg[4], obj->name ) )
+	auto carrying_snapshot = ch->carrying;
+	for ( auto* obj : carrying_snapshot )
 	{
-	    if ( obj->wear_loc != WEAR_NONE)
-		unequip_char( ch, obj );
-	    extract_obj( obj );
+	    if ( arg[3] == '\0' || is_name( &arg[4], obj->name ) )
+	    {
+		if ( obj->wear_loc != WEAR_NONE)
+		    unequip_char( ch, obj );
+		extract_obj( obj );
+	    }
 	}
     }
 
@@ -496,7 +505,7 @@ DEF_DO_FUN( mpecho )
 }
 
 /* Thanos: pozwala mobowi wykonac czynnosc bez pokazywania komunikatu o tym */
-/* Sk³adnia: mpnoecho <komenda> */
+/* Skï¿½adnia: mpnoecho <komenda> */
 DEF_DO_FUN( mpnoecho )
 {
 
@@ -514,7 +523,7 @@ DEF_DO_FUN( mpnoecho )
     return;
 }
 
-/* Sk³adnia: mpresetroom -- resetuje pokój */
+/* Skï¿½adnia: mpresetroom -- resetuje pokï¿½j */
 DEF_DO_FUN( mpresetroom )
 {
     MPCOMMAND; //do_mpresetroom" );
@@ -531,7 +540,7 @@ DEF_DO_FUN( mpresetroom )
     return;
 }
 
-/* Sk³adnia: mpaddtowanted <ch> <type> [planet] */
+/* Skï¿½adnia: mpaddtowanted <ch> <type> [planet] */
 DEF_DO_FUN( mpaddtowanted )
 {
     PLANET_DATA *	planet = 0;
@@ -592,7 +601,7 @@ DEF_DO_FUN( mpaddtowanted )
     return;
 }
 
-/* Sk³adnia: mpremfromwanted <ch> <type> [planet] */
+/* Skï¿½adnia: mpremfromwanted <ch> <type> [planet] */
 DEF_DO_FUN( mpremfromwanted )
 {
     PLANET_DATA *	planet = 0;
@@ -749,7 +758,7 @@ DEF_DO_FUN( mpoload )
     return;
 }
 
-/* Sk³adnia: mpqoload $n <vnum> [level] [timer] */
+/* Skï¿½adnia: mpqoload $n <vnum> [level] [timer] */
 DEF_DO_FUN( mpqoload )
 {
     char 		arg1	[ MAX_INPUT_LENGTH ];
@@ -856,7 +865,7 @@ DEF_DO_FUN( mpqoload )
     return;
 }
 
-/* Sk³adnia: mpqmload $n <vnum> */
+/* Skï¿½adnia: mpqmload $n <vnum> */
 DEF_DO_FUN( mpqmload )
 {
     char            	arg	[ MAX_INPUT_LENGTH ];
@@ -932,16 +941,14 @@ DEF_DO_FUN( mppurge )
     if ( arg[0] == '\0' )
     {
 	/* 'purge' */
-	CHAR_DATA *vnext;
-
-	for ( victim = ch->in_room->first_person; victim; victim = vnext )
+	auto people_snapshot = ch->in_room->people;
+	for ( auto* victim : people_snapshot )
 	{
-	    vnext = victim->next_in_room;
 	    if ( IS_NPC( victim ) && victim != ch )
 	      extract_char( victim, true );
 	}
-	while ( ch->in_room->first_content )
-	   extract_obj( ch->in_room->first_content );
+	while ( !ch->in_room->contents.empty() )
+	   extract_obj( ch->in_room->contents.front() );
 
 	return;
     }
@@ -963,8 +970,8 @@ DEF_DO_FUN( mppurge )
 
 
 /* 	Eeee
-	Niech sie mobki ucz± purgeowaæ -
-	kto to je ma purgeowaæ jak nie one   ;)
+	Niech sie mobki uczï¿½ purgeowaï¿½ -
+	kto to je ma purgeowaï¿½ jak nie one   ;)
     							    -- Thanos
     if ( victim == ch )
     {
@@ -1065,8 +1072,6 @@ DEF_DO_FUN( mpat )
     char             arg[ MAX_INPUT_LENGTH ];
     ROOM_INDEX_DATA *location;
     ROOM_INDEX_DATA *original;
-    CHAR_DATA       *wch, *ch_next;
-
     MPCOMMAND; //do_mpat" );
 
     argument = one_argument( argument, arg );
@@ -1084,7 +1089,9 @@ DEF_DO_FUN( mpat )
     }
 
     original = ch->in_room;
-    ch_next = ch->next_in_room;
+    /* Save position in room's people list so we can restore it later */
+    auto it_pos = std::find(original->people.begin(), original->people.end(), ch);
+    auto it_next = (it_pos != original->people.end()) ? std::next(it_pos) : original->people.end();
     char_from_room( ch );
     char_to_room( ch, location );
 
@@ -1094,27 +1101,25 @@ DEF_DO_FUN( mpat )
      * See if 'ch' still exists before continuing!
      * Handles 'at XXXX quit' case.
      */
-    for ( wch = first_char; wch; wch = wch->next )
+    for ( auto* wch : char_list )
 	if ( wch == ch )
 	{
 	    char_from_room( ch );
 	    char_to_room( ch, original );
 
         /* BUGFIX by Thanos:
-         * po wykonaniu komendy progowej mob czêsto u¿ywa mpat, a co
-         * za tym idzie robi co¶ w innej lokacji, czyli wypina siê z listy
-         * lokacji aktualnej. Po powrocie zostaje wpiêty na sam jej koniec,
-         * a co za tym idzie, pêtla lec±ca po wszystkich w pomieszczeniu
-         * znów trafia na niego. Taki manewr grozi zapêtlaniem i duplikowaniem
-         * siê wykonañ progów. Mój sposób: wepnijmy mobka tam gdzie by³.
+         * po wykonaniu komendy progowej mob czï¿½sto uï¿½ywa mpat, a co
+         * za tym idzie robi coï¿½ w innej lokacji, czyli wypina siï¿½ z listy
+         * lokacji aktualnej. Po powrocie zostaje wpiï¿½ty na sam jej koniec,
+         * a co za tym idzie, pï¿½tla lecï¿½ca po wszystkich w pomieszczeniu
+         * znï¿½w trafia na niego. Taki manewr grozi zapï¿½tlaniem i duplikowaniem
+         * siï¿½ wykonaï¿½ progï¿½w. Mï¿½j sposï¿½b: wepnijmy mobka tam gdzie byï¿½.
          * O ile ofcoz sa jeszcze ci, obok ktorych stal.
          */
-	    if( ch_next )
+	    if( it_next != original->people.end() )
 	    {
-		UNLINK( ch, original->first_person, original->last_person,
-		    next_in_room, prev_in_room );
-		INSERT( ch, ch_next, original->first_person,
-		    next_in_room, prev_in_room );
+		original->people.remove( ch );
+		original->people.insert( it_next, ch );
 	    }
 	    break;
 	}
@@ -1128,7 +1133,6 @@ void save_nameslist( CHAR_DATA *ch )
 {
     FILE *fp;
     char buf[MSL];
-    NAMESLIST_DATA *nameslist;
 
     sprintf( buf, "%snl_%d", NAMESLIST_DIR, ch->pIndexData->vnum );
     if( ch->pIndexData->namescount == 0 )
@@ -1144,7 +1148,7 @@ void save_nameslist( CHAR_DATA *ch )
     }
 
     fprintf( fp, "%d", ch->pIndexData->namescount );
-    for( nameslist = ch->pIndexData->first_nameslist; nameslist; nameslist = nameslist->next )
+    for( auto* nameslist : ch->pIndexData->nameslists )
 	fprintf( fp, " %s~", nameslist->name );
     fprintf( fp, "\n" );
     fclose(fp);
@@ -1167,7 +1171,7 @@ void fread_nameslist( MOB_INDEX_DATA *pMobIndex )
     for( i = 1; i<= pMobIndex->namescount; i++ )
     {
 	CREATE( nameslist, NAMESLIST_DATA, 1 );
-	LINK( nameslist,  pMobIndex->first_nameslist, pMobIndex->last_nameslist, next, prev );
+	pMobIndex->nameslists.push_back( nameslist );
 	nameslist->name = fread_string( fp );
     }
     fclose(fp);
@@ -1178,14 +1182,11 @@ void fread_nameslist( MOB_INDEX_DATA *pMobIndex )
 
 void clear_nameslist( CHAR_DATA *ch )
 {
-    NAMESLIST_DATA	*nameslist,*n;
-
-    for( nameslist = ch->pIndexData->first_nameslist; nameslist; nameslist = n )
+    for( auto* nameslist : ch->pIndexData->nameslists )
     {
-	n = nameslist->next;
-	UNLINK( nameslist, ch->pIndexData->first_nameslist, ch->pIndexData->last_nameslist, next, prev );
 	free_nameslist( nameslist );
     }
+    ch->pIndexData->nameslists.clear();
     ch->pIndexData->namescount = 0;
 
     return;
@@ -1226,9 +1227,7 @@ bool nameslistempty( CHAR_DATA *ch )
 
 bool isinnameslist( CHAR_DATA *ch, char *arg )
 {
-    NAMESLIST_DATA	*nameslist;
-
-    for( nameslist = ch->pIndexData->first_nameslist; nameslist; nameslist = nameslist->next )
+    for( auto* nameslist : ch->pIndexData->nameslists )
 	if( !str_cmp( nameslist->name, arg ) )
 	    return true;
     return false;
@@ -1237,7 +1236,7 @@ bool isinnameslist( CHAR_DATA *ch, char *arg )
 DEF_DO_FUN( mpaddtolist )
 {
     CHAR_DATA		*victim;
-    NAMESLIST_DATA	*nameslist,*tmp;
+    NAMESLIST_DATA	*nameslist;
     char		arg[MAX_INPUT_LENGTH];
 
     MPCOMMAND; //do_mpaddtolist" );
@@ -1261,30 +1260,15 @@ DEF_DO_FUN( mpaddtolist )
 
 
     CREATE( nameslist, NAMESLIST_DATA, 1 );
-    if( ch->pIndexData->first_nameslist )
+    ch->pIndexData->nameslists.push_front( nameslist );
+    if( ch->pIndexData->namescount == 10 )
     {
-	ch->pIndexData->first_nameslist->prev = nameslist;
-	nameslist->next = ch->pIndexData->first_nameslist;
-	ch->pIndexData->first_nameslist = nameslist;
-	nameslist->prev = NULL;
-	if( ch->pIndexData->namescount == 10 )
-	{
-	    tmp = ch->pIndexData->last_nameslist;
-	     UNLINK( tmp, ch->pIndexData->first_nameslist, ch->pIndexData->last_nameslist, next, prev );
-	    free_nameslist( tmp );
-	}
-	else
-	    ch->pIndexData->namescount++;
-        ch->pIndexData->last_nameslist->next = NULL;
+	NAMESLIST_DATA *tmp = ch->pIndexData->nameslists.back();
+	ch->pIndexData->nameslists.pop_back();
+	free_nameslist( tmp );
     }
     else
-    {
-	ch->pIndexData->first_nameslist = nameslist;
-	nameslist->next = NULL;
-	nameslist->prev = NULL;
-	ch->pIndexData->last_nameslist = nameslist;
 	ch->pIndexData->namescount++;
-    }
     STRDUP( nameslist->name, arg );
     save_nameslist( ch );
     return;
@@ -1293,7 +1277,6 @@ DEF_DO_FUN( mpaddtolist )
 DEF_DO_FUN( mpremfromlist )
 {
     CHAR_DATA		*victim;
-    NAMESLIST_DATA	*nameslist;
     char		arg[MAX_INPUT_LENGTH];
 
     MPCOMMAND; //do_mpremfromist" );
@@ -1315,12 +1298,11 @@ DEF_DO_FUN( mpremfromlist )
 	return;
     }
 
-    for( nameslist = ch->pIndexData->first_nameslist; nameslist; nameslist = nameslist->next )
-	if( !str_cmp( nameslist->name, arg ) )
+    for( auto it = ch->pIndexData->nameslists.begin(); it != ch->pIndexData->nameslists.end(); ++it )
+	if( !str_cmp( (*it)->name, arg ) )
 	{
-
-	    UNLINK( nameslist, ch->pIndexData->first_nameslist, ch->pIndexData->last_nameslist, next, prev );
-	    free_nameslist( nameslist );
+	    free_nameslist( *it );
+	    ch->pIndexData->nameslists.erase( it );
 	    ch->pIndexData->namescount--;
 	    save_nameslist( ch );
 	    break;
@@ -1379,7 +1361,7 @@ DEF_DO_FUN( mpadvance )
 		if( victim->top_level < victim->skill_level[ability] )
 		    victim->top_level = victim->skill_level[ability];
 		victim->experience[ability]=exp_level( victim->skill_level[ability]+(atoi(arg2)-1) );
-	    	ch_printf( victim, "&W* Opanowujesz nowe tajniki %s !!! Znasz je ju¿ na %d poziomie! *&w" NL,
+	    	ch_printf( victim, "&W* Opanowujesz nowe tajniki %s !!! Znasz je juï¿½ na %d poziomie! *&w" NL,
 		class_table[ability].przypadki[1], victim->skill_level[ability] );
 		return;
 		}
@@ -1431,11 +1413,11 @@ void do_mpinduct( CHAR_DATA *ch, char *argument ) //byTrog
 	induct_member( clan, victim );
 	buf[0]=buf2[0]='\0';
 	sprintf( buf2, "Council %s", LEADER_NAME( clan ) );
-	sprintf( buf, "W szeregach Twoje%s %s pojawia siê nowa osoba." NL
-		"Powinna byæ ona powitana w sposób, który uwa¿asz za najlepszy." NL
-		"Imiê tej osoby brzmi: %s." NL, CLANSUFFIX( clan, "go", "j" ), CLANTYPE( clan, 1 ),
+	sprintf( buf, "W szeregach Twoje%s %s pojawia siï¿½ nowa osoba." NL
+		"Powinna byï¿½ ona powitana w sposï¿½b, ktï¿½ry uwaï¿½asz za najlepszy." NL
+		"Imiï¿½ tej osoby brzmi: %s." NL, CLANSUFFIX( clan, "go", "j" ), CLANTYPE( clan, 1 ),
 		victim->przypadki[0] );
-	note( ch->przypadki[0], buf2, "Nowy cz³onek.", buf );
+	note( ch->przypadki[0], buf2, "Nowy czï¿½onek.", buf );
 }
 
 void do_mpoutcast( CHAR_DATA *ch, char *argument ) //byTrog
@@ -1480,11 +1462,11 @@ void do_mpoutcast( CHAR_DATA *ch, char *argument ) //byTrog
 	outcast_member( victim->pcdata->clan, victim );
 	buf2[0]=buf[0]='\0';
 	sprintf( buf2, "Council %s", LEADER_NAME( clan ) );
-	sprintf( buf, "Z szeregów twoje%s %s zosta³a usuniêta pewna osoba." NL
-		"Powinna siê liczyæ z wszelkimi nastêpstwami." NL
-		"Imiê tej osoby brzmi: %s." NL, CLANSUFFIX( clan, "go", "j" ), CLANTYPE( clan, 1 ),
+	sprintf( buf, "Z szeregï¿½w twoje%s %s zostaï¿½a usuniï¿½ta pewna osoba." NL
+		"Powinna siï¿½ liczyï¿½ z wszelkimi nastï¿½pstwami." NL
+		"Imiï¿½ tej osoby brzmi: %s." NL, CLANSUFFIX( clan, "go", "j" ), CLANTYPE( clan, 1 ),
 		victim->przypadki[0] );
-	note( ch->przypadki[0], buf2, "Usuniêty cz³onek.", buf );
+	note( ch->przypadki[0], buf2, "Usuniï¿½ty czï¿½onek.", buf );
 }
 
 
@@ -1536,7 +1518,6 @@ DEF_DO_FUN( mptransfer )
     char buf[MAX_STRING_LENGTH];
     ROOM_INDEX_DATA *location;
     CHAR_DATA       *victim;
-    CHAR_DATA       *nextinroom;
 
     MPCOMMAND; //do_mptransfer" );
 
@@ -1552,9 +1533,9 @@ DEF_DO_FUN( mptransfer )
     /* Put in the variable nextinroom to make this work right. -Narn */
     if ( !str_cmp( arg1, "all" ) )
     {
-	for ( victim = ch->in_room->first_person; victim; victim = nextinroom )
+	auto people_snapshot = ch->in_room->people;
+	for ( auto* victim : people_snapshot )
 	{
-            nextinroom = victim->next_in_room;
 	    if ( victim != ch
 	    &&   !NOT_AUTHED(victim)
 	    &&   can_see( ch, victim ) )
@@ -1643,9 +1624,7 @@ DEF_DO_FUN( mpforce )
 
     if ( !str_cmp( arg, "all" ) )
     {
-	CHAR_DATA *vch;
-
-	for ( vch = ch->in_room->first_person; vch; vch = vch->next_in_room )
+	for ( auto* vch : ch->in_room->people )
 	    if ( get_trust( vch ) < get_trust( ch ) && can_see( ch, vch ) )
 		interpret( vch, argument );
     }
@@ -1695,9 +1674,7 @@ DEF_DO_FUN( mpsuggest )
 
     if ( !str_cmp( arg, "all" ) )
     {
-	CHAR_DATA *vch;
-
-	for ( vch = ch->in_room->first_person; vch; vch = vch->next_in_room )
+	for ( auto* vch : ch->in_room->people )
 	    if ( get_trust( vch ) < get_trust( ch ) && can_see( ch, vch ) )
 		interpret( vch, argument );
     }
@@ -1729,14 +1706,14 @@ DEF_DO_FUN( mpsuggest )
 	/*
 	 * Thanos: taka zmiana.
 	 * Gracz po mpforce nie wykonuje komendy automatyczne, tylko
-	 * czeka az minie mu ws. Zeby tak by³o wstawiamy przed jego
+	 * czeka az minie mu ws. Zeby tak byï¿½o wstawiamy przed jego
 	 * incomm komende zadana przez moba - fajne to jest przy
 	 * mpdelay. Np.
          *
 	 * mpechoat $n Zastanawiasz sie i...
 	 * mpdelay $n 1
 	 * mpforce $n s
-	 * mpechoat $n odchodzisz st±d.
+	 * mpechoat $n odchodzisz stï¿½d.
 	 */
 	if( victim->desc )
 	{
@@ -2085,7 +2062,7 @@ DEF_DO_FUN( mpgain )
 
     exp =  URANGE(1, exp, ( exp_level( victim->skill_level[ability]+1 ) - exp_level( victim->skill_level[ability]) ) );
 
-    ch_printf( victim, "Zdobywasz %ld punktów do¶wiadczenia %s." NL, exp,
+    ch_printf( victim, "Zdobywasz %ld punktï¿½w doï¿½wiadczenia %s." NL, exp,
 	class_table[ability].przypadki[6]  );
     gain_exp( victim , exp , ability);
     return;
@@ -2366,7 +2343,7 @@ DEF_DO_FUN( mpapplyb )
   case 0:
   case 1:
   default:
-  send_to_char( "Zwracasz na siebie uwage Bogów." NL, victim);
+  send_to_char( "Zwracasz na siebie uwage Bogï¿½w." NL, victim);
   sprintf( log_buf, "%s@%s new %s applying for authorization...",
                     victim->name, victim->desc->host,
                     victim->race->name);
@@ -2377,18 +2354,18 @@ DEF_DO_FUN( mpapplyb )
   break;
 
   case 2:
-  send_to_char("Twoje imiê zosta³o przeklête przez Bogów. Popro¶ ich, ¿eby ci je zmienili." NL, victim);
+  send_to_char("Twoje imiï¿½ zostaï¿½o przeklï¿½te przez Bogï¿½w. Poproï¿½ ich, ï¿½eby ci je zmienili." NL, victim);
   add_timer(victim, TIMER_APPLIED, 10, NULL, 0);
   break;
 
   case 3:
-  send_to_char( "Bogowie zabraniaj± ci wej¶cia do tego ¶wiata." NL, victim);
+  send_to_char( "Bogowie zabraniajï¿½ ci wejï¿½cia do tego ï¿½wiata." NL, victim);
         REMOVE_BIT(victim->pcdata->flags, PCFLAG_UNAUTHED);
         if ( victim->fighting )
           stop_fighting( victim, true );
         char_from_room(victim);
         char_to_room(victim, get_room_index(ROOM_VNUM_SCHOOL));
-        act( FB_WHITE, "$n wkracza do tego ¶wiata w s³upie o¶lepiaj±cego ¶wiat³a!",
+        act( FB_WHITE, "$n wkracza do tego ï¿½wiata w sï¿½upie oï¿½lepiajï¿½cego ï¿½wiatï¿½a!",
             victim, NULL, NULL, TO_ROOM );
         do_look(victim, (char *)"auto");
   break;
@@ -2612,20 +2589,20 @@ ch_ret simple_damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 	switch (victim->position)
 	{
 	case POS_MORTAL:
-		act(COL_DYING, "$n jest ¶miertelnie rann$e i szbko umrze bez pomocy.", victim, NULL, NULL, TO_ROOM);
-		act(COL_DANGER, "Jaste¶ ¶miertelnie rann$e i bez pomocy szybko umrzesz.", victim, NULL, NULL, TO_CHAR);
+		act(COL_DYING, "$n jest ï¿½miertelnie rann$e i szbko umrze bez pomocy.", victim, NULL, NULL, TO_ROOM);
+		act(COL_DANGER, "Jasteï¿½ ï¿½miertelnie rann$e i bez pomocy szybko umrzesz.", victim, NULL, NULL, TO_CHAR);
 		break;
 
 	case POS_INCAP:
-		act(COL_DYING, "$n jest og³uszon$e, mo¿e umrzeæ bez niczyjej pomocy.", victim, NULL, NULL, TO_ROOM);
-		act(COL_DANGER, "Jeste¶ og³uszon$e i mo¿esz umrzeæ je¶li nikt ci nie pomo¿e.", victim, NULL, NULL, TO_CHAR);
+		act(COL_DYING, "$n jest ogï¿½uszon$e, moï¿½e umrzeï¿½ bez niczyjej pomocy.", victim, NULL, NULL, TO_ROOM);
+		act(COL_DANGER, "Jesteï¿½ ogï¿½uszon$e i moï¿½esz umrzeï¿½ jeï¿½li nikt ci nie pomoï¿½e.", victim, NULL, NULL, TO_CHAR);
 		break;
 
 	case POS_STUNNED:
 		if (!IS_AFFECTED( victim, AFF_PARALYSIS ))
 		{
-			act(COL_ACTION, "$n jest og³uszon$e, ale prawdopodobnie z tego wyjdzie.", victim, NULL, NULL, TO_ROOM);
-			act(COL_HURT, "Jeste¶ og³uszon$e ale prawdopodobnie z tego wyjdziesz.", victim, NULL, NULL, TO_CHAR);
+			act(COL_ACTION, "$n jest ogï¿½uszon$e, ale prawdopodobnie z tego wyjdzie.", victim, NULL, NULL, TO_ROOM);
+			act(COL_HURT, "Jesteï¿½ ogï¿½uszon$e ale prawdopodobnie z tego wyjdziesz.", victim, NULL, NULL, TO_CHAR);
 		}
 		break;
 
@@ -2636,9 +2613,9 @@ ch_ret simple_damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 
 	default:
 		if (dam > victim->max_hit / 4)
-			act(COL_HURT, "Ale¶ oberwa³$o! To musia³o BOLEÆ !!!", victim, 0, 0, TO_CHAR);
+			act(COL_HURT, "Aleï¿½ oberwaï¿½$o! To musiaï¿½o BOLEï¿½ !!!", victim, 0, 0, TO_CHAR);
 		if (victim->hit < victim->max_hit / 4)
-			act(COL_DANGER, "Chcia³$oby¶, by twoje rany przesta³y tak KRWAWIÆ !!!", victim, 0, 0, TO_CHAR);
+			act(COL_DANGER, "Chciaï¿½$obyï¿½, by twoje rany przestaï¿½y tak KRWAWIï¿½ !!!", victim, 0, 0, TO_CHAR);
 		break;
 	}
 
@@ -2705,7 +2682,6 @@ ch_ret simple_damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 CHAR_DATA *get_char_room_mp( CHAR_DATA *ch, char *argument )
 {
     char arg[MAX_INPUT_LENGTH];
-    CHAR_DATA *rch;
     int number, count, vnum;
 
     number = number_argument( argument, arg );
@@ -2719,7 +2695,7 @@ CHAR_DATA *get_char_room_mp( CHAR_DATA *ch, char *argument )
 
     count  = 0;
 
-    for ( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
+    for ( auto* rch : ch->in_room->people )
 	if ( (nifty_is_name( arg, rch->name )
 	||  (IS_NPC(rch) && vnum == rch->pIndexData->vnum)) )
 	{
@@ -2733,7 +2709,7 @@ CHAR_DATA *get_char_room_mp( CHAR_DATA *ch, char *argument )
     if ( vnum != -1 )
 	return NULL;
     count  = 0;
-    for ( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
+    for ( auto* rch : ch->in_room->people )
     {
 	if ( !nifty_is_name_prefix( arg, rch->name ) )
 	    continue;

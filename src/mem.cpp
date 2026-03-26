@@ -24,10 +24,10 @@
 
 
 /*
-    W tym pliq maj± byc TYLKO f-cje zaczynaj±ce siê na
+    W tym pliq majï¿½ byc TYLKO f-cje zaczynajï¿½ce siï¿½ na
     free_... lub
-    new_...  inaczej --> zabijê :)            --Thanos
-    No, mo¿e jeszcze clean_... byæ ;)
+    new_...  inaczej --> zabijï¿½ :)            --Thanos
+    No, moï¿½e jeszcze clean_... byï¿½ ;)
  */
 
 #include <sys/types.h>
@@ -47,8 +47,7 @@
 #include "mud.h"
 
 
-SHIP_DATA * first_free_ship = NULL;
-SHIP_DATA * last_free_ship = NULL;
+std::list<SHIP_DATA*> free_ship_list;
 
 int	shrec_count;
 
@@ -60,21 +59,12 @@ void free_course( COURSE_DATA *course )
 
 void free_courses( SHIP_DATA *ship )
 {
-    COURSE_DATA * 	course;
-    COURSE_DATA * 	course_next;
-
-    if( !ship || !ship->first_stop )
+    if( !ship || ship->stops.empty() )
 	return;
 
-    for( course = ship->first_stop; course; course = course_next )
-    {
-	course_next = course->next;
-	UNLINK( course, ship->first_stop, ship->last_stop, next, prev );
+    for( auto* course : ship->stops )
 	free_course( course );
-    }
-
-    ship->first_stop 	= NULL;
-    ship->last_stop 	= NULL;
+    ship->stops.clear();
     ship->curr_stop 	= NULL;
 
     return;
@@ -126,7 +116,6 @@ MPROG_DATA *new_mprog()
 	STRDUP( prog->arglist, "0" );
 	STRDUP( prog->comlist, "break" NL );
 	prog->type = 0|RAND_PROG;
-	prog->next = NULL;
 	return prog;
 }
 
@@ -141,8 +130,6 @@ AFFECT_DATA *new_affect()
 {
 	AFFECT_DATA	*pAf;
 	CREATE( pAf, AFFECT_DATA, 1 );
-	pAf->next		= NULL;
-	pAf->prev		= NULL;
 	pAf->type		= 0;
 	pAf->duration	= 0;
 	pAf->location	= 0;
@@ -262,40 +249,22 @@ void free_pcdata( PC_DATA *pcdata )
     STRFREE( pcdata->host 		); /*Thanos*/
     STRFREE( pcdata->user 		); /*Thanos*/
 
-    if( pcdata->first_alias )
+    for( auto* alias : pcdata->aliases )
     {
-	ALIAS_DATA *	alias;
-	ALIAS_DATA * 	alias_next;
-
-	for( alias = pcdata->first_alias; alias; alias=alias_next )
-	{
-	    alias_next = alias->next;
-
-	    STRFREE( alias->name );
-	    STRFREE( alias->sub );
-	     UNLINK( alias, pcdata->first_alias,
-	    		    pcdata->last_alias, next, prev );
-	    DISPOSE( alias );
-	}
+	STRFREE( alias->name );
+	STRFREE( alias->sub );
+	DISPOSE( alias );
     }
+    pcdata->aliases.clear();
 
-    if( pcdata->first_last_tell )
+    for( auto* last : pcdata->last_tells )
     {
-	LAST_DATA * last;
-	LAST_DATA * last_next;
-
-    	for( last = pcdata->first_last_tell; last; last = last_next )
-	{
-	    last_next = last->next;
-
-	    STRFREE( last->teller 	);
-	    STRFREE( last->text		);
-	    STRFREE( last->time		);
-	     UNLINK( last,  pcdata->first_last_tell,
-			    pcdata->last_last_tell, next, prev );
-	    DISPOSE( last );
-	}
+	STRFREE( last->teller 	);
+	STRFREE( last->text		);
+	STRFREE( last->time		);
+	DISPOSE( last );
     }
+    pcdata->last_tells.clear();
     DISPOSE( pcdata );
 }
 
@@ -304,12 +273,7 @@ void free_pcdata( PC_DATA *pcdata )
  */
 void free_char( CHAR_DATA *ch )
 {
-    OBJ_DATA 		*obj;
-    AFFECT_DATA 	*paf;
-    TIMER 		*timer;
     MPROG_ACT_LIST 	*mpact, *mpact_next;
-    CRIME_DATA 		*crime;
-	KNOWN_CHAR_DATA	*_friend; //Tanglor
     int	i;
 
     if ( !ch )
@@ -321,24 +285,17 @@ void free_char( CHAR_DATA *ch )
     if ( ch->desc )
       bug( "Free_char: char (%s) still has descriptor.", ch->name );
 
-    while ( (obj = ch->last_carrying) != NULL )
-	extract_obj( obj );
-    ch->first_carrying 	= NULL;
-    ch->last_carrying 	= NULL;
+    while ( !ch->carrying.empty() )
+	extract_obj( ch->carrying.back() );
 
-    while ( (paf = ch->last_affect) != NULL )
-	affect_remove( ch, paf );
-    ch->first_affect 	= NULL;
-    ch->last_affect 	= NULL;
+    while ( !ch->affects.empty() )
+	affect_remove( ch, ch->affects.back() );
 
-    while ( (crime = ch->last_crime) != NULL )
-	free_crime( ch, crime );
-    ch->first_crime 	= NULL;
-    ch->last_crime 	= NULL;
+    while ( !ch->crimes.empty() )
+	free_crime( ch, ch->crimes.back() );
 
-    while ( (timer = ch->first_timer) != NULL )
-	extract_timer( ch, timer );
-    ch->first_timer = NULL;
+    while ( !ch->timers.empty() )
+	extract_timer( ch, ch->timers.front() );
 
     STRFREE( ch->name		);
     STRFREE( ch->long_descr	);
@@ -387,14 +344,12 @@ void free_char( CHAR_DATA *ch )
     }
     ch->mpact 	= NULL;
     ch->inquest = NULL;
-	while ( (_friend = ch->last_known) != NULL )
+	for( auto* _friend : ch->known )
 	{
 		STRFREE(_friend->name);
-		UNLINK(_friend,ch->first_known,ch->last_known,next,prev);
 		DISPOSE(_friend);
-	};
-	ch->first_known	=NULL;
-	ch->last_known 	=NULL;
+	}
+	ch->known.clear();
 
     char_from_room( ch );
 
@@ -414,22 +369,8 @@ CLAN_DATA *new_clan()
 	STRDUP( clan->vYes,			"" );
 //	STRDUP( clan->vNo,			"" );
 	STRDUP( clan->tmpstr,		"" );
-	clan->next				= NULL;
-	clan->prev				= NULL;
-	clan->first_member		= NULL;
-	clan->last_member		= NULL;
-	clan->first_last_ctalk	= NULL;
-	clan->last_last_ctalk	= NULL;
-	clan->next_suborg		= NULL;
-	clan->prev_suborg		= NULL;
-	clan->first_suborg		= NULL;
-	clan->last_suborg		= NULL;
 	clan->mainorg			= NULL;
 	clan->vClan				= NULL;
-	clan->first_hq			= NULL;
-	clan->last_hq			= NULL;
-	clan->first_politics	= NULL;
-	clan->last_politics		= NULL;
 	clan->leader			= NULL;
 	clan->first				= NULL;
 	clan->second			= NULL;
@@ -458,10 +399,6 @@ CLAN_DATA *new_clan()
 
 void free_clan( CLAN_DATA *clan )
 {
-	CLAN_DATA	*suborg;
-	CLAN_DATA	*suborg_next;
-	MEMBER_DATA	*member;
-	MEMBER_DATA	*member_next;
 	int			i;
 
 	STRFREE( clan->name );
@@ -473,23 +410,19 @@ void free_clan( CLAN_DATA *clan )
 	for( i = 0; i <= CLAN_LEADER; i++ )
 		STRFREE( clan->rank[i] );
 
-	for( suborg = clan->first_suborg; suborg; suborg = suborg_next )
+	for( auto* suborg : clan->suborgs )
 	{
-		suborg_next = clan->next_suborg;
-		UNLINK( suborg, clan->first_suborg, clan->last_suborg, next_suborg, prev_suborg );
 		suborg->mainorg = NULL;
 		suborg->type = CLAN_ORGANIZATION;
 		save_clan( suborg );
 	}
+	clan->suborgs.clear();
 
 	/* free HQ here */
 
-	for( member = clan->first_member; member; member = member_next )
-	{
-		member_next = member->next;
-		UNLINK( member, clan->first_member, clan->last_member, next, prev );
+	for( auto* member : clan->member_list )
 		free_member( member );
-	}
+	clan->member_list.clear();
 
 	DISPOSE( clan );
 	top_clan--;
@@ -526,15 +459,9 @@ HELPS_FILE *new_helps_file()
 
 void free_helps_file( HELPS_FILE *fHelp )
 {
-	HELP_DATA	*pHelp;
-	HELP_DATA	*pHelp_next;
-
-	for( pHelp = fHelp->first_help; pHelp; pHelp = pHelp_next )
-	{
-		pHelp_next = pHelp->next;
-		UNLINK( pHelp, fHelp->first_help, fHelp->last_help, next, prev );
+	for( auto* pHelp : fHelp->helps )
 		free_help( pHelp );
-	}
+	fHelp->helps.clear();
 
 	clear_helps_file( fHelp->name );
 	STRFREE( fHelp->name );
@@ -660,13 +587,13 @@ void free_desc( DESCRIPTOR_DATA *d )
 
 void free_crime( CHAR_DATA *ch, CRIME_DATA *crime )
 {
-    if ( !ch->first_crime )
+    if ( ch->crimes.empty() )
     {
 	bug( "Free_crime: %s-->no crime.", ch->name );
 	return;
     }
 
-    UNLINK( crime, ch->first_crime, ch->last_crime, next, prev );
+    ch->crimes.remove( crime );
     STRFREE( crime->planet );
     DISPOSE( crime );
     return;
@@ -696,7 +623,7 @@ RID *new_room()
 
 void free_room( RID *room )
 {
-    RESET_DATA *res, *res_next;
+    RESET_DATA *res;
 
     if (!is_room_unlinked(room))
 	{
@@ -711,11 +638,9 @@ void free_room( RID *room )
     else
 	top_vroom--;
 
-    for( res = room->first_reset; res; res = res_next )
-    {
-	res_next=res->next;
+    for( auto* res : room->resets )
     	free_reset( res );
-    }
+    room->resets.clear();
 
     // Ratm - zwalnianie pamieci zajetej przez zmienne
     if( room->variables )
@@ -759,8 +684,6 @@ OID *new_obj_index()
     STRDUP( obj->action_desc, "" );
     for( i = 0; i < 6; i++ )
 		STRDUP( obj->przypadki[i], "" );
-	obj->first_affect	= NULL;
-	obj->last_affect	= NULL;
 
 	return obj;
 }
@@ -830,34 +753,17 @@ void free_dock( DOCK_DATA *dock )
 
 void free_chapter( CHAPTER_INDEX_DATA *chapt )
 {
-	QUEST_CMND_DATA *	pCmnd;
-	QUEST_CMND_DATA *	pCmnd_next;
-	QUEST_ACTION_DATA *	pAction;
-	QUEST_ACTION_DATA *	pAction_next;
-
-	for( pCmnd=chapt->first_init_cmd; pCmnd; pCmnd=pCmnd_next )
-	{
-		pCmnd_next = pCmnd->next;
-		UNLINK( pCmnd, chapt->first_init_cmd,
-				chapt->last_init_cmd, next, prev );
+	for( auto* pCmnd : chapt->init_cmds )
 		free_qcmd( pCmnd );
-	}
+	chapt->init_cmds.clear();
 
-	for( pCmnd=chapt->first_event; pCmnd; pCmnd=pCmnd_next )
-	{
-		pCmnd_next = pCmnd->next;
-		UNLINK( pCmnd, chapt->first_event,
-				chapt->last_event, next, prev );
+	for( auto* pCmnd : chapt->events )
 		free_qcmd( pCmnd );
-	}
+	chapt->events.clear();
 
-	for( pAction=chapt->first_action; pAction; pAction=pAction_next )
-	{
-		pAction_next = pAction->next;
-		UNLINK( pAction, chapt->first_action,
-				chapt->last_action, next, prev );
+	for( auto* pAction : chapt->actions )
 		free_qaction( pAction );
-	}
+	chapt->actions.clear();
 
 	STRFREE( chapt->name );
 	DISPOSE( chapt );
@@ -924,7 +830,7 @@ void free_astro( ASTRO_DATA *astro )
 
 void free_suspect( CHAR_DATA *ch, SUSPECT_DATA *sus )
 {
-    UNLINK( sus, ch->first_suspect, ch->last_suspect, next, prev );
+    ch->suspects.remove( sus );
     STRFREE( sus->name );
     DISPOSE( sus );
     return;
@@ -972,20 +878,6 @@ void free_inform( INFORM_DATA *inform )
 
 void free_ship( SHIP_DATA *ship )
 {
-    COURSE_DATA * 	stop;
-    COURSE_DATA * 	stop_next;
-    TURRET_DATA	*	turret;
-    TURRET_DATA	*	turret_next;
-    HANGAR_DATA	*	hanger;
-    HANGAR_DATA	*	hanger_next;
-    MODULE_DATA	*	module;
-    MODULE_DATA	*	module_next;
-    TRANSPONDER_DATA *	trans;
-    TRANSPONDER_DATA *	trans_next;
-    SHIPDOCK_DATA *	dock;
-    SHIPDOCK_DATA *	dock_next;
-    ROOM_INDEX_DATA *	room;
-    ROOM_INDEX_DATA *	room_next;
     char		buf		[MSL];
 
 
@@ -997,92 +889,60 @@ void free_ship( SHIP_DATA *ship )
     if( ship->starsystem )
 	ship_from_starsystem( ship, ship->starsystem );
 
-    UNLINK( ship, first_ship, last_ship, next, prev );
+    ship_list.remove( ship );
 
-    for( stop = ship->first_stop; stop; stop = stop_next )
-    {
-	stop_next = stop->next;
-	UNLINK( stop, ship->first_stop, ship->last_stop, next, prev );
+    for( auto* stop : ship->stops )
 	DISPOSE( stop );
-    }
+    ship->stops.clear();
 
-    for( turret = ship->first_turret; turret; turret = turret_next )
-    {
-	turret_next = turret->next;
-	UNLINK( turret, ship->first_turret, ship->last_turret, next, prev );
+    for( auto* turret : ship->turrets )
 	DISPOSE( turret );
-    }
+    ship->turrets.clear();
 
-    for( hanger = ship->first_hangar; hanger; hanger = hanger_next )
-    {
-	hanger_next = hanger->next;
-	UNLINK( hanger, ship->first_hangar, ship->last_hangar, next, prev );
+    for( auto* hanger : ship->hangars )
 	DISPOSE( hanger );
-    }
+    ship->hangars.clear();
 
-/*    for( cargo = ship->first_cargo; cargo; cargo = cargo_next )
-    {
-	cargo_next = cargo->next;
-	UNLINK( cargo, ship->first_cargo, ship->last_cargo, next, prev );
+/*    for( auto* cargo : ship->cargo_list )
 	DISPOSE( cargo );
-    }    */
+    ship->cargo_list.clear();    */
 
-    for( module = ship->first_module; module; module = module_next )
+    for( auto* module : ship->modules )
     {
-	module_next = module->next;
-	UNLINK( module, ship->first_module, ship->last_module, next, prev );
 	STRFREE( module->spyname );
 	DISPOSE( module );
     }
+    ship->modules.clear();
 
 /*
-    for( smap = ship->first_smap; smap; smap = smap_next )
+    for( auto* smap : ship->smaps )
     {
-	smap_next = smap->next;
-	UNLINK( smap, ship->first_smap, ship->last_smap, next, prev );
 	STRFREE( smap->name );
 	DISPOSE( smap );
     }
+    ship->smaps.clear();
 */
-    for( trans = ship->first_trans; trans; trans = trans_next )
-    {
-	trans_next = trans->next;
-	UNLINK( trans, ship->first_trans, ship->last_trans, next, prev );
+    for( auto* trans : ship->transponders )
 	free_transponder( trans );
-    }
+    ship->transponders.clear();
 
-    for( dock = ship->first_dock; dock; dock = dock_next )
-    {
-	dock_next = dock->next;
-	UNLINK( dock, ship->first_dock, ship->last_dock, next, prev );
+    for( auto* dock : ship->docks )
 	DISPOSE( dock );
-    }
+    ship->docks.clear();
 
-    for (room = ship->first_location; room; room = room_next)
+    while (!ship->locations.empty())
 	{
-		EXTRA_DESCR_DATA * ed;
-		EXTRA_DESCR_DATA * ed_next;
-		EXIT_DATA * xit;
-		EXIT_DATA * xit_next;
-		MPROG_DATA * mprog;
-		MPROG_DATA * mprog_next;
-		MPROG_ACT_LIST * mpact;
-		MPROG_ACT_LIST * mpact_next;
+		auto* room = ship->locations.front();
+		ship->locations.pop_front();
 
-		room_next = room->next_on_ship;
-
-		if (room->first_person)
+		if (!room->people.empty())
 		{
-			CHAR_DATA * ech;
-			CHAR_DATA * ech_next;
-
 			bug( "free_ship: FATAL: room with people (#%d on %s)",
 					VNUM(room), ship->name );
 
-			for (ech = room->first_person; ech; ech = ech_next)
+			auto people_snapshot = room->people;
+			for (auto* ech : people_snapshot)
 			{
-				ech_next = ech->next_in_room;
-
 				if (ech->fighting)
 					stop_fighting(ech, true);
 
@@ -1096,34 +956,32 @@ void free_ship( SHIP_DATA *ship )
 			}
 		}
 
-		for (ed = room->first_extradesc; ed; ed = ed_next)
-		{
-			ed_next = ed->next;
-			UNLINK( ed, room->first_extradesc, room->last_extradesc, next, prev );
+		for( auto* ed : room->extradesc )
 			free_ed(ed);
-		}
+		room->extradesc.clear();
 
-		for (xit = room->first_exit; xit; xit = xit_next)
+		while( !room->exits.empty() )
 		{
-			xit_next = xit->next;
-			UNLINK( xit, room->first_exit, room->last_exit, next, prev );
+			auto* xit = room->exits.front();
+			room->exits.pop_front();
 			extract_exit(room, xit);
 		}
 
-		for (mprog = room->mudprogs; mprog; mprog = mprog_next)
 		{
-			mprog_next = mprog->next;
-			free_mprog(mprog);
+			for (auto* mprog : room->mudprogs)
+				free_mprog(mprog);
+			room->mudprogs.clear();
 		}
 
-		for (mpact = room->mpact; mpact; mpact = mpact_next)
 		{
-			mpact_next = mpact->next;
-			free_mpact(mpact);
+			MPROG_ACT_LIST * mpact;
+			MPROG_ACT_LIST * mpact_next;
+			for (mpact = room->mpact; mpact; mpact = mpact_next)
+			{
+				mpact_next = mpact->next;
+				free_mpact(mpact);
+			}
 		}
-
-		UNLINK( room, ship->first_location, ship->last_location,
-				next_on_ship, prev_on_ship );
 
 		unlink_room(room);
 		free_room(room);
@@ -1160,7 +1018,7 @@ void free_ship( SHIP_DATA *ship )
    acz ladnie oczyszczone. Teraz jesli bedziemy chcieli stworzyc
    nowy statek nie bedziemy uzywac CREATE, tylko wyciagniemy jakis
    stateczek ze smietnika */
-    LINK( ship, first_free_ship, last_free_ship, next, prev );
+    free_ship_list.push_back( ship );
     return;
 }
 
@@ -1168,10 +1026,10 @@ SHIP_DATA *new_ship( )
 {
     SHIP_DATA *	ship;
 
-    if( first_free_ship )
+    if( !free_ship_list.empty() )
     {
-	ship = first_free_ship;
-	UNLINK( ship, first_free_ship, last_free_ship, next, prev );
+	ship = free_ship_list.front();
+	free_ship_list.pop_front();
     }
     else
 	CREATE( ship, SHIP_DATA, 1 );
@@ -1196,32 +1054,18 @@ SHIP_DATA *new_ship( )
     STRDUP( ship->lock_key, 	"" );
 
     ship->pIndexData 		= NULL;
-    ship->next			= NULL;
-    ship->prev			= NULL;
-    ship->next_in_starsystem	= NULL;
-    ship->prev_in_starsystem	= NULL;
-    ship->next_in_room		= NULL;
-    ship->prev_in_room		= NULL;
-    ship->first_stop		= NULL;
-    ship->last_stop		= NULL;
+    ship->starsystem		= NULL;
+    ship->stops.clear();
     ship->curr_stop		= NULL;
-    ship->first_turret		= NULL;
-    ship->last_turret		= NULL;
-    ship->first_hangar		= NULL;
-    ship->last_hangar		= NULL;
+    ship->turrets.clear();
+    ship->hangars.clear();
     ship->in_room		= NULL;
-    ship->first_cargo		= NULL;
-    ship->last_cargo		= NULL;
-    ship->first_module		= NULL;
-    ship->last_module		= NULL;
-    ship->first_smap		= NULL;
-    ship->last_smap		= NULL;
-    ship->first_trans		= NULL;
-    ship->last_trans		= NULL;
-    ship->first_dock		= NULL;
-    ship->last_dock		= NULL;
-    ship->first_location	= NULL;
-    ship->last_location		= NULL;
+    ship->cargo_list.clear();
+    ship->modules.clear();
+    ship->smaps.clear();
+    ship->transponders.clear();
+    ship->docks.clear();
+    ship->locations.clear();
     ship->cockpit		= NULL;
     ship->location		= NULL;
     ship->lastdoc		= NULL;
@@ -1245,20 +1089,6 @@ SHIP_INDEX_DATA *new_ship_index( )
     SHIP_INDEX_DATA *	ship;
 
     CREATE( ship, SHIP_INDEX_DATA, 1 );
-    ship->first_turret		= NULL;
-    ship->last_turret		= NULL;
-    ship->first_hangar		= NULL;
-    ship->last_hangar		= NULL;
-    ship->first_cargo		= NULL;
-    ship->last_cargo		= NULL;
-    ship->first_module		= NULL;
-    ship->last_module		= NULL;
-    ship->first_smap		= NULL;
-    ship->last_smap		= NULL;
-    ship->first_dock		= NULL;
-    ship->last_dock		= NULL;
-    ship->first_room		= NULL;
-    ship->last_room		= NULL;
     STRDUP( ship->filename, 	"" );
     STRDUP( ship->name, 	"" );
     STRDUP( ship->builders, 	"" );
@@ -1271,41 +1101,25 @@ SHIP_INDEX_DATA *new_ship_index( )
 
 void free_sroom( SHIP_ROOM_DATA * sRoom )
 {
-    RESET_DATA *res, *res_next;
-    EXTRA_DESCR_DATA *	ed;
-    EXTRA_DESCR_DATA *	ed_next;
-    SHIP_EXIT_DATA *    xit;
-    SHIP_EXIT_DATA *    xit_next;
-    MPROG_DATA *    	mprog;
-    MPROG_DATA *    	mprog_next;
-
-    for( ed = sRoom->first_extradesc; ed; ed = ed_next )
-    {
-        ed_next = ed->next;
-        UNLINK( ed, sRoom->first_extradesc, sRoom->last_extradesc, next, prev );
+    for( auto* ed : sRoom->extradesc )
         free_ed( ed );
-    }
+    sRoom->extradesc.clear();
 
-    for( xit = sRoom->first_exit; xit; xit = xit_next )
+    for( auto* xit : sRoom->exits )
     {
-        xit_next = xit->next;
-        UNLINK( xit, sRoom->first_exit, sRoom->last_exit, next, prev );
         STRFREE( xit->keyword 		);
         STRFREE( xit->description 	);
 	DISPOSE( xit );
     }
+    sRoom->exits.clear();
 
-    for( mprog = sRoom->mudprogs; mprog; mprog = mprog_next )
-    {
-        mprog_next = mprog->next;
+    for( auto* mprog : sRoom->mudprogs )
         free_mprog( mprog );
-    }
+    sRoom->mudprogs.clear();
 
-    for( res = sRoom->first_reset; res; res = res_next )
-    {
-	res_next=res->next;
+    for( auto* res : sRoom->resets )
     	free_reset( res );
-    }
+    sRoom->resets.clear();
 
     STRFREE( sRoom->name );
     STRFREE( sRoom->description );
@@ -1315,46 +1129,27 @@ void free_sroom( SHIP_ROOM_DATA * sRoom )
 
 void free_srooms( SHIP_INDEX_DATA *ship )
 {
-    SHIP_ROOM_DATA *	sRoom;
-    SHIP_ROOM_DATA *	sRoom_next;
-
-    for( sRoom = ship->first_room; sRoom; sRoom = sRoom_next )
-    {
-	sRoom_next = sRoom->next;
-	UNLINK( sRoom, ship->first_room, ship->last_room, next, prev );
+    for( auto* sRoom : ship->rooms )
 	free_sroom( sRoom );
-    }
+    ship->rooms.clear();
 
     return;
 }
 
 void free_part( PART_DATA *part )
 {
-    COMPONENT_DATA *	comp;
-    COMPONENT_DATA *	comp_next;
-
-    for( comp = part->first_component; comp; comp = comp_next )
-    {
-        comp_next = comp->next;
-        UNLINK( comp, part->first_component, part->last_component,
-    		next, prev );
+    for( auto* comp : part->components )
         DISPOSE( comp );
-    }
+    part->components.clear();
     DISPOSE( part );
     return;
 }
 
 void free_project( PROJECT_DATA *pro )
 {
-    PART_DATA *		part;
-    PART_DATA *		part_next;
-
-    for( part = pro->first_part; part; part = part_next )
-    {
-	part_next = part->next;
-	UNLINK( part, pro->first_part, pro->last_part, next, prev );
+    for( auto* part : pro->parts )
 	free_part( part );
-    }
+    pro->parts.clear();
     DISPOSE( pro );
     return;
 }
@@ -1446,8 +1241,6 @@ RACE_DATA *new_race()
 	race->resistant			= 0;
 	race->immune			= 0;
 	race->language			= NULL;
-	race->next				= NULL;
-	race->prev				= NULL;
 	for( i = 0; i < MAX_DESC_TYPES; i++ )
 		race->desc_restrictions[i]=0;
 
@@ -1482,8 +1275,6 @@ LANG_DATA *new_lang()
 	lang->max_practice	= 75;
 	lang->min_int		= 0;
 	lang->difficulty	= 0;
-	lang->next			= NULL;
-	lang->prev			= NULL;
 
 	return lang;
 }
@@ -1503,8 +1294,6 @@ KNOWN_LANG *new_known_lang()
 
 	CREATE( lang, KNOWN_LANG, 1 );
 	lang->language		= NULL;
-	lang->next			= NULL;
-	lang->prev			= NULL;
 	lang->learned		= 1;
 /*
 	lang->times_used	= 0;
@@ -1522,8 +1311,6 @@ BETS_PROGRES * new_bets()
 	BETS_PROGRES *	pBets;
 	CREATE( pBets,BETS_PROGRES,1);
 	STRDUP( pBets->name, "" );
-	pBets->next			= NULL;
-	pBets->prev			= NULL;
 	pBets->buy_out		= false;
 	pBets->price		= 0;
 	pBets->max_price	= 0;
@@ -1546,10 +1333,6 @@ AUCTION_DATA * new_auction()
 	STRDUP( pAuction->seller_name, "" );
 	STRDUP( pAuction->stock_name, "" );
 	STRDUP( pAuction->desc, "" );
-	pAuction->next				= NULL;
-	pAuction->prev				= NULL;
-	pAuction->first				= NULL;
-	pAuction->last				= NULL;
 	pAuction->planet			= NULL;
 	pAuction->item				= NULL;
 	pAuction->buy_out_now		= 0;
@@ -1577,20 +1360,15 @@ AUCTION_DATA * new_auction()
 
 void free_auction(AUCTION_DATA *	pAuction)
 {
-	BETS_PROGRES *	pBets;
-
 	STRFREE( pAuction->seller_name );
 	STRFREE( pAuction->stock_name );
 	STRFREE( pAuction->desc );
-	while ( pAuction->first)
-	{
-		pBets = pAuction->first;
-		UNLINK( pBets, pAuction->first, pAuction->last, next, prev );
+	for( auto* pBets : pAuction->bets )
 		free_bets( pBets);
-	}
+	pAuction->bets.clear();
 	if (pAuction->item)
 	{
-		UNLINK( pAuction->item, first_object, last_object,next,prev);
+		object_list.remove( pAuction->item );
 //		extract_obj( pAuction->item );
 		free_obj(pAuction->item);
 	}
@@ -1601,26 +1379,21 @@ STOCK_EXCHANGE_DATA * new_stock_exchange()
 {
 	STOCK_EXCHANGE_DATA * pStock;
 	CREATE(pStock, STOCK_EXCHANGE_DATA, 1);
-	pStock->next	= NULL;
-	pStock->prev	= NULL;
 	pStock->pPlanet	= NULL;
-	pStock->first	= NULL;
-	pStock->last	= NULL;
-	pStock->first_new_offert=	NULL;
-	pStock->last_new_offert	=	NULL;
 
 	return pStock;
 }
 
 void free_stock_exchange(STOCK_EXCHANGE_DATA * pStock)
 {
-	AUCTION_DATA * pAuction;
-	FOREACH( pAuction, pStock->first )
+	for( auto* pAuction : pStock->auctions )
 		free_auction( pAuction );
-	FOREACH( pAuction, pStock->first_new_offert )
+	pStock->auctions.clear();
+	for( auto* pAuction : pStock->new_offers )
 		free_auction( pAuction );
+	pStock->new_offers.clear();
 
-	UNLINK( pStock, first_stock_exchange, last_stock_exchange, next, prev );
+	stock_exchange_list.remove( pStock );
 	DISPOSE( pStock );
 }
 
@@ -1654,13 +1427,7 @@ DIALOG_NODE *new_dialog_node()
 	STRDUP( pNode->text, "(brak)" );
 	STRDUP( pNode->mob_answer, "");
 	pNode->pBase			= NULL;
-	pNode->first			= NULL;
-	pNode->last				= NULL;
-	pNode->next				= NULL;
-	pNode->prev				= NULL;
 	pNode->prog				= NULL;
-	pNode->next_in_dialog	= NULL;//etap rozmowy
-	pNode->prev_in_dialog	= NULL;	//etap rozmowy
 	pNode->nr				= -1;
 	pNode->target_nr		= -1;
 	pNode->saved			= false;
@@ -1670,17 +1437,17 @@ DIALOG_NODE *new_dialog_node()
 void free_dialog_node( DIALOG_NODE *pNode )
 {
 	DIALOG_DATA		* pData = pNode->pBase;
-	DIALOG_NODE		* pLeaf = NULL, * pNextLeaf = NULL;
 
 	if ( pData  )
-		for( pLeaf= pNode->first; pLeaf	; pLeaf = pNextLeaf )
+	{
+		auto snapshot = pNode->children;
+		for( auto* pLeaf : snapshot )
 		{
-			pNextLeaf = pLeaf->next_in_dialog;
-			UNLINK( pLeaf, pData->first, pData->last, next, prev );
-			UNLINK( pLeaf, pNode->first, pNode->last, next_in_dialog,
-			prev_in_dialog );
+			pData->nodes.remove( pLeaf );
+			pNode->children.remove( pLeaf );
 			free_dialog_node( pLeaf );
 		}
+	}
 
 	if (pNode->prog)
 		free_mprog( pNode->prog );
@@ -1696,12 +1463,10 @@ DIALOG_DATA * new_dialog_data()
 	DIALOG_NODE			* pNode;
 	CREATE( pData,DIALOG_DATA,1);
 	STRDUP( pData->name, "" );
-	pData->next			= NULL;
-	pData->prev			= NULL;
 	pData->dialog_ID	= free_dialog_ID();
 
 	pNode 				= new_dialog_node();
-	LINK( pNode, pData->first, pData->last, next, prev );
+	pData->nodes.push_back( pNode );
 	pNode->pBase		= pData;
 
 	return pData;
@@ -1709,11 +1474,10 @@ DIALOG_DATA * new_dialog_data()
 
 void free_dialog_data( DIALOG_DATA * pData )
 {
-	DIALOG_NODE			* pNode;
-	while ( pData->first)
+	while ( !pData->nodes.empty())
 	{
-		pNode = pData -> first;
-		UNLINK( pNode, pData->first, pData->last, next, prev );
+		auto* pNode = pData->nodes.front();
+		pData->nodes.remove( pNode );
 		free_dialog_node( pNode );
 	}
 	STRFREE( pData->name );
@@ -1723,8 +1487,6 @@ DEPOSIT_DATA * new_deposit()
 {
 	DEPOSIT_DATA	* pDeposit;
 	CREATE( pDeposit, DEPOSIT_DATA, 1);
-	pDeposit->next = NULL;
-	pDeposit->prev = NULL;
 	STRDUP( pDeposit->material_name,	"" );
 	pDeposit->daily_mining = 0;
 	return pDeposit;
@@ -1756,10 +1518,6 @@ HQ_DATA * new_hq_data()
 	HQ_DATA * pHQ=NULL;
 
 	CREATE( pHQ, HQ_DATA, 1);
-	pHQ->next=NULL;
-	pHQ->prev=NULL;
-	pHQ->first_room=NULL;
-	pHQ->last_room=NULL;
 	pHQ->main=true;
 
 	return pHQ;
@@ -1773,26 +1531,19 @@ TURBOCAR *new_turbocar()
 	STRDUP( tc->name, "" );
 	STRDUP( tc->filename, "" );
 	tc->vnum = 0;
-	tc->next = NULL;
-	tc->prev = NULL;
 	tc->current_station = NULL;
-	tc->first_station = NULL;
-	tc->last_station = NULL;
 
 	return tc;
 }
 
 void free_turbocar( TURBOCAR *tc )
 {
-	TC_STATION	*station;
-	TC_STATION	*station_next;
-
 	STRFREE( tc->name );
 	STRFREE( tc->filename );
-	for( station = tc->first_station; station; station = station_next )
+	while( !tc->stations.empty() )
 	{
-		station_next = station->next;
-		UNLINK( station, tc->first_station, tc->last_station, next, prev );
+		auto* station = tc->stations.front();
+		tc->stations.remove( station );
 		free_station( station );
 	}
 	DISPOSE( tc );
@@ -1805,8 +1556,6 @@ TC_STATION *new_station()
 	CREATE( station, TC_STATION, 1 );
 	STRDUP( station->name, "" );
 	station->vnum = 0;
-	station->next = NULL;
-	station->prev = NULL;
 
 	return station;
 }
@@ -1825,8 +1574,6 @@ FEVENT_DATA	*new_fevent()
 	STRDUP( fevent->sattr, "" );
 	fevent->trigger = (fe_trigger)0;
 	memset( &fevent->attr, 0, FE_MAX_ATTR*sizeof(int64) );
-	fevent->next = NULL;
-	fevent->prev = NULL;
 
 	return fevent;
 }
@@ -1848,8 +1595,6 @@ MID	*new_mob()
 
 void free_mob( MID *mob )
 {
-	MPROG_DATA	*mprog;
-	MPROG_DATA	*mprog_next;
 	int			i;
 
 	STRFREE( mob->player_name );
@@ -1860,11 +1605,9 @@ void free_mob( MID *mob )
 	STRFREE( mob->description );
 	STRFREE( mob->dialog_name );
 
-	for( mprog = mob->mudprogs; mprog; mprog = mprog_next )
-	{
-		mprog_next = mprog->next;
-		free_mprog( mprog );
-	}
+	for( auto* mp : mob->mudprogs )
+		free_mprog( mp );
+	mob->mudprogs.clear();
 }
 
 REQ *new_requirement()
@@ -1917,16 +1660,6 @@ AREA_TMP_DATA *new_area_tmp()
 	AREA_TMP_DATA	*area_tmp;
 
 	CREATE( area_tmp, AREA_TMP_DATA, 1 );
-	area_tmp->first_mob		= NULL;
-	area_tmp->last_mob		= NULL;
-	area_tmp->first_obj		= NULL;
-	area_tmp->last_obj		= NULL;
-	area_tmp->first_room	= NULL;
-	area_tmp->last_room		= NULL;
-	area_tmp->first_shop	= NULL;
-	area_tmp->last_shop		= NULL;
-	area_tmp->first_repair	= NULL;
-	area_tmp->last_repair	= NULL;
 	return area_tmp;
 }
 

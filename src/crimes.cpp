@@ -30,12 +30,12 @@
 #include "mud.h"
 
 
-/* przez ile ticków w³adze planety nie zorientuj± siê o ucieczce */
+/* przez ile tickï¿½w wï¿½adze planety nie zorientujï¿½ siï¿½ o ucieczce */
 #define JAIL_ACTIVITY		2
 
 /* Pamietaj jeszcze o:
-- depozyty - jak zrobiæ by da³o siê wykra¶æ?
-- stra¿nik ma fizycznie ³aziæ po celach, a depozyt wyci±gaæ
+- depozyty - jak zrobiï¿½ by daï¿½o siï¿½ wykraï¿½ï¿½?
+- straï¿½nik ma fizycznie ï¿½aziï¿½ po celach, a depozyt wyciï¿½gaï¿½
 - itd... :)
 */
 
@@ -44,10 +44,9 @@ const int crime_level_price = 400;
 /* by Ganis */
 int calculate_wanted_price( const CHAR_DATA *ch )
 {
-	CRIME_DATA		*crime;
 	int				price = 0;
 
-	for (crime = ch->first_crime; crime; crime = crime->next)
+	for (auto* crime : ch->crimes)
 		price += crime->level * crime_level_price;
 
 	return price;
@@ -57,29 +56,26 @@ int calculate_wanted_price( const CHAR_DATA *ch )
 DEF_DO_FUN( corrupt )
 {
 	CHAR_DATA		* victim;
-	CHAR_DATA		* xch;
-	CRIME_DATA		* crime;
-	CRIME_DATA		* n_crime;
 	int				price;
 	char			buf[MSL];
-	static const SPEC_FUN* spec_name = spec_lookup("spec_police_fine");
+	static SPEC_FUN* const spec_name = spec_lookup("spec_police_fine");
 
 	if (!spec_name)
 	{
 		bug("spec_police_fine function got lost... Corrupt won't work!");
-		send_to_char("Sorry, co¶ przesta³o dzia³aæ w mudzie tak jak powinno :(" NL, ch);
+		send_to_char("Sorry, coï¿½ przestaï¿½o dziaï¿½aï¿½ w mudzie tak jak powinno :(" NL, ch);
 		return;
 	}
 
-	if (!ch->first_crime)
+	if (ch->crimes.empty())
 	{
-		send_to_char("Przecie¿ nie masz nic na sumieniu." NL, ch);
+		send_to_char("Przecieï¿½ nie masz nic na sumieniu." NL, ch);
 		return;
 	}
 
 	//Poszukajmy, czy w tym pokoju jest ktos, kogo mozna skorumpowac
 	victim = NULL;
-	for (xch = ch->in_room->first_person; xch; xch = xch->next_in_room)
+	for (auto* xch : ch->in_room->people)
 	{
 
 		if (xch->spec_fun == spec_name || xch->spec_2 == spec_name)
@@ -91,7 +87,7 @@ DEF_DO_FUN( corrupt )
 
 	if (!victim)
 	{
-		send_to_char("Nie ma tu nikogo, kogo mo¿na by skorumpowaæ." NL, ch);
+		send_to_char("Nie ma tu nikogo, kogo moï¿½na by skorumpowaï¿½." NL, ch);
 		return;
 	}
 
@@ -99,20 +95,19 @@ DEF_DO_FUN( corrupt )
 
 	if (price > ch->gold)
 	{
-		sprintf(buf, "Potrzebujesz %d kredytek, aby wymazaæ swoj± kryminaln± kartotekê." NL, price);
+		sprintf(buf, "Potrzebujesz %d kredytek, aby wymazaï¿½ swojï¿½ kryminalnï¿½ kartotekï¿½." NL, price);
 		send_to_char(buf, ch);
 		return;
 	}
 
 	ch->gold -= price;
 	victim->gold += price;
-	sprintf(buf, "Przekazujesz %s %d kredytów w celu wymazania swojej kartoteki." NL,
+	sprintf(buf, "Przekazujesz %s %d kredytï¿½w w celu wymazania swojej kartoteki." NL,
 				victim->przypadki[2], price);
 	send_to_char(buf,ch);
 
-	for (crime = ch->first_crime; crime; crime = n_crime)
+	for (auto* crime : std::list<CRIME_DATA *>(ch->crimes))
 	{
-		n_crime = crime->next;
 		free_crime(ch, crime);
 	}
 }
@@ -134,21 +129,22 @@ DEF_DO_FUN( bail )
 
 	if ( arg1[0] == '\0' || arg2[0] == '\0' )
 	{
-		send_to_char( "Kogo chcesz wykupiæ i za ile?" NL, ch );
+		send_to_char( "Kogo chcesz wykupiï¿½ i za ile?" NL, ch );
 		return;
 	}
 
-	if( ( ( victim = get_char_world(ch, arg1) ) == NULL ))
+	if( ( victim = get_char_world(ch, arg1) ) == NULL )
 	{
 		send_to_char("Nie ma nikogo takiego w grze." NL, ch);
 		return;
 	}
 
 	found = false;
-	for ( crime = victim->first_crime; crime; crime = crime->next)
+	for ( auto* cr : victim->crimes)
 	{
-		if( crime->jail_end )
+		if( cr->jail_end )
 		{
+			crime = cr;
 			found = true;
 			break;
 		}
@@ -156,18 +152,19 @@ DEF_DO_FUN( bail )
 
 	if ( !found || IS_NPC( victim ) )
 	{
-		send_to_char("Ta osoba nie odsiaduje ¿adnego wyroku." NL, ch);
+		send_to_char("Ta osoba nie odsiaduje ï¿½adnego wyroku." NL, ch);
 		return;
 	}
 
 	found = false;
-	for( mob = ch->in_room->first_person; mob; mob = mob->next )
+	for( auto* m : ch->in_room->people )
 	{
-		if( !IS_NPC( mob ) || !can_see( ch, mob ) )
+		if( !IS_NPC( m ) || !can_see( ch, m ) )
 			continue;
-		if( ( mob->spec_fun && mob->spec_fun == spec_lookup( "spec_prosecutor" ) )
-		||  ( mob->spec_2   && mob->spec_2   == spec_lookup( "spec_prosecutor" ) ) )
+		if( ( m->spec_fun && m->spec_fun == spec_lookup( "spec_prosecutor" ) )
+		||  ( m->spec_2   && m->spec_2   == spec_lookup( "spec_prosecutor" ) ) )
 		{
+			mob = m;
 			found = true;
 			break;
 		}
@@ -175,20 +172,20 @@ DEF_DO_FUN( bail )
 
 	if( !found )
 	{
-		send_to_char("Nie ma tu nikogo kto móg³by przyj±æ twoj± kaucjê." NL, ch);
+		send_to_char("Nie ma tu nikogo kto mï¿½gï¿½by przyjï¿½ï¿½ twojï¿½ kaucjï¿½." NL, ch);
 		return;
 	}
 
 	amount = atoi( arg2 );
 	if( amount <= 0 )
 	{
-		ch_tell( mob, ch, "Za tyle to ja mogê zapuszkowaæ ciebie! Nie strój sobie ¿artów." );
+		ch_tell( mob, ch, "Za tyle to ja mogï¿½ zapuszkowaï¿½ ciebie! Nie strï¿½j sobie ï¿½artï¿½w." );
 		return;
 	}
 
 	if( amount > ch->gold )
 	{
-		ch_tell( mob, ch, "A masz tyle? Wróæ jak uzbierasz!" );
+		ch_tell( mob, ch, "A masz tyle? Wrï¿½ï¿½ jak uzbierasz!" );
 		return;
 	}
 
@@ -199,12 +196,12 @@ DEF_DO_FUN( bail )
 	{
 		cost+=cost/10;
 		sprintf( buf,
-			"Zwariowa³%s¶? Za takie drobniaki nie chce mi siê nawet s³uchaæ tego imienia!",
+			"Zwariowaï¿½%sï¿½? Za takie drobniaki nie chce mi siï¿½ nawet sï¿½uchaï¿½ tego imienia!",
 			SEX_SUFFIX_EAE( ch ) );
 		ch_tell( mob, ch, buf );
 		sprintf( buf,
-			"Daj mi %d kredyt%s, a %s wyjdzie na wolno¶æ jeszcze dzi¶.",
-			cost, NUMBER_SUFF( cost, "kê", "ki", "ek" ), victim->name );
+			"Daj mi %d kredyt%s, a %s wyjdzie na wolnoï¿½ï¿½ jeszcze dziï¿½.",
+			cost, NUMBER_SUFF( cost, "kï¿½", "ki", "ek" ), victim->name );
 		ch_tell( mob, ch, buf );
 		return;
 	}
@@ -212,26 +209,26 @@ DEF_DO_FUN( bail )
 	if( amount < cost )
 	{
 		cost+=cost/10;
-		ch_tell( mob, ch, "To za ma³o..." );
+		ch_tell( mob, ch, "To za maï¿½o..." );
 		sprintf( buf,
-			"Daj mi %d kredyt%s, a %s wyjdzie na wolno¶æ jeszcze dzi¶.",
-			cost, NUMBER_SUFF( cost, "kê", "ki", "ek" ), victim->name );
+			"Daj mi %d kredyt%s, a %s wyjdzie na wolnoï¿½ï¿½ jeszcze dziï¿½.",
+			cost, NUMBER_SUFF( cost, "kï¿½", "ki", "ek" ), victim->name );
 		ch_tell( mob, ch, buf );
 		return;
 	}
 
 	ch->gold -= amount;
 
-	sprintf( buf, "Zgoda.. Uwolniê %s, ale pod warunkiem, ¿e wiêcej nie z³amie prawa.",
+	sprintf( buf, "Zgoda.. Uwolniï¿½ %s, ale pod warunkiem, ï¿½e wiï¿½cej nie zï¿½amie prawa.",
 	victim->przypadki[3] );
 	ch_tell( mob, ch, buf );
-	do_emote( mob, (char *)"wyci±ga komunikator." );
+	do_emote( mob, (char *)"wyciï¿½ga komunikator." );
 	sprintf( buf, "Tu %s. Macie tam jeszcze %s %s?",
 	mob->przypadki[0],
-	SEX_STR( ch, "tego", "t±", "to" ),
+	SEX_STR( ch, "tego", "tï¿½", "to" ),
 	victim->przypadki[4] );
 	do_say( mob, buf );
-	do_say( mob, (char *)"Dobrze... Zwolniæ." );
+	do_say( mob, (char *)"Dobrze... Zwolniï¿½." );
 
 	/* Tak jest! */
 	crime->released = true;
@@ -239,10 +236,9 @@ DEF_DO_FUN( bail )
 	return;
 }
 
-/* zwraca wska¼nik na przestêpstwa pope³nione przez 'ch' na planecie 'planet' */
+/* zwraca wskaï¿½nik na przestï¿½pstwa popeï¿½nione przez 'ch' na planecie 'planet' */
 CRIME_DATA *find_crime( CHAR_DATA *ch, PLANET_DATA *planet )
 {
-	CRIME_DATA 	*crime;
 
 	IF_BUG( ch==NULL, "" )
 		return NULL;
@@ -253,10 +249,10 @@ CRIME_DATA *find_crime( CHAR_DATA *ch, PLANET_DATA *planet )
 	IF_BUG( IS_NPC(ch), "(%s)", ch->name )
 		return NULL;
 
-	if ( !ch->first_crime )
+	if ( ch->crimes.empty() )
 		return NULL;
 
-	for ( crime = ch->first_crime; crime; crime = crime->next )
+	for ( auto* crime : ch->crimes )
 		if ( !str_cmp( planet->name, crime->planet ) )
 			return crime;
 
@@ -275,20 +271,20 @@ void crime_to_char( CHAR_DATA *ch, char *planet, int type )
 		return;
 
 	/*
-	* je¶li gracz pope³ni³ ju¿ przestêpstwo na tej planecie --
-	* zwiêkszmy wyrok i ewentualnie dodajmy typ do listy pope³nionych
-	* wykroczeñ
+	* jeï¿½li gracz popeï¿½niï¿½ juï¿½ przestï¿½pstwo na tej planecie --
+	* zwiï¿½kszmy wyrok i ewentualnie dodajmy typ do listy popeï¿½nionych
+	* wykroczeï¿½
 	*/
-	if ( ch->first_crime )
+	if ( !ch->crimes.empty() )
 	{
-		for ( crime = ch->first_crime; crime; crime = crime->next )
+		for ( auto* crime : ch->crimes )
 		{
 			if ( !str_cmp( crime->planet, planet ) )
 			{
 				SET_BIT( crime->type, type );
 			/*
-			* to o ile wskoczy nam wska¼nik przegiêcia zale¿y
-			* od typu przestêpstwa - im wiêcej tym gorzej
+			* to o ile wskoczy nam wskaï¿½nik przegiï¿½cia zaleï¿½y
+			* od typu przestï¿½pstwa - im wiï¿½cej tym gorzej
 			*/
 				crime->level += type;
 				return;
@@ -297,10 +293,10 @@ void crime_to_char( CHAR_DATA *ch, char *planet, int type )
 	}
 
 	/*
-	* A je¶li nie jest recydywist± -- dopiszmy przestêpstwo do listy
+	* A jeï¿½li nie jest recydywistï¿½ -- dopiszmy przestï¿½pstwo do listy
 	*/
 	CREATE( crime, CRIME_DATA, 1 );
-	LINK( crime, ch->first_crime, ch->last_crime, next, prev );
+	ch->crimes.push_back( crime );
 	STRDUP( crime->planet, capitalize( planet ) );
 	crime->type		= type;
 	crime->level	= type;
@@ -312,22 +308,17 @@ void crime_to_char( CHAR_DATA *ch, char *planet, int type )
 
 void crime_remove( CHAR_DATA *ch, char *planet, int type )
 {
-	CRIME_DATA *crime;
-	CRIME_DATA *crime_next;
-
 	IF_BUG( ch==NULL, "" )
 		return;
 
 	IF_BUG( !*planet, "(%s)", ch->name )
 		return;
 
-	if ( !ch->first_crime )
+	if ( ch->crimes.empty() )
 		return;
 
-	for ( crime = ch->first_crime; crime; crime = crime_next )
+	for ( auto* crime : std::list<CRIME_DATA *>(ch->crimes) )
 	{
-		crime_next = crime->next;
-
 		if ( !str_cmp( crime->planet, planet ) )
 		{
 		/*
@@ -362,35 +353,35 @@ char *crime_flag_string( CRIME_DATA *crime )
 	{
 		if( crime_found )
 			strcat( crime_buf, ", " );
-		strcat( crime_buf, "w³amania komputerowe" );
+		strcat( crime_buf, "wï¿½amania komputerowe" );
 		crime_found = true;
 	}
 	if( IS_SET( crime->type, CRIME_STEAL ) )
 	{
 		if( crime_found )
 			strcat( crime_buf, ", " );
-		strcat( crime_buf, "kradzie¿" );
+		strcat( crime_buf, "kradzieï¿½" );
 		crime_found = true;
 	}
 	if( IS_SET( crime->type, CRIME_CONTRABAND ) )
 	{
 		if( crime_found )
 			strcat( crime_buf, " i " );
-		strcat( crime_buf, "kontrabandê" );
+		strcat( crime_buf, "kontrabandï¿½" );
 		crime_found = true;
 	}
 	if( IS_SET( crime->type, CRIME_MURDER ) )
 	{
 		if( crime_found )
 			strcat( crime_buf, " oraz " );
-		strcat( crime_buf, "zabójstwo" );
+		strcat( crime_buf, "zabï¿½jstwo" );
 		crime_found = true;
 	}
 
 	if( !crime_found )
 	{
 		bug( "Did't find a valid crime->type" );
-		strcat( crime_buf, "przekrêty wszelkiego rodzaju" );
+		strcat( crime_buf, "przekrï¿½ty wszelkiego rodzaju" );
 	}
 	return crime_buf;
 }
@@ -399,7 +390,6 @@ char *crime_flag_string( CRIME_DATA *crime )
 DEF_DO_FUN( wanted )
 {
 	CHAR_DATA 	*victim;
-	CRIME_DATA  *crime;
 
 
 	if( argument[0] == '\0' )
@@ -409,11 +399,11 @@ DEF_DO_FUN( wanted )
 		if( IS_ADMIN( argument ) && !IS_ADMIN( ch->name ) )
 		{
 			ch_printf(ch,
-			"%s jednym z W£ADCÓW TEGO ¦WIATA i nikt nie ma prawa go ¶cigaæ !!!" NL,
+			"%s jednym z Wï¿½ADCï¿½W TEGO ï¿½WIATA i nikt nie ma prawa go ï¿½cigaï¿½ !!!" NL,
 			capitalize(argument) );
 			return;
 		}
-		else if( ( ( victim = get_char_world(ch, argument) ) == NULL ))
+		else if( ( victim = get_char_world(ch, argument) ) == NULL )
 		{
 			send_to_char("Nie ma nikogo takiego w grze." NL, ch);
 			return;
@@ -425,50 +415,50 @@ DEF_DO_FUN( wanted )
 		if( IS_ADMIN( victim->name ) && !IS_ADMIN( ch->name ) )
 		{
 			ch_printf(ch,
-			"%s jednym z W£ADCÓW TEGO ¦WIATA i nikt nie ma prawa go ¶cigaæ !!!" NL,
+			"%s jednym z Wï¿½ADCï¿½W TEGO ï¿½WIATA i nikt nie ma prawa go ï¿½cigaï¿½ !!!" NL,
 			capitalize(argument) );
 			return;
 		}
 
-		if ( !victim->first_crime )
+		if ( victim->crimes.empty() )
 		{
 			victim == ch ?
-				send_to_char( "Nie poszukuj± ciê na ¿adnej planecie." NL, ch ) :
+				send_to_char( "Nie poszukujï¿½ ciï¿½ na ï¿½adnej planecie." NL, ch ) :
 				send_to_char( "Ta osoba nie jest nigdzie poszukiwana." NL, ch );
 		}
 		else
 		{
 			ch_printf( ch, FB_WHITE
-			"Oto lista planet, na których %s jest%s poszukiwan%s:" EOL,
+			"Oto lista planet, na ktï¿½rych %s jest%s poszukiwan%s:" EOL,
 			victim == ch ? ""   : victim->przypadki[0],
-			victim == ch ? "e¶" : "",
+			victim == ch ? "eï¿½" : "",
 			SEX_SUFFIX_YAE( victim ) );
 
-			for ( crime = victim->first_crime; crime; crime = crime->next)
+			for ( auto* crime : victim->crimes)
 			{
 				PLANET_DATA	*planet = NULL;
 
 				if( crime->jail_vnum )
 					planet = get_room_index( crime->jail_vnum )->area->planet;
 
-				ch_printf( ch, "- %s za %s - przewiduje siê%s." NL,
+				ch_printf( ch, "- %s za %s - przewiduje siï¿½%s." NL,
 				crime->planet,
 				crime_flag_string( crime ),
-				crime->level <= 4  ? " ³agodn± karê wiêzienia"            :
-				crime->level <= 8  ? " karê wiêzienia"                    :
-				crime->level <= 16 ? " wysok± karê wiêzienia"             :
-				crime->level <= 32 ? " konkretn± odsiadkê"                :
-				crime->level <= 64 ? ", ¿e trochê posiedzisz"  	      :
+				crime->level <= 4  ? " ï¿½agodnï¿½ karï¿½ wiï¿½zienia"            :
+				crime->level <= 8  ? " karï¿½ wiï¿½zienia"                    :
+				crime->level <= 16 ? " wysokï¿½ karï¿½ wiï¿½zienia"             :
+				crime->level <= 32 ? " konkretnï¿½ odsiadkï¿½"                :
+				crime->level <= 64 ? ", ï¿½e trochï¿½ posiedzisz"  	      :
 				crime->level <=128 ? " przygotowanie ci oddzielnej celi"  :
-							" DO¯YWOCIE"  );
+							" DOï¿½YWOCIE"  );
 
 				if( crime->jail_end )
 					ch_printf( ch , NL FG_CYAN
-				"Kara, któr± %s w³a¶nie odsiaduje%s na %s "
-				"zakoñczy siê za %d godzi%s."			EOL,
+				"Kara, ktï¿½rï¿½ %s wï¿½aï¿½nie odsiaduje%s na %s "
+				"zakoï¿½czy siï¿½ za %d godzi%s."			EOL,
 					victim == ch ? "" 		: victim->przypadki[0],
 					victim == ch ? "sz" 	: "",
-					planet ? planet->name 	: "Generalnej Planecie Wiêziennej",
+					planet ? planet->name 	: "Generalnej Planecie Wiï¿½ziennej",
 					crime->jail_end,
 					NUMBER_SUFF(crime->jail_end, "ne", "ny", "n" ) );
 			}
@@ -481,10 +471,10 @@ DEF_DO_FUN( wanted )
 
 
 /*
-* WIÊZIENIA					(C) 2002 Thanos ;)
+* WIï¿½ZIENIA					(C) 2002 Thanos ;)
 */
 
-/* zwraca losowo wybran± celê w wiêzieniu */
+/* zwraca losowo wybranï¿½ celï¿½ w wiï¿½zieniu */
 ROOM_INDEX_DATA *find_jail_cell( PLANET_DATA *planet )
 {
 	ROOM_INDEX_DATA	*	cell;
@@ -492,7 +482,7 @@ ROOM_INDEX_DATA *find_jail_cell( PLANET_DATA *planet )
 	int			 		one_cell;
 	int			 		found		= 0;
 
-	/* liczymy ile cel ma wiêzienie */
+	/* liczymy ile cel ma wiï¿½zienie */
 	if ( planet )
 		for( cell_vnum = planet->first_jail; cell_vnum <= planet->last_jail; cell_vnum++ )
 		{
@@ -507,7 +497,7 @@ ROOM_INDEX_DATA *find_jail_cell( PLANET_DATA *planet )
 		return get_room_index( ROOM_VNUM_DEFAULT_CELL );
 	}
 
-	/* losujemy jedn± */
+	/* losujemy jednï¿½ */
 	one_cell 	= number_range( 1, found );
 	/* printf( "choosed %d of %d" NL, one_cell, found ); */
 	found 	= 0;
@@ -522,12 +512,12 @@ ROOM_INDEX_DATA *find_jail_cell( PLANET_DATA *planet )
 		}
 	}
 
-	/* tu nas byæ nie powinno */
+	/* tu nas byï¿½ nie powinno */
 	bug( "Something's wrong" );
 	return get_room_index( ROOM_VNUM_DEFAULT_CELL );
 }
 
-/* zwraca losowo wybrane biuro wiêzienia */
+/* zwraca losowo wybrane biuro wiï¿½zienia */
 ROOM_INDEX_DATA *find_jail_office( PLANET_DATA *planet )
 {
 	ROOM_INDEX_DATA	*office;
@@ -535,7 +525,7 @@ ROOM_INDEX_DATA *find_jail_office( PLANET_DATA *planet )
 	int			 one_office;
 	int			 found		= 0;
 
-	/* liczymy ile cel ma wiêzienie */
+	/* liczymy ile cel ma wiï¿½zienie */
 	if ( planet )
 		for( office_vnum = planet->first_jail; office_vnum <= planet->last_jail; office_vnum++ )
 		{
@@ -565,12 +555,12 @@ ROOM_INDEX_DATA *find_jail_office( PLANET_DATA *planet )
 		}
 	}
 
-	/* tu nas byæ nie powinno */
+	/* tu nas byï¿½ nie powinno */
 	bug( "Something's wrong" );
 	return get_room_index( ROOM_VNUM_DEFAULT_OFFICE );
 }
 
-/* zwraca losowo wybrane biuro wiêzienia */
+/* zwraca losowo wybrane biuro wiï¿½zienia */
 ROOM_INDEX_DATA *find_jail_entrance( PLANET_DATA *planet )
 {
 	ROOM_INDEX_DATA	*entrance;
@@ -578,7 +568,7 @@ ROOM_INDEX_DATA *find_jail_entrance( PLANET_DATA *planet )
 	int			 one_entrance;
 	int			 found		= 0;
 
-	/* liczymy ile wej¶æ ma wiêzienie */
+	/* liczymy ile wejï¿½ï¿½ ma wiï¿½zienie */
 
 /* Chodzi o to planet->first_jail. Jest taka mozliwosc, ze do krainki
 nie ma przypisanej zadnej planety, wtedy planet jest NULL i mud pada.
@@ -615,12 +605,12 @@ to jakos ciekawie w ponizszym kodzie rozwiazac a ja nie mam pomyslu
 		}
 	}
 
-	/* tu nas byæ nie powinno */
+	/* tu nas byï¿½ nie powinno */
 	bug( "Something's wrong" );
 	return get_room_index( ROOM_VNUM_DEFAULT_ENTRANCE );
 }
 
-/* zwraca szafê w biurze */
+/* zwraca szafï¿½ w biurze */
 OBJ_DATA *find_jail_closet( CHAR_DATA *ch, PLANET_DATA *planet )
 {
 	ROOM_INDEX_DATA	*office;
@@ -630,39 +620,35 @@ OBJ_DATA *find_jail_closet( CHAR_DATA *ch, PLANET_DATA *planet )
 
 	if( office )
 	{
-		for ( closet = office->first_content;
-			closet;
-			closet = closet->next_content )
+		for ( auto* c : office->contents )
 		{
-			if( closet && closet->pIndexData->vnum == OBJ_VNUM_JAIL_CLOSET )
-				return closet;
+			if( c && c->pIndexData->vnum == OBJ_VNUM_JAIL_CLOSET )
+				return c;
 		}
-	/* w razie gdyby kto¶ zniszczy³ szafê ;) */
+	/* w razie gdyby ktoï¿½ zniszczyï¿½ szafï¿½ ;) */
 		closet = create_object( get_obj_index( OBJ_VNUM_JAIL_CLOSET ), MAX_LEVEL );
 		obj_to_room( closet, office );
 		return closet;
 	}
 
-	/* je¶li co¶ poszlo nie tak, spróbujmy to naprawiæ */
+	/* jeï¿½li coï¿½ poszlo nie tak, sprï¿½bujmy to naprawiï¿½ */
 	bug( "Fatal --> NO OFFICE, putting closet at ch->in_room" );
 	closet = create_object( get_obj_index( OBJ_VNUM_JAIL_CLOSET ), MAX_LEVEL );
 	obj_to_room( closet, ch->in_room );
 	return closet;
 }
 
-/* tak - je¶li przedmiot jest depozytem */
+/* tak - jeï¿½li przedmiot jest depozytem */
 bool is_deposit( OBJ_DATA *obj )
 {
-	DESCRIPTOR_DATA 	*d;
-	CHAR_DATA		*ch;
-
-	for ( d = first_descriptor; d; d = d->next )
+	for ( auto* d : descriptor_list )
 	{
+		CHAR_DATA *ch;
 		if( ( ch = CH( d ) ) == NULL )
 			continue;
-		if( IS_NPC( ch ) ) /* ciekawe czy co¶ takiego mo¿e siê zdarzyæ ;) */
+		if( IS_NPC( ch ) ) /* ciekawe czy coï¿½ takiego moï¿½e siï¿½ zdarzyï¿½ ;) */
 			continue;
-		if( !ch->first_crime )
+		if( ch->crimes.empty() )
 			continue;
 
 		if( ch->deposit && ch->deposit == obj )
@@ -671,19 +657,17 @@ bool is_deposit( OBJ_DATA *obj )
 	return false;
 }
 
-/* zwraca w³a¶ciciela danego depozytu */
+/* zwraca wï¿½aï¿½ciciela danego depozytu */
 CHAR_DATA *deposit_owner( OBJ_DATA *obj )
 {
-	DESCRIPTOR_DATA 	*d;
-	CHAR_DATA		*ch;
-
-	for ( d = first_descriptor; d; d = d->next )
+	for ( auto* d : descriptor_list )
 	{
+		CHAR_DATA *ch;
 		if( ( ch = CH( d ) ) == NULL )
 			continue;
-		if( IS_NPC( ch ) ) /* ciekawe czy co¶ takiego mo¿e siê zdarzyæ ;) */
+		if( IS_NPC( ch ) ) /* ciekawe czy coï¿½ takiego moï¿½e siï¿½ zdarzyï¿½ ;) */
 			continue;
-		if( !ch->first_crime )
+		if( ch->crimes.empty() )
 			continue;
 
 		if( ch->deposit && ch->deposit == obj )
@@ -719,10 +703,10 @@ OBJ_DATA *prepare_deposit( CHAR_DATA *ch )
 	STRDUP( deposit->przypadki[5], buf );
 
 	sprintf( buf,
-	"Depozyt %s najwyra¼niej siê tutaj zawieruszy³.", ch->przypadki[1] );
+	"Depozyt %s najwyraï¿½niej siï¿½ tutaj zawieruszyï¿½.", ch->przypadki[1] );
 	STRDUP( deposit->description, buf );
 
-	ch->deposit 		= deposit; /*zapamiêtajmy wska¼nik*/
+	ch->deposit 		= deposit; /*zapamiï¿½tajmy wskaï¿½nik*/
 
 	STRDUP( deposit->owner_name, ch->name );
 
@@ -763,12 +747,10 @@ void save_deposit( CHAR_DATA *ch )
 	return;
 }
 
-/* ³aduje depozyt z pliku */
+/* ï¿½aduje depozyt z pliku */
 void fread_deposit( CHAR_DATA *ch, OBJ_DATA *closet )
 {
 	FILE 	*fp;
-	OBJ_DATA 	*obj;
-	OBJ_DATA	*obj_next;
 	char 	 filename	[256];
 	int	 	 found		= 0;
 
@@ -805,14 +787,13 @@ void fread_deposit( CHAR_DATA *ch, OBJ_DATA *closet )
 			if ( !str_cmp( word, "OBJECT" ) )
 			{
 				/*
-				* niech nam pomo¿e ten, który wiecznie siê obija  ;)
+				* niech nam pomoï¿½e ten, ktï¿½ry wiecznie siï¿½ obija  ;)
 				*/
 				set_supermob( closet );
 				fread_obj  ( supermob, fp, OS_CARRY );
 
-				for ( obj = supermob->first_carrying; obj; obj = obj_next )
+				for ( auto* obj : std::list<OBJ_DATA *>(supermob->carrying) )
 				{
-					obj_next = obj->next_content;
 					obj_from_char( obj );
 					obj_to_obj( obj, closet );
 
@@ -842,12 +823,10 @@ void fread_deposit( CHAR_DATA *ch, OBJ_DATA *closet )
 
 void load_deposit( CHAR_DATA *ch )
 {
-	CRIME_DATA		*crime;
-
-	if( !ch || IS_NPC( ch ) || !ch->first_crime )
+	if( !ch || IS_NPC( ch ) || ch->crimes.empty() )
 		return;
 
-	for( crime = ch->first_crime; crime; crime = crime->next )
+	for( auto* crime : ch->crimes )
 	{
 		if( crime->jail_vnum && crime->jail_end )
 		{
@@ -859,7 +838,7 @@ void load_deposit( CHAR_DATA *ch )
 	return;
 }
 
-/* niszczy wska¼nik na depozyt gracza oraz plik, w którym by³ zapisany
+/* niszczy wskaï¿½nik na depozyt gracza oraz plik, w ktï¿½rym byï¿½ zapisany
 dobytek */
 void destroy_deposit( CHAR_DATA *ch )
 {
@@ -873,7 +852,7 @@ void destroy_deposit( CHAR_DATA *ch )
 
 	sprintf( buf, "%s%s.deposit", DEPOSIT_DIR, capitalize( ch->name ) );
 	unlink ( buf );
-	extract_obj ( ch->deposit ); /* wiêc lepiej to najpierw opró¿niæ */
+	extract_obj ( ch->deposit ); /* wiï¿½c lepiej to najpierw oprï¿½niï¿½ */
 	ch->deposit = NULL;
 	save_char_obj( ch );
 	return;
@@ -881,14 +860,12 @@ void destroy_deposit( CHAR_DATA *ch )
 
 
 /*
-* Funkcja 'aresztuje' gracza. Przenosi go do wiêzienia,
+* Funkcja 'aresztuje' gracza. Przenosi go do wiï¿½zienia,
 * ustala wyrok, przerzuca inventory gracza do depozytu. 	Thanos
 */
 void jail_char( CHAR_DATA *victim, CHAR_DATA *policeman, CRIME_DATA *crime )
 {
 	int 	         time;
-	OBJ_DATA 		*obj;
-	OBJ_DATA 		*obj_next;
 	OBJ_DATA 		*closet;
 	OBJ_DATA 		*deposit;
 	ROOM_INDEX_DATA 	*jail;
@@ -904,10 +881,10 @@ void jail_char( CHAR_DATA *victim, CHAR_DATA *policeman, CRIME_DATA *crime )
 		"$n aresztuje $N$3 i zabiera $I do aresztu w imieniu prawa.",
 		policeman, NULL, victim, TO_NOTVICT );
 	act( COL_ACTION,
-		"$n zabiera ciê do aresztu w imieniu prawa.",
+		"$n zabiera ciï¿½ do aresztu w imieniu prawa.",
 		policeman, NULL, victim, TO_VICT    );
 
-	/* najpierw przenie¶my gracza */
+	/* najpierw przenieï¿½my gracza */
 	jail 			= find_jail_cell( planet );
 	char_from_room		( victim );
 	char_to_room		( victim, jail );
@@ -917,36 +894,35 @@ void jail_char( CHAR_DATA *victim, CHAR_DATA *policeman, CRIME_DATA *crime )
 	deposit = prepare_deposit( victim );
 
 	/* rozbieramy gracza */
-	for ( obj = victim->first_carrying; obj; obj = obj_next )
+	for ( auto* obj : std::list<OBJ_DATA *>(victim->carrying) )
 	{
-		obj_next = obj->next_content;
 		obj_from_char( obj );
 		if ( IS_OBJ_STAT( obj, ITEM_INVENTORY )  )
-			extract_obj( obj );  		/* niektóre rzeczy musz± znikn±æ */
+			extract_obj( obj );  		/* niektï¿½re rzeczy muszï¿½ zniknï¿½ï¿½ */
 		else
 		{
-			deposit->value[0] 	+= obj->weight;	/* zwiêkszamy pojemno¶æ */
+			deposit->value[0] 	+= obj->weight;	/* zwiï¿½kszamy pojemnoï¿½ï¿½ */
 			obj_to_obj( obj, deposit ); 	/* wsio do depozytu */
 		}
 	}
 	/* i do szafy;) */
 	closet 			= find_jail_closet( victim, planet );
-	closet->value[0]   	       += deposit->weight;/* zwiêkszamy pojemno¶æ */
+	closet->value[0]   	       += deposit->weight;/* zwiï¿½kszamy pojemnoï¿½ï¿½ */
 	obj_to_obj			( deposit, closet );
 
-	/* jak wk³adaj± depozyt to niech zamkn± na wszelki szafe */
+	/* jak wkï¿½adajï¿½ depozyt to niech zamknï¿½ na wszelki szafe */
 	SET_BIT			( closet->value[1], CONT_CLOSEABLE );
 	SET_BIT			( closet->value[1], CONT_CLOSED );
 	SET_BIT			( closet->value[1], CONT_LOCKED );
 	SET_BIT			( closet->value[1], CONT_PICKPROOF );
 
-	send_to_char( NL "Twoje rzeczy zosta³y zabrane do depozytu." NL, victim );
+	send_to_char( NL "Twoje rzeczy zostaï¿½y zabrane do depozytu." NL, victim );
 
-	/* ¿egnajcie pieni±¿ki */
+	/* ï¿½egnajcie pieniï¿½ï¿½ki */
 	victim->gold 		= 0;
-	send_to_char( "Twoje kredytki zosta³y skonfiskowane." NL, victim );
+	send_to_char( "Twoje kredytki zostaï¿½y skonfiskowane." NL, victim );
 
-	/* kara zale¿y od poziomu przewinienia ( w tickach )*/
+	/* kara zaleï¿½y od poziomu przewinienia ( w tickach )*/
 	time			= crime->level + 1 * number_range( 45, 75 );
 	time 			= UMAX( 1, time/4 );
 	time		       /= 2;
@@ -955,14 +931,14 @@ void jail_char( CHAR_DATA *victim, CHAR_DATA *policeman, CRIME_DATA *crime )
 
 
 	ch_printf( victim, "Zostaniesz w areszcie przez %d godzi%s." NL,
-	time, NUMBER_SUFF( time, "nê", "ny", "n"  ) );
+	time, NUMBER_SUFF( time, "nï¿½", "ny", "n"  ) );
 
-	save_char_obj( victim ); /* z tej f-cji zapisze siê te¿ depozyt */
+	save_char_obj( victim ); /* z tej f-cji zapisze siï¿½ teï¿½ depozyt */
 	/* po sprawie  :) */
 	return;
 }
 
-/* uwalniamy gracza -- je¶li ju¿ odsiedzia³ swoje */
+/* uwalniamy gracza -- jeï¿½li juï¿½ odsiedziaï¿½ swoje */
 void unjail_char( CHAR_DATA *ch, CRIME_DATA *crime )
 {
 	PLANET_DATA	*planet = NULL;
@@ -976,61 +952,61 @@ void unjail_char( CHAR_DATA *ch, CRIME_DATA *crime )
 	ch->position = POS_STANDING;
 
 	echo_to_room( ch->in_room, PLAIN
-	"Stra¿nik wiêzienia podchodzi do drzwi twojej celi..." );
+	"Straï¿½nik wiï¿½zienia podchodzi do drzwi twojej celi..." );
 
 	echo_to_room( ch->in_room, EOL
-	"Drzwi otwieraj± siê." EOL );
+	"Drzwi otwierajï¿½ siï¿½." EOL );
 
-	act( COL_SAY, "Stra¿nik mówi '$n - pójdziesz ze mn±.'", ch, NULL, NULL, TO_ROOM );
-	act( COL_SAY, "Stra¿nik mówi '$n - pójdziesz ze mn±.'", ch, NULL, NULL, TO_CHAR );
+	act( COL_SAY, "Straï¿½nik mï¿½wi '$n - pï¿½jdziesz ze mnï¿½.'", ch, NULL, NULL, TO_ROOM );
+	act( COL_SAY, "Straï¿½nik mï¿½wi '$n - pï¿½jdziesz ze mnï¿½.'", ch, NULL, NULL, TO_CHAR );
 
-	act( PLAIN,"Stra¿nik wyprowadza $n$3 przed gmach wiêzienia.", ch, NULL, NULL, TO_ROOM );
-	act( PLAIN,"Stra¿nik wyprowadza ciê przed gmach wiêzienia.", ch, NULL, NULL, TO_CHAR );
+	act( PLAIN,"Straï¿½nik wyprowadza $n$3 przed gmach wiï¿½zienia.", ch, NULL, NULL, TO_ROOM );
+	act( PLAIN,"Straï¿½nik wyprowadza ciï¿½ przed gmach wiï¿½zienia.", ch, NULL, NULL, TO_CHAR );
 
 	char_from_room	( ch );
 
 	echo_to_room( get_room_index( crime->jail_vnum ), EOL
-	"Drzwi zamykaj± siê siê." EOL );
+	"Drzwi zamykajï¿½ siï¿½ siï¿½." EOL );
 
 	char_to_room	( ch, find_jail_entrance( planet ) );
 	do_look		( ch, (char *)"auto" );
 
-	act( COL_SAY, "Stra¿nik mówi 'Jeste¶ woln$y $n.'", ch, NULL, NULL, TO_ROOM );
-	act( COL_SAY, "Stra¿nik mówi 'Jeste¶ woln$y $n.'", ch, NULL, NULL, TO_CHAR );
+	act( COL_SAY, "Straï¿½nik mï¿½wi 'Jesteï¿½ woln$y $n.'", ch, NULL, NULL, TO_ROOM );
+	act( COL_SAY, "Straï¿½nik mï¿½wi 'Jesteï¿½ woln$y $n.'", ch, NULL, NULL, TO_CHAR );
 
 	if( crime->released )
 	{
-		act( COL_SAY, "Stra¿nik mówi 'Kto¶ wp³aci³ za ciebie kaucjê.'", ch, NULL, NULL, TO_ROOM );
-		act( COL_SAY, "Stra¿nik mówi 'Kto¶ wp³aci³ za ciebie kaucjê.'", ch, NULL, NULL, TO_CHAR );
+		act( COL_SAY, "Straï¿½nik mï¿½wi 'Ktoï¿½ wpï¿½aciï¿½ za ciebie kaucjï¿½.'", ch, NULL, NULL, TO_ROOM );
+		act( COL_SAY, "Straï¿½nik mï¿½wi 'Ktoï¿½ wpï¿½aciï¿½ za ciebie kaucjï¿½.'", ch, NULL, NULL, TO_CHAR );
 	}
 	else
 	{
-		act( COL_SAY, "Stra¿nik mówi 'Twoja odsiadka u nas siê skoñczy³a.'", ch, NULL, NULL, TO_ROOM );
-		act( COL_SAY, "Stra¿nik mówi 'Twoja odsiadka u nas siê skoñczy³a.'", ch, NULL, NULL, TO_CHAR );
+		act( COL_SAY, "Straï¿½nik mï¿½wi 'Twoja odsiadka u nas siï¿½ skoï¿½czyï¿½a.'", ch, NULL, NULL, TO_ROOM );
+		act( COL_SAY, "Straï¿½nik mï¿½wi 'Twoja odsiadka u nas siï¿½ skoï¿½czyï¿½a.'", ch, NULL, NULL, TO_CHAR );
 	}
 
-	act( COL_SAY, "Stra¿nik mówi 'Oby¶ nie wraca³$o do nas wiêcej.'", ch, NULL, NULL, TO_ROOM );
-	act( COL_SAY, "Stra¿nik mówi 'Oby¶ nie wraca³$o do nas wiêcej.'", ch, NULL, NULL, TO_CHAR );
+	act( COL_SAY, "Straï¿½nik mï¿½wi 'Obyï¿½ nie wracaï¿½$o do nas wiï¿½cej.'", ch, NULL, NULL, TO_ROOM );
+	act( COL_SAY, "Straï¿½nik mï¿½wi 'Obyï¿½ nie wracaï¿½$o do nas wiï¿½cej.'", ch, NULL, NULL, TO_CHAR );
 
-	ch_printf( ch, NL FB_WHITE "Wychodzisz na WOLNO¦Æ!" NL EOL );
+	ch_printf( ch, NL FB_WHITE "Wychodzisz na WOLNOï¿½ï¿½!" NL EOL );
 
-	/* chwila napiêcia */
+	/* chwila napiï¿½cia */
 	if( ch->deposit )
 	{
 		act( COL_SAY,
-		"Stra¿nik mówi 'By³bym zapomnia³. Twój depozyt zostawiam ci do dyspozycji.'",
+		"Straï¿½nik mï¿½wi 'Byï¿½bym zapomniaï¿½. Twï¿½j depozyt zostawiam ci do dyspozycji.'",
 		ch, NULL, NULL, TO_CHAR );
 		empty_obj( ch->deposit, NULL, ch->in_room );
 	}
 	else
 	{
 		act( COL_SAY,
-		"Stra¿nik mówi 'A je¶li chodzi o twój depozyt... Có¿. Gdzie¶ siê zawieruszy³.'",
+		"Straï¿½nik mï¿½wi 'A jeï¿½li chodzi o twï¿½j depozyt... Cï¿½. Gdzieï¿½ siï¿½ zawieruszyï¿½.'",
 		ch, NULL, NULL, TO_CHAR );
 	}
 
-	act( PLAIN, "Stra¿nik odchodzi by dalej wykonywaæ swoje obowi±zki.", ch, NULL, NULL, TO_ROOM );
-	act( PLAIN, "Stra¿nik odchodzi by dalej wykonywaæ swoje obowi±zki.", ch, NULL, NULL, TO_CHAR );
+	act( PLAIN, "Straï¿½nik odchodzi by dalej wykonywaï¿½ swoje obowiï¿½zki.", ch, NULL, NULL, TO_ROOM );
+	act( PLAIN, "Straï¿½nik odchodzi by dalej wykonywaï¿½ swoje obowiï¿½zki.", ch, NULL, NULL, TO_CHAR );
 
 	free_crime		( ch, crime );
 	destroy_deposit	( ch );
@@ -1044,26 +1020,20 @@ void unjail_char( CHAR_DATA *ch, CRIME_DATA *crime )
 /* sprawdza czy gracz 'dobrze' odsiaduje ;) */
 void crime_update( void )
 {
-	DESCRIPTOR_DATA 	*d;
-	CHAR_DATA		*ch;
-	CRIME_DATA		*crime;
-	CRIME_DATA		*crime_next;
-
-	for ( d = first_descriptor; d; d = d->next )
+	for ( auto* d : descriptor_list )
 	{
+		CHAR_DATA *ch;
 		if( ( ch = CH( d ) ) == NULL )
 			continue;
 
 		if( IS_NPC( ch ) )
 			continue;
 
-		if( !ch->first_crime )
+		if( ch->crimes.empty() )
 			continue;
 
-		for ( crime = ch->first_crime; crime; crime = crime_next )
+		for ( auto* crime : std::list<CRIME_DATA *>(ch->crimes) )
 		{
-			crime_next	= crime->next;
-
 			if( crime->jail_end > 0 )
 				crime->jail_end--;
 
@@ -1079,13 +1049,13 @@ void crime_update( void )
 				break;
 			}
 
-			/* te¿ freedom, ale inny ;) */
+			/* teï¿½ freedom, ale inny ;) */
 			if( crime->jail_end  %  JAIL_ACTIVITY == 0
 			&&  crime->jail_vnum && ch->in_room
 			&&  crime->jail_vnum != ch->in_room->vnum )
 			{
 				ch_printf( ch, FB_WHITE
-					"W³adze %s w³a¶nie zorientowa³y siê o twojej ucieczce!" EOL,
+					"Wï¿½adze %s wï¿½aï¿½nie zorientowaï¿½y siï¿½ o twojej ucieczce!" EOL,
 					crime->planet );
 
 				crime->jail_vnum = 0;

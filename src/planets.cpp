@@ -28,8 +28,7 @@
 #include <math.h>
 #include "mud.h"
 
-PLANET_DATA * first_planet;
-PLANET_DATA * last_planet;
+std::list<PLANET_DATA *> planet_list;
 
 /* local routines */
 void	fread_planet		args( ( PLANET_DATA *planet, FILE *fp ) );
@@ -51,16 +50,14 @@ bool	has_map				args( ( SPACE_DATA *starsystem, CHAR_DATA *ch ) );
 
 DEPOSIT_DATA * get_deposit( PLANET_DATA * planet, int nr )
 {
-	DEPOSIT_DATA *	pDeposit;
-	int			i;
+	int i = 0;
 
-	for( i=0,pDeposit = planet->first_deposit; pDeposit; pDeposit =
-			pDeposit->next,i++ )
+	for( auto* pDeposit : planet->deposits )
+	{
 		if( i == nr )
-			break;
-
-	if( pDeposit )
-		return pDeposit;
+			return pDeposit;
+		i++;
+	}
 
 	return NULL;
 }
@@ -68,12 +65,10 @@ DEPOSIT_DATA * get_deposit( PLANET_DATA * planet, int nr )
 
 PLANET_DATA *get_planet( const char *name )
 {
-    PLANET_DATA *planet;
-
-    for ( planet = first_planet; planet; planet = planet->next )
+    for ( auto* planet : planet_list )
        if ( !str_cmp( name, planet->name ) )
          return planet;
-    for ( planet = first_planet; planet; planet = planet->next )
+    for ( auto* planet : planet_list )
        if ( nifty_is_name_prefix( (char *)name, planet->name ) )
          return planet;
     return NULL;
@@ -81,7 +76,6 @@ PLANET_DATA *get_planet( const char *name )
 
 void write_planet_list( )
 {
-    PLANET_DATA *	tplanet;
     FILE *		fpout;
 
     fpout = fopen( PLANET_LIST, "w" );
@@ -91,7 +85,7 @@ void write_planet_list( )
  	return;
     }
 
-    for ( tplanet = first_planet; tplanet; tplanet = tplanet->next )
+    for ( auto* tplanet : planet_list )
 	fprintf	( fpout, "%s\n", tplanet->filename );
     fprintf	( fpout, "$\n" );
     fclose	( fpout );
@@ -101,9 +95,6 @@ void save_planet( PLANET_DATA *planet )
 {
     FILE *	fp;
     char 	filename	[256];
-    DOCK_DATA *dock;
-	DEPOSIT_DATA		* pDeposit;
-	CARGO_DATA			* pCargo;
 
     IF_BUG( planet==NULL, "" )
 	return;
@@ -124,8 +115,6 @@ void save_planet( PLANET_DATA *planet )
     }
     else
     {
-        AREA_DATA *	pArea;
-	SEASON_DATA *	season;
 	int		nr;
 
 	fprintf( fp, "#PLANET\n" );
@@ -158,12 +147,12 @@ void save_planet( PLANET_DATA *planet )
 	fprintf( fp, "JailLast     %d\n",	planet->last_jail       );
 	//done
 
-	/* Thanos czas i pogoda: KOLEJNO¦Æ OBOWI¡ZKOWA */
+	/* Thanos czas i pogoda: KOLEJNOï¿½ï¿½ OBOWIï¿½ZKOWA */
 	fprintf( fp, "TimeInfo     %d %d %d\n",	planet->daylen,
 						planet->nightlen,
 						planet->monthlen       	);
 
-	for( season = planet->first_season; season; season = season->next )
+	for( auto* season : planet->seasons )
 	fprintf( fp, "Season       %s~ %d %d %d %d %d %d %d\n",
 						*season->name ? season->name : "",
 						season->temperature,
@@ -175,7 +164,7 @@ void save_planet( PLANET_DATA *planet )
 						season->windspeed      	);
 
 	nr = 1; /* numer pory roku */
-	for( season = planet->first_season; season; season = season->next )
+	for( auto* season : planet->seasons )
 	{
 	    if( planet->curr_season == season )
 		break;
@@ -187,20 +176,20 @@ void save_planet( PLANET_DATA *planet )
 						    nr );
 
 // Aldegard
-	for ( dock = planet->first_dock; dock ; dock = dock->next )
+	for ( auto* dock : planet->docks )
 	{
 	    fprintf( fp, "Dock %d %.0f %d %s~\n",dock->vnum,
 	                dock->capacity, dock->hidden, dock->name );
 	}
 		//added by Tanglor - listy materialow produkownych przez planete
-		FOREACH( pDeposit, planet->first_deposit)
+		for( auto* pDeposit : planet->deposits )
 			fprintf( fp, "Deposit       %d %s~\n",
 					 pDeposit->daily_mining, pDeposit->material_name );
 		if ( planet->pWarehouse )
 		{
 				fprintf( fp, "WarehouseData %d\n",
 				planet->pWarehouse->max_capacity );
-			FOREACH( pCargo, planet->pWarehouse->first_cargo)
+			for( auto* pCargo : planet->pWarehouse->cargo )
 			if (pCargo->pMaterial)
 				fprintf( fp, "Warehouse     %d %d %s~\n",
 						 pCargo->amount,
@@ -211,7 +200,7 @@ void save_planet( PLANET_DATA *planet )
 		fprintf( fp, "Description         %s~\n",	planet->description  	);
         fprintf( fp, "Description2         %s~\n",	planet->description2  	);
         fprintf( fp, "Version         %d\n",	planet->version  	);
-	for( pArea = planet->first_area ; pArea ; pArea = pArea->next_on_planet )
+	for( auto* pArea : planet->areas )
 	if (pArea->filename)
         fprintf( fp, "Area         %s~\n",	pArea->filename  	);
 	fprintf( fp, "End\n\n"						);
@@ -264,14 +253,13 @@ void fread_planet( PLANET_DATA *planet, FILE *fp )
 	    if ( !str_cmp( word, "Area" ) )
 	    {
 	        char aName[MAX_STRING_LENGTH];
-                AREA_DATA *pArea;
 
 	     	strcpy(aName, st_fread_string(fp));
-		for( pArea = first_area ; pArea ; pArea = pArea->next )
+		for( auto* pArea : area_list )
 	          if (pArea->filename && !str_cmp(pArea->filename , aName ) )
 	          {
 	             pArea->planet = planet;
-	             LINK( pArea, planet->first_area, planet->last_area, next_on_planet, prev_on_planet);
+	             planet->areas.push_back( pArea );
 	          }
                 fMatch = true;
 	    }
@@ -303,8 +291,7 @@ void fread_planet( PLANET_DATA *planet, FILE *fp )
 			pDeposit = new_deposit();
 			pDeposit->daily_mining = fread_number( fp );
 			pDeposit->material_name = fread_string( fp );
-			LINK( pDeposit, planet->first_deposit, planet->last_deposit,
-				  next,prev);
+			planet->deposits.push_back( pDeposit );
 			fMatch = true;
 		}
 		if( !str_cmp( word, "Dock" ) )
@@ -316,7 +303,7 @@ void fread_planet( PLANET_DATA *planet, FILE *fp )
 			dock->capacity 		= atof( fread_word( fp ) );
 			dock->hidden		= fread_number( fp );
 			dock->name		= fread_string( fp );
-			LINK( dock, planet->first_dock, planet->last_dock, next, prev );
+			planet->docks.push_back( dock );
 			fMatch = true;
 	    }
 	    break;
@@ -368,7 +355,7 @@ void fread_planet( PLANET_DATA *planet, FILE *fp )
 	    KEY( "Import",	planet->import,     fread_number( fp ) );
 	    break;
 
-	//added by Thanos (wiêzienia)
+	//added by Thanos (wiï¿½zienia)
 	case 'J':
 	    KEY( "JailFirst",	planet->first_jail,     fread_number( fp ) );
 	    KEY( "JailLast",	planet->last_jail,	fread_number( fp ) );
@@ -409,7 +396,7 @@ void fread_planet( PLANET_DATA *planet, FILE *fp )
                 {
                      SPACE_DATA *starsystem = planet->starsystem;
 
-                     LINK( planet , starsystem->first_planet, starsystem->last_planet, next_in_system, prev_in_system );
+                     starsystem->planets.push_back( planet );
                 }
                 fMatch = true;
 	    }
@@ -432,7 +419,7 @@ void fread_planet( PLANET_DATA *planet, FILE *fp )
 		season->length 		= fread_number( fp );
 		season->windspeed	= fread_number( fp );
 
-		LINK( season, planet->first_season, planet->last_season, next, prev );
+		planet->seasons.push_back( season );
                 fMatch = true;
 	    }
 	    break;
@@ -506,23 +493,13 @@ bool load_planet_file( const char *planetfile )
     CREATE( planet, PLANET_DATA, 1 );
 
     planet->governed_by 	= NULL;
-    planet->next_in_system 	= NULL;
-    planet->prev_in_system 	= NULL;
     planet->starsystem 		= NULL ;
-    planet->first_area 		= NULL;
-    planet->last_area 		= NULL;
-    planet->first_guard 	= NULL;
-    planet->last_guard 		= NULL;
-	planet->first_deposit	= NULL;
-	planet->last_deposit	= NULL;
 	planet->pWarehouse		= NULL;
 	planet->hour		= -1;
     planet->day			= -1;
     planet->month		= -1;
 
 	CREATE( planet->pWarehouse, WAREHOUSE_DATA, 1);
-	planet->pWarehouse->first_cargo	= NULL;
-	planet->pWarehouse->last_cargo	= NULL;
 
     found = false;
     sprintf( filename, "%s%s", PLANET_DIR, planetfile );
@@ -574,7 +551,7 @@ bool load_planet_file( const char *planetfile )
     }
     else
 
-      LINK( planet, first_planet, last_planet, next, prev );
+      planet_list.push_back( planet );
 
     return found;
 }
@@ -588,8 +565,7 @@ void load_planets( )
     FILE *		fpList;
 	const char *		filename;
 
-    first_planet	= NULL;
-    last_planet		= NULL;
+    planet_list.clear();
 
     RESERVE_CLOSE;
     if ( ( fpList = fopen( PLANET_LIST, "r" ) ) == NULL )
@@ -678,11 +654,11 @@ DEF_DO_FUN( setplanet )
         SPACE_DATA *starsystem;
 
         if ((starsystem=planet->starsystem) != NULL)
-          UNLINK(planet, starsystem->first_planet, starsystem->last_planet, next_in_system, prev_in_system);
+          starsystem->planets.remove(planet);
 	if ( (planet->starsystem = starsystem_from_name(argument)) )
         {
            starsystem = planet->starsystem;
-           LINK(planet, starsystem->first_planet, starsystem->last_planet, next_in_system, prev_in_system);
+           starsystem->planets.push_back(planet);
            send_to_char( "Done.\n\r", ch );
 	}
 	else
@@ -700,7 +676,7 @@ DEF_DO_FUN( setplanet )
 	return;
     }
 
-    //added by Thanos (wiêzienia)
+    //added by Thanos (wiï¿½zienia)
     if ( !str_cmp( arg2, "first_jail" ) )
     {
  	if( get_room_index( atoi( argument ) ) == NULL )
@@ -858,13 +834,9 @@ DEF_DO_FUN( setplanet )
 DEF_DO_FUN( showplanet )
 { //very highly extremely hard modified by Trog :))))
     PLANET_DATA *	planet;
-    SEASON_DATA *	season;
-    AREA_DATA	*	area;
-    DOCK_DATA	*	dock;
     char 		buf 	[MAX_STRING_LENGTH];
     char        	buf1	[MAX_STRING_LENGTH];
     int			i, a=0;
-	DEPOSIT_DATA		* pDeposit;
 
     if ( IS_NPC( ch ) )
     {
@@ -918,7 +890,7 @@ DEF_DO_FUN( showplanet )
 		strcat( buf, " notshown" );
     if( !IS_SET( planet->flags, PLANET_NOCAPTURE ) && !IS_SET( planet->flags, PLANET_NOTSHOWN ) )
 		strcat( buf, "none" );
-    /*added by Thanos (wiêzienia) Trog: a gdzie sprawdzanie czy
+    /*added by Thanos (wiï¿½zienia) Trog: a gdzie sprawdzanie czy
       first/last->jail istnieje? :-) */
     strcat( buf, NL FG_CYAN "Jail:        " PLAIN  );
     if( !planet->first_jail || !planet->last_jail )
@@ -933,8 +905,8 @@ DEF_DO_FUN( showplanet )
     }
 	i = 0;
 	strcat( buf, NL FG_CYAN "Production and mining" PLAIN NL);
-	if ( planet->first_deposit)
-		FOREACH( pDeposit, planet->first_deposit )
+	if ( !planet->deposits.empty() )
+		for( auto* pDeposit : planet->deposits )
 	{
 		sprintf( buf1, FG_CYAN "%d   - Name  : " PLAIN "%-15s"
 				FG_CYAN "  Quant.  :" PLAIN "%d" EOL, i,
@@ -954,7 +926,7 @@ DEF_DO_FUN( showplanet )
 // 	      planet->stock, planet->maxstock);
 // 	    strcat( buf, buf1 );
     strcat( buf, FG_CYAN "Areas:" EOL );
-    for( area = planet->first_area; area; area = area->next_on_planet )
+    for( auto* area : planet->areas )
     {
 		if( area )
 		{
@@ -965,7 +937,7 @@ DEF_DO_FUN( showplanet )
 		}
     }
     strcat( buf, FG_CYAN "Docks:" EOL );
-    for ( dock = planet->first_dock; dock; dock=dock->next )
+    for ( auto* dock : planet->docks )
     {
        	sprintf( buf1,
 			FG_CYAN "%-3d - dock: " PLAIN "%d %s %.0f/%.0f %s" EOL,a,
@@ -988,7 +960,7 @@ DEF_DO_FUN( showplanet )
 		FG_CYAN "MonthLen: " PLAIN "%d" NL,	planet->daylen,
 		planet->nightlen, planet->monthlen );
     i=1;
-    for( season = planet->first_season; season; season = season->next )
+    for( auto* season : planet->seasons )
     {
 		ch_printf( ch,
 			FG_CYAN "Season%s[" FB_WHITE "%d" FG_CYAN "]: Name: " PLAIN "%-20s  "
@@ -1031,43 +1003,33 @@ DEF_DO_FUN( makeplanet )
     CREATE( planet, PLANET_DATA, 1 );
     STRDUP( planet->name, argument );
     planet->governed_by 	= NULL;
-    planet->next_in_system 	= NULL;
-    planet->prev_in_system 	= NULL;
     planet->starsystem 		= NULL;
-    planet->first_area 		= NULL;
-    planet->last_area 		= NULL;
-    planet->first_guard 	= NULL;
-    planet->last_guard 		= NULL;
-	planet->first_deposit	= NULL;
-	planet->last_deposit	= NULL;
 	planet->pWarehouse		= NULL;
 	planet->flags               = 3;
     planet->import               = 0;
     planet->_export               = 0;
-    LINK( planet, first_planet, last_planet, next, prev );
+    planet_list.push_back( planet );
 }
 
 DEF_DO_FUN( planets )
 {
-    PLANET_DATA 	*planet;
     int 		 count 		= 0;
-    AREA_DATA   	*area;
 
-    for ( planet = first_planet; planet; planet = planet->next )
+    for ( auto* planet : planet_list )
     {
         if ( planet->starsystem )
 	if ( !IS_SET(planet->flags,PLANET_NOTSHOWN ) || IS_SET(ch->act, PLR_HOLYLIGHT) )
 	if ( planet->starsystem->hidden==0 || has_map(planet->starsystem,ch) || IS_SET(ch->act, PLR_HOLYLIGHT ) )
 	{
 	   pager_printf( ch,
-	   FB_WHITE "Planeta: " PLAIN "%-15s         " FB_WHITE "Pod Rz±dami: " PLAIN "%s %s" NL,
+	   FB_WHITE "Planeta: " PLAIN "%-15s         " FB_WHITE "Pod Rzï¿½dami: " PLAIN "%s %s" NL,
                    planet->name ,
                    planet->governed_by ? CLANNAME(planet->governed_by) : "",
-                   IS_SET(planet->flags, PLANET_NOCAPTURE ) ? "(nie 'do przejêcia')" : "" );
+                   IS_SET(planet->flags, PLANET_NOCAPTURE ) ? "(nie 'do przejï¿½cia')" : "" );
 	   if ( IS_SET(planet->flags,PLANET_NOTSHOWN ) )
 	   	pager_printf( ch,"Not shown to players - it is part of the 'Aldegards Solars Sytems'" NL);
            pager_printf( ch,
-	   FB_WHITE "Warto¶æ: " PLAIN "%10ld" FB_WHITE "/" PLAIN "%-10d   ",
+	   FB_WHITE "Wartoï¿½ï¿½: " PLAIN "%10ld" FB_WHITE "/" PLAIN "%-10d   ",
                    get_taxes(planet) , planet->base_value);
            pager_printf( ch,
 	   FB_WHITE "Populacja: " PLAIN "  %-5d " FB_WHITE "Przyrost Poparcia: " PLAIN "%.1f" NL,
@@ -1081,10 +1043,10 @@ DEF_DO_FUN( planets )
            if ( IS_IMMORTAL(ch) )
            {
           	pager_printf( ch, FB_WHITE "Krainy:  " PLAIN);
-          	for ( area = planet->first_area ; area ; area = area->next_on_planet )
+          	for ( auto* area : planet->areas )
           	   pager_printf( ch , "%s" NL "         ", area->filename );
 
-	  	if( !planet->first_area )	     pager_printf( ch, NL );
+	  	if( planet->areas.empty() )	     pager_printf( ch, NL );
     	   }
            pager_printf( ch, NL );
 
@@ -1094,7 +1056,7 @@ DEF_DO_FUN( planets )
 
     if ( !count )
     {
-        send_to_char( "Jako¶ nie ma na tym mudzie ¿adnych planet. Dziwne co?" NL, ch );
+        send_to_char( "Jakoï¿½ nie ma na tym mudzie ï¿½adnych planet. Dziwne co?" NL, ch );
     }
     return;
 }
@@ -1119,7 +1081,7 @@ DEF_DO_FUN( imports )
 	pager_printf(ch,FB_CYAN "  ________________________________________________________________________" EOL);
 	pager_printf(ch,FB_CYAN " / Planeta          )    Import    )  p/c        )   Export     )  cena/T )_." EOL);
 	pager_printf(ch,FB_CYAN "|----------------------------------------------------------------------------." EOL);
-	for ( planet = first_planet; planet; planet = planet->next )
+	for ( auto* planet : planet_list )
    	{
 	  if ( !planet->starsystem )
 	       continue;
@@ -1145,25 +1107,22 @@ DEF_DO_FUN( imports )
    pager_printf(ch,FB_BLUE "Import i Export dla " FB_WHITE "%s" NL, planet->name);
    pager_printf(ch,FB_BLUE "Import:         " FB_WHITE "%-12s  " FB_BLUE "Export: " FB_WHITE "%s" NL,
               cargo_names[planet->import], cargo_names[planet->_export]);
-   pager_printf(ch,FB_BLUE "Procent zwrotu: " FB_WHITE "%-12d  " FB_BLUE "Cena: " FB_WHITE "%d " FB_BLUE "kredytów za tonê." NL,
+   pager_printf(ch,FB_BLUE "Procent zwrotu: " FB_WHITE "%-12d  " FB_BLUE "Cena: " FB_WHITE "%d " FB_BLUE "kredytï¿½w za tonï¿½." NL,
               planet->prisei, planet->prisee);
-   pager_printf(ch,FB_BLUE "                              Ilo¶æ towaru w magazynach: " FB_WHITE "%d " FB_BLUE "ton." EOL,
+   pager_printf(ch,FB_BLUE "                              Iloï¿½ï¿½ towaru w magazynach: " FB_WHITE "%d " FB_BLUE "ton." EOL,
               planet->stock);
 	pager_printf(ch, FB_BLUE "Wydobycie :" EOL);
 
-	DEPOSIT_DATA		* pDeposit;
-
-	FOREACH( pDeposit, planet->first_deposit)
+	for( auto* pDeposit : planet->deposits )
 		pager_printf(ch, FB_BLUE "Ruda :" FB_WHITE "%s" EOL,
 			pDeposit->material_name);
 
 	pager_printf(ch, NL NL FB_BLUE "Magazyny :" EOL);
-	CARGO_DATA		* pCargo;
-	FOREACH( pCargo, planet->pWarehouse->first_cargo)
+	for( auto* pCargo : planet->pWarehouse->cargo )
 	{
-		pager_printf(ch, FB_BLUE "Minera³ : " FB_WHITE "%s" EOL,
+		pager_printf(ch, FB_BLUE "Mineraï¿½ : " FB_WHITE "%s" EOL,
 			pCargo->pMaterial->name);
-		pager_printf(ch, FB_BLUE "Ilo¶æ   : " FB_WHITE "%d" EOL EOL,
+		pager_printf(ch, FB_BLUE "Iloï¿½ï¿½   : " FB_WHITE "%d" EOL EOL,
 			pCargo->amount);
 	}
 
@@ -1174,7 +1133,6 @@ void add_material_warehouse( PLANET_DATA * pPlanet,
 			MATERIAL_DATA * pMat,  int quant)
 {
 	WAREHOUSE_DATA		* pWarehouse;
-	CARGO_DATA			* pCargo;
 	bool				fMatch = false;
 
 
@@ -1187,7 +1145,7 @@ void add_material_warehouse( PLANET_DATA * pPlanet,
 		return;
 	}
 
-	FOREACH( pCargo, pWarehouse->first_cargo )
+	for( auto* pCargo : pWarehouse->cargo )
 	{
 		if ( !pCargo->pMaterial )
 			continue;
@@ -1200,11 +1158,10 @@ void add_material_warehouse( PLANET_DATA * pPlanet,
 	}
 	if ( !fMatch )
 	{
-		pCargo = new_cargo();
+		CARGO_DATA* pCargo = new_cargo();
 		pCargo->pMaterial = pMat;
 		pCargo->amount = quant;
-		LINK( pCargo, pWarehouse->first_cargo,
-			pWarehouse->last_cargo, next, prev );
+		pWarehouse->cargo.push_back( pCargo );
 	}
 }
 

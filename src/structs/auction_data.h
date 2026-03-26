@@ -20,25 +20,23 @@
 #define AUCTION_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	auction_data
 {
-	AUCTION_DATA		* next;			//w koncu mozemy miec kilka aukcji
-	AUCTION_DATA		* prev;
-	BETS_PROGRES		* first;		//lista licytuj±cych
-	BETS_PROGRES		* last;
+	std::list<BETS_PROGRES*> bets;
 
 	auction_type		type;			/*!< typ sprzedawanego towaru */
 	char				* planet;		/*!< planeta na jakiej toczy sie licytacja */
 	OBJ_DATA			* item;			/*!< a pointer to the item */
 	char				* stock_name;	/*!< nazwa licytowanego przedmiotu - dla notek inf */
 	char				* seller_name;
-	char				* desc;			/*!< krótki opis gracza sprzedaj±cego */
+	char				* desc;			/*!< krï¿½tki opis gracza sprzedajï¿½cego */
 	int64				buy_out_now;	//stawka za jaka mozna natychmiast kupic dany przedmiot
 	int64				starting_price;
 	int64				bet;			// najwyzsza aktualna stawka
 	int					bidders_count;	//ilu licytantow
-	int64				quantity;		/*!< iloæ sprzedawnych towarów*/
+	int64				quantity;		/*!< iloï¿½ sprzedawnych towarï¿½w*/
 
 	int					duration;		/*!< czas trwania aukcji w godzinach */
 	time_t				start_time;
@@ -46,7 +44,7 @@ struct	auction_data
 	bool				item_collected; //czy licytujacy dostal przedmiot
 	bool				payment_collected;	//czy licytator dostal kase
 	bool				notes_send;			//czy wyslalismy juz notki z infomacjami
-	bool				max_cash_auction;	/*!< czy chce by zarobiæ jak najwiêcej na aukcji, czy sprzedaæ caly towar */
+	bool				max_cash_auction;	/*!< czy chce by zarobiï¿½ jak najwiï¿½cej na aukcji, czy sprzedaï¿½ caly towar */
 };
 
 #endif //AUCTION_DATA_H_

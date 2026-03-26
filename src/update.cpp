@@ -63,8 +63,7 @@ void add_material_warehouse(PLANET_DATA *planet, MATERIAL_DATA *pMat, int quant)
 /*
  * Global Variables
  */
-CHAR_DATA *gch_prev;
-OBJ_DATA *gobj_prev;
+/* gch_prev and gobj_prev removed - using snapshot iteration instead */
 CHAR_DATA *timechar;
 
 /*
@@ -78,12 +77,12 @@ void auction_cleanup(AUCTION_DATA *pAuction);
 MATERIAL_DATA* get_material(char *name, material_type typ);
 
 const char *const corpse_descs[] =
-{ "Martwe cia³o %s rozk³ada siê tutaj.", "Martwe cia³o %s le¿y tutaj.", "Martwe cia³o %s le¿y tutaj.", "Martwe cia³o %s le¿y tutaj.",
-		"Martwe cia³o %s le¿y tutaj." };
+{ "Martwe ciaï¿½o %s rozkï¿½ada siï¿½ tutaj.", "Martwe ciaï¿½o %s leï¿½y tutaj.", "Martwe ciaï¿½o %s leï¿½y tutaj.", "Martwe ciaï¿½o %s leï¿½y tutaj.",
+		"Martwe ciaï¿½o %s leï¿½y tutaj." };
 
 const char *const d_corpse_descs[] =
-{ "Zmasakrowane czê¶ci %s rdzewiej± tutaj.", "Le¿± tu zmasakrowane czê¶ci %s.", "Le¿± tu zmasakrowane czê¶ci %s.",
-		"Le¿± tu zmasakrowane czê¶ci %s.", "Le¿± tu zmasakrowane czê¶ci %s." };
+{ "Zmasakrowane czï¿½ci %s rdzewiejï¿½ tutaj.", "Leï¿½ï¿½ tu zmasakrowane czï¿½ci %s.", "Leï¿½ï¿½ tu zmasakrowane czï¿½ci %s.",
+		"Leï¿½ï¿½ tu zmasakrowane czï¿½ci %s.", "Leï¿½ï¿½ tu zmasakrowane czï¿½ci %s." };
 
 extern int top_exit;
 
@@ -404,7 +403,7 @@ void advance_level(CHAR_DATA *ch, int ability)
 
 		ch_printf( ch, "Otrzymujesz " FB_WHITE "%d" PLAIN "(%d) prakty%s." NL,
 			prac, ch->pcdata->practices,
-			prac==1 ? "kê" :
+			prac==1 ? "kï¿½" :
 			(prac > 1  && prac<5)? "ki"  : prac < 22 ? "k":
 			(prac%10 > 1  && prac%10<5)? "ki" :"k" );
 	}
@@ -423,7 +422,7 @@ void gain_exp(CHAR_DATA *ch, int gain, int ability)
 	/*  Removed by Thanos - fuj!
 	 if (NOT_AUTHED(ch) && ch->experience[ability] >= exp_level(ch->skill_level[ability]+1))
 	 {
-	 send_to_char("Dopóki twoja postaæ nie dostanie autotoryzacji, nie bêdzie mog³a zdobyæ poziomu.\n\r", ch);
+	 send_to_char("Dopï¿½ki twoja postaï¿½ nie dostanie autotoryzacji, nie bï¿½dzie mogï¿½a zdobyï¿½ poziomu.\n\r", ch);
 	 ch->experience[ability] = (exp_level( ch->skill_level[ability]+1 ) - 1);
 	 return;
 	 }*/
@@ -436,7 +435,7 @@ void gain_exp(CHAR_DATA *ch, int gain, int ability)
 			return;
 		}
 		ch_printf(ch, FB_WHITE
-		"* Opanowujesz nowe tajniki %s !!! Znasz je ju¿ na %d poziomie! *" EOL, class_table[ability].przypadki[1],
+		"* Opanowujesz nowe tajniki %s !!! Znasz je juï¿½ na %d poziomie! *" EOL, class_table[ability].przypadki[1],
 				++ch->skill_level[ability]);
 		advance_level(ch, ability);
 	}
@@ -483,9 +482,9 @@ int hit_gain(CHAR_DATA *ch)
 
 	if ((get_age(ch) > 800) && !IS_IMMORTAL(ch))
 	{
-		ch_printf(ch, "Jeste¶ ju¿ star%s." NL
-		"Stajesz siê s³absz%s z ka¿d± chwil±." NL
-		"Nied³ugo umrzesz." NL, SEX_SUFFIX_YAE(ch), SEX_SUFFIX_YAE(ch));
+		ch_printf(ch, "Jesteï¿½ juï¿½ star%s." NL
+		"Stajesz siï¿½ sï¿½absz%s z kaï¿½dï¿½ chwilï¿½." NL
+		"Niedï¿½ugo umrzesz." NL, SEX_SUFFIX_YAE(ch), SEX_SUFFIX_YAE(ch));
 		return -10;
 	}
 	else if (get_age(ch) > 500)
@@ -643,7 +642,7 @@ void gain_addiction(CHAR_DATA *ch)
 
 		if (ch->pcdata->addiction[drug] > ch->pcdata->drug_level[drug] + 200)
 		{
-			ch_printf(ch, "Czujesz, ¿e za chwilê umrzesz. POTRZEBUJESZ %s." NL, spice_types_list[drug]);
+			ch_printf(ch, "Czujesz, ï¿½e za chwilï¿½ umrzesz. POTRZEBUJESZ %s." NL, spice_types_list[drug]);
 			worsen_mental_state(ch, 2);
 			damage(ch, ch, 5, TYPE_UNDEFINED);
 		}
@@ -654,12 +653,12 @@ void gain_addiction(CHAR_DATA *ch)
 		}
 		else if (ch->pcdata->addiction[drug] > ch->pcdata->drug_level[drug] + 50)
 		{
-			ch_printf(ch, "Naprawdê przyda³oby siê trochê %s." NL, spice_types_list[drug]);
+			ch_printf(ch, "Naprawdï¿½ przydaï¿½oby siï¿½ trochï¿½ %s." NL, spice_types_list[drug]);
 			worsen_mental_state(ch, 1);
 		}
 		else if (ch->pcdata->addiction[drug] > ch->pcdata->drug_level[drug] + 25)
 		{
-			ch_printf(ch, "Troszkê %s i twoje samopoczucie by³oby znacznie lepsze." NL, spice_types_list[drug]);
+			ch_printf(ch, "Troszkï¿½ %s i twoje samopoczucie byï¿½oby znacznie lepsze." NL, spice_types_list[drug]);
 		}
 		else if (ch->pcdata->addiction[drug] < ch->pcdata->drug_level[drug] - 50)
 		{
@@ -686,7 +685,7 @@ void gain_condition(CHAR_DATA *ch, int iCond, int value)
 		/*|| NOT_AUTHED(ch))*/ //Removed by Thanos
 		return;
 
-	/* Thanos the lito¶ciwy */
+	/* Thanos the litoï¿½ciwy */
 	if (value < 0 && number_percent() > 80)
 		return;
 
@@ -703,8 +702,8 @@ void gain_condition(CHAR_DATA *ch, int iCond, int value)
 		case COND_FULL:
 			if (ch->top_level <= LEVEL_AVATAR)
 			{
-				send_to_char( COL_HUNGRY "UMIERASZ z g³odu!" EOL, ch);
-				act( COL_HUNGRY, "$n jest strasznie wyg³odzon$y!", ch, NULL, NULL, TO_ROOM);
+				send_to_char( COL_HUNGRY "UMIERASZ z gï¿½odu!" EOL, ch);
+				act( COL_HUNGRY, "$n jest strasznie wygï¿½odzon$y!", ch, NULL, NULL, TO_ROOM);
 				worsen_mental_state(ch, 1);
 				retcode = damage(ch, ch, 5, TYPE_UNDEFINED);
 			}
@@ -723,7 +722,7 @@ void gain_condition(CHAR_DATA *ch, int iCond, int value)
 
 		case COND_DRUNK:
 			if (condition != 0)
-				send_to_char("Trze¼wiejesz." NL, ch);
+				send_to_char("Trzeï¿½wiejesz." NL, ch);
 			retcode = rNONE;
 			break;
 		default:
@@ -743,8 +742,8 @@ void gain_condition(CHAR_DATA *ch, int iCond, int value)
 		case COND_FULL:
 			if (ch->top_level <= LEVEL_AVATAR)
 			{
-				send_to_char( COL_HUNGRY "G³ód staje siê coraz silniejszy." EOL, ch);
-				act( COL_HUNGRY, "S³yszysz burczenie w brzuchu $n$1.", ch, NULL, NULL, TO_ROOM);
+				send_to_char( COL_HUNGRY "Gï¿½ï¿½d staje siï¿½ coraz silniejszy." EOL, ch);
+				act( COL_HUNGRY, "Sï¿½yszysz burczenie w brzuchu $n$1.", ch, NULL, NULL, TO_ROOM);
 				if (number_bits(1) == 0)
 					worsen_mental_state(ch, 1);
 			}
@@ -753,15 +752,15 @@ void gain_condition(CHAR_DATA *ch, int iCond, int value)
 		case COND_THIRST:
 			if (ch->top_level <= LEVEL_AVATAR)
 			{
-				send_to_char( COL_THIRSTY "Twoje pragnienie wzmaga siê." EOL, ch);
+				send_to_char( COL_THIRSTY "Twoje pragnienie wzmaga siï¿½." EOL, ch);
 				worsen_mental_state(ch, 1);
-				act( COL_THIRSTY, "$n wygl±da jakby potrzebowa³$o czego¶ do picia.", ch, NULL, NULL, TO_ROOM);
+				act( COL_THIRSTY, "$n wyglï¿½da jakby potrzebowaï¿½$o czegoï¿½ do picia.", ch, NULL, NULL, TO_ROOM);
 			}
 			break;
 
 		case COND_DRUNK:
 			if (condition != 0)
-				send_to_char("Twoja g³owa staje siê nieco ciê¿sza." NL, ch);
+				send_to_char("Twoja gï¿½owa staje siï¿½ nieco ciï¿½sza." NL, ch);
 			break;
 		}
 	}
@@ -772,11 +771,11 @@ void gain_condition(CHAR_DATA *ch, int iCond, int value)
 		{
 		case COND_FULL:
 			if (ch->top_level <= LEVEL_AVATAR)
-				ch_printf(ch, COL_HUNGRY "Jeste¶ g³odn%s." EOL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, COL_HUNGRY "Jesteï¿½ gï¿½odn%s." EOL, SEX_SUFFIX_YAE(ch));
 			break;
 		case COND_THIRST:
 			if (ch->top_level <= LEVEL_AVATAR)
-				ch_printf(ch, COL_THIRSTY "Jeste¶ spragnion%s." EOL, SEX_SUFFIX_YAE(ch));
+				ch_printf(ch, COL_THIRSTY "Jesteï¿½ spragnion%s." EOL, SEX_SUFFIX_YAE(ch));
 			break;
 
 		}
@@ -788,12 +787,12 @@ void gain_condition(CHAR_DATA *ch, int iCond, int value)
 		{
 		case COND_FULL:
 			if (ch->top_level <= LEVEL_AVATAR)
-				ch_printf(ch, COL_HUNGRY "Przegryz³%sby¶ co¶." EOL, SEX_SUFFIX__AO(ch));
+				ch_printf(ch, COL_HUNGRY "Przegryzï¿½%sbyï¿½ coï¿½." EOL, SEX_SUFFIX__AO(ch));
 			break;
 
 		case COND_THIRST:
 			if (ch->top_level <= LEVEL_AVATAR)
-				ch_printf(ch, COL_THIRSTY "Chêtnie by¶ siê czego¶ napi³%s." EOL, SEX_SUFFIX__AO(ch));
+				ch_printf(ch, COL_THIRSTY "Chï¿½tnie byï¿½ siï¿½ czegoï¿½ napiï¿½%s." EOL, SEX_SUFFIX__AO(ch));
 			break;
 
 		}
@@ -816,25 +815,14 @@ void mobile_update(void)
 	retcode = rNONE;
 
 	/* Examine all mobs. */
-	for (ch = last_char; ch; ch = gch_prev)
+	auto char_snapshot = char_list;
+	for (auto it = char_snapshot.rbegin(); it != char_snapshot.rend(); ++it)
 	{
+		ch = *it;
 		set_cur_char(ch);
-		if (ch == first_char && ch->prev)
-		{
-			bug("first_char->prev != NULL... fixed", 0);
-			ch->prev = NULL;
-		}
 
-		gch_prev = ch->prev;
-
-		if (gch_prev && gch_prev->next != ch)
-		{
-			bug("FATAL: Mobile_update: %s->prev->next doesn't point to ch.", ch->name);
-			bug("Short-cutting here", 0);
-			gch_prev = NULL;
-			ch->prev = NULL;
-			do_shout(ch, (char*) "Przygotujcie siê na najgorsze!");
-		}
+		if (char_died(ch))
+			continue;
 
 		if (!IS_NPC(ch))
 		{
@@ -849,8 +837,8 @@ void mobile_update(void)
 
 		if (ch->pIndexData->vnum == 5 && !IS_AFFECTED(ch, AFF_CHARM))
 		{
-			if (ch->in_room->first_person)
-				act(COL_FORCE, "$n obraca siê w proch i wraca tam, sk±d przyby³$o.", ch, NULL, NULL, TO_ROOM);
+			if (!ch->in_room->people.empty())
+				act(COL_FORCE, "$n obraca siï¿½ w proch i wraca tam, skï¿½d przybyï¿½$o.", ch, NULL, NULL, TO_ROOM);
 
 			if (IS_NPC(ch)) /* Guard against purging switched? */
 				extract_char(ch, true);
@@ -879,7 +867,7 @@ void mobile_update(void)
 			act( COL_ACTION, "$n odchodzi.", ch, NULL, NULL, TO_ROOM);
 			char_from_room(ch);
 			char_to_room(ch, ch->was_sentinel);
-			act( COL_ACTION, "$n w³a¶nie przyby³$o.", ch, NULL, NULL, TO_ROOM);
+			act( COL_ACTION, "$n wï¿½aï¿½nie przybyï¿½$o.", ch, NULL, NULL, TO_ROOM);
 			SET_BIT(ch->act, ACT_SENTINEL);
 			ch->was_sentinel = NULL;
 		}
@@ -913,13 +901,13 @@ void mobile_update(void)
 		if (IS_SET(ch->act, ACT_MOUNTED))
 		{
 			if (IS_SET(ch->act, ACT_AGGRESSIVE))
-				do_emote(ch, (char*) "szarpie siê i warczy.");
+				do_emote(ch, (char*) "szarpie siï¿½ i warczy.");
 			continue;
 		}
 
 		if ( IS_SET(ch->in_room->room_flags,
 				ROOM_SAFE) && IS_SET(ch->act, ACT_AGGRESSIVE))
-			do_emote(ch, (char*) "szarpie siê i szamocze.");
+			do_emote(ch, (char*) "szarpie siï¿½ i szamocze.");
 
 		/* MOBprogram random trigger */
 		if (ch->in_room->area->nplayer > 0)
@@ -949,15 +937,14 @@ void mobile_update(void)
 			continue;
 
 		/* Scavenge */
-		if ( IS_SET(ch->act, ACT_SCAVENGER) && ch->in_room->first_content && number_bits(2) == 0)
+		if ( IS_SET(ch->act, ACT_SCAVENGER) && !ch->in_room->contents.empty() && number_bits(2) == 0)
 		{
-			OBJ_DATA *obj;
 			OBJ_DATA *obj_best;
 			int max;
 
 			max = 1;
 			obj_best = NULL;
-			for (obj = ch->in_room->first_content; obj; obj = obj->next_content)
+			for (auto* obj : ch->in_room->contents)
 			{
 				if ( CAN_WEAR(obj, ITEM_TAKE) && obj->cost > max && !IS_OBJ_STAT(obj, ITEM_BURRIED))
 				{
@@ -977,10 +964,10 @@ void mobile_update(void)
 
 		/*
 		 * Tutaj pies jest pogrzebany:
-		 * Mobki ³a¿±c u¿ywaj± f-cji generate_exit wywolywanej w
-		 * move_char() i w ten sposób sprawiaj±, ¿e mud alokuje sobie
-		 * pamiêæ w³a¶ciwie w nieskoñczono¶æ -> trza by j± potem zwolnic
-		 * jako¶ nie? 	--Thanos
+		 * Mobki ï¿½aï¿½ï¿½c uï¿½ywajï¿½ f-cji generate_exit wywolywanej w
+		 * move_char() i w ten sposï¿½b sprawiajï¿½, ï¿½e mud alokuje sobie
+		 * pamiï¿½ï¿½ wï¿½aï¿½ciwie w nieskoï¿½czonoï¿½ï¿½ -> trza by jï¿½ potem zwolnic
+		 * jakoï¿½ nie? 	--Thanos
 		 */
 		/* Wander */
 		if (!IS_SET(ch->act, ACT_RUNNING) && !IS_SET(ch->act, ACT_SENTINEL) && !IS_SET(ch->act, ACT_PROTOTYPE)
@@ -988,7 +975,7 @@ void mobile_update(void)
 				&& !IS_SET(pexit->flags, EX_CLOSED) && !IS_SET(pexit->to_room->room_flags, ROOM_NO_MOB)
 				&& (!IS_SET(ch->act, ACT_STAY_AREA) || pexit->to_room->area == ch->in_room->area))
 		{
-			/* o proszê: */
+			/* o proszï¿½: */
 			retcode = move_char(ch, pexit, 0);
 			//	If ch changes position due
 			//	to it's or someother mob's
@@ -1007,17 +994,16 @@ void mobile_update(void)
 		&& !IS_SET(pexit->flags, EX_CLOSED)
 		&& !IS_SET(pexit->to_room->room_flags, ROOM_NO_MOB))
 		{
-			CHAR_DATA *rch;
 			bool found;
 			found = false;
-			for (rch = ch->in_room->first_person; rch; rch = rch->next_in_room)
+			for (auto* rch : ch->in_room->people)
 			{
 				if (is_fearing(ch, rch))
 				{
 					switch (number_bits(2))
 					{
 					default:
-						sprintf(buf, "Mo¿e siê dogadamy jako¶ %s?", PERS(rch, ch, 0));
+						sprintf(buf, "Moï¿½e siï¿½ dogadamy jakoï¿½ %s?", PERS(rch, ch, 0));
 						break;
 					case 0:
 						sprintf(buf, "Spadaj ode mnie %s!", PERS(rch, ch, 0));
@@ -1026,10 +1012,10 @@ void mobile_update(void)
 						sprintf(buf, "Zostaw mnie w spokoju %s!", PERS(rch, ch, 0));
 						break;
 					case 2:
-						sprintf(buf, "%s chce mnie zabiæ! Pomocy!", PERS(rch, ch, 0));
+						sprintf(buf, "%s chce mnie zabiï¿½! Pomocy!", PERS(rch, ch, 0));
 						break;
 					case 3:
-						sprintf(buf, "Niech mnie kto¶ uratuje od %s!", PERS(rch, ch, 0));
+						sprintf(buf, "Niech mnie ktoï¿½ uratuje od %s!", PERS(rch, ch, 0));
 						break;
 					}
 					do_yell(ch, buf);
@@ -1046,15 +1032,13 @@ void mobile_update(void)
 
 void update_mining()
 {
-	PLANET_DATA *pPlanet;
-	DEPOSIT_DATA *pDeposit;
 	MATERIAL_DATA *pMat;
 
-	FOREACH( pPlanet, first_planet )
+	for (auto* pPlanet : planet_list)
 	{
-		if (pPlanet->first_deposit)
+		if (!pPlanet->deposits.empty())
 		{
-			FOREACH( pDeposit, pPlanet->first_deposit )
+			for (auto* pDeposit : pPlanet->deposits)
 			{
 				if ((pMat = get_material(pDeposit->material_name, U_ORE_FORM)) == NULL)
 				{
@@ -1070,23 +1054,20 @@ void update_mining()
 
 void update_taxes(void)
 {
-	PLANET_DATA *planet;
 	CLAN_DATA *clan;
 
-	FOREACH( planet, first_planet )
+	for (auto* planet : planet_list)
 	{
 		if ((clan = planet->governed_by))
 		{
-			CLAN_DATA *suborg = NULL;
 			int sCount = 0;
 
 			/* Trog: tu raczej trzeba dorobic, ze org czerpie kase z suborg */
-			if (clan->first_suborg)
+			if (!clan->suborgs.empty())
 			{
-				for (suborg = clan->first_suborg; suborg; suborg = suborg->next_suborg)
-					sCount++;
+				sCount = clan->suborgs.size();
 
-				for (suborg = clan->first_suborg; suborg; suborg = suborg->next_suborg)
+				for (auto* suborg : clan->suborgs)
 				{
 					suborg->funds += get_taxes(planet) / 840 / sCount;
 					save_clan(suborg);
@@ -1110,16 +1091,13 @@ void update_taxes(void)
  */
 void weather_update(void)
 {
-	DESCRIPTOR_DATA *d;
-	PLANET_DATA *pPlanet;
 	const char *AT_TEMP = PLAIN;
 	char buf[MAX_STRING_LENGTH];
 	int diff;
 
-	for (pPlanet = first_planet; pPlanet; pPlanet = pPlanet->next)
+	for (auto* pPlanet : planet_list)
 	{
 		SEASON_DATA *pSeason = pPlanet->curr_season;
-		SEASON_DATA *seas;
 		int night = pPlanet->curr_season->night_length;
 		int day = pPlanet->curr_season->day_length;
 		int hour = (++pPlanet->hour);
@@ -1131,33 +1109,41 @@ void weather_update(void)
 		if (hour == night / 2) /* np. 6 dla 24 godz. doby */
 		{
 			pPlanet->sunlight = SUN_RISE;
-			strcat(buf, "S³oñce wschodzi powoli.");
+			strcat(buf, "Sï¿½oï¿½ce wschodzi powoli.");
 			AT_TEMP = FG_YELLOW;
 			pPlanet->temperature += number_range(1, tempdiff / 3);
 		}
 		else if (hour == night / 2 + night / 4) /* np. 9 dla 24 godz. doby */
 		{
 			pPlanet->sunlight = SUN_LIGHT;
-			strcat(buf, "Dzieñ siê rozpocz±³.");
+			strcat(buf, "Dzieï¿½ siï¿½ rozpoczï¿½ï¿½.");
 			AT_TEMP = FG_CYAN;
 
 			pPlanet->temperature += number_range(1, tempdiff / 2);
 
 			mon = 0;
-			/* w ostatni miesi±c pory zaczynamy zbli¿aæ siê
-			 * temperaturowo do nastêpnej */
-			for (seas = pPlanet->first_season; seas; seas = seas->next)
+			/* w ostatni miesiï¿½c pory zaczynamy zbliï¿½aï¿½ siï¿½
+			 * temperaturowo do nastï¿½pnej */
+			for (auto* seas : pPlanet->seasons)
 			{
 				mon += seas->length;
 				if (seas == pPlanet->curr_season)
 					break;
 			}
 
-			if ((pSeason->next && pSeason->temperature != pSeason->next->temperature))
+			/* find next season after pSeason */
+			SEASON_DATA *nextSeason = NULL;
+			{
+				auto sit = std::find(pPlanet->seasons.begin(), pPlanet->seasons.end(), pSeason);
+				if (sit != pPlanet->seasons.end() && ++sit != pPlanet->seasons.end())
+					nextSeason = *sit;
+			}
+
+			if ((nextSeason && pSeason->temperature != nextSeason->temperature))
 			{
 				if (pPlanet->month == mon)
 				{
-					if (pPlanet->temperature > pSeason->next->temperature)
+					if (pPlanet->temperature > nextSeason->temperature)
 						pPlanet->temperature--;
 					else
 						pPlanet->temperature++;
@@ -1167,7 +1153,7 @@ void weather_update(void)
 			{
 				if (pPlanet->month == mon)
 				{
-					if (pPlanet->temperature > pPlanet->first_season->temperature)
+					if (pPlanet->temperature > pPlanet->seasons.front()->temperature)
 						pPlanet->temperature--;
 					else
 						pPlanet->temperature++;
@@ -1177,14 +1163,14 @@ void weather_update(void)
 		else if (hour == (night + day) / 2) /* np. 12 dla 24 godz. doby */
 		{
 			pPlanet->sunlight = SUN_LIGHT;
-			strcat(buf, "Jest po³udnie.");
+			strcat(buf, "Jest poï¿½udnie.");
 			AT_TEMP = FB_YELLOW;
 			pPlanet->temperature += number_range(1, tempdiff / 3);
 		}
 		else if (hour == (night / 2 + day)) /* np. 18 dla 24 godz. doby */
 		{
 			pPlanet->sunlight = SUN_SET;
-			strcat(buf, "S³oñce powoli chyli siê ku zachodowi.");
+			strcat(buf, "Sï¿½oï¿½ce powoli chyli siï¿½ ku zachodowi.");
 			AT_TEMP = FG_RED;
 			pPlanet->temperature -= number_range(1, tempdiff / 3);
 		}
@@ -1207,8 +1193,8 @@ void weather_update(void)
 			pPlanet->month++;
 		}
 
-		mon = 0;/* Liczymy czy up³ynê³a pora roku */
-		for (seas = pPlanet->first_season; seas; seas = seas->next)
+		mon = 0;/* Liczymy czy upï¿½ynï¿½a pora roku */
+		for (auto* seas : pPlanet->seasons)
 		{
 			mon += seas->length;
 			if (seas == pPlanet->curr_season)
@@ -1217,17 +1203,19 @@ void weather_update(void)
 
 		if (pPlanet->month >= mon)
 		{
-			if (pPlanet->curr_season->next)
-				pPlanet->curr_season = pPlanet->curr_season->next;
+			/* advance to next season or wrap around */
+			auto sit = std::find(pPlanet->seasons.begin(), pPlanet->seasons.end(), pPlanet->curr_season);
+			if (sit != pPlanet->seasons.end() && ++sit != pPlanet->seasons.end())
+				pPlanet->curr_season = *sit;
 			else
-			{ /* reset ca³ego roku */
-				pPlanet->curr_season = pPlanet->first_season;
+			{ /* reset caï¿½ego roku */
+				pPlanet->curr_season = pPlanet->seasons.front();
 				pPlanet->month = 1;
 			}
 		}
 
-		mon = 0;/* Liczymy czy up³yn±³ rok (na wszelki) */
-		for (seas = pPlanet->first_season; seas; seas = seas->next)
+		mon = 0;/* Liczymy czy upï¿½ynï¿½ï¿½ rok (na wszelki) */
+		for (auto* seas : pPlanet->seasons)
 			mon += seas->length;
 
 		if (pPlanet->month >= mon)
@@ -1236,7 +1224,7 @@ void weather_update(void)
 		if (buf[0] != '\0')
 		{
 			strcat(buf, PLAIN);
-			for (d = first_descriptor; d; d = d->next)
+			for (auto* d : descriptor_list)
 			{
 				if (d->connected == CON_PLAYING && IS_OUTSIDE(d->character) && IS_AWAKE(d->character) && d->character->in_room->area->planet
 						&& d->character->in_room->area->planet == pPlanet)
@@ -1272,9 +1260,9 @@ void weather_update(void)
 			if (pPlanet->mmhg < 990 || (pPlanet->mmhg < 1010 && number_bits(2) == 0))
 			{
 				if (pPlanet->temperature <= 4)
-					strcat(buf, "Zaczyna padaæ drobny ¶nieg.");
+					strcat(buf, "Zaczyna padaï¿½ drobny ï¿½nieg.");
 				else
-					strcat(buf, "Niebo zaczyna siê chmurzyæ.");
+					strcat(buf, "Niebo zaczyna siï¿½ chmurzyï¿½.");
 				AT_TEMP = PLAIN;
 				pPlanet->temperature -= 2;
 				pPlanet->sky = SKY_CLOUDY;
@@ -1286,9 +1274,9 @@ void weather_update(void)
 			if (pPlanet->mmhg < 970 || (pPlanet->mmhg < 990 && number_bits(2) == 0))
 			{
 				if (pPlanet->temperature <= 4)
-					strcat(buf, "Zaczyna sypaæ ¶nieg.");
+					strcat(buf, "Zaczyna sypaï¿½ ï¿½nieg.");
 				else
-					strcat(buf, "Zaczyna padaæ deszcz.");
+					strcat(buf, "Zaczyna padaï¿½ deszcz.");
 				pPlanet->temperature -= 2;
 				pPlanet->sky = SKY_RAINING;
 				pPlanet->windspeed += 10;
@@ -1297,9 +1285,9 @@ void weather_update(void)
 			if (pPlanet->mmhg > 1030 && number_bits(2) == 0)
 			{
 				if (pPlanet->temperature <= 5)
-					strcat(buf, "¦nieg przestaje sypaæ.");
+					strcat(buf, "ï¿½nieg przestaje sypaï¿½.");
 				else
-					strcat(buf, "Chmury rozwiewaj± siê.");
+					strcat(buf, "Chmury rozwiewajï¿½ siï¿½.");
 				pPlanet->temperature += 2;
 				pPlanet->sky = SKY_CLOUDLESS;
 				pPlanet->windspeed -= 10;
@@ -1311,9 +1299,9 @@ void weather_update(void)
 			if (pPlanet->mmhg < 970 && number_bits(2) == 0)
 			{
 				if (pPlanet->temperature <= 4)
-					strcat(buf, "S³yszysz odg³osy burzy ¶nie¿nej w oddali.");
+					strcat(buf, "Sï¿½yszysz odgï¿½osy burzy ï¿½nieï¿½nej w oddali.");
 				else
-					strcat(buf, "B³yskawica przeszywa niebo.");
+					strcat(buf, "Bï¿½yskawica przeszywa niebo.");
 				pPlanet->temperature -= 3;
 				pPlanet->sky = SKY_LIGHTNING;
 				pPlanet->windspeed += 10;
@@ -1323,9 +1311,9 @@ void weather_update(void)
 			if (pPlanet->mmhg > 1030 || (pPlanet->mmhg > 1010 && number_bits(2) == 0))
 			{
 				if (pPlanet->temperature <= 4)
-					strcat(buf, "¦nieg przestaje sypaæ.");
+					strcat(buf, "ï¿½nieg przestaje sypaï¿½.");
 				else
-					strcat(buf, "Przesta³o padaæ.");
+					strcat(buf, "Przestaï¿½o padaï¿½.");
 				pPlanet->temperature += 6;
 				pPlanet->sky = SKY_CLOUDY;
 				pPlanet->windspeed -= 10;
@@ -1337,9 +1325,9 @@ void weather_update(void)
 			if (pPlanet->mmhg > 1010 || (pPlanet->mmhg > 990 && number_bits(2) == 0))
 			{
 				if (pPlanet->temperature <= 4)
-					strcat(buf, "Burza oddala siê.");
+					strcat(buf, "Burza oddala siï¿½.");
 				else
-					strcat(buf, "B³yskawice ustaj±.");
+					strcat(buf, "Bï¿½yskawice ustajï¿½.");
 				pPlanet->temperature += 2;
 				pPlanet->sky = SKY_RAINING;
 				pPlanet->windspeed -= 10;
@@ -1355,7 +1343,7 @@ void weather_update(void)
 		if (buf[0] != '\0')
 		{
 			strcat(buf, PLAIN);
-			for (d = first_descriptor; d; d = d->next)
+			for (auto* d : descriptor_list)
 			{
 				if (d->connected == CON_PLAYING && IS_OUTSIDE(d->character) && IS_AWAKE(d->character) && d->character->in_room->area->planet
 						&& d->character->in_room->area->planet == pPlanet)
@@ -1373,20 +1361,14 @@ void weather_update(void)
 void bacta_update()
 {
 	CHAR_DATA *ch;
-	for (ch = last_char; ch; ch = gch_prev)
+	auto bacta_snapshot = char_list;
+	for (auto it = bacta_snapshot.rbegin(); it != bacta_snapshot.rend(); ++it)
 	{
-		if (ch == first_char && ch->prev)
-		{
-			bug("first_char->prev != NULL... fixed", 0);
-			ch->prev = NULL;
-		}
-		gch_prev = ch->prev;
+		ch = *it;
 		set_cur_char(ch);
-		if (gch_prev && gch_prev->next != ch)
-		{
-			bug("ch->prev->next != ch", 0);
-			return;
-		}
+
+		if (char_died(ch))
+			continue;
 
 		if (IS_SET(ch->in_room->room_flags, ROOM_BACTA))
 		{
@@ -1397,8 +1379,8 @@ void bacta_update()
 				ch->hit += number_range(0, 3);
 				if (ch->hit > ch->max_hit)
 					ch->hit = ch->max_hit;
-				ch_printf(ch, "Czujesz, ¿e twoje rany goj± siê du¿o "
-						"szybciej dziêki aromatowi bacty." NL);
+				ch_printf(ch, "Czujesz, ï¿½e twoje rany gojï¿½ siï¿½ duï¿½o "
+						"szybciej dziï¿½ki aromatowi bacty." NL);
 			}
 
 			if (ch->move < ch->max_move)
@@ -1407,8 +1389,8 @@ void bacta_update()
 				ch->move += number_range(0, 3);
 				if (ch->move > ch->max_move)
 					ch->move = ch->max_move;
-				ch_printf(ch, "Aromat bacty dzia³a na ciebie koj±co,"
-						" czujesz jak zmêczenie odchodzi." NL);
+				ch_printf(ch, "Aromat bacty dziaï¿½a na ciebie kojï¿½co,"
+						" czujesz jak zmï¿½czenie odchodzi." NL);
 			}
 		}
 	}
@@ -1427,20 +1409,14 @@ void char_update(void)
 	int break_control = 0;
 
 	ch_save = NULL;
-	for (ch = last_char; ch; ch = gch_prev)
+	auto charupd_snapshot = char_list;
+	for (auto it = charupd_snapshot.rbegin(); it != charupd_snapshot.rend(); ++it)
 	{
-		if (ch == first_char && ch->prev)
-		{
-			bug("first_char->prev != NULL... fixed", 0);
-			ch->prev = NULL;
-		}
-		gch_prev = ch->prev;
+		ch = *it;
 		set_cur_char(ch);
-		if (gch_prev && gch_prev->next != ch)
-		{
-			bug("ch->prev->next != ch", 0);
-			return;
-		}
+
+		if (char_died(ch))
+			continue;
 
 		/*
 		 *  Do a room_prog rand check right off the bat
@@ -1492,7 +1468,7 @@ void char_update(void)
 			{
 				affect_strip(ch, gsn_dominate);
 				stop_follower(ch);
-				send_to_char("Czujesz siê jako¶ swobodniej." NL, ch);
+				send_to_char("Czujesz siï¿½ jakoï¿½ swobodniej." NL, ch);
 			}
 		}
 
@@ -1504,8 +1480,8 @@ void char_update(void)
 				if (--obj->value[2] == 0 && ch->in_room)
 				{
 					ch->in_room->light -= obj->count;
-					act( COL_ACTION, "$p ga¶nie.", ch, obj, NULL, TO_ROOM);
-					act( COL_ACTION, "$p ga¶nie.", ch, obj, NULL, TO_CHAR);
+					act( COL_ACTION, "$p gaï¿½nie.", ch, obj, NULL, TO_ROOM);
+					act( COL_ACTION, "$p gaï¿½nie.", ch, obj, NULL, TO_CHAR);
 					if (obj->serial == cur_obj)
 						global_objcode = rOBJ_EXPIRED;
 					extract_obj(obj);
@@ -1585,9 +1561,9 @@ void char_update(void)
 			 */
 			if (IS_AFFECTED(ch, AFF_POISON))
 			{
-				act( COL_POISON, "$n trzêsie siê i cierpi.", ch, NULL, NULL,
+				act( COL_POISON, "$n trzï¿½sie siï¿½ i cierpi.", ch, NULL, NULL,
 				TO_ROOM);
-				act( COL_POISON, "Trzêsiesz siê i cierpisz.", ch, NULL, NULL,
+				act( COL_POISON, "Trzï¿½siesz siï¿½ i cierpisz.", ch, NULL, NULL,
 				TO_CHAR);
 				ch->mental_state = URANGE(20, ch->mental_state + 4, 100);
 				damage(ch, ch, 6, gsn_poison);
@@ -1603,38 +1579,38 @@ void char_update(void)
 				switch ((ch->mental_state + 5) / 10)
 				{
 				case 3:
-					send_to_char("Nienajlepiej siê czujesz." NL, ch);
-					act( COL_ACTION, "$n nie wygl±da najlepiej.", ch, NULL, NULL, TO_ROOM);
+					send_to_char("Nienajlepiej siï¿½ czujesz." NL, ch);
+					act( COL_ACTION, "$n nie wyglï¿½da najlepiej.", ch, NULL, NULL, TO_ROOM);
 					break;
 				case 4:
-					send_to_char("¬le siê czujesz." NL, ch);
-					act( COL_ACTION, "$n ¼le siê czuje.", ch, NULL, NULL,
+					send_to_char("ï¿½le siï¿½ czujesz." NL, ch);
+					act( COL_ACTION, "$n ï¿½le siï¿½ czuje.", ch, NULL, NULL,
 					TO_ROOM);
 					break;
 				case 5:
 					send_to_char("Potrzebujesz pomocy!" NL, ch);
-					act( COL_ACTION, "$n wygl±da jakby potrzebowa³$o pomocy.", ch, NULL, NULL, TO_ROOM);
+					act( COL_ACTION, "$n wyglï¿½da jakby potrzebowaï¿½$o pomocy.", ch, NULL, NULL, TO_ROOM);
 					break;
 				case 6:
 					send_to_char("Szukaj lepiej lekarza." NL, ch);
-					act( COL_ACTION, "Niech kto¶ wezwie po lekarza dla $n$1.", ch, NULL, NULL, TO_ROOM);
+					act( COL_ACTION, "Niech ktoï¿½ wezwie po lekarza dla $n$1.", ch, NULL, NULL, TO_ROOM);
 					break;
 				case 7:
-					send_to_char("Czujesz jak ¶wiat rozmywa ci siê przed oczyma..." NL, ch);
-					act( COL_ACTION, "$n wygl±da jakby traci³$o poczucie rzeczywisto¶ci.", ch, NULL, NULL, TO_ROOM);
+					send_to_char("Czujesz jak ï¿½wiat rozmywa ci siï¿½ przed oczyma..." NL, ch);
+					act( COL_ACTION, "$n wyglï¿½da jakby traciï¿½$o poczucie rzeczywistoï¿½ci.", ch, NULL, NULL, TO_ROOM);
 					break;
 				case 8:
-					send_to_char("Zaczynasz rozumieæ... wszystko." NL, ch);
-					act( COL_ACTION, "$n zaczyna zachowywaæ siê jak szaleniec!", ch, NULL, NULL, TO_ROOM);
+					send_to_char("Zaczynasz rozumieï¿½... wszystko." NL, ch);
+					act( COL_ACTION, "$n zaczyna zachowywaï¿½ siï¿½ jak szaleniec!", ch, NULL, NULL, TO_ROOM);
 					break;
 				case 9:
-					send_to_char("W ca³ym wszech¶wiecie jeste¶ tylko TY." NL, ch);
-					act( COL_ACTION, "$n be³kocze co¶ o 'odpowiedzi', 'JEDYNYM' i"
-							" jakie¶ tam mumbo-jumbo...", ch, NULL, NULL, TO_ROOM);
+					send_to_char("W caï¿½ym wszechï¿½wiecie jesteï¿½ tylko TY." NL, ch);
+					act( COL_ACTION, "$n beï¿½kocze coï¿½ o 'odpowiedzi', 'JEDYNYM' i"
+							" jakieï¿½ tam mumbo-jumbo...", ch, NULL, NULL, TO_ROOM);
 					break;
 				case 10:
-					send_to_char("Czujesz, ¿e koniec jest ju¿ bliski." NL, ch);
-					act( COL_ACTION, "$n poci siê strasznie i wije w konwulsjach...", ch, NULL, NULL, TO_ROOM);
+					send_to_char("Czujesz, ï¿½e koniec jest juï¿½ bliski." NL, ch);
+					act( COL_ACTION, "$n poci siï¿½ strasznie i wije w konwulsjach...", ch, NULL, NULL, TO_ROOM);
 					break;
 				}
 
@@ -1666,28 +1642,28 @@ void char_update(void)
 						if (ch->position < POS_SITTING && (number_percent() + 30) < abs(ch->mental_state))
 							do_sleep(ch, (char*) "");
 						else
-							ch_printf(ch, "Jeste¶ mocno wyczerpan%s." NL, SEX_SUFFIX_YAE(ch));
+							ch_printf(ch, "Jesteï¿½ mocno wyczerpan%s." NL, SEX_SUFFIX_YAE(ch));
 					}
 					break;
 				case 7:
 					if (ch->position > POS_RESTING)
-						send_to_char("Nie chce ci siê nic robiæ." NL, ch);
+						send_to_char("Nie chce ci siï¿½ nic robiï¿½." NL, ch);
 					break;
 				case 6:
 					if (ch->position > POS_RESTING)
-						ch_printf(ch, "Jeste¶ bardzo senn%s." NL, SEX_SUFFIX_YAE(ch));
+						ch_printf(ch, "Jesteï¿½ bardzo senn%s." NL, SEX_SUFFIX_YAE(ch));
 					break;
 				case 5:
 					if (ch->position > POS_RESTING)
-						ch_printf(ch, "Jeste¶ senn%s." NL, SEX_SUFFIX_YAE(ch));
+						ch_printf(ch, "Jesteï¿½ senn%s." NL, SEX_SUFFIX_YAE(ch));
 					break;
 				case 4:
 					if (ch->position > POS_RESTING)
-						ch_printf(ch, "Jeste¶ zmêczon%s." NL, SEX_SUFFIX_YAE(ch));
+						ch_printf(ch, "Jesteï¿½ zmï¿½czon%s." NL, SEX_SUFFIX_YAE(ch));
 					break;
 				case 3:
 					if (ch->position > POS_RESTING)
-						send_to_char("Przyda³by ci siê wypoczynek." NL, ch);
+						send_to_char("Przydaï¿½by ci siï¿½ wypoczynek." NL, ch);
 					break;
 				}
 
@@ -1722,7 +1698,7 @@ void char_update(void)
 			char_from_room(ch);
 			char_to_room(ch, get_room_index( ROOM_VNUM_TEMPLE));
 			save_char_obj(ch);
-			send_to_char("Koniec izolacji. Wychodzisz na wolno¶æ." NL, ch);
+			send_to_char("Koniec izolacji. Wychodzisz na wolnoï¿½ï¿½." NL, ch);
 		}
 
 		/* Trog */
@@ -1731,7 +1707,7 @@ void char_update(void)
 			STRDUP(ch->pcdata->silenced_by, "");
 			ch->pcdata->unsilence_date = 0;
 			save_char_obj(ch);
-			send_to_char("Koniec ciszy. Mo¿esz ju¿ rozmawiaæ." NL, ch);
+			send_to_char("Koniec ciszy. Moï¿½esz juï¿½ rozmawiaï¿½." NL, ch);
 		}
 	}
 	return;
@@ -1746,22 +1722,13 @@ void obj_update(void)
 	OBJ_DATA *obj;
 	const char *AT_TEMP;
 
-	for (obj = last_object; obj; obj = gobj_prev)
+	auto obj_snapshot = object_list;
+	for (auto oit = obj_snapshot.rbegin(); oit != obj_snapshot.rend(); ++oit)
 	{
+		obj = *oit;
 		CHAR_DATA *rch;
 		const char *message;
 
-		if (obj == first_object && obj->prev)
-		{
-			bug("first_object->prev != NULL... fixed", 0);
-			obj->prev = NULL;
-		}
-		gobj_prev = obj->prev;
-		if (gobj_prev && gobj_prev->next != obj)
-		{
-			bug("obj->prev->next != obj", 0);
-			return;
-		}
 		set_cur_obj(obj);
 		if (obj->carried_by)
 			oprog_random_trigger(obj);
@@ -1781,11 +1748,11 @@ void obj_update(void)
 			{
 				if (obj->value[3] == WEAPON_LIGHTSABER)
 				{
-					act( PLAIN, "$p zaczyna buczeæ, a ¶wiat³o w nim obumiera.", obj->carried_by, obj, NULL, TO_CHAR);
-					act( PLAIN, "$n zaczyna buczeæ, a ¶wiat³o w nim obumiera.", obj->carried_by, NULL, NULL, TO_ROOM);
+					act( PLAIN, "$p zaczyna buczeï¿½, a ï¿½wiatï¿½o w nim obumiera.", obj->carried_by, obj, NULL, TO_CHAR);
+					act( PLAIN, "$n zaczyna buczeï¿½, a ï¿½wiatï¿½o w nim obumiera.", obj->carried_by, NULL, NULL, TO_ROOM);
 				}
 				else if (obj->value[3] == WEAPON_VIBRO_BLADE)
-					act( PLAIN, "$p przestaje wibrowaæ.", obj->carried_by, obj, NULL, TO_CHAR);
+					act( PLAIN, "$p przestaje wibrowaï¿½.", obj->carried_by, obj, NULL, TO_CHAR);
 			}
 		}
 
@@ -1837,13 +1804,13 @@ void obj_update(void)
 				obj->value[2] = timerfrac;
 				if (obj->item_type == ITEM_DROID_CORPSE)
 				{
-					/* Pogruchotane czê¶ci %s rdzewiej± tutaj. */
+					/* Pogruchotane czï¿½ci %s rdzewiejï¿½ tutaj. */
 					bufptr = one_argument(bufptr, name);
 					sprintf(buf, d_corpse_descs[UMIN(timerfrac - 1, 4)], bufptr);
 				}
 				else
 				{
-					/* Cia³o %s le¿y tutaj. */
+					/* Ciaï¿½o %s leï¿½y tutaj. */
 					sprintf(buf, corpse_descs[UMIN(timerfrac - 1, 4)], capitalize(bufptr));
 				}
 
@@ -1858,7 +1825,7 @@ void obj_update(void)
 		if (obj->timer > 0 && obj->timer < 5 && obj->item_type == ITEM_ARMOR)
 			if (obj->carried_by)
 			{
-				act( COL_ACTION, "$p jest niemal bezu¿yteczne.", obj->carried_by, obj, NULL, TO_CHAR);
+				act( COL_ACTION, "$p jest niemal bezuï¿½yteczne.", obj->carried_by, obj, NULL, TO_CHAR);
 			}
 
 		if ((obj->timer <= 0 || --obj->timer > 0))
@@ -1870,7 +1837,7 @@ void obj_update(void)
 		switch (obj->item_type)
 		{
 		default:
-			message = "$p zu¿ywa siê.";
+			message = "$p zuï¿½ywa siï¿½.";
 			AT_TEMP = PLAIN;
 			break;
 		case ITEM_GRENADE:
@@ -1878,7 +1845,7 @@ void obj_update(void)
 			return;
 // 				break;
 		case ITEM_PORTAL:
-			message = "$p zamyka siê i znika.";
+			message = "$p zamyka siï¿½ i znika.";
 			remove_portal(obj);
 			obj->item_type = ITEM_TRASH; /* so extract_obj	 */
 			AT_TEMP = COL_FORCE; /* doesn't remove_portal */
@@ -1888,19 +1855,19 @@ void obj_update(void)
 			AT_TEMP = FB_BLUE;
 			break;
 		case ITEM_CORPSE_NPC:
-			message = "$p zamienia siê w kupkê prochu i znika.";
+			message = "$p zamienia siï¿½ w kupkï¿½ prochu i znika.";
 			AT_TEMP = COL_OBJECT;
 			break;
 		case ITEM_DROID_CORPSE:
-			message = "$p rdzewieje na drobny py³.";
+			message = "$p rdzewieje na drobny pyï¿½.";
 			AT_TEMP = COL_OBJECT;
 			break;
 		case ITEM_CORPSE_PC:
-			message = "$p zamienia siê w kupkê prochu i znika...";
+			message = "$p zamienia siï¿½ w kupkï¿½ prochu i znika...";
 			AT_TEMP = COL_FORCE;
 			break;
 		case ITEM_FOOD:
-			message = "Gromada robaków ob³azi $p$3.";
+			message = "Gromada robakï¿½w obï¿½azi $p$3.";
 			AT_TEMP = COL_HUNGRY;
 			break;
 		case ITEM_BLOODSTAIN:
@@ -1908,14 +1875,14 @@ void obj_update(void)
 			AT_TEMP = FG_RED;
 			break;
 		case ITEM_SCRAPS:
-			message = "$p rozpadaj± siê i znikaj±.";
+			message = "$p rozpadajï¿½ siï¿½ i znikajï¿½.";
 			AT_TEMP = COL_OBJECT;
 			break;
 		}
 
 		if (obj->carried_by)
 			act(AT_TEMP, message, obj->carried_by, obj, NULL, TO_CHAR);
-		else if (obj->in_room && (rch = obj->in_room->first_person) != NULL && !IS_OBJ_STAT(obj, ITEM_BURRIED))
+		else if (obj->in_room && !obj->in_room->people.empty() && (rch = obj->in_room->people.front()) != NULL && !IS_OBJ_STAT(obj, ITEM_BURRIED))
 		{
 			act(AT_TEMP, message, rch, obj, NULL, TO_ROOM);
 			act(AT_TEMP, message, rch, obj, NULL, TO_CHAR);
@@ -1934,17 +1901,16 @@ void obj_update(void)
  */
 void char_check(void)
 {
-	CHAR_DATA *ch, *ch_next;
 	EXIT_DATA *pexit;
 	static int cnt = 0;
 	int door, retcode;
 
 	cnt = (cnt + 1) % 2;
 
-	for (ch = first_char; ch; ch = ch_next)
+	auto charchk_snapshot = char_list;
+	for (auto* ch : charchk_snapshot)
 	{
 		set_cur_char(ch);
-		ch_next = ch->next;
 		will_fall(ch, 0);
 
 		if (char_died(ch))
@@ -2001,7 +1967,7 @@ void char_check(void)
 				REMOVE_BIT(ch->mount->act, ACT_MOUNTED);
 				ch->mount = NULL;
 				ch->position = POS_STANDING;
-				send_to_char("Spadasz z wierzchowca na...ty³ek." NL "OUCH!" NL, ch);
+				send_to_char("Spadasz z wierzchowca na...tyï¿½ek." NL "OUCH!" NL, ch);
 				fevent_trigger(ch, FE_POSITION);
 			}
 
@@ -2018,7 +1984,7 @@ void char_check(void)
 						if (ch->hit <= 0)
 							dam = UMIN(10, dam);
 						if (number_bits(3) == 0)
-							send_to_char("D³awisz siê i krztusisz próbuj±c oddychaæ WOD¡!" NL, ch);
+							send_to_char("Dï¿½awisz siï¿½ i krztusisz prï¿½bujï¿½c oddychaï¿½ WODï¿½!" NL, ch);
 						damage(ch, ch, dam, TYPE_UNDEFINED);
 					}
 				}
@@ -2044,7 +2010,7 @@ void char_check(void)
 							if (ch->hit <= 0)
 								dam = UMIN(10, dam);
 							if (number_bits(3) == 0)
-								send_to_char("Ledwie unikaj±c ¶mierci, krztusisz siê wod±." NL, ch);
+								send_to_char("Ledwie unikajï¿½c ï¿½mierci, krztusisz siï¿½ wodï¿½." NL, ch);
 							damage(ch, ch, dam, TYPE_UNDEFINED);
 						}
 					}
@@ -2069,10 +2035,7 @@ void char_check(void)
  */
 void aggr_update(void)
 {
-	DESCRIPTOR_DATA *d, *dnext;
 	CHAR_DATA *wch;
-	CHAR_DATA *ch;
-	CHAR_DATA *ch_next;
 	CHAR_DATA *victim;
 	struct act_prog_data *apdtmp;
 
@@ -2103,9 +2066,11 @@ void aggr_update(void)
 #endif
 
 	/* check mobprog act queue */
-	while ((apdtmp = mob_act_list) != NULL)
+	while (!mob_act_list.empty())
 	{
-		wch = (CD*) mob_act_list->vo;
+		apdtmp = mob_act_list.front();
+		mob_act_list.pop_front();
+		wch = (CD*) apdtmp->vo;
 		if (!char_died(wch) && wch->mpactnum > 0)
 		{
 			MPROG_ACT_LIST *tmp_act;
@@ -2122,7 +2087,6 @@ void aggr_update(void)
 			wch->mpactnum = 0;
 			wch->mpact = NULL;
 		}
-		mob_act_list = apdtmp->next;
 		DISPOSE(apdtmp);
 	}
 
@@ -2130,18 +2094,18 @@ void aggr_update(void)
 	 * Just check descriptors here for victims to aggressive mobs
 	 * We can check for linkdead victims to mobile_update	-Thoric
 	 */
-	for (d = first_descriptor; d; d = dnext)
+	auto desc_snapshot = descriptor_list;
+	for (auto* d : desc_snapshot)
 	{
-		dnext = d->next;
 		if (d->connected != CON_PLAYING || (wch = d->character) == NULL)
 			continue;
 
 		if (char_died(wch) || IS_NPC(wch) || wch->top_level >= LEVEL_IMMORTAL || !wch->in_room)
 			continue;
 
-		for (ch = wch->in_room->first_person; ch; ch = ch_next)
+		auto people_snapshot = wch->in_room->people;
+		for (auto* ch : people_snapshot)
 		{
-			ch_next = ch->next_in_room;
 
 			if (!IS_NPC(ch) || ch->fighting || IS_AFFECTED(ch, AFF_CHARM) || !IS_AWAKE(ch) || (IS_SET(ch->act, ACT_WIMPY))
 					|| !can_see(ch, wch))
@@ -2198,7 +2162,6 @@ void aggr_update(void)
 void drunk_randoms(CHAR_DATA *ch)
 {
 	CHAR_DATA *rvch = NULL;
-	CHAR_DATA *vch;
 	int drunk;
 	int position;
 
@@ -2222,7 +2185,7 @@ void drunk_randoms(CHAR_DATA *ch)
 		check_social(ch, "fart", "");
 	else if (drunk > (10 + (get_curr_con(ch) / 5)) && number_percent() < (2 * drunk / 18))
 	{
-		for (vch = ch->in_room->first_person; vch; vch = vch->next_in_room)
+		for (auto* vch : ch->in_room->people)
 			if (number_percent() < 10)
 				rvch = vch;
 		check_social(ch, "puke", (char*) (rvch ? rvch->name : ""));
@@ -2242,64 +2205,64 @@ void halucinations(CHAR_DATA *ch)
 		{
 		default:
 		case 1:
-			t = "Energia ciê rozpiera. Nie mo¿esz usiedzieæ w jednym miejscu." NL;
+			t = "Energia ciï¿½ rozpiera. Nie moï¿½esz usiedzieï¿½ w jednym miejscu." NL;
 			break;
 		case 2:
-			t = "£askoczesz wszystkich dooko³a." NL;
+			t = "ï¿½askoczesz wszystkich dookoï¿½a." NL;
 			break;
 		case 3:
-			t = "Czujesz jak dreszcze przechodz± twoje cia³o." NL;
+			t = "Czujesz jak dreszcze przechodzï¿½ twoje ciaï¿½o." NL;
 			break;
 		case 4:
-			t = "Nagle zdajesz sobie sprawê, ze jednak wcale nie jest tak weso³o..." NL;
+			t = "Nagle zdajesz sobie sprawï¿½, ze jednak wcale nie jest tak wesoï¿½o..." NL;
 			break;
 		case 5:
-			t = "Hej! Ci tam ¶miej± siê z ciebie" NL;
+			t = "Hej! Ci tam ï¿½miejï¿½ siï¿½ z ciebie" NL;
 			break;
 		case 6:
-			t = "S³yszysz p³acz. To twoja mama..." NL;
+			t = "Sï¿½yszysz pï¿½acz. To twoja mama..." NL;
 			break;
 		case 7:
-			t = "By³$a¶ ju¿ tutaj?" NL " Nie." NL "   Tak!" NL " Nie..." NL;
+			t = "Byï¿½$aï¿½ juï¿½ tutaj?" NL " Nie." NL "   Tak!" NL " Nie..." NL;
 			break;
 		case 8:
-			t = "Bolesne wspomnienia z dzieciñstwa migaj± w twojej g³owie" NL;
+			t = "Bolesne wspomnienia z dzieciï¿½stwa migajï¿½ w twojej gï¿½owie" NL;
 			break;
 		case 9:
-			t = "S³yszysz jakby kto¶ wo³a³ twoje imiê z daleka..." NL;
+			t = "Sï¿½yszysz jakby ktoï¿½ woï¿½aï¿½ twoje imiï¿½ z daleka..." NL;
 			break;
 		case 10:
-			t = "G³owa ci pêka, nie mo¿esz siê na niczym skupiæ.";
+			t = "Gï¿½owa ci pï¿½ka, nie moï¿½esz siï¿½ na niczym skupiï¿½.";
 			break;
 		case 11:
-			t = "Ziemia... Ona chyba siê rozstêpuje!" NL;
+			t = "Ziemia... Ona chyba siï¿½ rozstï¿½puje!" NL;
 			break;
 		case 12:
-			t = "Nie bardzo wiesz co jest prawd±, a co nie." NL;
+			t = "Nie bardzo wiesz co jest prawdï¿½, a co nie." NL;
 			break;
 		case 13:
-			t = "To wszystko jest snem. A mo¿e nie jest?" NL;
+			t = "To wszystko jest snem. A moï¿½e nie jest?" NL;
 			break;
 		case 14:
-			t = "Oni nadchodz±. Oni s± coraz bli¿ej. Widz± ciê." NL;
+			t = "Oni nadchodzï¿½. Oni sï¿½ coraz bliï¿½ej. Widzï¿½ ciï¿½." NL;
 			break;
 		case 15:
-			t = "MOC wype³nia ca³e twoje cia³o!" NL;
+			t = "MOC wypeï¿½nia caï¿½e twoje ciaï¿½o!" NL;
 			break;
 		case 16:
-			t = "Jeste¶ lekk$z jak piórko... niebo stoi dla ciebie otworem." NL;
+			t = "Jesteï¿½ lekk$z jak piï¿½rko... niebo stoi dla ciebie otworem." NL;
 			break;
 		case 17:
-			t = "Ca³e twoje ¿ycie mignê³o ci przed oczyma. O, a teraz twoja przysz³o¶æ." NL;
+			t = "Caï¿½e twoje ï¿½ycie mignï¿½o ci przed oczyma. O, a teraz twoja przyszï¿½oï¿½ï¿½." NL;
 			break;
 		case 18:
-			t = "Jeste¶ wszêdzie i wszystkim. Znasz wszystko i wszystkich." NL;
+			t = "Jesteï¿½ wszï¿½dzie i wszystkim. Znasz wszystko i wszystkich." NL;
 			break;
 		case 19:
-			t = "Czy jeste¶ nie¶mierteln$y?" NL;
+			t = "Czy jesteï¿½ nieï¿½mierteln$y?" NL;
 			break;
 		case 20:
-			t = "Ahhh... W³adza Absolutna... Co zrobiæ... Co zrobiæ?" NL;
+			t = "Ahhh... Wï¿½adza Absolutna... Co zrobiï¿½... Co zrobiï¿½?" NL;
 			break;
 		}
 		act( PLAIN, t, ch, NULL, NULL, TO_CHAR);
@@ -2309,22 +2272,20 @@ void halucinations(CHAR_DATA *ch)
 
 void tele_update(void)
 {
-	TELEPORT_DATA *tele, *tele_next;
-
-	if (!first_teleport)
+	if (teleport_list.empty())
 		return;
 
-	for (tele = first_teleport; tele; tele = tele_next)
+	auto tele_snapshot = teleport_list;
+	for (auto* tele : tele_snapshot)
 	{
-		tele_next = tele->next;
 		if (--tele->timer <= 0)
 		{
-			if (tele->room->first_person)
+			if (!tele->room->people.empty())
 			{
-				teleport(tele->room->first_person, tele->room->tele_vnum,
+				teleport(tele->room->people.front(), tele->room->tele_vnum,
 				TELE_TRANSALL);
 			}
-			UNLINK(tele, first_teleport, last_teleport, next, prev);
+			teleport_list.remove(tele);
 			DISPOSE(tele);
 		}
 	}
@@ -2342,7 +2303,7 @@ void auth_update( void )
 	bool 				first_time 	= true;
 			/* so titles are only done once */
 
-	for ( d = first_descriptor; d; d = d->next )
+	for (auto* d : descriptor_list)
 	{
 		victim = d->character;
 
@@ -2365,14 +2326,13 @@ void auth_update( void )
 void auth_update(void)
 {
 	CHAR_DATA *victim;
-	DESCRIPTOR_DATA *d;
 	char buf[MAX_INPUT_LENGTH];
 	bool found = false; /* was at least one found? */
 
 #if defined(__FreeBSD__) && __FreeBSD__ == 5
 	cpu_usage();
 #endif
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		if ((victim = d->character) && IS_WAITING_FOR_AUTH(victim))
 		{
@@ -2393,32 +2353,32 @@ void update_informs()
 {
 	DESCRIPTOR_DATA *d = 0;
 	CHAR_DATA *killer = 0;
-	INFORM_DATA *inf;
+	INFORM_DATA *inf = nullptr;
 	char buf[MSL];
 	bool found = false;
 
-	for (inf = first_inform; inf; inf = inf->next)
+	for (auto* i : inform_list)
 	{
-		if (!inf->reported)
+		if (!i->reported)
 		{
 			struct tm *start;
 
 			/* Tutaj sprawdzenie przeterminowania */
-			start = localtime(&inf->time);
+			start = localtime(&i->time);
 			start->tm_hour += 24;
 			start = update_time(start);
 
 			if (mktime(start) < current_time)
 			{
-				UNLINK(inf, first_inform, last_inform, next, prev);
-				free_inform(inf);
+				inform_list.remove(i);
+				free_inform(i);
 				save_informs();
 				return;
 			}
 		}
 		else
 		{
-			for (d = first_descriptor; d; d = d->next)
+			for (auto* d : descriptor_list)
 			{
 				if (d->connected > CON_PLAYING)
 					continue;
@@ -2426,9 +2386,10 @@ void update_informs()
 				if (!CH(d) || IS_NPC(CH( d )))
 					continue;
 
-				if (!str_cmp( CH( d )->name, inf->attacker))
+				if (!str_cmp( CH( d )->name, i->attacker))
 				{
 					killer = CH(d);
+					inf = i;
 					found = true;
 					break;
 				}
@@ -2441,7 +2402,7 @@ void update_informs()
 	if (!killer || !found)
 		return;
 
-	UNLINK(inf, first_inform, last_inform, next, prev);
+	inform_list.remove(inf);
 	free_inform(inf);
 	save_informs();
 
@@ -2454,7 +2415,7 @@ void update_informs()
 
 	sprintf(buf, "Ha! %s to paskudny MORDERCA!", killer->name);
 	do_chat(Quest_Master, buf);
-	do_chat(Quest_Master, (char*) "Nie ma sprawiedliwo¶ci na tym mudzie!");
+	do_chat(Quest_Master, (char*) "Nie ma sprawiedliwoï¿½ci na tym mudzie!");
 	do_chat(Quest_Master, (char*) "Bracia i Siostry! Do Broni! Zniszczmy ten pomiot!");
 
 	SET_BIT(killer->act, PLR_KILLER);
@@ -2465,9 +2426,7 @@ void update_informs()
 
 void hotel_safe_update()
 {
-	DESCRIPTOR_DATA *d;
-
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		if (d->connected < CON_PLAYING)
 			continue;
@@ -2526,7 +2485,7 @@ void update_handler(void)
 		pulse_mobile = PULSE_MOBILE;
 		mobile_update();
 		scripts_update(); /* Thanos */
-		if (first_quest)
+		if (!quest_list.empty())
 			quest_update(); /* Thanos */
 	}
 
@@ -2543,7 +2502,7 @@ void update_handler(void)
 		update_astro();
 		update_traffic();
 		recharge_ships(); //Pixel tymczasowo do testow
-		update_informs(); /* Thanos, niech tu bêdzie */
+		update_informs(); /* Thanos, niech tu bï¿½dzie */
 	}
 
 	if (--pulse_bus <= 0) /* busy niech lataja WOLNIEJ */
@@ -2588,7 +2547,7 @@ void update_handler(void)
 		weather_update();
 		char_update();
 		obj_update();
-		crime_update(); /* przestêpstwa	-- Thanos 	*/
+		crime_update(); /* przestï¿½pstwa	-- Thanos 	*/
 		//star_update		( );	/* ruchy planet no i narazie..  */
 		/* .."stop" dla pustych statkow */
 	}
@@ -2637,7 +2596,6 @@ void remove_portal(OBJ_DATA *portal)
 {
 	ROOM_INDEX_DATA *fromRoom, *toRoom;
 	CHAR_DATA *ch;
-	EXIT_DATA *pexit;
 	bool found;
 
 	IF_BUG(portal == NULL, "")
@@ -2649,9 +2607,11 @@ void remove_portal(OBJ_DATA *portal)
 	IF_BUG(portal->in_room == NULL, "")
 		return;
 
-	for (pexit = fromRoom->first_exit; pexit; pexit = pexit->next)
+	EXIT_DATA *found_exit = NULL;
+	for (auto* pexit : fromRoom->exits)
 		if (IS_SET(pexit->flags, EX_PORTAL))
 		{
+			found_exit = pexit;
 			found = true;
 			break;
 		}
@@ -2662,13 +2622,13 @@ void remove_portal(OBJ_DATA *portal)
 		return;
 	}
 
-	if (pexit->vdir != DIR_PORTAL)
-		bug("exit in dir %d != DIR_PORTAL", pexit->vdir);
+	if (found_exit->vdir != DIR_PORTAL)
+		bug("exit in dir %d != DIR_PORTAL", found_exit->vdir);
 
-	if ((toRoom = pexit->to_room) == NULL)
+	if ((toRoom = found_exit->to_room) == NULL)
 		bug("toRoom is NULL", 0);
 
-	extract_exit(fromRoom, pexit);
+	extract_exit(fromRoom, found_exit);
 	/* rendunancy */
 	/* send a message to fromRoom */
 	/* ch = fromRoom->first_person; */
@@ -2676,8 +2636,8 @@ void remove_portal(OBJ_DATA *portal)
 	/* act( PLAIN, "A forceal portal below winks from existence.", ch, NULL, NULL, TO_ROOM ); */
 
 	/* send a message to toRoom */
-	if (toRoom && (ch = toRoom->first_person) != NULL)
-		act( PLAIN, "Portal zamyka siê i znika.", ch, NULL, NULL, TO_ROOM);
+	if (toRoom && !toRoom->people.empty() && (ch = toRoom->people.front()) != NULL)
+		act( PLAIN, "Portal zamyka siï¿½ i znika.", ch, NULL, NULL, TO_ROOM);
 
 	/* remove the portal obj: looks better to let update_obj do this */
 	/* extract_obj(portal);  */
@@ -2688,9 +2648,9 @@ void remove_portal(OBJ_DATA *portal)
 void reboot_check(time_t reset)
 {
 	static const char *tmsg[] =
-	{ "1", "2", "3", "4", "5", "6", "7", "8", "9", "UWAGA !!! Za 10 sekund nast±pi %s.", "UWAGA !!! Za 30 sekund nast±pi %s.",
-			"UWAGA !!! Za 1 minutê nast±pi %s.", "UWAGA !!! Za 2 minuty nast±pi %s.", "UWAGA !!! Za 3 minuty nast±pi %s.",
-			"UWAGA !!! Za 4 minuty nast±pi %s.", "UWAGA !!! Za 5 minut nast±pi %s.", "UWAGA !!! Za 10 minut nast±pi %s." };
+	{ "1", "2", "3", "4", "5", "6", "7", "8", "9", "UWAGA !!! Za 10 sekund nastï¿½pi %s.", "UWAGA !!! Za 30 sekund nastï¿½pi %s.",
+			"UWAGA !!! Za 1 minutï¿½ nastï¿½pi %s.", "UWAGA !!! Za 2 minuty nastï¿½pi %s.", "UWAGA !!! Za 3 minuty nastï¿½pi %s.",
+			"UWAGA !!! Za 4 minuty nastï¿½pi %s.", "UWAGA !!! Za 5 minut nastï¿½pi %s.", "UWAGA !!! Za 10 minut nastï¿½pi %s." };
 	static const int times[] =
 	{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 30, 60, 120, 180, 240, 300, 600 };
 	static const int timesize = UMIN(sizeof(times) / sizeof(*times), sizeof(tmsg) / sizeof(*tmsg));
@@ -2713,7 +2673,7 @@ void reboot_check(time_t reset)
 		append_to_file(USAGE_FILE, buf);
 	}
 
-	/* Ten ifcheck jest g³upi i ma go nie byæ     -- Thanos
+	/* Ten ifcheck jest gï¿½upi i ma go nie byï¿½     -- Thanos
 
 	 if ( new_boot_time_t - boot_time < 60*60*18
 	 &&  !set_boot_time->manual )
@@ -2724,17 +2684,14 @@ void reboot_check(time_t reset)
 
 	if (new_boot_time_t <= current_time)
 	{
-		CHAR_DATA *vch;
 		extern bool mud_down;
-		PLANET_DATA *planet;
-		DESCRIPTOR_DATA *d;
 
 		echo_to_all( NL NL
-		"Wyczuwasz, ¿e olbrzymia si³a nie pozwala ci" NL NL
+		"Wyczuwasz, ï¿½e olbrzymia siï¿½a nie pozwala ci" NL NL
 		"dostrzec" NL NL
-		"jak odradza siê ¿ycie ¶wiata..." NL, ECHOTAR_ALL);
+		"jak odradza siï¿½ ï¿½ycie ï¿½wiata..." NL, ECHOTAR_ALL);
 
-		for (d = first_descriptor; d; d = d->next)
+		for (auto* d : descriptor_list)
 		{
 			CHAR_DATA *ch = CH(d);
 			if (!ch)
@@ -2743,7 +2700,7 @@ void reboot_check(time_t reset)
 				evacuate_guests(ch->in_room);
 		}
 
-		for (vch = first_char; vch; vch = vch->next)
+		for (auto* vch : char_list)
 			if (!IS_NPC(vch))
 				save_char_obj(vch);
 
@@ -2753,7 +2710,7 @@ void reboot_check(time_t reset)
 		save_sysdata(sysdata);
 
 		/* Save time and weather */
-		for (planet = first_planet; planet; planet = planet->next)
+		for (auto* planet : planet_list)
 			save_planet(planet);
 
 		if (sysdata.reboot_type == REB_COPYOVER)
@@ -2772,7 +2729,7 @@ void reboot_check(time_t reset)
 		char msg[MSL];
 
 		sprintf(msg, tmsg[trun],
-				sysdata.reboot_type == REB_COPYOVER ? "gor±cy reboot" : sysdata.reboot_type == REB_SHUTDOWN ? "shutdown" : "reboot");
+				sysdata.reboot_type == REB_COPYOVER ? "gorï¿½cy reboot" : sysdata.reboot_type == REB_SHUTDOWN ? "shutdown" : "reboot");
 		echo_to_all(msg, ECHOTAR_ALL);
 		if (trun <= 15)
 			sysdata.DENY_NEW_PLAYERS = true;
@@ -2839,12 +2796,12 @@ void reboot_check( char *arg )
 	if ( new_boot_time_t <= current_time )
 	{
 	    echo_to_all(PLAIN, NL NL
-		"Wyczuwasz, ¿e olbrzymia si³a nie pozwala ci" NL NL
+		"Wyczuwasz, ï¿½e olbrzymia siï¿½a nie pozwala ci" NL NL
 		"dostrzec" NL NL
-		"jak odradza siê ¿ycie ¶wiata..." NL, ECHOTAR_ALL);
+		"jak odradza siï¿½ ï¿½ycie ï¿½wiata..." NL, ECHOTAR_ALL);
 
 		/* Save all characters before booting. */
-		for ( vch = first_char; vch; vch = vch->next )
+		for ( auto* vch : char_list )
 			if ( !IS_NPC( vch ) )
 				save_char_obj( vch );
 		mud_down = true;
@@ -2860,7 +2817,7 @@ void reboot_check( char *arg )
 	{
 		if ( one == false )
 		{
-			sprintf( buf, "Czujesz, ¿e ziemia pod twoimi nogami trzêsie siê! Koniec jest BLISKI!" );
+			sprintf( buf, "Czujesz, ï¿½e ziemia pod twoimi nogami trzï¿½sie siï¿½! Koniec jest BLISKI!" );
 			echo_to_all( PLAIN, buf, ECHOTAR_ALL );
 			one = true;
 			sysdata.DENY_NEW_PLAYERS = true;
@@ -2873,7 +2830,7 @@ void reboot_check( char *arg )
 	{
 		if ( two == false )
 		{
-			sprintf( buf, "B³yskawice strzelaj± tn±c niebo !!!" );
+			sprintf( buf, "Bï¿½yskawice strzelajï¿½ tnï¿½c niebo !!!" );
 			echo_to_all( PLAIN, buf, ECHOTAR_ALL );
 			two = true;
 			sysdata.DENY_NEW_PLAYERS = true;
@@ -2886,7 +2843,7 @@ void reboot_check( char *arg )
 	{
 		if ( three == false )
 		{
-			sprintf( buf, "S³yszysz, ¿e zerwa³ siê potê¿ny wicher. Jêczy zag³uszaj±c wszystko!" );
+			sprintf( buf, "Sï¿½yszysz, ï¿½e zerwaï¿½ siï¿½ potï¿½ny wicher. Jï¿½czy zagï¿½uszajï¿½c wszystko!" );
 			echo_to_all( PLAIN, buf, ECHOTAR_ALL );
 			three = true;
 			sysdata.DENY_NEW_PLAYERS = true;
@@ -2899,7 +2856,7 @@ void reboot_check( char *arg )
 	{
 		if ( four == false )
 		{
-			sprintf( buf, "Niebo przybiera nagle barwê najciemniejszej czerni." );
+			sprintf( buf, "Niebo przybiera nagle barwï¿½ najciemniejszej czerni." );
 			echo_to_all( PLAIN, buf, ECHOTAR_ALL );
 			four = true;
 			sysdata.DENY_NEW_PLAYERS = true;
@@ -2912,7 +2869,7 @@ void reboot_check( char *arg )
 	{
 		if ( five == false )
 		{
-			sprintf( buf, "Zauwa¿asz jak wszystko co ¿yje doko³a obumiera momentalnie." );
+			sprintf( buf, "Zauwaï¿½asz jak wszystko co ï¿½yje dokoï¿½a obumiera momentalnie." );
 			echo_to_all( PLAIN, buf, ECHOTAR_ALL );
 			five = true;
 			sysdata.DENY_NEW_PLAYERS = true;
@@ -2925,7 +2882,7 @@ void reboot_check( char *arg )
 	{
 		if ( ten == false )
 		{
-			sprintf( buf, "S³yszysz jak trzaska lód na zmro¿onych morzach"
+			sprintf( buf, "Sï¿½yszysz jak trzaska lï¿½d na zmroï¿½onych morzach"
 			" i oceanach." );
 			echo_to_all( PLAIN, buf, ECHOTAR_ALL );
 			ten = true;
@@ -2938,8 +2895,8 @@ void reboot_check( char *arg )
 	{
 		if ( fifteen == false )
 		{
-			sprintf( buf, "¦wiat³a doko³a b³yskaj± po to za chwilê porzuciæ ¶wiat"
-					" w bezkresnej ciemno¶ci." );
+			sprintf( buf, "ï¿½wiatï¿½a dokoï¿½a bï¿½yskajï¿½ po to za chwilï¿½ porzuciï¿½ ï¿½wiat"
+					" w bezkresnej ciemnoï¿½ci." );
 			echo_to_all( PLAIN, buf, ECHOTAR_ALL );
 			fifteen = true;
 		}
@@ -2951,7 +2908,7 @@ void reboot_check( char *arg )
 	{
 		if ( thirty == false )
 		{
-		sprintf( buf, "Czujesz jak MOC zmienia ¶wiat doko³a ciebie." );
+		sprintf( buf, "Czujesz jak MOC zmienia ï¿½wiat dokoï¿½a ciebie." );
 		echo_to_all( PLAIN, buf, ECHOTAR_ALL );
 		thirty = true;
 		}
@@ -2990,7 +2947,7 @@ void auction_update(void)
 	 else if ( !pAuction->notes_send && !pAuction->item && !pAuction->item_collected )
 	 send_auction_notes( pAuction, SHIP_SOLD );
 	 }
-	 else if (time_diff < -1209600) //jesli minê³y 2 tygodnie
+	 else if (time_diff < -1209600) //jesli minï¿½y 2 tygodnie
 	 auction_cleanup(pAuction);
 	 }*/
 }
@@ -3010,14 +2967,9 @@ void subtract_times(struct timeval *etime, struct timeval *stime)
 /* Trog */
 void clan_update()
 {
-	CLAN_DATA *clan;
-	CLAN_DATA *clan_next;
-	HQ_DATA *hq;
-	RID *room;
-
-	for (clan = first_clan; clan; clan = clan_next)
+	auto clan_snapshot = clan_list;
+	for (auto* clan : clan_snapshot)
 	{
-		clan_next = clan->next;
 		adjust_clan(clan);
 
 		if ((IS_ORG( clan ) || IS_SUBORG(clan)) && clan->repay_date != 0)
@@ -3026,24 +2978,24 @@ void clan_update()
 
 			if (clan->repay_date < current_time)
 			{
-				DESCRIPTOR_DATA *d;
-				CHAR_DATA *ch;
-
 				/* rozwiazujemy organizacje z powodu nie splacenia pozyczki */
-				FOREACH( d, first_descriptor )
+				for (auto* d : descriptor_list)
+				{
+					CHAR_DATA *ch;
 					if ((ch = d->original) && ch->pcdata && ch->pcdata->clan && ch->pcdata->clan == clan)
 					{
 						ch->pcdata->clan = NULL;
 						save_char_obj(ch);
 					}
-				UNLINK(clan, first_clan, last_clan, next, prev);
+				}
+				clan_list.remove(clan);
 				free_clan(clan);
 			}
 		}
 
-		FOREACH( hq, clan->first_hq )
+		for (auto* hq : clan->hqs)
 		{
-			FOREACH( room, hq->first_room )
+			for (auto* room : hq->rooms)
 				if (room->clan_room.completion_date != 0 && room->clan_room.completion_date < current_time)
 				{
 					room->clan_room.completion_date = 0;
@@ -3055,7 +3007,7 @@ void clan_update()
 
 /*
  added by Thanos:
- poni¿sze funkcje pozwalaj± na stopniowe wykonywanie komend for i rat
+ poniï¿½sze funkcje pozwalajï¿½ na stopniowe wykonywanie komend for i rat
  */
 void clean_for_loop()
 {
@@ -3074,8 +3026,8 @@ void clean_for_loop()
 	STRDUP(for_loop.command, "");
 }
 
-/* no ¿eby itoa nie by³o... */
-char* __itoa(int num)	// defined as itoa (mud.h)
+/* no ï¿½eby itoa nie byï¿½o... */
+char* sw_itoa(int num)	// defined as itoa (mud.h)
 {
 	static char buf[256];
 
@@ -3084,8 +3036,8 @@ char* __itoa(int num)	// defined as itoa (mud.h)
 }
 
 /*
- * ta funkcja przenosi gracza do miejsca, w ktorym pêtla for wykona
- * komendê i 'zwraca' go na miejsce ;) oraz interpretuje komendê
+ * ta funkcja przenosi gracza do miejsca, w ktorym pï¿½tla for wykona
+ * komendï¿½ i 'zwraca' go na miejsce ;) oraz interpretuje komendï¿½
  */
 void exec_command_in_loop(CHAR_DATA *owner, ROOM_INDEX_DATA *room, char *pSource, const char *namebuf)
 {
@@ -3097,8 +3049,8 @@ void exec_command_in_loop(CHAR_DATA *owner, ROOM_INDEX_DATA *room, char *pSource
 	while (*pSource)
 	{
 		/*
-		 podmianka pod '#' nazwy warto¶ci aktualnej zmiennej
-		 BUGFIX: teraz ju¿ mo¿na stosowaæ zmienn± kilkakrotnie
+		 podmianka pod '#' nazwy wartoï¿½ci aktualnej zmiennej
+		 BUGFIX: teraz juï¿½ moï¿½na stosowaï¿½ zmiennï¿½ kilkakrotnie
 		 w jednej komendzie (podmieniamy wszystkie '#')
 		 */
 		if (*pSource == '#')
@@ -3131,7 +3083,7 @@ void exec_command_in_loop(CHAR_DATA *owner, ROOM_INDEX_DATA *room, char *pSource
 
 void update_for()
 {
-	CHAR_DATA *owner;
+	CHAR_DATA *owner = nullptr;
 	CHAR_DATA *victim;
 	bool found = false;
 	ROOM_INDEX_DATA *room;
@@ -3139,15 +3091,16 @@ void update_for()
 	if (for_loop.fStopped)
 		return;
 
-	/* czy w³a¶ciciel jest jescze w grze? */
-	for (owner = first_char; owner; owner = owner->next)
-		if (owner == for_loop.fOwner)
+	/* czy wï¿½aï¿½ciciel jest jescze w grze? */
+	for (auto* ch : char_list)
+		if (ch == for_loop.fOwner)
 		{
+			owner = ch;
 			found = true;
 			break;
 		}
 
-	if ((!found)	//je¶li wyszed³ z gry.
+	if ((!found)	//jeï¿½li wyszedï¿½ z gry.
 	|| (!for_loop.command || for_loop.command[0] == '\0'))
 	{
 		clean_for_loop();
@@ -3155,8 +3108,8 @@ void update_for()
 		return;
 	}
 
-	// ten warunek raczej nie ma szans na wywo³anie (u¿ywa³em go do debugowania)
-	// ale zostawiam, bo jak mawiaj± 'strze¿onego Yoda strze¿e ;)
+	// ten warunek raczej nie ma szans na wywoï¿½anie (uï¿½ywaï¿½em go do debugowania)
+	// ale zostawiam, bo jak mawiajï¿½ 'strzeï¿½onego Yoda strzeï¿½e ;)
 	if (!for_loop.fRoom && !for_loop.fVictim)
 	{
 		bug("No victim or room specified, cleaning For Loop");
@@ -3164,43 +3117,60 @@ void update_for()
 		return;
 	}
 
-	/*wykonujemy komendê*/
+	/*wykonujemy komendï¿½*/
 	if (for_loop.fMobs || for_loop.fMortals || for_loop.fGods)
 	{
 		found = false;
-		for (victim = for_loop.fVictim; victim && !found; victim = victim->prev)
+		victim = NULL;
 		{
-			if ((!victim->in_room) || (victim == owner))
-				continue;
-
-			if (IS_NPC(victim))
+			/* iterate backwards from fVictim's position in char_list */
+			auto vit = std::find(char_list.begin(), char_list.end(), for_loop.fVictim);
+			while (vit != char_list.begin())
 			{
-				if (for_loop.fMobs)
+				--vit;
+				CHAR_DATA *v = *vit;
+				if ((!v->in_room) || (v == owner))
+					continue;
+
+				if (IS_NPC(v))
 				{
-					found = true;
-					break;
+					if (for_loop.fMobs)
+					{
+						victim = v;
+						found = true;
+						break;
+					}
+					else
+						continue;
 				}
-				else
-					continue;
-			}
 
-			if (!IS_NPC(victim))
-			{
-				if (for_loop.fGods && !for_loop.fMortals && get_trust(victim) < LEVEL_IMMORTAL)
-					continue;
+				if (!IS_NPC(v))
+				{
+					if (for_loop.fGods && !for_loop.fMortals && get_trust(v) < LEVEL_IMMORTAL)
+						continue;
 
-				if (!for_loop.fGods && for_loop.fMortals && get_trust(victim) >= LEVEL_IMMORTAL)
-					continue;
+					if (!for_loop.fGods && for_loop.fMortals && get_trust(v) >= LEVEL_IMMORTAL)
+						continue;
+				}
+				victim = v;
+				found = true;
+				break;
 			}
-			found = true;
-			break;
 		}
 
-		if (found)
+		if (found && victim)
 		{
 			const SWString &expanded = name_expand(victim);
 			exec_command_in_loop(owner, victim->in_room, for_loop.command, expanded.c_str());
-			for_loop.fVictim = victim->prev;
+			/* set fVictim to the element before victim */
+			auto vit = std::find(char_list.begin(), char_list.end(), victim);
+			if (vit != char_list.begin())
+			{
+				--vit;
+				for_loop.fVictim = *vit;
+			}
+			else
+				for_loop.fVictim = NULL;
 		}
 		else
 		{
@@ -3211,22 +3181,28 @@ void update_for()
 	}
 	else if (for_loop.fAreaMobs)
 	{
-		for (victim = for_loop.fVictim; victim; victim = victim->next)
+		/* iterate forward from fVictim in char_list */
+		auto vit = std::find(char_list.begin(), char_list.end(), for_loop.fVictim);
+		bool area_found = false;
+		for (; vit != char_list.end(); ++vit)
 		{
+			victim = *vit;
 			if (victim && victim->in_room && victim->in_room->area && victim->in_room->area == for_loop.fArea
 					&& !room_is_private(victim, victim->in_room))
 			{
 				const SWString &expanded = name_expand(victim);
 				exec_command_in_loop(owner, victim->in_room, for_loop.command, expanded.c_str());
-				for_loop.fVictim = victim->next;
+				++vit;
+				for_loop.fVictim = (vit != char_list.end()) ? *vit : NULL;
+				area_found = true;
 				break;
 			}
-			else
-			{
-				ch_printf(owner, "For Loop finished. Made %d iteration%s." NL, for_loop.fCount, for_loop.fCount == 1 ? "" : "s");
-				clean_for_loop();
-				return;
-			}
+		}
+		if (!area_found)
+		{
+			ch_printf(owner, "For Loop finished. Made %d iteration%s." NL, for_loop.fCount, for_loop.fCount == 1 ? "" : "s");
+			clean_for_loop();
+			return;
 		}
 	}
 	else if (for_loop.fEverywhere)
@@ -3244,8 +3220,8 @@ void update_for()
 		}
 		if (for_loop.fRoom >= MAX_VNUM)
 		/*
-		 * bleh -- MAX_VNUM nie zapewnia nam, ¿e polecimy po wszystkich
-		 * 	   zostaj± jeszcze pokoje virtualne
+		 * bleh -- MAX_VNUM nie zapewnia nam, ï¿½e polecimy po wszystkich
+		 * 	   zostajï¿½ jeszcze pokoje virtualne
 		 */
 		{
 			ch_printf(owner, "For Loop finished. Made %d iteration%s." NL, for_loop.fCount, for_loop.fCount == 1 ? "" : "s");
@@ -3269,8 +3245,8 @@ void update_for()
 
 		if (for_loop.fRoom >= MAX_VNUM)
 		/*
-		 * bleh -- MAX_VNUM nie zapewnia nam, ¿e polecimy po wszystkich
-		 * 	   zostaj± jeszcze pokoje virtualne
+		 * bleh -- MAX_VNUM nie zapewnia nam, ï¿½e polecimy po wszystkich
+		 * 	   zostajï¿½ jeszcze pokoje virtualne
 		 */
 		{
 			ch_printf(owner, "For Loop finished. Made %d iteration%s." NL, for_loop.fCount, for_loop.fCount == 1 ? "" : "s");
@@ -3296,21 +3272,22 @@ void clean_rat_loop()
 
 void update_rat()
 {
-	CHAR_DATA *owner;
-	bool found;
+	CHAR_DATA *owner = nullptr;
+	bool found = false;
 
 	if (rat_loop.rStopped)
 		return;
 
-	/* czy w³a¶ciciel jest jescze w grze? */
-	for (owner = first_char; owner; owner = owner->next)
-		if (owner == rat_loop.rOwner)
+	/* czy wï¿½aï¿½ciciel jest jescze w grze? */
+	for (auto* ch : char_list)
+		if (ch == rat_loop.rOwner)
 		{
+			owner = ch;
 			found = true;
 			break;
 		}
 
-	if ((!found)	//je¶li wyszed³ z gry.
+	if ((!found)	//jeï¿½li wyszedï¿½ z gry.
 	|| (!rat_loop.command || rat_loop.command[0] == '\0'))
 	{
 		clean_rat_loop();
@@ -3345,9 +3322,7 @@ void update_rat()
  */
 void update_explosives(void)
 {
-	OBJ_DATA *obj;
-
-	for (obj = first_object; obj; obj = obj->next)
+	for (auto* obj : object_list)
 	{
 		CHAR_DATA *ch;
 		ROOM_INDEX_DATA *room;
@@ -3357,17 +3332,17 @@ void update_explosives(void)
 
 		if (obj->value[2] > 0)
 		{
-			// Thanos : w saferoomach liczniki granatów zatrzymuj± siê
+			// Thanos : w saferoomach liczniki granatï¿½w zatrzymujï¿½ siï¿½
 			room = NULL;
 			if ((ch = obj->carried_by))
 				room = ch->in_room;
 			else if (obj->in_room)
 				room = obj->in_room;
 
-			if (room && room->first_person && IS_SET(room->room_flags, ROOM_SAFE))
+			if (room && !room->people.empty() && IS_SET(room->room_flags, ROOM_SAFE))
 			{
-				act( FB_WHITE, "Ochronne pole si³owe zatrzymuje zapalnik $p$1.", room->first_person, obj, NULL, TO_ROOM);
-				act( FB_WHITE, "Ochronne pole si³owe zatrzymuje zapalnik $p$1.", room->first_person, obj, NULL, TO_CHAR);
+				act( FB_WHITE, "Ochronne pole siï¿½owe zatrzymuje zapalnik $p$1.", room->people.front(), obj, NULL, TO_ROOM);
+				act( FB_WHITE, "Ochronne pole siï¿½owe zatrzymuje zapalnik $p$1.", room->people.front(), obj, NULL, TO_CHAR);
 				obj->value[2] = 0;
 			}
 			// done by Thanos

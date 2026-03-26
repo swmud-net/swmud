@@ -23,8 +23,6 @@
 
 struct	bounty_data
 {
-	BOUNTY_DATA			* next;
-	BOUNTY_DATA			* prev;
 	char				* target;
 	long int			amount;
 	int					type;

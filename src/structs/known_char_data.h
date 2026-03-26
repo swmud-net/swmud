@@ -23,8 +23,6 @@
 
 struct known_char_data
 {
-	KNOWN_CHAR_DATA		* prev;
-	KNOWN_CHAR_DATA		* next;
 	RACE_DATA			* race;
 	char				* name;
 //	int					race;

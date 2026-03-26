@@ -23,6 +23,7 @@
  ****************************************************************************/
 
 #include <time.h>
+#include <iterator>
 #if defined(KEY)
 #undef KEY
 #endif
@@ -59,7 +60,7 @@ const SWString prepare_time(time_t end_time, bool short_form, bool minus)
 	int sek;
 
 	min = time_diff / 60;
-	sek = time_diff - min * 60;	//ile sekund up³yne³o
+	sek = time_diff - min * 60;	//ile sekund upï¿½yneï¿½o
 	hour = min / 60;		//ile godziny
 	min = min - hour * 60;
 	if (hour > 24)
@@ -67,21 +68,21 @@ const SWString prepare_time(time_t end_time, bool short_form, bool minus)
 		day = hour / 24;
 		hour = hour - day * 24;
 		if (!short_form)
-			sprintf(buf1, "%d d%s, %d godzin%s", day, NUMBER_SUFF(day, "zieñ", "ni", "ni"), hour, NUMBER_SUFF(hour, "ê", "y", ""));
+			sprintf(buf1, "%d d%s, %d godzin%s", day, NUMBER_SUFF(day, "zieï¿½", "ni", "ni"), hour, NUMBER_SUFF(hour, "ï¿½", "y", ""));
 		else
 			sprintf(buf1, "%d d, %d h", day, hour);
 	}
 	else if (hour > 0)
 	{
 		if (!short_form)
-			sprintf(buf1, "%d godzin%s, %d minut%s", hour, NUMBER_SUFF(hour, "ê", "y", ""), min, NUMBER_SUFF(min, "ê", "y", ""));
+			sprintf(buf1, "%d godzin%s, %d minut%s", hour, NUMBER_SUFF(hour, "ï¿½", "y", ""), min, NUMBER_SUFF(min, "ï¿½", "y", ""));
 		else
 			sprintf(buf1, "%d h, %d m", hour, min);
 	}
 	else if (min > 0)
 	{
 		if (!short_form)
-			sprintf(buf1, "%d minut%s, %d sekund%s", min, NUMBER_SUFF(min, "ê", "y", ""), sek, NUMBER_SUFF(sek, "a", "y", ""));
+			sprintf(buf1, "%d minut%s, %d sekund%s", min, NUMBER_SUFF(min, "ï¿½", "y", ""), sek, NUMBER_SUFF(sek, "a", "y", ""));
 		else
 			sprintf(buf1, "%d m, %d s", min, sek);
 	}
@@ -106,8 +107,7 @@ bool auction_creator(char *name, AUCTION_DATA *pAuction)
 
 bool is_auction_member(char *name, AUCTION_DATA *pAuction)
 {
-	BETS_PROGRES *pBets;
-	FOREACH(pBets,pAuction->first)
+	for (auto* pBets : pAuction->bets)
 		if (!str_cmp(pBets->name, name))
 			return true;
 	return false;
@@ -115,9 +115,7 @@ bool is_auction_member(char *name, AUCTION_DATA *pAuction)
 
 BETS_PROGRES* get_auction_member(char *name, AUCTION_DATA *pAuction)
 {
-	BETS_PROGRES *pBets;
-
-	FOREACH(pBets,pAuction->first)
+	for (auto* pBets : pAuction->bets)
 		if (!str_cmp(pBets->name, name))
 			return pBets;
 	return NULL;
@@ -127,14 +125,13 @@ AUCTION_DATA* get_auction_nr(CHAR_DATA *ch, int nr, STOCK_EXCHANGE_DATA *pStock)
 {
 	int index = 1;
 	auction_type type;
-	AUCTION_DATA *pAuction = NULL;
 
-	if (!pStock || !pStock->first)
+	if (!pStock || pStock->auctions.empty())
 		return NULL;
 	type = get_auction_type(ch);
 	if (nr < 0)
 		return NULL;
-	FOREACH(pAuction,pStock->first)
+	for (auto* pAuction : pStock->auctions)
 	{
 		if (pAuction->type != type)
 			continue;
@@ -158,9 +155,9 @@ bool auction_started(AUCTION_DATA *pAuction)
 
 bool won_auction(char *name, AUCTION_DATA *pAuction)
 {
-	if (!pAuction->first)
+	if (pAuction->bets.empty())
 		return false;
-	if (!str_cmp(name, pAuction->first->name))
+	if (!str_cmp(name, pAuction->bets.front()->name))
 		return true;
 	return false;
 }
@@ -203,24 +200,24 @@ static void auction_showaffect(CHAR_DATA *ch, AFFECT_DATA *paf)
 		switch (paf->location)
 		{
 		default:
-			sprintf(buf, FG_CYAN "    Wp³ywa na " PLAIN "%s" FG_CYAN " o " PLAIN "%d" FG_CYAN "." EOL, affect_loc_name_pl(paf->location),
+			sprintf(buf, FG_CYAN "    Wpï¿½ywa na " PLAIN "%s" FG_CYAN " o " PLAIN "%d" FG_CYAN "." EOL, affect_loc_name_pl(paf->location),
 					paf->modifier);
 			break;
 		case APPLY_AFFECT:
-			sprintf(buf, FG_CYAN "    Wp³ywa na " PLAIN "%s" FG_CYAN " o " PLAIN, affect_loc_name_pl(paf->location));
+			sprintf(buf, FG_CYAN "    Wpï¿½ywa na " PLAIN "%s" FG_CYAN " o " PLAIN, affect_loc_name_pl(paf->location));
 			strcat(buf, flag_string(aff_flags_list, paf->modifier));
 			strcat(buf, EOL);
 			break;
 		case APPLY_WEAPONSPELL:
 		case APPLY_WEARSPELL:
 		case APPLY_REMOVESPELL:
-			sprintf(buf, FG_CYAN "Potrafi wykonaæ '" PLAIN "%s" FG_CYAN "'" EOL,
+			sprintf(buf, FG_CYAN "Potrafi wykonaï¿½ '" PLAIN "%s" FG_CYAN "'" EOL,
 			IS_VALID_SN(paf->modifier) ? skill_table[paf->modifier]->name : "nie wiadomo co");
 			break;
 		case APPLY_RESISTANT:
 		case APPLY_IMMUNE:
 		case APPLY_SUSCEPTIBLE:
-			sprintf(buf, FG_CYAN "    Wp³ywa na " PLAIN "%s" FG_CYAN " o " PLAIN, affect_loc_name_pl(paf->location));
+			sprintf(buf, FG_CYAN "    Wpï¿½ywa na " PLAIN "%s" FG_CYAN " o " PLAIN, affect_loc_name_pl(paf->location));
 			for (x = 0; x < 32; x++)
 				if (IS_SET(paf->modifier, 1 << x))
 				{
@@ -236,19 +233,19 @@ static void auction_showaffect(CHAR_DATA *ch, AFFECT_DATA *paf)
 
 void auction_item_gather(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 {
-	/*!	Aukcja zakoñczy³a siê. Dany gracz zg³osi³ siê po odbiór
-	 *	wylicytowanego przedmiotu lub gotówki (je¶li to jej twórca) albo
-	 *	te¿ jest to licytant, który postawi³ za ma³o i przyszed³ odebraæ
-	 *	zdeponowan± z góry kwotê.
+	/*!	Aukcja zakoï¿½czyï¿½a siï¿½. Dany gracz zgï¿½osiï¿½ siï¿½ po odbiï¿½r
+	 *	wylicytowanego przedmiotu lub gotï¿½wki (jeï¿½li to jej twï¿½rca) albo
+	 *	teï¿½ jest to licytant, ktï¿½ry postawiï¿½ za maï¿½o i przyszedï¿½ odebraï¿½
+	 *	zdeponowanï¿½ z gï¿½ry kwotï¿½.
 	 */
-	/*! \todo Trzeba obowi¿zkowo doda¿ modyfikacje zale¿ne od typu sprzedawanego
+	/*! \todo Trzeba obowiï¿½zkowo dodaï¿½ modyfikacje zaleï¿½ne od typu sprzedawanego
 	 * przedmiotu	*/
 	BETS_PROGRES *pBets;
 
 	if (auction_creator(ch->name, pAuction))
 	{
-		// jesli ktos licytowal i odebra³ ju¿ przedmiot
-		if (pAuction->item_collected || (!pAuction->item_collected && pAuction->first))
+		// jesli ktos licytowal i odebraï¿½ juï¿½ przedmiot
+		if (pAuction->item_collected || (!pAuction->item_collected && !pAuction->bets.empty()))
 		{
 			int pay, tax;
 			float percent;
@@ -268,9 +265,9 @@ void auction_item_gather(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 
 			boost_economy(ch->in_room->area, tax);
 			ch->gold += pay;
-			ch_printf(ch, "Aukcjoner wyp³aci³ Ci %d kredyt%s, pobieraj¹c"
-					" prowizjê w wysokoœci %d kredyt%s.\n", pay, NUMBER_SUFF(pay, "kê", "ki", "ek"), tax,
-					NUMBER_SUFF(tax, "kê", "ki", "ek"));
+			ch_printf(ch, "Aukcjoner wypï¿½aciï¿½ Ci %d kredyt%s, pobierajï¿½c"
+					" prowizjï¿½ w wysokoï¿½ci %d kredyt%s.\n", pay, NUMBER_SUFF(pay, "kï¿½", "ki", "ek"), tax,
+					NUMBER_SUFF(tax, "kï¿½", "ki", "ek"));
 		}
 		else
 		{
@@ -285,21 +282,21 @@ void auction_item_gather(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 	{
 		if ((ch->carry_weight + get_obj_weight(pAuction->item)) > can_carry_w(ch))
 		{
-			act( PLAIN, "$p to zbyt du¿y ciê¿ar jak dla ciebie w "
+			act( PLAIN, "$p to zbyt duï¿½y ciï¿½ar jak dla ciebie w "
 					"tej chwili.\n", ch, pAuction->item, NULL, TO_CHAR);
-			act( PLAIN, "$n nie mo¿e udŸwign¹æ $p$1 i odrzuca to.\n", ch, pAuction->item, NULL, TO_ROOM);
+			act( PLAIN, "$n nie moï¿½e udï¿½wignï¿½ï¿½ $p$1 i odrzuca to.\n", ch, pAuction->item, NULL, TO_ROOM);
 			obj_to_room(pAuction->item, ch->in_room);
 		}
 		else
 		{
 			obj_to_char(pAuction->item, ch);
-			act(PLAIN, "Aukcjoner daje jakiœ przedmiot $n$2.\n", ch, NULL, NULL, TO_ROOM);
+			act(PLAIN, "Aukcjoner daje jakiï¿½ przedmiot $n$2.\n", ch, NULL, NULL, TO_ROOM);
 			ch_printf(ch, "Aukcjoner daje Ci wylicytowany przedmiot.\n" NL);
 		}
 		pAuction->item = NULL;
 		pAuction->item_collected = true;
-		pBets = pAuction->first;
-		UNLINK(pBets, pAuction->first, pAuction->last, next, prev);
+		pBets = pAuction->bets.front();
+		pAuction->bets.pop_front();
 		free_bets(pBets);
 		pAuction->bidders_count--;
 	}
@@ -307,9 +304,9 @@ void auction_item_gather(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 	{
 		pBets = get_auction_member(ch->name, pAuction);
 		ch->gold += pBets->max_price;
-		ch_printf(ch, "Odbierasz z³o¿on¹ wczeœniej gotówkê.\n");
-		act(PLAIN, "Aukcjoner wyp³aca gotówka $n$2.\n", ch, NULL, NULL, TO_ROOM);
-		UNLINK(pBets, pAuction->first, pAuction->last, next, prev);
+		ch_printf(ch, "Odbierasz zï¿½oï¿½onï¿½ wczeï¿½niej gotï¿½wkï¿½.\n");
+		act(PLAIN, "Aukcjoner wypï¿½aca gotï¿½wka $n$2.\n", ch, NULL, NULL, TO_ROOM);
+		pAuction->bets.remove(pBets);
 		free_bets(pBets);
 		pAuction->bidders_count--;
 	}
@@ -317,7 +314,6 @@ void auction_item_gather(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 
 void auction_show_obj_stats(CHAR_DATA *ch, OBJ_DATA *obj)
 {
-	AFFECT_DATA *paf;
 	SKILLTYPE *sktmp;
 #if defined(ARMAGEDDON)
     REQUIREMENT_DATA 	*req;
@@ -334,14 +330,14 @@ void auction_show_obj_stats(CHAR_DATA *ch, OBJ_DATA *obj)
 	{
 	case ITEM_WEAPON:
 		ch_printf(ch, FG_CYAN
-		"    Zadawane obra¿enia w walce wrêcz " PLAIN "%d" FG_CYAN
-		" do " PLAIN "%d" FG_CYAN " (¶rednio " PLAIN "%d" FG_CYAN ")." EOL, obj->value[1], obj->value[2],
+		"    Zadawane obraï¿½enia w walce wrï¿½cz " PLAIN "%d" FG_CYAN
+		" do " PLAIN "%d" FG_CYAN " (ï¿½rednio " PLAIN "%d" FG_CYAN ")." EOL, obj->value[1], obj->value[2],
 				(obj->value[1] + obj->value[2]) / 2);
 
 		if (obj->value[3] == WEAPON_BLASTER)
 		{
 			ch_printf(ch, FG_CYAN
-			"    Posiada jeszcze " PLAIN "%d" FG_CYAN " na " PLAIN "%d" FG_CYAN " pocisków." EOL, obj->value[4], obj->value[5]);
+			"    Posiada jeszcze " PLAIN "%d" FG_CYAN " na " PLAIN "%d" FG_CYAN " pociskï¿½w." EOL, obj->value[4], obj->value[5]);
 		}
 		else if (obj->value[3] == WEAPON_LIGHTSABER || obj->value[3] == WEAPON_VIBRO_BLADE || obj->value[3] == WEAPON_FORCE_PIKE)
 		{
@@ -353,13 +349,13 @@ void auction_show_obj_stats(CHAR_DATA *ch, OBJ_DATA *obj)
 		{
 			ch_printf(ch, FG_CYAN
 			"    Posiada jeszcze " PLAIN "%d" FG_CYAN " z " PLAIN
-			"%d" FG_CYAN " strza³ energetycznych." NL, obj->value[4], obj->value[5]);
+			"%d" FG_CYAN " strzaï¿½ energetycznych." NL, obj->value[4], obj->value[5]);
 		}
 		break;
 	case ITEM_DEVICE:
 		ch_printf(ch, FG_CYAN
 		"    Posiada " PLAIN "%d" FG_CYAN "(" PLAIN "%d" FG_CYAN
-		") ³adunków na poziomie " PLAIN "%d ", obj->value[1], obj->value[2], obj->value[0]);
+		") ï¿½adunkï¿½w na poziomie " PLAIN "%d ", obj->value[1], obj->value[2], obj->value[0]);
 		if (obj->value[3] >= 0 && (sktmp = get_skilltype(obj->value[3])) != NULL)
 		{
 			send_to_char(" '", ch);
@@ -370,11 +366,11 @@ void auction_show_obj_stats(CHAR_DATA *ch, OBJ_DATA *obj)
 		break;
 
 	case ITEM_AMMO:
-		ch_printf(ch, FG_CYAN "    Posiada " PLAIN "%d" FG_CYAN " pocisków." EOL, obj->value[0]);
+		ch_printf(ch, FG_CYAN "    Posiada " PLAIN "%d" FG_CYAN " pociskï¿½w." EOL, obj->value[0]);
 		break;
 
 	case ITEM_BOLT:
-		ch_printf(ch, FG_CYAN "    Posiada " PLAIN "%d" FG_CYAN " strza³ energetycznych." EOL, obj->value[0]);
+		ch_printf(ch, FG_CYAN "    Posiada " PLAIN "%d" FG_CYAN " strzaï¿½ energetycznych." EOL, obj->value[0]);
 		break;
 
 	case ITEM_BATTERY:
@@ -383,7 +379,7 @@ void auction_show_obj_stats(CHAR_DATA *ch, OBJ_DATA *obj)
 
 	case ITEM_ARMOR:
 		ch_printf(ch, FG_CYAN "    Aktualna klasa zbroi: " PLAIN "%d" FG_CYAN "/" PLAIN "%d" FG_CYAN "." EOL, obj->value[0], obj->value[1]);
-		ch_printf(ch, FG_CYAN "    Dodatkowy wp³yw na uzbrojenie: " PLAIN "%d" FG_CYAN "." EOL, apply_ac(obj, obj->wear_loc));
+		ch_printf(ch, FG_CYAN "    Dodatkowy wpï¿½yw na uzbrojenie: " PLAIN "%d" FG_CYAN "." EOL, apply_ac(obj, obj->wear_loc));
 		break;
 
 	case ITEM_PILL:
@@ -415,15 +411,15 @@ void auction_show_obj_stats(CHAR_DATA *ch, OBJ_DATA *obj)
 		break;
 	}
 
-	for (paf = obj->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->affects)
 		auction_showaffect(ch, paf);
-	for (paf = obj->pIndexData->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->pIndexData->affects)
 		auction_showaffect(ch, paf);
 
 #if defined(ARMAGEDDON)
-	for( req = obj->first_requirement; req; req=req->next )
+	for (auto* req : obj->requirements)
 	explain( ch, req, obj, true );
-	for( req = obj->pIndexData->first_requirement; req; req=req->next )
+	for (auto* req : obj->pIndexData->requirements)
 	explain( ch, req, obj, true );
 #endif
 	send_to_char( PLAIN, ch);
@@ -435,7 +431,7 @@ void auction_show_ship_info(CHAR_DATA *ch, SHIP_DATA *pShip)
 {
 	pager_printf(ch, FG_CYAN "    Licytowany jest " PLAIN "%s",
 			pShip->type == SHIP_REPUBLIC ?
-					"NowoRepublikañski" :
+					"NowoRepublikaï¿½ski" :
 					(pShip->type == SHIP_IMPERIAL ? "Imperialny" : (pShip->type == SHIP_PIRATE ? "Piracki" : "Cywilny")));
 
 	pager_printf(ch, FG_CYAN " statek klasy:" PLAIN " %s" EOL FG_CYAN "    o nazwie :" PLAIN " %s" EOL,
@@ -456,49 +452,48 @@ void auction_show_ship_info(CHAR_DATA *ch, SHIP_DATA *pShip)
 													"capital ships" :
 													(is_huge(pShip) ?
 															"superships" :
-															(is_platform(pShip) ? "platforms" : "Hmm jaki¶ b³±d albo speeder")))))));
+															(is_platform(pShip) ? "platforms" : "Hmm jakiï¿½ bï¿½ï¿½d albo speeder")))))));
 
-	pager_printf(ch, FG_CYAN "    Dzia³ka Laserowe:    " PLAIN "%d"
-	FG_CYAN "    Dzia³ka Jonowe:    " PLAIN "%d" NL, pShip->lasers, pShip->ioncannons);
-	pager_printf(ch, FG_CYAN "    Ilo¶æ pocisków: " PLAIN "%d" FG_CYAN " / "
+	pager_printf(ch, FG_CYAN "    Dziaï¿½ka Laserowe:    " PLAIN "%d"
+	FG_CYAN "    Dziaï¿½ka Jonowe:    " PLAIN "%d" NL, pShip->lasers, pShip->ioncannons);
+	pager_printf(ch, FG_CYAN "    Iloï¿½ï¿½ pociskï¿½w: " PLAIN "%d" FG_CYAN " / "
 	PLAIN "%d" FG_CYAN " / " PLAIN "%d" FG_CYAN "   %s" NL, pShip->maxmissiles, pShip->torpedos, pShip->rockets,
 			pShip->trawler == 0 ? "" : "Zbieracz Min");
-	pager_printf(ch, FG_CYAN "    Ilo¶æ Flar:     " PLAIN "%d" NL, pShip->maxchaff);
-	pager_printf(ch, FG_CYAN "    Wytrzyma³o¶æ Kad³ubu: " PLAIN "%d" NL, pShip->maxhull);
+	pager_printf(ch, FG_CYAN "    Iloï¿½ï¿½ Flar:     " PLAIN "%d" NL, pShip->maxchaff);
+	pager_printf(ch, FG_CYAN "    Wytrzymaï¿½oï¿½ï¿½ Kadï¿½ubu: " PLAIN "%d" NL, pShip->maxhull);
 	pager_printf(ch, FG_CYAN "    Moc Tarczy: " PLAIN "%d"
 	FG_CYAN "   Energia(paliwo): " PLAIN "%d" NL, pShip->maxshield, pShip->maxenergy);
-	pager_printf(ch, FG_CYAN "    Prêdko¶æ:   " PLAIN "%.0f"
-	FG_CYAN "   Hiperprêdko¶æ:        " PLAIN "%.0f" NL, pShip->realspeed, pShip->hyperspeed);
+	pager_printf(ch, FG_CYAN "    Prï¿½dkoï¿½ï¿½:   " PLAIN "%.0f"
+	FG_CYAN "   Hiperprï¿½dkoï¿½ï¿½:        " PLAIN "%.0f" NL, pShip->realspeed, pShip->hyperspeed);
 	pager_printf(ch, FG_CYAN "    Radar:           " PLAIN "Mk%d"
 	FG_CYAN "  System rozpoznawczy:  " PLAIN "Mk%d" NL, pShip->sensor, pShip->target_array);
-	pager_printf(ch, FG_CYAN "    £adowno¶æ " PLAIN "%d" NL, pShip->maxcargo);
+	pager_printf(ch, FG_CYAN "    ï¿½adownoï¿½ï¿½ " PLAIN "%d" NL, pShip->maxcargo);
 }
 
 void show_all_betters(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 {
-	BETS_PROGRES *pBets;
 	const size_t bufsize = 150;
 	char buf[bufsize], color[3];
 
-	pager_printf(ch, PLAIN "      [" FG_CYAN "Nick           " PLAIN "][" FG_CYAN "Iloœæ   " PLAIN "]["
+	pager_printf(ch, PLAIN "      [" FG_CYAN "Nick           " PLAIN "][" FG_CYAN "Iloï¿½ï¿½   " PLAIN "]["
 	FG_CYAN "Cena    " PLAIN "]");
-	//tutaj mozna dodaæ modyfikacje d³ugoœci lini
+	//tutaj mozna dodaï¿½ modyfikacje dï¿½ugoï¿½ci lini
 	if ( IS_IMMORTAL(ch) || is_auction_member(ch->name, pAuction))
 		ch_printf(ch, "[" FG_CYAN "Max cena" PLAIN "]" NL
 		"     ------------------------------------------------" NL);
 	else
 		ch_printf(ch, NL FG_CYAN "     ----------------------------" NL);
 
-	if (!pAuction->first)
+	if (pAuction->bets.empty())
 	{
 		if (IS_IMMORTAL(ch))
 			pager_printf(ch, NL "   ");
-		ch_printf(ch, FG_CYAN "          Brak licytuj±cych" NL NL NL);
+		ch_printf(ch, FG_CYAN "          Brak licytujï¿½cych" NL NL NL);
 	}
 	else
-		FOREACH( pBets, pAuction->first )
+		for (auto* pBets : pAuction->bets)
 		{
-			if (pBets != pAuction->first)
+			if (pBets != pAuction->bets.front())
 				sprintf(color, FG_CYAN);
 			else
 				sprintf(color, FB_YELLOW);
@@ -523,7 +518,7 @@ void show_ship_info(CHAR_DATA *ch, SHIP_DATA *pShip)
 
 	pager_printf(ch, FG_CYAN "Licytowany jest " FB_CYAN "%s",
 			pShip->type == SHIP_REPUBLIC ?
-					"NowoRepublikañski" :
+					"NowoRepublikaï¿½ski" :
 					(pShip->type == SHIP_IMPERIAL ? "Imperialny" : (pShip->type == SHIP_PIRATE ? "Piracki" : "Cywilny")));
 
 	pager_printf(ch, FG_CYAN " statek klasy:" FB_CYAN " %s" EOL FG_CYAN "o nazwie :" FB_CYAN " %s" EOL,
@@ -544,24 +539,24 @@ void show_ship_info(CHAR_DATA *ch, SHIP_DATA *pShip)
 													"capital ships" :
 													(is_huge(pShip) ?
 															"superships" :
-															(is_platform(pShip) ? "platforms" : "Hmm jaki¶ b³±d albo speeder")))))));
+															(is_platform(pShip) ? "platforms" : "Hmm jakiï¿½ bï¿½ï¿½d albo speeder")))))));
 
 	if (*pShip->description)/* I tutaj ja -- Than */
 		pager_printf(ch, "%s" EOL, pShip->description);
-	pager_printf(ch, FG_CYAN "Dzia³ka Laserowe:    " FB_CYAN "%d"
-	FG_CYAN "    Dzia³ka Jonowe:    " FB_CYAN "%d" NL, pShip->lasers, pShip->ioncannons);
-	pager_printf(ch, FG_CYAN "Max. Ilo¶æ pocisków: " FB_CYAN "%d" FG_CYAN " / "
+	pager_printf(ch, FG_CYAN "Dziaï¿½ka Laserowe:    " FB_CYAN "%d"
+	FG_CYAN "    Dziaï¿½ka Jonowe:    " FB_CYAN "%d" NL, pShip->lasers, pShip->ioncannons);
+	pager_printf(ch, FG_CYAN "Max. Iloï¿½ï¿½ pociskï¿½w: " FB_CYAN "%d" FG_CYAN " / "
 	FB_CYAN "%d" FG_CYAN " / " FB_CYAN "%d" FG_CYAN "   %s" NL, pShip->maxmissiles, pShip->torpedos, pShip->rockets,
 			pShip->trawler == 0 ? "" : "Zbieracz Min");
-	pager_printf(ch, FG_CYAN "Max. Ilo¶æ Flar:     " FB_CYAN "%d" NL, pShip->maxchaff);
-	pager_printf(ch, FG_CYAN "Max. Wytrzyma³o¶æ Kad³ubu: " FB_CYAN "%d" NL, pShip->maxhull);
+	pager_printf(ch, FG_CYAN "Max. Iloï¿½ï¿½ Flar:     " FB_CYAN "%d" NL, pShip->maxchaff);
+	pager_printf(ch, FG_CYAN "Max. Wytrzymaï¿½oï¿½ï¿½ Kadï¿½ubu: " FB_CYAN "%d" NL, pShip->maxhull);
 	pager_printf(ch, FG_CYAN "Max. Moc Tarczy: " FB_CYAN "%d"
 	FG_CYAN "   Max. Energia(paliwo): " FB_CYAN "%d" NL, pShip->maxshield, pShip->maxenergy);
-	pager_printf(ch, FG_CYAN "Max. Prêdko¶æ:   " FB_CYAN "%.0f"
-	FG_CYAN "    Hiperprêdko¶æ:        " FB_CYAN "%.0f" NL, pShip->realspeed, pShip->hyperspeed);
+	pager_printf(ch, FG_CYAN "Max. Prï¿½dkoï¿½ï¿½:   " FB_CYAN "%.0f"
+	FG_CYAN "    Hiperprï¿½dkoï¿½ï¿½:        " FB_CYAN "%.0f" NL, pShip->realspeed, pShip->hyperspeed);
 	pager_printf(ch, FG_CYAN "Radar:           " FB_CYAN "Mk%d"
 	FG_CYAN "  System rozpoznawczy:  " FB_CYAN "Mk%d" NL, pShip->sensor, pShip->target_array);
-	pager_printf(ch, FG_CYAN "£adowno¶æ " FB_CYAN "%d" NL, pShip->maxcargo);
+	pager_printf(ch, FG_CYAN "ï¿½adownoï¿½ï¿½ " FB_CYAN "%d" NL, pShip->maxcargo);
 }
 
 void show_auction_data(CHAR_DATA *ch, AUCTION_DATA *pAuction, int number)
@@ -575,13 +570,13 @@ void show_auction_data(CHAR_DATA *ch, AUCTION_DATA *pAuction, int number)
 	 if ( auction_finished( pAuction ) && !auction_creator( ch->name, pAuction )
 	 && !is_auction_member( ch->name, pAuction ) )
 	 {
-	 ch_printf( ch, "Ta aukcja jest ju¿ zakoñczona i nie masz do"
-	 " niej dostêpu." NL );
+	 ch_printf( ch, "Ta aukcja jest juï¿½ zakoï¿½czona i nie masz do"
+	 " niej dostï¿½pu." NL );
 	 return;
 	 }
 	 if ( !auction_started( pAuction ) && !auction_creator( ch->name, pAuction) )
 	 {
-	 ch_printf( ch, "Ta aukcja jeszcze siê nie rozpocze³a." NL);
+	 ch_printf( ch, "Ta aukcja jeszcze siï¿½ nie rozpoczeï¿½a." NL);
 	 return;
 	 }
 	 if ( auction_ship( pAuction ) )
@@ -605,19 +600,19 @@ void show_auction_data(CHAR_DATA *ch, AUCTION_DATA *pAuction, int number)
 	 else if ( auction_ship( pAuction ) )
 	 show_ship_info(ch, pShip );
 	 else
-	 ch_printf( ch, FG_CYAN "Przedmiot licytacji zosta³ ju¿ odebrany" NL);
+	 ch_printf( ch, FG_CYAN "Przedmiot licytacji zostaï¿½ juï¿½ odebrany" NL);
 
 	 ch_printf( ch, FG_CYAN "Opis :" FB_CYAN "%s" EOL,pAuction->desc );
 
 	 if ( pAuction->bet > 0 )
 	 ch_printf ( ch, NL FG_CYAN "Aktualna stawka  : " FB_CYAN "%s" FG_CYAN " kredyt%s." NL NL,
 	 advitoa( pAuction->bet, true),
-	 NUMBER_SUFF( pAuction->bet, "kê", "ki", "ek" ) );
+	 NUMBER_SUFF( pAuction->bet, "kï¿½", "ki", "ek" ) );
 
 
 
-	 if ( pAuction->first == NULL )
-	 ch_printf( ch, NL FG_CYAN "Brak licytuj±cych" NL);
+	 if ( pAuction->bets.empty() )
+	 ch_printf( ch, NL FG_CYAN "Brak licytujï¿½cych" NL);
 	 else
 	 {
 	 if ( IS_IMMORTAL(ch) )
@@ -625,9 +620,9 @@ void show_auction_data(CHAR_DATA *ch, AUCTION_DATA *pAuction, int number)
 	 " -------------------------------------" NL);
 	 else
 	 ch_printf( ch, FG_CYAN " --------------------------------" NL);
-	 FOREACH( pBets, pAuction->first )
+	 for (auto* pBets : pAuction->bets)
 	 {
-	 if ( pBets != pAuction->first )
+	 if ( pBets != pAuction->bets.front() )
 	 ch_printf( ch, FG_YELLOW "%s" FB_CYAN "[" PLAIN "%-15s" FB_CYAN "]["
 	 PLAIN "%8lld" FB_CYAN "]",(!str_cmp(pBets->name,ch->name)) ? "*":" ",
 	 pBets->name,pBets->price);
@@ -648,18 +643,18 @@ void show_auction_data(CHAR_DATA *ch, AUCTION_DATA *pAuction, int number)
 	 ch_printf( ch, NL FG_CYAN "  Twoja aukcja ");
 	 else    ch_printf( ch, NL FG_CYAN "  Aukcja ");
 	 if ( !auction_started( pAuction ) )
-	 ch_printf( ch, FG_CYAN "rozpocznie siê za %s" NL,
+	 ch_printf( ch, FG_CYAN "rozpocznie siï¿½ za %s" NL,
 	 prepare_time(pAuction->start_time,false,false));
 	 else if ( !auction_finished( pAuction ) )
-	 ch_printf( ch, FG_CYAN "zakoñczy siê za %s" NL,
+	 ch_printf( ch, FG_CYAN "zakoï¿½czy siï¿½ za %s" NL,
 	 prepare_time(pAuction->end_time,false,false));
-	 else 	ch_printf( ch, FG_CYAN "zakoñczy³a siê" NL);
+	 else 	ch_printf( ch, FG_CYAN "zakoï¿½czyï¿½a siï¿½" NL);
 	 */
 }
 
 void show_1_auction_list(CHAR_DATA *ch, AUCTION_DATA *pAuction, int index)
 {
-	//UWAGA funkcja bedzie rozszerzana - na razie ma dzialac tylko dla obiektów
+	//UWAGA funkcja bedzie rozszerzana - na razie ma dzialac tylko dla obiektï¿½w
 	OBJ_DATA *pObject = NULL;
 	SHIP_DATA *pShip = NULL;
 	char buf[15];
@@ -692,7 +687,7 @@ void show_1_auction_list(CHAR_DATA *ch, AUCTION_DATA *pAuction, int index)
 	pager_printf(ch, "[" MOD_BOLD "%-3d" PLAIN "]", pAuction->quantity);
 	pager_printf(ch, "[" MOD_BOLD "%-3d" PLAIN "]", pAuction->bidders_count);
 	pager_printf(ch, "[" MOD_BOLD "%-11s" PLAIN "]", advitoa(pAuction->bet, true));
-	//ustawimy znacznik BuyOut oraz podajemy czas do zakoñczenia trwania aukcji
+	//ustawimy znacznik BuyOut oraz podajemy czas do zakoï¿½czenia trwania aukcji
 	const SWString &prepTime = prepare_time(pAuction->end_time, true, false);
 	pager_printf(ch, "[" PLAIN MOD_BOLD "%s" PLAIN "][" PLAIN
 	MOD_BOLD "%-12s" PLAIN "]" PLAIN NL, pAuction->buy_out_now ? "T" : "N", prepTime.c_str());
@@ -703,75 +698,41 @@ void show_1_auction_list(CHAR_DATA *ch, AUCTION_DATA *pAuction, int index)
 //	return NULL;
 //}
 
-/*! \brief Posortuj aukcje wedle czasu ich ukoñczenia */
+/*! \brief Posortuj aukcje wedle czasu ich ukoï¿½czenia */
 void sort_stock_market_auctions(STOCK_EXCHANGE_DATA *pStock)
 {
-	AUCTION_DATA *pAuction;		//aukcja przetwarzana
-	AUCTION_DATA *pMinAuction;	//aukcja koncz±ca siê najwcze¶niej
-
-	AUCTION_DATA *pfirst = NULL;
-	AUCTION_DATA *plast = NULL;
-
-	pMinAuction = pStock->first;
-	//najpierw poukladamy aukcje wedle czasu zakonczenia
-	while (pStock->first)
+	pStock->auctions.sort([](const AUCTION_DATA *a, const AUCTION_DATA *b)
 	{
-		FOREACH(pAuction,pStock->first)
-			if (pAuction->end_time < pMinAuction->end_time)
-				pMinAuction = pAuction;
-
-		//znale¿li¶my najwcze¶niejsz± aukcje
-		UNLINK(pMinAuction, pStock->first, pStock->last, next, prev);
-		LINK(pMinAuction, pfirst, plast, next, prev);
-		pMinAuction = pStock->first;
-	}
-	pStock->first = pfirst;
-	pStock->last = plast;
-
+		return a->end_time < b->end_time;
+	});
 }
 
-/*! \brief Posortuj stawki licytantów	*/
+/*! \brief Posortuj stawki licytantï¿½w	*/
 void sort_auction_bets(AUCTION_DATA *pAuction)
 {
 	/*!
-	 *	Posortuj stawki licytantów wedle maksymalnej kwoty jak± postawili
-	 *	oraz oblicz ile tak naprawdê bêd± musieli zap³aciæ
+	 *	Posortuj stawki licytantï¿½w wedle maksymalnej kwoty jakï¿½ postawili
+	 *	oraz oblicz ile tak naprawdï¿½ bï¿½dï¿½ musieli zapï¿½aciï¿½
 	 */
-	BETS_PROGRES *pBets, *pNextBets, *pIterBets;
-	//sortujemy licytantow po max_stawkach
-	FOREACH(pBets,pAuction->first)
+	//sortujemy licytantow po max_stawkach (najwyzsza na poczatku)
+	pAuction->bets.sort([](const BETS_PROGRES *a, const BETS_PROGRES *b)
 	{
-		pNextBets = pBets->next;
-		if (pNextBets && pBets->max_price < pNextBets->max_price)
-		{
-			UNLINK(pBets, pAuction->first, pAuction->last, next, prev);
-			FOREACH(pIterBets,pNextBets)
-				if (pIterBets->max_price < pBets->max_price)
-				{
-					if (pIterBets->next)
-						INSERT(pBets, pIterBets->next, pAuction->first, next, prev);
-					else
-						LINK(pBets, pAuction->first, pAuction->last, next, prev);
-					break;
-				}
-				//a co jesli ta stawka jest najnizsza
-				else if (!pIterBets->next)
-				{
-					LINK(pBets, pAuction->first, pAuction->last, next, prev);
-					break;
-				}
-		}
-	}
+		return a->max_price > b->max_price;
+	});
 
 	//teraz ustalamy, ile kto placi - mamy licytantow posortowanych
 	//wedle tego ile placa
-	FOREACH(pBets,pAuction->first)
+	for (auto it = pAuction->bets.begin(); it != pAuction->bets.end(); ++it)
 	{
-		pIterBets = pBets->prev;
-		pNextBets = pBets->next;
-		if (!pNextBets)		//czy to koniec listy
+		BETS_PROGRES *pBets = *it;
+		bool hasPrev = (it != pAuction->bets.begin());
+		auto nextIt = std::next(it);
+		bool hasNext = (nextIt != pAuction->bets.end());
+		BETS_PROGRES *pNextBets = hasNext ? *nextIt : nullptr;
+
+		if (!hasNext)		//czy to koniec listy
 		{
-			if (pBets == pAuction->first)	//czy to jedyna stawka
+			if (!hasPrev)	//czy to jedyna stawka
 			{
 				if (pBets->buy_out) //
 				{
@@ -786,8 +747,8 @@ void sort_auction_bets(AUCTION_DATA *pAuction)
 			else
 				pBets->price = pBets->max_price;
 		}
-		//je¶li to ¶rodek listy - poprzednik dal wiecej ni¿ ta stawka - czyli max_price
-		else if (pIterBets)
+		//jeï¿½li to ï¿½rodek listy - poprzednik dal wiecej niï¿½ ta stawka - czyli max_price
+		else if (hasPrev)
 			pBets->price = pBets->max_price;
 		else if (pBets->buy_out)
 			pBets->price = pAuction->buy_out_now;
@@ -798,20 +759,20 @@ void sort_auction_bets(AUCTION_DATA *pAuction)
 			pAuction->bet = pBets->price;
 		}
 	}
-	if (!pAuction->first)
+	if (pAuction->bets.empty())
 		pAuction->bet = pAuction->starting_price;
-	else if (pAuction->first->buy_out)
+	else if (pAuction->bets.front()->buy_out)
 		pAuction->bet = pAuction->buy_out_now;
 	else
-		pAuction->bet = pAuction->first->price;
+		pAuction->bet = pAuction->bets.front()->price;
 }
 
 void auction_buy_out(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 {
-	/*! Gracz dokona³ wykupu natychmiastowego. Zmodyfikuj wpis
-	 *	w li¶cie bior±cych w niej licytantów (dodaj±c wedle potrzeby
-	 *	tego gracza), posortuj tê listê, zakoñcz sam± aukcjê oraz
-	 *	wy¶lij do zainteresowanych notki
+	/*! Gracz dokonaï¿½ wykupu natychmiastowego. Zmodyfikuj wpis
+	 *	w liï¿½cie biorï¿½cych w niej licytantï¿½w (dodajï¿½c wedle potrzeby
+	 *	tego gracza), posortuj tï¿½ listï¿½, zakoï¿½cz samï¿½ aukcjï¿½ oraz
+	 *	wyï¿½lij do zainteresowanych notki
 	 */
 	BETS_PROGRES *pBets;
 	if (!pAuction->buy_out_now)
@@ -822,30 +783,30 @@ void auction_buy_out(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 
 	if (auction_finished(pAuction))
 	{
-		ch_printf(ch, "Ta aukcja ju¿ siê zakoñczy³a." NL);
+		ch_printf(ch, "Ta aukcja juï¿½ siï¿½ zakoï¿½czyï¿½a." NL);
 		return;
 	}
 	if (!auction_started(pAuction) && !auction_creator(ch->name, pAuction))
 	{
-		ch_printf(ch, "Ta aukcja jeszcze siê nie rozpocze³a." NL);
+		ch_printf(ch, "Ta aukcja jeszcze siï¿½ nie rozpoczeï¿½a." NL);
 		return;
 	}
 	if (!auction_started(pAuction))
 	{
-		ch_printf(ch, "Ta aukcja jeszcze siê nie rozpocze³a." NL);
+		ch_printf(ch, "Ta aukcja jeszcze siï¿½ nie rozpoczeï¿½a." NL);
 		return;
 	}
 
-	if (pAuction->bet >= pAuction->buy_out_now || (pAuction->first && pAuction->first->max_price >= pAuction->buy_out_now))
+	if (pAuction->bet >= pAuction->buy_out_now || (!pAuction->bets.empty() && pAuction->bets.front()->max_price >= pAuction->buy_out_now))
 	{
-		ch_printf(ch, "Juz za pó¿no na natychmiastowy wykup, "
-				"aktualna stawka jest wy¿sza." NL);
+		ch_printf(ch, "Juz za pï¿½no na natychmiastowy wykup, "
+				"aktualna stawka jest wyï¿½sza." NL);
 		return;
 	}
 
 	if (auction_creator(ch->name, pAuction))
 	{
-		ch_printf(ch, "Jeste¶ twórc± tej aukcji, nie mo¿esz dokonaæ"
+		ch_printf(ch, "Jesteï¿½ twï¿½rcï¿½ tej aukcji, nie moï¿½esz dokonaï¿½"
 				"natychmiastowego wykupu." NL);
 		return;
 	}
@@ -860,17 +821,14 @@ void auction_buy_out(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 			return;
 		}
 		int diff = pAuction->buy_out_now - pBets->max_price;
-		act( PLAIN, "$n realizuje jak±¶ transakcje z Aukcjonerem", ch, NULL, NULL, TO_ROOM);
-		ch_printf(ch, "Wp³acasz Aukcjonerowi %d kredyt%s dokonuj±c "
+		act( PLAIN, "$n realizuje jakï¿½ï¿½ transakcje z Aukcjonerem", ch, NULL, NULL, TO_ROOM);
+		ch_printf(ch, "Wpï¿½acasz Aukcjonerowi %d kredyt%s dokonujï¿½c "
 				"natychmiastowego wykupu.", diff, NUMBER_SUFF(diff, "ke", "ki", "ek"));
 		pAuction->end_time = current_time;
 		ch->gold -= diff;
 		pBets->max_price = pAuction->buy_out_now;
-		UNLINK(pBets, pAuction->first, pAuction->last, next, prev);
-		if (pAuction->first)
-			INSERT(pBets, pAuction->first, pAuction->first, next, prev);
-		else
-			LINK(pBets, pAuction->first, pAuction->last, next, prev);
+		pAuction->bets.remove(pBets);
+		pAuction->bets.push_front(pBets);
 		pBets->buy_out = true;
 		pAuction->bidders_count++;
 		sort_auction_bets(pAuction);
@@ -885,9 +843,9 @@ void auction_buy_out(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 		}
 		pAuction->end_time = current_time;
 		ch->gold -= pAuction->buy_out_now;
-		act(PLAIN, "$n realizuje jak±¶ transakcje z "
+		act(PLAIN, "$n realizuje jakï¿½ï¿½ transakcje z "
 				"Aukcjonerem", ch, NULL, NULL, TO_ROOM);
-		ch_printf(ch, "Wp³acasz Aukcjonerowi %lld kredyt%s dokonuj±c"
+		ch_printf(ch, "Wpï¿½acasz Aukcjonerowi %lld kredyt%s dokonujï¿½c"
 				"natychmiastowego wykupu.", pAuction->buy_out_now, NUMBER_SUFF(pAuction->buy_out_now, "ke", "ki", "ek"));
 		pBets = new_bets();
 		STRDUP(pBets->name, ch->name);
@@ -896,15 +854,7 @@ void auction_buy_out(CHAR_DATA *ch, AUCTION_DATA *pAuction)
 		pBets->buy_out = true;
 		pAuction->bidders_count++;
 		//potrzebuje wstawic jako pierwsza pozycje
-		if (pAuction->first)
-		{
-			pBets->prev = pAuction->first->prev;
-			pAuction->first->prev = pBets;
-			pBets->next = pAuction->first;
-			pAuction->first = pBets;
-		}
-		else
-			LINK(pBets, pAuction->first, pAuction->last, next, prev);
+		pAuction->bets.push_front(pBets);
 		sort_auction_bets(pAuction);
 	}
 }
@@ -919,25 +869,26 @@ void send_auction_notes(AUCTION_DATA *pAuction, auction_ends typ)
 	 {
 	 case ITEM_SOLD:
 	 {
-	 sprintf( buf, "Twoja aukcja zakoñczy³a siê. Zaoferowany przez Ciebie" NL
-	 "%s zosta³ kupiony za %lld kredyt%s." NL
-	 "Zg³o¶ siê do najbli¿szego domu aukcyjnego celem odebrania gotówki",
+	 sprintf( buf, "Twoja aukcja zakoï¿½czyï¿½a siï¿½. Zaoferowany przez Ciebie" NL
+	 "%s zostaï¿½ kupiony za %lld kredyt%s." NL
+	 "Zgï¿½oï¿½ siï¿½ do najbliï¿½szego domu aukcyjnego celem odebrania gotï¿½wki",
 	 pAuction->item_name,pAuction->bet, NUMBER_SUFF(pAuction->bet,"ke","ki","ek"));
-	 note("Aukcjoner",pAuction->seller_name,"Zakoñczenie aukcji",buf);
+	 note("Aukcjoner",pAuction->seller_name,"Zakoï¿½czenie aukcji",buf);
 
 	 //teraz notka dla zwyciezcy licytacji
-	 sprintf( buf,   "Aukcja zakoñczy³a siê Twoim zwyciêstwem." NL
-	 "Zg³o¶ siê do najbli¿szego domu aukcyjnego, by odebraææ" NL
+	 sprintf( buf,   "Aukcja zakoï¿½czyï¿½a siï¿½ Twoim zwyciï¿½stwem." NL
+	 "Zgï¿½oï¿½ siï¿½ do najbliï¿½szego domu aukcyjnego, by odebraï¿½ï¿½" NL
 	 "wygrany  %s.",pAuction->item_name);
-	 note("Aukcjoner",pAuction->first->name,"Zakoñczenie aukcji",buf);
+	 note("Aukcjoner",pAuction->bets.front()->name,"Zakoï¿½czenie aukcji",buf);
 
-	 FOREACH(pBets, pAuction->first->next)
-	 {
+	 { auto it = pAuction->bets.begin(); ++it;
+	 for (; it != pAuction->bets.end(); ++it)
+	 { BETS_PROGRES *pBets = *it;
 	 sprintf( buf,
-	 "Aukcja zakoñczy³a, lecz to nie Twoim zwyciêstwem." NL
-	 "Nastêpnym razem postaw wiêcej, jesli chcesz wygraæ." NL);
-	 note("Aukcjoner",pBets->name,"Zakoñczenie aukcji",buf);
-	 }
+	 "Aukcja zakoï¿½czyï¿½a, lecz to nie Twoim zwyciï¿½stwem." NL
+	 "Nastï¿½pnym razem postaw wiï¿½cej, jesli chcesz wygraï¿½." NL);
+	 note("Aukcjoner",pBets->name,"Zakoï¿½czenie aukcji",buf);
+	 } }
 	 pAuction->notes_send = true;
 	 break;
 	 }
@@ -945,24 +896,25 @@ void send_auction_notes(AUCTION_DATA *pAuction, auction_ends typ)
 	 break;
 	 case NO_BIDDERS:
 	 {
-	 sprintf( buf, "Przykro mi, ale Twoja nie cieszy³a"
-	 " siê popularno¶ci±." NL
-	 "Nikt nie chcia³ kupiæ zaoferowanego przez Ciebie %s." NL
-	 "Zglos siê po odbiór licytowanego towaru.",
+	 sprintf( buf, "Przykro mi, ale Twoja nie cieszyï¿½a"
+	 " siï¿½ popularnoï¿½ciï¿½." NL
+	 "Nikt nie chciaï¿½ kupiï¿½ zaoferowanego przez Ciebie %s." NL
+	 "Zglos siï¿½ po odbiï¿½r licytowanego towaru.",
 	 pAuction->item_name);
-	 note("Aukcjoner",pAuction->seller_name,"Zakoñczenie aukcji",buf);
+	 note("Aukcjoner",pAuction->seller_name,"Zakoï¿½czenie aukcji",buf);
 	 pAuction->notes_send = true;
 	 return;
 	 }
 	 case IMMO_IMPACT:
 	 {
-	 sprintf( buf, "Wpl±ta³y siê si³y wy¿sze. Twoja aukcja zosta³a "
-	 "natychmiast zakoñczona" NL);
-	 note("Aukcjoner",pAuction->seller_name,"Zakoñczenie aukcji",buf);
+	 sprintf( buf, "Wplï¿½taï¿½y siï¿½ siï¿½y wyï¿½sze. Twoja aukcja zostaï¿½a "
+	 "natychmiast zakoï¿½czona" NL);
+	 note("Aukcjoner",pAuction->seller_name,"Zakoï¿½czenie aukcji",buf);
 
-	 sprintf( buf, "Wpl±ta³y siê si³y wy¿sze. Aukcja zosta³a natychmiast zakoñczona," NL);
-	 FOREACH(pBets, pAuction->first->next)
-	 note("Aukcjoner",pBets->name,"Zakoñczenie aukcji",buf);
+	 sprintf( buf, "Wplï¿½taï¿½y siï¿½ siï¿½y wyï¿½sze. Aukcja zostaï¿½a natychmiast zakoï¿½czona," NL);
+	 { auto it = pAuction->bets.begin(); ++it;
+	 for (; it != pAuction->bets.end(); ++it)
+	 note("Aukcjoner",(*it)->name,"Zakoï¿½czenie aukcji",buf); }
 	 pAuction->notes_send = true;
 	 break;
 	 }
@@ -978,16 +930,16 @@ void send_auction_info(AUCTION_DATA *pAuction)
 	 char buf[MSL];
 	 if ( auction_ship( pAuction ) )
 	 sprintf (buf,
-	 "Na aukcjê zostaje wystawiony statek kosmiczny" NL
+	 "Na aukcjï¿½ zostaje wystawiony statek kosmiczny" NL
 	 "%s za %lld kredyt%s.",
 	 pAuction->item_name, pAuction->starting_price,
-	 NUMBER_SUFF( pAuction->starting_price, "kê", "ki", "ek" ) );
+	 NUMBER_SUFF( pAuction->starting_price, "kï¿½", "ki", "ek" ) );
 	 else
 	 sprintf (buf,
-	 "Na aukcjê zostaje wystawiony nowy"
+	 "Na aukcjï¿½ zostaje wystawiony nowy"
 	 " przedmiot: %s za %lld kredyt%s.",
 	 pAuction->item->przypadki[0], pAuction->starting_price,
-	 NUMBER_SUFF( pAuction->starting_price, "kê", "ki", "ek" ) );
+	 NUMBER_SUFF( pAuction->starting_price, "kï¿½", "ki", "ek" ) );
 	 talk_auction (buf);
 	 */
 }

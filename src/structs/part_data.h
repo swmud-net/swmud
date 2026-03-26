@@ -20,13 +20,11 @@
 #define PART_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct part_data
 {
-	PART_DATA			* next;
-	PART_DATA			* prev;
-	COMPONENT_DATA		* first_component;
-	COMPONENT_DATA		* last_component;
+	std::list<COMPONENT_DATA*> components;
 	int					quantity;
 };
 

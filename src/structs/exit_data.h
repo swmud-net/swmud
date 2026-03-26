@@ -23,8 +23,6 @@
 
 struct	exit_data
 {
-	EXIT_DATA			* prev;		/* previous exit in linked list */
-	EXIT_DATA			* next;		/* next exit in linked list	*/
 	EXIT_DATA			* rexit;		/* Reverse exit pointer		*/
 	ROOM_INDEX_DATA		* to_room;	/* Pointer to destination room	*/
 	char				* keyword;	/* Keywords for exit or door	*/

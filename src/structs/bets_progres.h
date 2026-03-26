@@ -23,10 +23,8 @@
 
 struct bets_progres	//jak obstawiaja gracze
 {
-	BETS_PROGRES		* next;
-	BETS_PROGRES		* prev;
 	char				* name;		/*!< nazwa licytanta */
-	bool				buy_out;	/*!< czy to on dokona³ wykupu natychmiastowego */
+	bool				buy_out;	/*!< czy to on dokonaï¿½ wykupu natychmiastowego */
 	int64				price;		/*!< aktualna stawka */
 	int64				max_price;	/*!< maskymalna kwita jaka jest gotowy zaplacic */
 	int64				quantity;	/*!< ilosc kupowanych elementow - domyslnie 1 */

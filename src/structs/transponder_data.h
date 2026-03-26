@@ -23,8 +23,6 @@
 
 struct transponder_data
 {
-	TRANSPONDER_DATA	* next;
-	TRANSPONDER_DATA	* prev;
 	char				* number;
 	char				* shipname;
 	int					shipclas;

@@ -20,34 +20,21 @@
 #define SHIP_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct ship_data
 {
 	SHIP_INDEX_DATA		* pIndexData;
-	SHIP_DATA			* next;
-	SHIP_DATA			* prev;
-	SHIP_DATA			* next_in_starsystem;
-	SHIP_DATA			* prev_in_starsystem;
-	SHIP_DATA			* next_in_room;
-	SHIP_DATA			* prev_in_room;
-	TURRET_DATA			* first_turret;
-	TURRET_DATA			* last_turret;
-	HANGAR_DATA			* first_hangar;
-	HANGAR_DATA			* last_hangar;
+	std::list<TURRET_DATA*> turrets;
+	std::list<HANGAR_DATA*> hangars;
 	ROOM_INDEX_DATA		* in_room;
 	SPACE_DATA			* starsystem;
-	CARGO_DATA			* first_cargo;
-	CARGO_DATA			* last_cargo;
-	MODULE_DATA			* first_module;
-	MODULE_DATA			* last_module;
-	SMAP_DATA			* first_smap;
-	SMAP_DATA			* last_smap;
-	TRANSPONDER_DATA	* first_trans;
-	TRANSPONDER_DATA	* last_trans;
-	SHIPDOCK_DATA		* first_dock;
-	SHIPDOCK_DATA		* last_dock;
-	ROOM_INDEX_DATA		* first_location;// Thanos -> wskaznik na pierwsza lokacje
-	ROOM_INDEX_DATA		* last_location;// Thanos -> wskaznik na ostatnia lokacje
+	std::list<CARGO_DATA*> cargo_list;
+	std::list<MODULE_DATA*> modules;
+	std::list<SMAP_DATA*> smaps;
+	std::list<TRANSPONDER_DATA*> transponders;
+	std::list<SHIPDOCK_DATA*> docks;
+	std::list<ROOM_INDEX_DATA*> locations;
 	int					vnum;		// Thanos: jesli 0 to statek jest stary
 	char				* transponder;
 	int					maxmodule;
@@ -133,7 +120,7 @@ struct ship_data
 	int					timer; // ile ma czasu do wybuchu
 	CHAR_DATA			* killer; // no i kto go zepsul
 	float				size;//urealnienie radar i look
-	float				vXpos; //dla virtual starsystemów
+	float				vXpos; //dla virtual starsystemï¿½w
 	float				vYpos;
 	char *				sXpos;
 	char *				sYpos;
@@ -150,8 +137,7 @@ struct ship_data
 	int					efflux;
 
 	//added by Thanos (statki publiczne)
-	COURSE_DATA			* first_stop;
-	COURSE_DATA			* last_stop;
+	std::list<COURSE_DATA*> stops;
 	COURSE_DATA			* curr_stop;
 	bool				ship_public;
 	int					public_subclass;

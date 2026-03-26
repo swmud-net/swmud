@@ -20,14 +20,14 @@
 #define WAREHOUSE_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct warehouse_data
 {
 	int				max_capacity;
 	int				current_capacity;
 	int				materials_count;
-	CARGO_DATA		* first_cargo;
-	CARGO_DATA		* last_cargo;
+	std::list<CARGO_DATA*> cargo;
 };
 
 #endif //WAREHOUSE_DATA_H_

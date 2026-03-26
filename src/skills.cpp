@@ -73,8 +73,8 @@ const char *const spell_class[] =
 const char *const target_type[] =
 { "ignore", "offensive", "defensive", "self", "objinv" };
 
-void show_char_to_char(CHAR_DATA *list, CHAR_DATA *ch);
-void show_list_to_char(OBJ_DATA *list, CHAR_DATA *ch, bool fShort, bool fShowN);
+void show_char_to_char(const std::list<CHAR_DATA*>& list, CHAR_DATA *ch);
+void show_list_to_char(const std::list<OBJ_DATA*>& list, CHAR_DATA *ch, bool fShort, bool fShowN);
 
 int ris_save(CHAR_DATA *ch, int chance, int ris);
 bool check_illegal_psteal(CHAR_DATA *ch, CHAR_DATA *victim);
@@ -105,7 +105,7 @@ bool check_knowledge(CHAR_DATA *ch, int sn)
 
 	if (!ch || IS_NPC(ch) || (!IS_NPC(ch) && ch->pcdata->learned[sn] <= 0))
 	{
-		send_to_char("Nie masz zielonego pojêcia jak to siê robi." NL, ch);
+		send_to_char("Nie masz zielonego pojï¿½cia jak to siï¿½ robi." NL, ch);
 		return false;
 	}
 	return true;
@@ -123,13 +123,13 @@ void break_skill(const char *txt, CHAR_DATA *ch)
 
 void mount_msg(CHAR_DATA *ch)
 {
-	send_to_char("Mo¿e najpierw zejd¼ z wierzchowca..." NL, ch);
+	send_to_char("Moï¿½e najpierw zejdï¿½ z wierzchowca..." NL, ch);
 	return;
 }
 
 void concentrate_msg(CHAR_DATA *ch)
 {
-	send_to_char("Nie mo¿esz siê wystarczaj±co skupiæ by to zrobiæ." NL, ch);
+	send_to_char("Nie moï¿½esz siï¿½ wystarczajï¿½co skupiï¿½ by to zrobiï¿½." NL, ch);
 	return;
 }
 
@@ -270,8 +270,8 @@ bool check_skill(CHAR_DATA *ch, char *command, char *argument)
 	if ( IS_NPC(ch)
 			&& (IS_AFFECTED( ch, AFF_CHARM ) || IS_AFFECTED(ch, AFF_POSSESS)))
 	{
-		send_to_char("Z jakiego¶ powodu, nie mo¿esz tego zrobiæ..." NL, ch);
-		act( PLAIN, "$n rozgl±da siê dooko³a.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Z jakiegoï¿½ powodu, nie moï¿½esz tego zrobiï¿½..." NL, ch);
+		act( PLAIN, "$n rozglï¿½da siï¿½ dookoï¿½a.", ch, NULL, NULL, TO_ROOM);
 		return true;
 	}
 
@@ -282,7 +282,7 @@ bool check_skill(CHAR_DATA *ch, char *command, char *argument)
 
 		if (!IS_NPC(ch) && ch->mana < mana)
 		{
-			send_to_char("Musisz odpocz±æ aby u¿yæ mocy ponownie.\n\r", ch);
+			send_to_char("Musisz odpoczï¿½ï¿½ aby uï¿½yï¿½ mocy ponownie.\n\r", ch);
 			return true;
 		}
 	}
@@ -307,7 +307,7 @@ bool check_skill(CHAR_DATA *ch, char *command, char *argument)
 		{
 		default:
 			bug("Check_skill: bad target for sn %d.", sn);
-			send_to_char("Co¶ jest nie tak...\n\r", ch);
+			send_to_char("Coï¿½ jest nie tak...\n\r", ch);
 			return true;
 
 		case TAR_IGNORE:
@@ -405,12 +405,8 @@ bool check_skill(CHAR_DATA *ch, char *command, char *argument)
 		if (skill_table[sn]->target == TAR_CHAR_OFFENSIVE && victim != ch
 				&& !char_died(victim))
 		{
-			CHAR_DATA *vch;
-			CHAR_DATA *vch_next;
-
-			for (vch = ch->in_room->first_person; vch; vch = vch_next)
+			for (auto* vch : ch->in_room->people)
 			{
-				vch_next = vch->next_in_room;
 				if (victim == vch && !victim->fighting && victim->master != ch)
 				{
 					retcode = multi_hit(victim, ch, TYPE_UNDEFINED);
@@ -562,7 +558,7 @@ void check_improve( CHAR_DATA *ch, int sn, bool success )
 	if (number_percent() < chance)
 	{
 	    ch_printf( ch, FG_BLUE
-		"Stajesz siê lepsz%s w skillu " FB_BLUE "%s" FG_BLUE "!" EOL,
+		"Stajesz siï¿½ lepsz%s w skillu " FB_BLUE "%s" FG_BLUE "!" EOL,
 			SEX_SUFFIX_YAE( ch ),
 			skill_table[sn]->name);
 	    ch->pcdata->learned[sn]++;
@@ -576,7 +572,7 @@ void check_improve( CHAR_DATA *ch, int sn, bool success )
 	if (number_percent() < chance)
 	{
 	    ch_printf(ch, FG_BLUE
-		"Mimo b³êdu twoja znajomo¶æ " FB_BLUE "%s" FG_BLUE " wzrasta!" EOL,
+		"Mimo bï¿½ï¿½du twoja znajomoï¿½ï¿½ " FB_BLUE "%s" FG_BLUE " wzrasta!" EOL,
 		    skill_table[sn]->name );
 	    ch->pcdata->learned[sn]++;
 	    ch->pcdata->learned[sn] = UMIN(ch->pcdata->learned[sn],100);
@@ -590,16 +586,16 @@ void check_improve( CHAR_DATA *ch, int sn, bool success )
 	return;
 
     gain+=number_range( gain/10, 2*gain/10 );
-    ch_printf( ch, FG_BLUE "Zdobywasz " FB_BLUE "%d" FG_BLUE " punk%s do¶wiadczenia." EOL,
-	gain, NUMBER_SUFF( gain, "t", "ty", "tów" ) );
+    ch_printf( ch, FG_BLUE "Zdobywasz " FB_BLUE "%d" FG_BLUE " punk%s doï¿½wiadczenia." EOL,
+	gain, NUMBER_SUFF( gain, "t", "ty", "tï¿½w" ) );
 
     gain_exp(ch,gain, skill_table[sn]->guild );
 
     if ( ch->pcdata->learned[sn] == 100 )
     {
         ch_printf( ch, FB_BLUE
-	    "Jeste¶ teraz ADEPTEM skillu %s!  "			NL
-	    "Otrzymujesz dodatkowe " FB_BLUE "%d" FG_BLUE " punktów do¶wiadczenia." 	EOL,
+	    "Jesteï¿½ teraz ADEPTEM skillu %s!  "			NL
+	    "Otrzymujesz dodatkowe " FB_BLUE "%d" FG_BLUE " punktï¿½w doï¿½wiadczenia." 	EOL,
 		skill_table[sn]->name, gain*2 );
 	gain_exp(ch,gain*2, skill_table[sn]->guild );
     }
@@ -666,22 +662,22 @@ void learn_from_success(CHAR_DATA *ch, int sn)
 			gain = 50 * sklvl;
 			ch_printf(ch, FB_BLUE
 			"Zostajesz ADEPTEM skillu %s!  " EOL
-			"Otrzymujesz dodatkowe %d punktów do¶wiadczenia." EOL,
+			"Otrzymujesz dodatkowe %d punktï¿½w doï¿½wiadczenia." EOL,
 					skill_table[sn]->name, gain);
 		}
 		else
 		{
 			gain = 10 * sklvl;
 			ch_printf(ch, FB_BLUE
-			"Stajesz siê lepsz%s w skillu %s !!!   " EOL
-			"Zdobywasz %d punktów do¶wiadczenia." EOL, SEX_SUFFIX_YAE(ch),
+			"Stajesz siï¿½ lepsz%s w skillu %s !!!   " EOL
+			"Zdobywasz %d punktï¿½w doï¿½wiadczenia." EOL, SEX_SUFFIX_YAE(ch),
 					skill_table[sn]->name, gain);
 		}
 		gain_exp(ch, gain, skill_table[sn]->guild);
 	}
 }
 
-//added by Thanos (tej funkcji nie by³o nie wiedzieæ czemu...)
+//added by Thanos (tej funkcji nie byï¿½o nie wiedzieï¿½ czemu...)
 void learn_from_failure(CHAR_DATA *ch, int sn)
 {
 	int adept, gain, sklvl, learn, percent, chance;
@@ -729,8 +725,8 @@ void learn_from_failure(CHAR_DATA *ch, int sn)
 		{
 			gain = 10 * sklvl;
 			ch_printf(ch, FB_BLUE
-			"Mimo b³êdu zostajesz ADEPTEM skillu %s !!!" EOL
-			"Otrzymujesz dodatkowe %d punktów do¶wiadczenia." EOL,
+			"Mimo bï¿½ï¿½du zostajesz ADEPTEM skillu %s !!!" EOL
+			"Otrzymujesz dodatkowe %d punktï¿½w doï¿½wiadczenia." EOL,
 					skill_table[sn]->name, gain);
 		}
 		else
@@ -738,9 +734,9 @@ void learn_from_failure(CHAR_DATA *ch, int sn)
 			gain = 2 * sklvl;
 			ch_printf(ch,
 			FG_BLUE
-			"Uczysz siê na b³êdach!" NL
-			"Stajesz siê lepsz%s w skillu %s. " EOL
-			"Zdobywasz %d punktów do¶wiadczenia." EOL, SEX_SUFFIX_YAE(ch),
+			"Uczysz siï¿½ na bï¿½ï¿½dach!" NL
+			"Stajesz siï¿½ lepsz%s w skillu %s. " EOL
+			"Zdobywasz %d punktï¿½w doï¿½wiadczenia." EOL, SEX_SUFFIX_YAE(ch),
 					skill_table[sn]->name, gain);
 		}
 		gain_exp(ch, gain, skill_table[sn]->guild);
@@ -764,7 +760,7 @@ DEF_DO_FUN( gouge )
 
 	if (!IS_NPC(ch) && !ch->pcdata->learned[gsn_gouge])
 	{
-		send_to_char("Musisz siê najpierw tego nauczyæ.\n\r", ch);
+		send_to_char("Musisz siï¿½ najpierw tego nauczyï¿½.\n\r", ch);
 		return;
 	}
 
@@ -783,7 +779,7 @@ DEF_DO_FUN( gouge )
 	// Thanos; bugfix
 	if ( IS_NPC( victim ) && IS_SET(victim->act, ACT_DROID))
 	{
-		send_to_char("Nie mo¿esz wyd³ubaæ oczu droidowi." NL, ch);
+		send_to_char("Nie moï¿½esz wydï¿½ubaï¿½ oczu droidowi." NL, ch);
 		return;
 	}
 
@@ -816,7 +812,7 @@ DEF_DO_FUN( gouge )
 		else if (global_retcode == rVICT_DIED)
 		{
 			act( FG_RED,
-					"Wbi³$a¶ palce tak g³êboko, ¿e naruszy³$a¶ mózg powoduj±c natychmiastow± ¶mieræ!",
+					"Wbiï¿½$aï¿½ palce tak gï¿½ï¿½boko, ï¿½e naruszyï¿½$aï¿½ mï¿½zg powodujï¿½c natychmiastowï¿½ ï¿½mierï¿½!",
 					ch, NULL, NULL, TO_CHAR);
 		}
 		if (global_retcode != rCHAR_DIED && global_retcode != rBOTH_DIED)
@@ -835,7 +831,7 @@ DEF_DO_FUN( gouge )
 DEF_DO_FUN( detrap )
 {
 	char arg[MAX_INPUT_LENGTH];
-	OBJ_DATA *obj;
+	OBJ_DATA *obj = nullptr;
 	OBJ_DATA *trap;
 	int percent;
 	bool found;
@@ -856,7 +852,7 @@ DEF_DO_FUN( detrap )
 		}
 		if (arg[0] == '\0')
 		{
-			send_to_char("Jak± pu³apkê chcesz rozbroiæ?" NL, ch);
+			send_to_char("Jakï¿½ puï¿½apkï¿½ chcesz rozbroiï¿½?" NL, ch);
 			return;
 		}
 		if (ms_find_obj(ch))
@@ -867,15 +863,16 @@ DEF_DO_FUN( detrap )
 			mount_msg(ch);
 			return;
 		}
-		if (!ch->in_room->first_content)
+		if (ch->in_room->contents.empty())
 		{
 			its_not_here_msg(ch);
 			return;
 		}
-		for (obj = ch->in_room->first_content; obj; obj = obj->next_content)
+		for (auto* o : ch->in_room->contents)
 		{
-			if (can_see_obj(ch, obj) && nifty_is_name(arg, obj->name))
+			if (can_see_obj(ch, o) && nifty_is_name(arg, o->name))
 			{
+				obj = o;
 				found = true;
 				break;
 			}
@@ -885,9 +882,9 @@ DEF_DO_FUN( detrap )
 			its_not_here_msg(ch);
 			return;
 		}
-		act( COL_ACTION, "Próbujesz ostro¿nie zdemontowaæ pu³apkê z $p$1...",
+		act( COL_ACTION, "Prï¿½bujesz ostroï¿½nie zdemontowaï¿½ puï¿½apkï¿½ z $p$1...",
 				ch, obj->przypadki[1], NULL, TO_CHAR);
-		act( COL_ACTION, "$n ostro¿nie próbuje zdj±æ pu³apkê z $p$1...", ch,
+		act( COL_ACTION, "$n ostroï¿½nie prï¿½buje zdjï¿½ï¿½ puï¿½apkï¿½ z $p$1...", ch,
 				obj->przypadki[1], NULL, TO_ROOM);
 		STRDUP(ch->dest_buf, obj->name);
 		add_timer(ch, TIMER_DO_FUN, 3, do_detrap, 1);
@@ -895,7 +892,7 @@ DEF_DO_FUN( detrap )
 	case 1:
 		if (!*ch->dest_buf)
 		{
-			send_to_char("Demontowanie pu³apki zosta³o przerwane!\n\r", ch);
+			send_to_char("Demontowanie puï¿½apki zostaï¿½o przerwane!\n\r", ch);
 			bug("do_detrap: ch->dest_buf NULL!", 0);
 			return;
 		}
@@ -904,16 +901,16 @@ DEF_DO_FUN( detrap )
 		ch->substate = SUB_NONE;
 		break;
 	case SUB_TIMER_DO_ABORT:
-		break_skill("Ostro¿nie przestajesz zajmowaæ siê pu³apk±.\n\r", ch);
+		break_skill("Ostroï¿½nie przestajesz zajmowaï¿½ siï¿½ puï¿½apkï¿½.\n\r", ch);
 		return;
 	}
 
-	if (!ch->in_room->first_content)
+	if (ch->in_room->contents.empty())
 	{
-		send_to_char("Nie mo¿esz tutaj tego znale¼æ.\n\r", ch);
+		send_to_char("Nie moï¿½esz tutaj tego znaleï¿½ï¿½.\n\r", ch);
 		return;
 	}
-	for (obj = ch->in_room->first_content; obj; obj = obj->next_content)
+	for (auto* obj : ch->in_room->contents)
 	{
 		if (can_see_obj(ch, obj) && nifty_is_name(arg, obj->name))
 		{
@@ -928,7 +925,7 @@ DEF_DO_FUN( detrap )
 	}
 	if ((trap = get_trap(obj)) == NULL)
 	{
-		send_to_char("To nie zawiera ¿adnej pu³apki.\n\r", ch);
+		send_to_char("To nie zawiera ï¿½adnej puï¿½apki.\n\r", ch);
 		return;
 	}
 
@@ -946,7 +943,7 @@ DEF_DO_FUN( detrap )
 
 	extract_obj(trap);
 
-	send_to_char("Uda³o siê... Pomy¶lnie demontujesz pu³apkê.\n\r", ch);
+	send_to_char("Udaï¿½o siï¿½... Pomyï¿½lnie demontujesz puï¿½apkï¿½.\n\r", ch);
 	learn_from_success(ch, gsn_detrap);
 	return;
 }
@@ -955,8 +952,7 @@ DEF_DO_FUN( dig )
 {
 	char arg[MAX_INPUT_LENGTH];
 	OBJ_DATA *obj;
-	OBJ_DATA *startobj;
-	bool found, shovel;
+	bool shovel;
 	EXIT_DATA *pexit;
 
 	switch (ch->substate)
@@ -987,7 +983,7 @@ DEF_DO_FUN( dig )
 						EX_DIG) && !IS_SET(pexit->flags, EX_CLOSED))
 				{
 					send_to_char(
-							"Nie ma potrzeby robiæ tego w tym kierunku.\n\r",
+							"Nie ma potrzeby robiï¿½ tego w tym kierunku.\n\r",
 							ch);
 					return;
 				}
@@ -1000,13 +996,13 @@ DEF_DO_FUN( dig )
 			case SECT_CITY:
 			case SECT_INSIDE:
 				send_to_char(
-						"Pod³oga jest zbyt twarda aby siê przez ni± przekopaæ.\n\r",
+						"Podï¿½oga jest zbyt twarda aby siï¿½ przez niï¿½ przekopaï¿½.\n\r",
 						ch);
 				return;
 			case SECT_WATER_SWIM:
 			case SECT_WATER_NOSWIM:
 			case SECT_UNDERWATER:
-				send_to_char("Kopaæ w wodzie?!\n\r", ch);
+				send_to_char("Kopaï¿½ w wodzie?!\n\r", ch);
 				return;
 			case SECT_AIR:
 				send_to_char("Co? W powietrzu?!\n\r", ch);
@@ -1016,15 +1012,15 @@ DEF_DO_FUN( dig )
 		add_timer(ch, TIMER_DO_FUN, UMIN(skill_table[gsn_dig]->beats / 10, 3),
 				do_dig, 1);
 		STRDUP(ch->dest_buf, arg);
-		send_to_char("Zaczynasz kopaæ...\n\r", ch);
-		act( PLAIN, "$n zaczyna kopaæ...", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Zaczynasz kopaï¿½...\n\r", ch);
+		act( PLAIN, "$n zaczyna kopaï¿½...", ch, NULL, NULL, TO_ROOM);
 		return;
 
 	case 1:
 		if (!ch->dest_buf)
 		{
-			send_to_char("Kopanie zosta³o przerwane!\n\r", ch);
-			act( PLAIN, "Kopanie $n$1 zosta³o przerwane!", ch, NULL, NULL,
+			send_to_char("Kopanie zostaï¿½o przerwane!\n\r", ch);
+			act( PLAIN, "Kopanie $n$1 zostaï¿½o przerwane!", ch, NULL, NULL,
 					TO_ROOM);
 			bug("do_dig: dest_buf NULL", 0);
 			return;
@@ -1034,8 +1030,8 @@ DEF_DO_FUN( dig )
 		break;
 
 	case SUB_TIMER_DO_ABORT:
-		break_skill("Przestajesz kopaæ...\n\r", ch);
-		act( PLAIN, "$n przestaje kopaæ...", ch, NULL, NULL, TO_ROOM);
+		break_skill("Przestajesz kopaï¿½...\n\r", ch);
+		act( PLAIN, "$n przestaje kopaï¿½...", ch, NULL, NULL, TO_ROOM);
 		return;
 	}
 
@@ -1043,7 +1039,7 @@ DEF_DO_FUN( dig )
 
 	/* not having a shovel makes it harder to succeed */
 	shovel = false;
-	for (obj = ch->first_carrying; obj; obj = obj->next_content)
+	for (auto* obj : ch->carrying)
 		if (obj->item_type == ITEM_SHOVEL)
 		{
 			shovel = true;
@@ -1062,46 +1058,46 @@ DEF_DO_FUN( dig )
 					< (IS_NPC(ch) ? 80 : ch->pcdata->learned[gsn_dig]))
 			{
 				REMOVE_BIT(pexit->flags, EX_CLOSED);
-				send_to_char("Przekopujesz siê!\n\r", ch);
-				act( PLAIN, "$n przekopuje siê!", ch, NULL, NULL, TO_ROOM);
+				send_to_char("Przekopujesz siï¿½!\n\r", ch);
+				act( PLAIN, "$n przekopuje siï¿½!", ch, NULL, NULL, TO_ROOM);
 				learn_from_success(ch, gsn_dig);
 				return;
 			}
 		}
 		learn_from_failure(ch, gsn_dig);
-		send_to_char("Kopanie nie znalaz³o ¿adnego przej¶cia...\n\r", ch);
-		act( PLAIN, "Kopanie $n$1 nie znalaz³o ¿adnego przej¶cia...", ch, NULL,
+		send_to_char("Kopanie nie znalazï¿½o ï¿½adnego przejï¿½cia...\n\r", ch);
+		act( PLAIN, "Kopanie $n$1 nie znalazï¿½o ï¿½adnego przejï¿½cia...", ch, NULL,
 				NULL, TO_ROOM);
 		return;
 	}
 
-	startobj = ch->in_room->first_content;
-	found = false;
+	OBJ_DATA *found_obj = nullptr;
 
-	for (obj = startobj; obj; obj = obj->next_content)
+	for (auto* o : ch->in_room->contents)
 	{
 		/* twice as hard to find something without a shovel */
-		if ( IS_OBJ_STAT(obj, ITEM_BURRIED)
+		if ( IS_OBJ_STAT(o, ITEM_BURRIED)
 				&& (number_percent() * (shovel ? 1 : 2))
 						< (IS_NPC(ch) ? 80 : ch->pcdata->learned[gsn_dig]))
 		{
-			found = true;
+			found_obj = o;
 			break;
 		}
 	}
 
-	if (!found)
+	if (!found_obj)
 	{
-		send_to_char("Nic nie znajdujesz kopi±c.\n\r", ch);
-		act( PLAIN, "Kopanie $n$1 nic nie znalaz³o.", ch, NULL, NULL, TO_ROOM);
+		send_to_char("Nic nie znajdujesz kopiï¿½c.\n\r", ch);
+		act( PLAIN, "Kopanie $n$1 nic nie znalazï¿½o.", ch, NULL, NULL, TO_ROOM);
 		learn_from_failure(ch, gsn_dig);
 		return;
 	}
 
+	obj = found_obj;
 	separate_obj(obj);
 	REMOVE_BIT(obj->extra_flags, ITEM_BURRIED);
-	act( COL_ACTION, "Kopanie odkry³o $p!", ch, obj, NULL, TO_CHAR);
-	act( COL_ACTION, "Kopanie $n$1 odkry³o $p$3!", ch, obj, NULL, TO_ROOM);
+	act( COL_ACTION, "Kopanie odkryï¿½o $p!", ch, obj, NULL, TO_CHAR);
+	act( COL_ACTION, "Kopanie $n$1 odkryï¿½o $p$3!", ch, obj, NULL, TO_ROOM);
 	learn_from_success(ch, gsn_dig);
 
 	return;
@@ -1110,9 +1106,8 @@ DEF_DO_FUN( dig )
 DEF_DO_FUN( search )
 {
 	char arg[MAX_INPUT_LENGTH];
-	OBJ_DATA *obj;
+	OBJ_DATA *obj = nullptr;
 	OBJ_DATA *container;
-	OBJ_DATA *startobj;
 	int percent, door;
 	bool found;
 
@@ -1141,25 +1136,25 @@ DEF_DO_FUN( search )
 			}
 			if (container->item_type != ITEM_CONTAINER)
 			{
-				send_to_char("Nie mo¿esz szukaæ w TYM!" NL, ch);
+				send_to_char("Nie moï¿½esz szukaï¿½ w TYM!" NL, ch);
 				return;
 			}
 			if (IS_SET(container->value[1], CONT_CLOSED))
 			{
-				send_to_char("Ten pojemnik jest zamkniêty." NL, ch);
+				send_to_char("Ten pojemnik jest zamkniï¿½ty." NL, ch);
 				return;
 			}
 		}
 		add_timer(ch, TIMER_DO_FUN,
 				UMIN(skill_table[gsn_search]->beats / 10, 3), do_search, 1);
-		send_to_char("Rozpoczynasz ¿mudne przeszukiwanie..." NL, ch);
+		send_to_char("Rozpoczynasz ï¿½mudne przeszukiwanie..." NL, ch);
 		STRDUP(ch->dest_buf, arg);
 		return;
 
 	case 1:
 		if (!ch->dest_buf)
 		{
-			send_to_char("Twoje przeszukiwanie zosta³o przerwane!" NL, ch);
+			send_to_char("Twoje przeszukiwanie zostaï¿½o przerwane!" NL, ch);
 			bug("do_search: dest_buf NULL", 0);
 			return;
 		}
@@ -1171,14 +1166,15 @@ DEF_DO_FUN( search )
 		return;
 	}
 	ch->substate = SUB_NONE;
+	std::list<OBJ_DATA*> *search_list = nullptr;
 	if (arg[0] == '\0')
 	{
-		startobj = ch->in_room->first_content;
+		search_list = &ch->in_room->contents;
 	}
 	else
 	{
 		if ((door = get_door(arg)) != -1)
-			startobj = NULL;
+			search_list = nullptr;
 		else
 		{
 			container = get_obj_here(ch, arg);
@@ -1187,15 +1183,15 @@ DEF_DO_FUN( search )
 				its_not_here_msg(ch);
 				return;
 			}
-			startobj = container->first_content;
+			search_list = &container->contents;
 		}
 	}
 
 	found = false;
 
-	if ((!startobj && door == -1) || IS_NPC(ch))
+	if (((!search_list || search_list->empty()) && door == -1) || IS_NPC(ch))
 	{
-		send_to_char("Nie uda³o ci siê niczego znale¼æ." NL, ch);
+		send_to_char("Nie udaï¿½o ci siï¿½ niczego znaleï¿½ï¿½." NL, ch);
 		learn_from_failure(ch, gsn_search);
 		return;
 	}
@@ -1223,11 +1219,12 @@ DEF_DO_FUN( search )
 	}
 	else
 	{
-		for (obj = startobj; obj; obj = obj->next_content)
+		for (auto* o : *search_list)
 		{
-			if (IS_OBJ_STAT(obj, ITEM_HIDDEN)
+			if (IS_OBJ_STAT(o, ITEM_HIDDEN)
 					&& percent < ch->pcdata->learned[gsn_search])
 			{
+				obj = o;
 				found = true;
 				break;
 			}
@@ -1236,15 +1233,15 @@ DEF_DO_FUN( search )
 
 	if (!found)
 	{
-		send_to_char("Nie uda³o ci siê nic znale¼æ." NL, ch);
+		send_to_char("Nie udaï¿½o ci siï¿½ nic znaleï¿½ï¿½." NL, ch);
 		learn_from_failure(ch, gsn_search);
 		return;
 	}
 
 	separate_obj(obj);
 	REMOVE_BIT(obj->extra_flags, ITEM_HIDDEN);
-	act(COL_ACTION, "Natrafi³$a¶ na $p$3!", ch, obj, NULL, TO_CHAR);
-	act(COL_ACTION, "$n natrafi³$o na $p$3!", ch, obj, NULL, TO_ROOM);
+	act(COL_ACTION, "Natrafiï¿½$aï¿½ na $p$3!", ch, obj, NULL, TO_CHAR);
+	act(COL_ACTION, "$n natrafiï¿½$o na $p$3!", ch, obj, NULL, TO_ROOM);
 	learn_from_success(ch, gsn_search);
 	return;
 }
@@ -1269,7 +1266,7 @@ DEF_DO_FUN( steal )
 
 	if (arg1[0] == '\0' || arg2[0] == '\0')
 	{
-		send_to_char("Ukra¶æ co i od kogo?" NL, ch);
+		send_to_char("Ukraï¿½ï¿½ co i od kogo?" NL, ch);
 		return;
 	}
 
@@ -1284,19 +1281,19 @@ DEF_DO_FUN( steal )
 
 	if (victim == ch)
 	{
-		send_to_char("Nieeee, lepiej nie. Jeszcze siê domy¶lisz." NL, ch);
+		send_to_char("Nieeee, lepiej nie. Jeszcze siï¿½ domyï¿½lisz." NL, ch);
 		return;
 	}
 
 	if (IS_SET(ch->in_room->room_flags, ROOM_SAFE))
 	{
-		send_to_char("To nie najlepsze miejsce na kradzie¿e." NL, ch);
+		send_to_char("To nie najlepsze miejsce na kradzieï¿½e." NL, ch);
 		return;
 	}
 
 	if (check_illegal_psteal(ch, victim))
 	{
-		send_to_char("Nie mo¿esz okradaæ graczy!" NL, ch);
+		send_to_char("Nie moï¿½esz okradaï¿½ graczy!" NL, ch);
 		return;
 	}
 
@@ -1312,12 +1309,12 @@ DEF_DO_FUN( steal )
 		 * Failure.
 		 */
 		send_to_char("Oops..." NL, ch);
-		act( COL_ACTION, "$n próbowa³$o ciê okra¶æ!", ch, NULL, victim,
+		act( COL_ACTION, "$n prï¿½bowaï¿½$o ciï¿½ okraï¿½ï¿½!", ch, NULL, victim,
 				TO_VICT);
-		act( COL_ACTION, "$n próbowa³$o okra¶æ $N$3.", ch, NULL, victim,
+		act( COL_ACTION, "$n prï¿½bowaï¿½$o okraï¿½ï¿½ $N$3.", ch, NULL, victim,
 				TO_NOTVICT);
 
-		sprintf(buf, "%s to smarkaty z³odziej !!!", ch->name);
+		sprintf(buf, "%s to smarkaty zï¿½odziej !!!", ch->name);
 		do_yell(victim, buf);
 
 		learn_from_failure(ch, gsn_steal);
@@ -1331,20 +1328,20 @@ DEF_DO_FUN( steal )
 
 				// Thanos: zalatalem, bo padal jak victim->...->planet == NULL
 				// co w gruncie rzeczy jest bugiem (???)
-				// £ata sama w sobie nie do konca jest pewna, bo first_planet
+				// ï¿½ata sama w sobie nie do konca jest pewna, bo first_planet
 				// tez w sumie moze byc NULL, ale to mud SW, wiec.. ;)
 				if (victim->in_room->area->planet)
 					planet = victim->in_room->area->planet;
 				else
-					planet = first_planet;
+					planet = planet_list.empty() ? nullptr : planet_list.front();
 
 				if (find_crime(ch, planet))
 					ch_printf(ch, FG_YELLOW
-					"Kradn±c na %s pogarszasz swoj± sytuacjê." EOL,
+					"Kradnï¿½c na %s pogarszasz swojï¿½ sytuacjï¿½." EOL,
 							capitalize(planet->name));
 				else
 					ch_printf(ch, FG_YELLOW
-					"Jeste¶ teraz poszukiwan%s na %s." EOL, SEX_SUFFIX_YAE(ch),
+					"Jesteï¿½ teraz poszukiwan%s na %s." EOL, SEX_SUFFIX_YAE(ch),
 							capitalize(planet->name));
 
 				crime_to_char(ch, planet->name, CRIME_STEAL);
@@ -1380,7 +1377,7 @@ DEF_DO_FUN( steal )
 		amount = (int) (victim->gold * number_range(1, 10) / 100);
 		if (amount <= 0)
 		{
-			send_to_char("Nie uda³o ci siê zwêdziæ ¿adnej kasy..." NL, ch);
+			send_to_char("Nie udaï¿½o ci siï¿½ zwï¿½dziï¿½ ï¿½adnej kasy..." NL, ch);
 			learn_from_failure(ch, gsn_steal);
 			return;
 		}
@@ -1388,7 +1385,7 @@ DEF_DO_FUN( steal )
 		ch->gold += amount;
 		victim->gold -= amount;
 		ch_printf(ch, "Aha! Zdobywasz %d kredyt%s." NL, amount,
-				NUMBER_SUFF(amount, "kê", "ki", "ek"));
+				NUMBER_SUFF(amount, "kï¿½", "ki", "ek"));
 		learn_from_success(ch, gsn_steal);
 		if (IS_NPC(victim))
 			;
@@ -1399,7 +1396,7 @@ DEF_DO_FUN( steal )
 			xp = UMIN(xp, xp_compute(ch, victim));
 			gain_exp(ch, xp, SMUGGLING_ABILITY);
 			ch_printf(ch,
-					FB_WHITE "Zdobywasz %ld punktów do¶wiadczenia przemytniczego!" EOL,
+					FB_WHITE "Zdobywasz %ld punktï¿½w doï¿½wiadczenia przemytniczego!" EOL,
 					xp);
 		}
 		return;
@@ -1415,7 +1412,7 @@ DEF_DO_FUN( steal )
 				{
 					ch_printf(ch, "%s nosi %s na %s." NL, PERS(victim, ch, 0),
 							obj_next->przypadki[3], obj->przypadki[5]);
-					send_to_char("Najpierw musisz to zwêdziæ." NL, ch);
+					send_to_char("Najpierw musisz to zwï¿½dziï¿½." NL, ch);
 					learn_from_failure(ch, gsn_steal);
 					return;
 				}
@@ -1424,7 +1421,7 @@ DEF_DO_FUN( steal )
 			}
 		}
 
-		send_to_char("Jako¶ nie mo¿esz tego znale¼æ." NL, ch);
+		send_to_char("Jakoï¿½ nie moï¿½esz tego znaleï¿½ï¿½." NL, ch);
 		learn_from_failure(ch, gsn_steal);
 		return;
 	}
@@ -1432,21 +1429,21 @@ DEF_DO_FUN( steal )
 	if (!can_drop_obj(ch, obj) || IS_OBJ_STAT(obj, ITEM_PERSONAL)/*Thanos*/
 	|| IS_OBJ_STAT(obj, ITEM_INVENTORY) || IS_OBJ_STAT(obj, ITEM_PROTOTYPE))
 	{
-		send_to_char("Nie udaje ci siê tego zwin±æ." NL, ch);
+		send_to_char("Nie udaje ci siï¿½ tego zwinï¿½ï¿½." NL, ch);
 		learn_from_failure(ch, gsn_steal);
 		return;
 	}
 
 	if (ch->carry_number + (get_obj_number(obj) / obj->count) > can_carry_n(ch))
 	{
-		send_to_char("Hej! Masz pe³ne rêce!" NL, ch);
+		send_to_char("Hej! Masz peï¿½ne rï¿½ce!" NL, ch);
 		learn_from_failure(ch, gsn_steal);
 		return;
 	}
 
 	if (ch->carry_weight + (get_obj_weight(obj) / obj->count) > can_carry_w(ch))
 	{
-		send_to_char("Nie ud¼wigniesz tak wiele." NL, ch);
+		send_to_char("Nie udï¿½wigniesz tak wiele." NL, ch);
 		learn_from_failure(ch, gsn_steal);
 		return;
 	}
@@ -1462,7 +1459,7 @@ DEF_DO_FUN( steal )
 		xp = UMIN(xp, xp_compute(ch, victim));
 		gain_exp(ch, xp, SMUGGLING_ABILITY);
 		ch_printf(ch,
-				FB_WHITE "Zdobywasz %ld punktów do¶wiadczenia przemytniczego!" EOL,
+				FB_WHITE "Zdobywasz %ld punktï¿½w doï¿½wiadczenia przemytniczego!" EOL,
 				xp);
 	}
 	separate_obj(obj);
@@ -1495,7 +1492,7 @@ DEF_DO_FUN( backstab )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Kogo chcesz potraktowaæ ciosem w plecy?" NL, ch);
+		send_to_char("Kogo chcesz potraktowaï¿½ ciosem w plecy?" NL, ch);
 		return;
 	}
 
@@ -1507,7 +1504,7 @@ DEF_DO_FUN( backstab )
 
 	if (victim == ch)
 	{
-		send_to_char("Nie uda ci siê zaskoczyæ samego siebie!" NL, ch);
+		send_to_char("Nie uda ci siï¿½ zaskoczyï¿½ samego siebie!" NL, ch);
 		return;
 	}
 
@@ -1518,14 +1515,14 @@ DEF_DO_FUN( backstab )
 	if ((obj = get_eq_char(ch, WEAR_WIELD)) == NULL
 			|| (obj->value[3] != WEAPON_VIBRO_BLADE))
 	{
-		send_to_char("Potrzebujesz krótkiej tn±cej broni." NL, ch);
+		send_to_char("Potrzebujesz krï¿½tkiej tnï¿½cej broni." NL, ch);
 		return;
 	}
 
 	if (victim->fighting || IS_RACE(victim, "YUUZHAN VONG"))
 	{
 		send_to_char(
-				"Twoja ofiara jest zbyt czujna. Nie da siê podej¶æ od ty³u." NL,
+				"Twoja ofiara jest zbyt czujna. Nie da siï¿½ podejï¿½ï¿½ od tyï¿½u." NL,
 				ch);
 		return;
 	}
@@ -1533,7 +1530,7 @@ DEF_DO_FUN( backstab )
 	/* Can backstab a char even if it's hurt as long as it's sleeping. -Narn */
 	if (victim->hit < victim->max_hit && IS_AWAKE(victim))
 	{
-		act( PLAIN, "$N jest rann$y i podejrzliw$y... Nie uda ci siê zakra¶æ.",
+		act( PLAIN, "$N jest rann$y i podejrzliw$y... Nie uda ci siï¿½ zakraï¿½ï¿½.",
 				ch, NULL, victim, TO_CHAR);
 		return;
 	}
@@ -1573,7 +1570,7 @@ DEF_DO_FUN( rescue )
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
 	{
-		send_to_char("Kogo chcesz wybawiæ z opresji?" NL, ch);
+		send_to_char("Kogo chcesz wybawiï¿½ z opresji?" NL, ch);
 		return;
 	}
 
@@ -1585,7 +1582,7 @@ DEF_DO_FUN( rescue )
 
 	if (victim == ch)
 	{
-		send_to_char("Próbujesz ratowaæ sw± skórê, ale jako¶ ci nie idzie." NL,
+		send_to_char("Prï¿½bujesz ratowaï¿½ swï¿½ skï¿½rï¿½, ale jakoï¿½ ci nie idzie." NL,
 				ch);
 		return;
 	}
@@ -1619,20 +1616,20 @@ DEF_DO_FUN( rescue )
 	WAIT_STATE(ch, skill_table[gsn_rescue]->beats);
 	if (!IS_NPC(ch) && percent > ch->pcdata->learned[gsn_rescue])
 	{
-		send_to_char("Nie uda³o ci siê nikogo wyratowaæ" NL, ch);
-		act( COL_ACTION, "$n próbowa³$o ciê uratowaæ!", ch, NULL, victim,
+		send_to_char("Nie udaï¿½o ci siï¿½ nikogo wyratowaï¿½" NL, ch);
+		act( COL_ACTION, "$n prï¿½bowaï¿½$o ciï¿½ uratowaï¿½!", ch, NULL, victim,
 				TO_VICT);
-		act( COL_ACTION, "$n bezskutecznie próbuje uratowaæ $N$3!", ch, NULL,
+		act( COL_ACTION, "$n bezskutecznie prï¿½buje uratowaï¿½ $N$3!", ch, NULL,
 				victim, TO_NOTVICT);
 		learn_from_failure(ch, gsn_rescue);
 		return;
 	}
 
-	act( COL_ACTION, "Zas³aniasz $N$3 swoim cia³em!", ch, NULL, victim,
+	act( COL_ACTION, "Zasï¿½aniasz $N$3 swoim ciaï¿½em!", ch, NULL, victim,
 			TO_CHAR);
-	act( COL_ACTION, "$n zas³ania $N$3 swoim cia³em!", ch, NULL, victim,
+	act( COL_ACTION, "$n zasï¿½ania $N$3 swoim ciaï¿½em!", ch, NULL, victim,
 			TO_VICT);
-	act( COL_ACTION, "$n zas³ania $N$3 swoim cia³em!", ch, NULL, victim,
+	act( COL_ACTION, "$n zasï¿½ania $N$3 swoim ciaï¿½em!", ch, NULL, victim,
 			TO_NOTVICT);
 
 	ch->alignment = ch->alignment + 50;
@@ -1693,7 +1690,7 @@ DEF_DO_FUN( punch )
 
 	if (!IS_NPC(ch) && ch->pcdata->learned[gsn_punch] <= 0)
 	{
-		send_to_char("Nie masz pojêcia jak to siê robi." NL, ch);
+		send_to_char("Nie masz pojï¿½cia jak to siï¿½ robi." NL, ch);
 		return;
 	}
 
@@ -1747,7 +1744,7 @@ DEF_DO_FUN( bash )
 
 	if (!IS_NPC(ch) && ch->pcdata->learned[gsn_bash] <= 0)
 	{
-		send_to_char("Nie masz pojêcia jak to zrobiæ" NL, ch);
+		send_to_char("Nie masz pojï¿½cia jak to zrobiï¿½" NL, ch);
 		return;
 	}
 
@@ -1800,7 +1797,7 @@ DEF_DO_FUN( stun )
 
 	if (!IS_NPC(ch) && ch->pcdata->learned[gsn_stun] <= 0)
 	{
-		send_to_char("Nie wiesz jak to siê robi." NL, ch);
+		send_to_char("Nie wiesz jak to siï¿½ robi." NL, ch);
 		return;
 	}
 
@@ -1813,7 +1810,7 @@ DEF_DO_FUN( stun )
 	if (ch->move < 16)
 	{
 		send_to_char( COL_ACTION, ch);
-		send_to_char("Nie starczy ci si³ by to zrobiæ." NL, ch);
+		send_to_char("Nie starczy ci siï¿½ by to zrobiï¿½." NL, ch);
 		return; /* missing return fixed March 11/96 */
 	}
 
@@ -1842,11 +1839,11 @@ DEF_DO_FUN( stun )
 		ch->move -= 15;
 		WAIT_STATE(ch, 2 * PULSE_VIOLENCE);
 		WAIT_STATE(victim, PULSE_VIOLENCE);
-		act( COL_ACTION, "$N uderza w ciebie z ca³± si³± og³uszaj±c ciê!",
+		act( COL_ACTION, "$N uderza w ciebie z caï¿½ï¿½ siï¿½ï¿½ ogï¿½uszajï¿½c ciï¿½!",
 				victim, NULL, ch, TO_CHAR);
-		act( COL_ACTION, "Uderzasz w $N$1 z ca³± si³± i powalasz $I!", ch, NULL,
+		act( COL_ACTION, "Uderzasz w $N$1 z caï¿½ï¿½ siï¿½ï¿½ i powalasz $I!", ch, NULL,
 				victim, TO_CHAR);
-		act( COL_ACTION, "$n uderza w $N$1 z ca³± si³± i powala $I!", ch, NULL,
+		act( COL_ACTION, "$n uderza w $N$1 z caï¿½ï¿½ siï¿½ï¿½ i powala $I!", ch, NULL,
 				victim, TO_NOTVICT);
 		if (!IS_AFFECTED(victim, AFF_PARALYSIS))
 		{
@@ -1865,11 +1862,11 @@ DEF_DO_FUN( stun )
 		ch->move -= 5;
 		learn_from_failure(ch, gsn_stun);
 		act( COL_ACTION,
-				"$N napiera na ciebie z ca³± si³±, ale zrêcznie odskakujesz.",
+				"$N napiera na ciebie z caï¿½ï¿½ siï¿½ï¿½, ale zrï¿½cznie odskakujesz.",
 				victim, NULL, ch, TO_CHAR);
-		act( COL_ACTION, "Napierasz na $N$1, ale $E odskakuje ¶miej±c siê.", ch,
+		act( COL_ACTION, "Napierasz na $N$1, ale $E odskakuje ï¿½miejï¿½c siï¿½.", ch,
 				NULL, victim, TO_CHAR);
-		act( COL_ACTION, "$n napiera na $N$1, ale $E odskakuje ¶miej±c siê.",
+		act( COL_ACTION, "$n napiera na $N$1, ale $E odskakuje ï¿½miejï¿½c siï¿½.",
 				ch, NULL, victim, TO_NOTVICT);
 	}
 	return;
@@ -1915,7 +1912,7 @@ void disarm(CHAR_DATA *ch, CHAR_DATA *victim)
 		return;
 	}
 
-	act( FB_WHITE, "$n ciê * ROZBRAJA * !", ch, NULL, victim, TO_VICT);
+	act( FB_WHITE, "$n ciï¿½ * ROZBRAJA * !", ch, NULL, victim, TO_VICT);
 	act( FB_WHITE, "* ROZBRAJASZ * $N$3!", ch, NULL, victim, TO_CHAR);
 	act( FB_WHITE, "$n rozbraja $N$3!", ch, NULL, victim, TO_NOTVICT);
 	learn_from_success(ch, gsn_disarm);
@@ -1944,13 +1941,13 @@ DEF_DO_FUN( disarm )
 
 	if (!IS_NPC(ch) && ch->pcdata->learned[gsn_disarm] <= 0)
 	{
-		send_to_char("Nie wiesz jak mo¿esz to zrobiæ." NL, ch);
+		send_to_char("Nie wiesz jak moï¿½esz to zrobiï¿½." NL, ch);
 		return;
 	}
 
 	if (get_eq_char(ch, WEAR_WIELD) == NULL)
 	{
-		send_to_char("Aby kogo¶ rozbroiæ musisz dzier¿yæ broñ." NL, ch);
+		send_to_char("Aby kogoï¿½ rozbroiï¿½ musisz dzierï¿½yï¿½ broï¿½." NL, ch);
 		return;
 	}
 
@@ -1962,7 +1959,7 @@ DEF_DO_FUN( disarm )
 
 	if ((obj = get_eq_char(victim, WEAR_WIELD)) == NULL)
 	{
-		send_to_char("Twój przeciwnik nie ma broni w rêku!" NL, ch);
+		send_to_char("Twï¿½j przeciwnik nie ma broni w rï¿½ku!" NL, ch);
 		return;
 	}
 
@@ -1976,7 +1973,7 @@ DEF_DO_FUN( disarm )
 		disarm(ch, victim);
 	else
 	{
-		send_to_char("Nie uda³o ci siê." NL, ch);
+		send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
 		learn_from_failure(ch, gsn_disarm);
 	}
 	return;
@@ -1997,13 +1994,13 @@ void trip(CHAR_DATA *ch, CHAR_DATA *victim)
 				AFF_FLYING) || IS_AFFECTED( victim->mount, AFF_FLOATING ))
 			return;
 		act( COL_ACTION,
-				"$n rzuca siê na twojego wierzchowca i spadasz na ziemiê!", ch,
+				"$n rzuca siï¿½ na twojego wierzchowca i spadasz na ziemiï¿½!", ch,
 				NULL, victim, TO_VICT);
 		act( COL_ACTION,
-				"Rzucasz siê na wierzchowca $N$1, a $E spada na ziemiê!", ch,
+				"Rzucasz siï¿½ na wierzchowca $N$1, a $E spada na ziemiï¿½!", ch,
 				NULL, victim, TO_CHAR);
 		act( COL_ACTION,
-				"$n rzuca siê na wierzchowca $N$1, a $E spada na ziemiê!", ch,
+				"$n rzuca siï¿½ na wierzchowca $N$1, a $E spada na ziemiï¿½!", ch,
 				NULL, victim, TO_NOTVICT);
 		REMOVE_BIT(victim->mount->act, ACT_MOUNTED);
 		victim->mount = NULL;
@@ -2015,13 +2012,13 @@ void trip(CHAR_DATA *ch, CHAR_DATA *victim)
 	}
 	if (victim->wait == 0)
 	{
-		act( PLAIN, "$n" PLAIN " rzuca siê na ciebie i upadasz na ziemiê!", ch,
+		act( PLAIN, "$n" PLAIN " rzuca siï¿½ na ciebie i upadasz na ziemiï¿½!", ch,
 				NULL, victim, TO_VICT);
 		act( PLAIN,
-				"Rzucasz siê na $N$3" PLAIN " i $N" PLAIN " upada na ziemiê!",
+				"Rzucasz siï¿½ na $N$3" PLAIN " i $N" PLAIN " upada na ziemiï¿½!",
 				ch, NULL, victim, TO_CHAR);
 		act( PLAIN,
-				"$n" PLAIN " rzuca siê na $N$3" PLAIN " i $N" PLAIN " upada na ziemiê!",
+				"$n" PLAIN " rzuca siï¿½ na $N$3" PLAIN " i $N" PLAIN " upada na ziemiï¿½!",
 				ch, NULL, victim, TO_NOTVICT);
 
 		WAIT_STATE(ch, 2 * PULSE_VIOLENCE);
@@ -2036,7 +2033,6 @@ void trip(CHAR_DATA *ch, CHAR_DATA *victim)
 DEF_DO_FUN( pick )
 {
 	char arg[MAX_INPUT_LENGTH];
-	CHAR_DATA *gch;
 	OBJ_DATA *obj;
 	EXIT_DATA *pexit;
 	SHIP_DATA *ship;
@@ -2051,7 +2047,7 @@ DEF_DO_FUN( pick )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Co chcesz odkluczyæ?" NL, ch);
+		send_to_char("Co chcesz odkluczyï¿½?" NL, ch);
 		return;
 	}
 
@@ -2067,12 +2063,12 @@ DEF_DO_FUN( pick )
 	WAIT_STATE(ch, skill_table[gsn_pick_lock]->beats);
 
 	/* look for guards */
-	for (gch = ch->in_room->first_person; gch; gch = gch->next_in_room)
+	for (auto* gch : ch->in_room->people)
 	{
 		if ( IS_NPC(gch) && IS_AWAKE(gch)
 				&& ch->skill_level[SMUGGLING_ABILITY] < gch->top_level)
 		{
-			act( PLAIN, "$N stoi za blisko zamka. Wyczuje ciê.", ch, NULL, gch,
+			act( PLAIN, "$N stoi za blisko zamka. Wyczuje ciï¿½.", ch, NULL, gch,
 					TO_CHAR);
 			return;
 		}
@@ -2086,22 +2082,22 @@ DEF_DO_FUN( pick )
 
 		if (!IS_SET(pexit->flags, EX_CLOSED))
 		{
-			send_to_char("Hej. To ju¿ jest otwarte." NL, ch);
+			send_to_char("Hej. To juï¿½ jest otwarte." NL, ch);
 			return;
 		}
 		if (pexit->key < 0)
 		{
-			send_to_char("Nie da siê tego otworzyæ." NL, ch);
+			send_to_char("Nie da siï¿½ tego otworzyï¿½." NL, ch);
 			return;
 		}
 		if (!IS_SET(pexit->flags, EX_LOCKED))
 		{
-			send_to_char("Hej. To jest ju¿ odkluczone." NL, ch);
+			send_to_char("Hej. To jest juï¿½ odkluczone." NL, ch);
 			return;
 		}
 		if (IS_SET(pexit->flags, EX_PICKPROOF))
 		{
-			send_to_char("Nie uda³o ci siê." NL, ch);
+			send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
 			learn_from_failure(ch, gsn_pick_lock);
 			check_room_for_traps(ch, TRAP_PICK | trap_door[pexit->vdir]);
 			return;
@@ -2110,14 +2106,14 @@ DEF_DO_FUN( pick )
 		if ( IS_NPC(ch)
 				|| number_percent() > ch->pcdata->learned[gsn_pick_lock])
 		{
-			send_to_char("Nie uda³o ci siê." NL, ch);
+			send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
 			learn_from_failure(ch, gsn_pick_lock);
 			return;
 		}
 
 		REMOVE_BIT(pexit->flags, EX_LOCKED);
 		send_to_char("*Click*" NL, ch);
-		act( COL_ACTION, "$n wy³amuje $d.", ch, NULL, pexit->keyword, TO_ROOM);
+		act( COL_ACTION, "$n wyï¿½amuje $d.", ch, NULL, pexit->keyword, TO_ROOM);
 		learn_from_success(ch, gsn_pick_lock);
 		/* pick the other side */
 		if ((pexit_rev = pexit->rexit) != NULL
@@ -2133,27 +2129,27 @@ DEF_DO_FUN( pick )
 	{
 		if (obj->item_type != ITEM_CONTAINER)
 		{
-			send_to_char("Nie mo¿esz tego wy³amaæ" NL, ch);
+			send_to_char("Nie moï¿½esz tego wyï¿½amaï¿½" NL, ch);
 			return;
 		}
 		if (!IS_SET(obj->value[1], CONT_CLOSED))
 		{
-			send_to_char("Hej. To ju¿ jest otwarte." NL, ch);
+			send_to_char("Hej. To juï¿½ jest otwarte." NL, ch);
 			return;
 		}
 		if (obj->value[2] < 0)
 		{
-			send_to_char("Tego nie da siê wy³amaæ." NL, ch);
+			send_to_char("Tego nie da siï¿½ wyï¿½amaï¿½." NL, ch);
 			return;
 		}
 		if (!IS_SET(obj->value[1], CONT_LOCKED))
 		{
-			send_to_char("Hej. To jest ju¿ odkluczone." NL, ch);
+			send_to_char("Hej. To jest juï¿½ odkluczone." NL, ch);
 			return;
 		}
 		if (IS_SET(obj->value[1], CONT_PICKPROOF))
 		{
-			send_to_char("Nie uda³o ci siê." NL, ch);
+			send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
 			learn_from_failure(ch, gsn_pick_lock);
 			check_for_trap(ch, obj, TRAP_PICK);
 			return;
@@ -2162,7 +2158,7 @@ DEF_DO_FUN( pick )
 		if ( IS_NPC(ch)
 				|| number_percent() > ch->pcdata->learned[gsn_pick_lock])
 		{
-			send_to_char("Nie uda³o ci siê." NL, ch);
+			send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
 			learn_from_failure(ch, gsn_pick_lock);
 			return;
 		}
@@ -2170,7 +2166,7 @@ DEF_DO_FUN( pick )
 		separate_obj(obj);
 		REMOVE_BIT(obj->value[1], CONT_LOCKED);
 		send_to_char("*Click*" NL, ch);
-		act( COL_ACTION, "$n wy³amuje $p$3.", ch, obj, NULL, TO_ROOM);
+		act( COL_ACTION, "$n wyï¿½amuje $p$3.", ch, obj, NULL, TO_ROOM);
 		learn_from_success(ch, gsn_pick_lock);
 		check_for_trap(ch, obj, TRAP_PICK);
 		return;
@@ -2189,18 +2185,18 @@ DEF_DO_FUN( pick )
 		if (!known_biotech(ship, ch))
 		{
 			ch_printf(ch,
-					FB_RED "To jest wytwór obcej biotechnologi, niestety nie masz o niej zielonego pojêcia." EOL);
+					FB_RED "To jest wytwï¿½r obcej biotechnologi, niestety nie masz o niej zielonego pojï¿½cia." EOL);
 			return;
 		}
 		if (check_pilot(ch, ship))
 		{
-			send_to_char("Hmm.. Chcesz siê w³amaæ do swojego statku???" NL, ch);
+			send_to_char("Hmm.. Chcesz siï¿½ wï¿½amaï¿½ do swojego statku???" NL, ch);
 			return;
 		}
 
 		if (ship->shipstate != SHIP_DOCKED && ship->shipstate != SHIP_DISABLED)
 		{
-			send_to_char("Ten statek w³a¶nie startuje." NL, ch);
+			send_to_char("Ten statek wï¿½aï¿½nie startuje." NL, ch);
 			return;
 		}
 
@@ -2209,8 +2205,8 @@ DEF_DO_FUN( pick )
 		if ( IS_NPC(ch) || !ch->pcdata
 				|| number_percent() > ch->pcdata->learned[gsn_pickshiplock])
 		{
-			send_to_char("Nie uda³o ci siê." NL, ch);
-			sprintf(buf, "%s próbuje w³amaæ siê do %s!", ch->name, ship->name);
+			send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
+			sprintf(buf, "%s prï¿½buje wï¿½amaï¿½ siï¿½ do %s!", ch->name, ship->name);
 			log_string(buf);
 			learn_from_failure(ch, gsn_pickshiplock);
 			return;
@@ -2221,12 +2217,12 @@ DEF_DO_FUN( pick )
 			if (!str_cmp(ship->lock_key, "0000"))
 			{
 				ship->hatchopen = true;
-				act( PLAIN, "Wy³amujesz zamek i otwierasz klapê statku $T.", ch,
+				act( PLAIN, "Wyï¿½amujesz zamek i otwierasz klapï¿½ statku $T.", ch,
 						NULL, ship->name, TO_CHAR);
-				act( PLAIN, "$n otwiera klapê statku $T.", ch, NULL, ship->name,
+				act( PLAIN, "$n otwiera klapï¿½ statku $T.", ch, NULL, ship->name,
 						TO_ROOM);
 				echo_to_room(ship->entrance, FB_YELLOW
-				"Klapa owtera siê od zewn±trz." EOL);
+				"Klapa owtera siï¿½ od zewnï¿½trz." EOL);
 				learn_from_success(ch, gsn_pickshiplock);
 			}
 			else
@@ -2239,7 +2235,7 @@ DEF_DO_FUN( pick )
 				 char digit4[MSL];
 				 */
 				act( PLAIN,
-						"Zamek $T jest dobrze zabezpieczony, nie udaje ci siê",
+						"Zamek $T jest dobrze zabezpieczony, nie udaje ci siï¿½",
 						ch, NULL, ship->name, TO_CHAR);
 				learn_from_failure(ch, gsn_pickshiplock);
 
@@ -2248,7 +2244,7 @@ DEF_DO_FUN( pick )
 		return;
 	}
 
-	ch_printf(ch, "Nie ma tu ¿adnego %s." NL, arg);
+	ch_printf(ch, "Nie ma tu ï¿½adnego %s." NL, arg);
 	return;
 }
 
@@ -2268,7 +2264,7 @@ DEF_DO_FUN( sneak )
 		return;
 	}
 
-	send_to_char("Zaczynasz poruszaæ siê niebywale cicho." NL, ch);
+	send_to_char("Zaczynasz poruszaï¿½ siï¿½ niebywale cicho." NL, ch);
 	affect_strip(ch, gsn_sneak);
 
 	if ( IS_NPC(ch) || number_percent() < ch->pcdata->learned[gsn_sneak])
@@ -2306,13 +2302,13 @@ DEF_DO_FUN( hide )
 
 	if ( IS_NPC(ch) || number_percent() < ch->pcdata->learned[gsn_hide])
 	{
-		send_to_char("Wtapiasz siê w otoczenie." NL, ch);
+		send_to_char("Wtapiasz siï¿½ w otoczenie." NL, ch);
 		SET_BIT(ch->affected_by, AFF_HIDE);
 		learn_from_success(ch, gsn_hide);
 	}
 	else
 	{
-		send_to_char("Próbujesz wtopiæ siê w otoczenie, ale bezskutecznie." NL,
+		send_to_char("Prï¿½bujesz wtopiï¿½ siï¿½ w otoczenie, ale bezskutecznie." NL,
 				ch);
 		learn_from_failure(ch, gsn_hide);
 	}
@@ -2355,7 +2351,7 @@ DEF_DO_FUN( recall )
 
 	if (!location)
 	{
-		send_to_char("Zupe³nie nie wiesz gdzie jeste¶." NL, ch);
+		send_to_char("Zupeï¿½nie nie wiesz gdzie jesteï¿½." NL, ch);
 		return;
 	}
 
@@ -2401,7 +2397,7 @@ DEF_DO_FUN( aid )
 	one_argument(argument, arg);
 	if (arg[0] == '\0')
 	{
-		send_to_char("Kogo chcesz uleczyæ?" NL, ch);
+		send_to_char("Kogo chcesz uleczyï¿½?" NL, ch);
 		return;
 	}
 
@@ -2432,7 +2428,7 @@ DEF_DO_FUN( aid )
 
 	if (victim->hit <= -400)
 	{
-		act( PLAIN, "$N jest w takim stanie, ¿e twój wysi³ek pójdzie na marne.",
+		act( PLAIN, "$N jest w takim stanie, ï¿½e twï¿½j wysiï¿½ek pï¿½jdzie na marne.",
 				ch, NULL, victim, TO_CHAR);
 		return;
 	}
@@ -2444,7 +2440,7 @@ DEF_DO_FUN( aid )
 	WAIT_STATE(ch, skill_table[gsn_aid]->beats);
 	if (!IS_NPC(ch) && percent > ch->pcdata->learned[gsn_aid])
 	{
-		send_to_char("Nie uda³o ci siê." NL, ch);
+		send_to_char("Nie udaï¿½o ci siï¿½." NL, ch);
 		learn_from_failure(ch, gsn_aid);
 		return;
 	}
@@ -2452,16 +2448,16 @@ DEF_DO_FUN( aid )
 	ch->alignment = ch->alignment + 20;
 	ch->alignment = URANGE(-1000, ch->alignment, 1000);
 
-	act( COL_ACTION, "Przywracasz $N$2 przytomno¶æ!", ch, NULL, victim,
+	act( COL_ACTION, "Przywracasz $N$2 przytomnoï¿½ï¿½!", ch, NULL, victim,
 			TO_CHAR);
-	act( COL_ACTION, "$n przywraca $N$2 przytomno¶æ!", ch, NULL, victim,
+	act( COL_ACTION, "$n przywraca $N$2 przytomnoï¿½ï¿½!", ch, NULL, victim,
 			TO_NOTVICT);
 	learn_from_success(ch, gsn_aid);
 	if (victim->hit < 1)
 		victim->hit = 1;
 
 	update_pos(victim);
-	act( COL_ACTION, "$n przywraca ci przytomno¶æ!", ch, NULL, victim, TO_VICT);
+	act( COL_ACTION, "$n przywraca ci przytomnoï¿½ï¿½!", ch, NULL, victim, TO_VICT);
 	return;
 }
 
@@ -2472,21 +2468,21 @@ DEF_DO_FUN( mount )
 	if (!IS_NPC(ch) && ch->pcdata->learned[gsn_mount] <= 0)
 	{
 		send_to_char(
-				"Lepiej nie próbuj tego dopóki siê tego nie nauczysz..." NL,
+				"Lepiej nie prï¿½buj tego dopï¿½ki siï¿½ tego nie nauczysz..." NL,
 				ch);
 		return;
 	}
 
 	if (ch->mount)
 	{
-		act( PLAIN, "No przecie¿ ju¿ dosiadasz $N$3!", ch, NULL, ch->mount,
+		act( PLAIN, "No przecieï¿½ juï¿½ dosiadasz $N$3!", ch, NULL, ch->mount,
 				TO_CHAR);
 		return;
 	}
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Kogo chcesz dosi±¶æ?\n\r", ch);
+		send_to_char("Kogo chcesz dosiï¿½ï¿½ï¿½?\n\r", ch);
 		return;
 	}
 
@@ -2498,26 +2494,26 @@ DEF_DO_FUN( mount )
 
 	if (!IS_NPC(victim) || !IS_SET(victim->act, ACT_MOUNTABLE))
 	{
-		act( PLAIN, "Nie mo¿esz dosi±¶æ $N$1!", ch, NULL, victim, TO_CHAR);
+		act( PLAIN, "Nie moï¿½esz dosiï¿½ï¿½ï¿½ $N$1!", ch, NULL, victim, TO_CHAR);
 		return;
 	}
 
 	if (IS_SET(victim->act, ACT_MOUNTED))
 	{
-		send_to_char("Przykro mi. Zajête." NL, ch);
+		send_to_char("Przykro mi. Zajï¿½te." NL, ch);
 		return;
 	}
 
 	if (victim->position < POS_STANDING)
 	{
-		act( PLAIN, "$E musi staæ, inaczej nici z dosiadania.", ch, NULL,
+		act( PLAIN, "$E musi staï¿½, inaczej nici z dosiadania.", ch, NULL,
 				victim, TO_CHAR);
 		return;
 	}
 
 	if (victim->position == POS_FIGHTING || victim->fighting)
 	{
-		send_to_char("Twoja ofiara za bardzo siê teraz wierzga." NL, ch);
+		send_to_char("Twoja ofiara za bardzo siï¿½ teraz wierzga." NL, ch);
 		return;
 	}
 
@@ -2527,9 +2523,9 @@ DEF_DO_FUN( mount )
 		SET_BIT(victim->act, ACT_MOUNTED);
 		ch->mount = victim;
 		act( COL_ACTION, "Dosiadasz $N$3.", ch, NULL, victim, TO_CHAR);
-		act( COL_ACTION, "$n zrêcznie wskakuje na $N$3.", ch, NULL, victim,
+		act( COL_ACTION, "$n zrï¿½cznie wskakuje na $N$3.", ch, NULL, victim,
 				TO_NOTVICT);
-		act( COL_ACTION, "$n dosiada ciê.", ch, NULL, victim, TO_VICT);
+		act( COL_ACTION, "$n dosiada ciï¿½.", ch, NULL, victim, TO_VICT);
 		learn_from_success(ch, gsn_mount);
 		ch->position = POS_MOUNTED;
 		fevent_trigger(ch, FE_POSITION);
@@ -2537,11 +2533,11 @@ DEF_DO_FUN( mount )
 	else
 	{
 		act( COL_ACTION,
-				"Twoja nieudolna próba wskoczenia na $N$3 ¼le siê koñczy, spadasz na ³eb.",
+				"Twoja nieudolna prï¿½ba wskoczenia na $N$3 ï¿½le siï¿½ koï¿½czy, spadasz na ï¿½eb.",
 				ch, NULL, victim, TO_CHAR);
-		act( COL_ACTION, "$n nieudolnie próbuje dosi±¶æ $N$3.", ch, NULL,
+		act( COL_ACTION, "$n nieudolnie prï¿½buje dosiï¿½ï¿½ï¿½ $N$3.", ch, NULL,
 				victim, TO_NOTVICT);
-		act( COL_ACTION, "$n próbuje ciê dosi±¶æ.", ch, NULL, victim, TO_VICT);
+		act( COL_ACTION, "$n prï¿½buje ciï¿½ dosiï¿½ï¿½ï¿½.", ch, NULL, victim, TO_VICT);
 		learn_from_failure(ch, gsn_mount);
 	}
 	return;
@@ -2561,7 +2557,7 @@ DEF_DO_FUN( dismount )
 	if ( IS_NPC(ch) || number_percent() < ch->pcdata->learned[gsn_mount])
 	{
 		act( COL_ACTION, "Zsiadasz z $N$1.", ch, NULL, victim, TO_CHAR);
-		act( COL_ACTION, "$n zrêcznie zeskakuje z $N$1.", ch, NULL, victim,
+		act( COL_ACTION, "$n zrï¿½cznie zeskakuje z $N$1.", ch, NULL, victim,
 				TO_NOTVICT);
 		act( COL_ACTION, "$n zeskakuje z ciebie. Ufff!", ch, NULL, victim,
 				TO_VICT);
@@ -2573,11 +2569,11 @@ DEF_DO_FUN( dismount )
 	}
 	else
 	{
-		act( COL_ACTION, "Spadasz na ³eb próbuj±c zsi±¶æ z $N$1. Ouch!", ch,
+		act( COL_ACTION, "Spadasz na ï¿½eb prï¿½bujï¿½c zsiï¿½ï¿½ï¿½ z $N$1. Ouch!", ch,
 				NULL, victim, TO_CHAR);
-		act( COL_ACTION, "$n spada na ³eb próbuj±c zsi±¶æ z $N$1.", ch, NULL,
+		act( COL_ACTION, "$n spada na ï¿½eb prï¿½bujï¿½c zsiï¿½ï¿½ï¿½ z $N$1.", ch, NULL,
 				victim, TO_NOTVICT);
-		act( COL_ACTION, "$n spada z twoich pleców. Ufff!", ch, NULL, victim,
+		act( COL_ACTION, "$n spada z twoich plecï¿½w. Ufff!", ch, NULL, victim,
 				TO_VICT);
 		learn_from_failure(ch, gsn_mount);
 		REMOVE_BIT(victim->act, ACT_MOUNTED);
@@ -2645,13 +2641,13 @@ bool check_parry(CHAR_DATA *ch, CHAR_DATA *victim)
 	if (number_range(1, 2) == 1)
 	{
 		act( PLAIN, "Parujesz atak $n$1" PLAIN ".", ch, NULL, victim, TO_VICT);
-		act( PLAIN, "$N" PLAIN " paruje twój atak.", ch, NULL, victim, TO_CHAR);
+		act( PLAIN, "$N" PLAIN " paruje twï¿½j atak.", ch, NULL, victim, TO_CHAR);
 	}
 	else
 	{
-		act( PLAIN, "Bezlito¶nie odbijasz atak $n$1" PLAIN ".", ch, NULL,
+		act( PLAIN, "Bezlitoï¿½nie odbijasz atak $n$1" PLAIN ".", ch, NULL,
 				victim, TO_VICT);
-		act( PLAIN, "$N" PLAIN " bezlito¶nie odbija twój atak.", ch, NULL,
+		act( PLAIN, "$N" PLAIN " bezlitoï¿½nie odbija twï¿½j atak.", ch, NULL,
 				victim, TO_CHAR);
 	}
 	learn_from_success(victim, gsn_parry);
@@ -2685,22 +2681,22 @@ bool check_dodge(CHAR_DATA *ch, CHAR_DATA *victim)
 
 	if (number_range(1, 2) == 1)
 	{
-		act( PLAIN, "Uchylasz siê przed atakiem $n$1" PLAIN ".", ch, NULL,
+		act( PLAIN, "Uchylasz siï¿½ przed atakiem $n$1" PLAIN ".", ch, NULL,
 				victim, TO_VICT);
-		act( PLAIN, "$N" PLAIN " uchyla siê przed twoim atakiem.", ch, NULL,
+		act( PLAIN, "$N" PLAIN " uchyla siï¿½ przed twoim atakiem.", ch, NULL,
 				victim, TO_CHAR);
-		act( PLAIN, "$N" PLAIN " uchyla siê przed atakiem $n$1.", ch, NULL,
+		act( PLAIN, "$N" PLAIN " uchyla siï¿½ przed atakiem $n$1.", ch, NULL,
 				victim, TO_NOTVICT);
 	}
 	else
 	{
-		act( PLAIN, "Robisz szybki zwód i $n" PLAIN " nie mo¿e ciê trafiæ.", ch,
+		act( PLAIN, "Robisz szybki zwï¿½d i $n" PLAIN " nie moï¿½e ciï¿½ trafiï¿½.", ch,
 				NULL, victim, TO_VICT);
 		act( PLAIN,
-				"$N" PLAIN " robi szybki zwód,a twój atak trafia w powietrze.",
+				"$N" PLAIN " robi szybki zwï¿½d,a twï¿½j atak trafia w powietrze.",
 				ch, NULL, victim, TO_CHAR);
 		act( PLAIN,
-				"$N" PLAIN " robi szybki zwód, a atak $n$1 trafia w powietrze.",
+				"$N" PLAIN " robi szybki zwï¿½d, a atak $n$1 trafia w powietrze.",
 				ch, NULL, victim, TO_NOTVICT);
 	}
 	learn_from_success(victim, gsn_dodge);
@@ -2710,14 +2706,14 @@ bool check_dodge(CHAR_DATA *ch, CHAR_DATA *victim)
 DEF_DO_FUN( poison_weapon )
 {
 	OBJ_DATA *obj;
-	OBJ_DATA *pobj;
-	OBJ_DATA *wobj;
+	OBJ_DATA *pobj = nullptr;
+	OBJ_DATA *wobj = nullptr;
 	char arg[ MAX_INPUT_LENGTH];
 	int percent;
 
 	if (!IS_NPC(ch) && ch->pcdata->learned[gsn_poison_weapon] <= 0)
 	{
-		send_to_char("Ale ty nie wiesz jak to siê robi!" NL, ch);
+		send_to_char("Ale ty nie wiesz jak to siï¿½ robi!" NL, ch);
 		return;
 	}
 
@@ -2725,13 +2721,13 @@ DEF_DO_FUN( poison_weapon )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Co chcesz zatruæ?" NL, ch);
+		send_to_char("Co chcesz zatruï¿½?" NL, ch);
 		return;
 	}
 	if (ch->fighting)
 	{
 		send_to_char(
-				"Podczas walki? Zastanów siê jak zatruæ ¿ycie swojemu przeciwnikowi!" NL,
+				"Podczas walki? Zastanï¿½w siï¿½ jak zatruï¿½ ï¿½ycie swojemu przeciwnikowi!" NL,
 				ch);
 		return;
 	}
@@ -2745,49 +2741,55 @@ DEF_DO_FUN( poison_weapon )
 	}
 	if (obj->item_type != ITEM_WEAPON)
 	{
-		send_to_char("Ale¿ to nie jest broñ!" NL, ch);
+		send_to_char("Aleï¿½ to nie jest broï¿½!" NL, ch);
 		return;
 	}
 
 	if (obj->value[3] == WEAPON_LIGHTSABER)
 	{
-		send_to_char("Nie próbuj takich sztuczek z mieczem swietlnym!" NL, ch);
+		send_to_char("Nie prï¿½buj takich sztuczek z mieczem swietlnym!" NL, ch);
 		return;
 	}
 
 	if (IS_OBJ_STAT(obj, ITEM_POISONED))
 	{
-		send_to_char("Ta broñ jest ju¿ zatruta!" NL, ch);
+		send_to_char("Ta broï¿½ jest juï¿½ zatruta!" NL, ch);
 		return;
 	}
 	/* Now we have a valid weapon...check to see if we have the powder. */
-	for (pobj = ch->first_carrying; pobj; pobj = pobj->next_content)
+	for (auto* po : ch->carrying)
 	{
-		if (pobj->pIndexData->vnum == OBJ_VNUM_BLACK_POWDER)
+		if (po->pIndexData->vnum == OBJ_VNUM_BLACK_POWDER)
+		{
+			pobj = po;
 			break;
+		}
 	}
 	if (!pobj)
 	{
-		send_to_char("Potrzebujesz czarnego truj±cego proszku." NL, ch);
+		send_to_char("Potrzebujesz czarnego trujï¿½cego proszku." NL, ch);
 		return;
 	}
 	/* Okay, we have the powder...do we have water? */
-	for (wobj = ch->first_carrying; wobj; wobj = wobj->next_content)
+	for (auto* wo : ch->carrying)
 	{
-		if (wobj->item_type == ITEM_DRINK_CON && wobj->value[1] > 0
-				&& wobj->value[2] == 0)
+		if (wo->item_type == ITEM_DRINK_CON && wo->value[1] > 0
+				&& wo->value[2] == 0)
+		{
+			wobj = wo;
 			break;
+		}
 	}
 	if (!wobj)
 	{
-		send_to_char("Proszek musisz zmieszaæ z wod±. Nie masz jej." NL, ch);
+		send_to_char("Proszek musisz zmieszaï¿½ z wodï¿½. Nie masz jej." NL, ch);
 		return;
 	}
 	/* And does the thief have steady enough hands? */
 	if (!IS_NPC(ch) && (ch->pcdata->condition[COND_DRUNK] > 0))
 	{
 		send_to_char(
-				"Rêce za bardzo ci siê trzês±. W tym stanie nie zatrujesz niczego." NL,
+				"Rï¿½ce za bardzo ci siï¿½ trzï¿½sï¿½. W tym stanie nie zatrujesz niczego." NL,
 				ch);
 		return;
 	}
@@ -2800,10 +2802,10 @@ DEF_DO_FUN( poison_weapon )
 	separate_obj(wobj);
 	if (!IS_NPC(ch) && percent > ch->pcdata->learned[gsn_poison_weapon])
 	{
-		send_to_char("Nie uda³o ci siê. Trucizna wylewa siê na ciebie! Ouæ!" NL,
+		send_to_char("Nie udaï¿½o ci siï¿½. Trucizna wylewa siï¿½ na ciebie! Ouï¿½!" NL,
 				ch);
 		damage(ch, ch, ch->skill_level[HUNTING_ABILITY], gsn_poison_weapon);
-		act(PLAIN, "$n oblewa siê trucizn±!", ch, NULL, NULL, TO_ROOM);
+		act(PLAIN, "$n oblewa siï¿½ truciznï¿½!", ch, NULL, NULL, TO_ROOM);
 		extract_obj(pobj);
 		extract_obj(wobj);
 		learn_from_failure(ch, gsn_poison_weapon);
@@ -2811,14 +2813,14 @@ DEF_DO_FUN( poison_weapon )
 	}
 	separate_obj(obj);
 	/* Well, I'm tired of waiting.  Are you? */
-	act(FB_RED, "Mieszasz $p$3 w $P$5, tworzysz ¶mierteln± truciznê!", ch, pobj,
+	act(FB_RED, "Mieszasz $p$3 w $P$5, tworzysz ï¿½miertelnï¿½ truciznï¿½!", ch, pobj,
 			wobj, TO_CHAR);
-	act(FB_RED, "$n miesza $p$3 w $P$5, tworzy ¶mierteln± truciznê!", ch, pobj,
+	act(FB_RED, "$n miesza $p$3 w $P$5, tworzy ï¿½miertelnï¿½ truciznï¿½!", ch, pobj,
 			wobj, TO_ROOM);
-	act(FG_GREEN, "Nas±czasz $p$3 trucizn±. Widzisz ob³ok pary i s³yszysz syk!",
+	act(FG_GREEN, "Nasï¿½czasz $p$3 truciznï¿½. Widzisz obï¿½ok pary i sï¿½yszysz syk!",
 			ch, obj, NULL, TO_CHAR);
 	act(FG_GREEN,
-			"$n nas±cza $p$3 trucizn±. Widzisz ob³ok pary i s³yszysz syk!", ch,
+			"$n nasï¿½cza $p$3 truciznï¿½. Widzisz obï¿½ok pary i sï¿½yszysz syk!", ch,
 			obj, NULL, TO_ROOM);
 	SET_BIT(obj->extra_flags, ITEM_POISONED);
 	obj->cost *= ch->skill_level[HUNTING_ABILITY] / 2;
@@ -2832,8 +2834,8 @@ DEF_DO_FUN( poison_weapon )
 		obj->timer *= 2;
 
 	/* WHAT?  All of that, just for that one bit?  How lame. ;) */
-	act(FB_BLUE, "Resztki trucizny prze¿eraj± $p$3.", ch, wobj, NULL, TO_CHAR);
-	act(FB_BLUE, "Resztki trucizny prze¿eraj± $p$3.", ch, wobj, NULL, TO_ROOM);
+	act(FB_BLUE, "Resztki trucizny przeï¿½erajï¿½ $p$3.", ch, wobj, NULL, TO_CHAR);
+	act(FB_BLUE, "Resztki trucizny przeï¿½erajï¿½ $p$3.", ch, wobj, NULL, TO_ROOM);
 	extract_obj(pobj);
 	extract_obj(wobj);
 	learn_from_success(ch, gsn_poison_weapon);
@@ -2867,10 +2869,10 @@ bool check_grip(CHAR_DATA *ch, CHAR_DATA *victim)
 		learn_from_failure(victim, gsn_grip);
 		return false;
 	}
-	act( COL_ACTION, "Robisz odskok i $n nie mo¿e ciê rozbroiæ.", ch, NULL,
+	act( COL_ACTION, "Robisz odskok i $n nie moï¿½e ciï¿½ rozbroiï¿½.", ch, NULL,
 			victim, TO_VICT);
 	act( COL_ACTION,
-			"$N trzyma broñ z ca³ych si³. Odskakuje i nie udaje ci siê.", ch,
+			"$N trzyma broï¿½ z caï¿½ych siï¿½. Odskakuje i nie udaje ci siï¿½.", ch,
 			NULL, victim, TO_CHAR);
 	learn_from_success(victim, gsn_grip);
 	return true;
@@ -2899,7 +2901,7 @@ DEF_DO_FUN( circle )
 
 	if (arg[0] == '\0')
 	{
-		send_to_char("Kogo chcesz zaj¶æ od ty³u?" NL, ch);
+		send_to_char("Kogo chcesz zajï¿½ï¿½ od tyï¿½u?" NL, ch);
 		return;
 	}
 
@@ -2911,7 +2913,7 @@ DEF_DO_FUN( circle )
 
 	if (victim == ch)
 	{
-		send_to_char("Zachodzisz siê w g³owê jakby tu zaj¶æ siê od ty³u." NL,
+		send_to_char("Zachodzisz siï¿½ w gï¿½owï¿½ jakby tu zajï¿½ï¿½ siï¿½ od tyï¿½u." NL,
 				ch);
 		return;
 	}
@@ -2922,7 +2924,7 @@ DEF_DO_FUN( circle )
 	if ((obj = get_eq_char(ch, WEAR_WIELD)) == NULL
 			|| (obj->value[3] != 11 && obj->value[3] != 2))
 	{
-		send_to_char("Potrzebujesz krótkiej bia³ej broni..." NL, ch);
+		send_to_char("Potrzebujesz krï¿½tkiej biaï¿½ej broni..." NL, ch);
 		return;
 	}
 
@@ -2935,7 +2937,7 @@ DEF_DO_FUN( circle )
 	if (!victim->fighting)
 	{
 		send_to_char(
-				"Nie zakradniesz siê dopóki twoja ofiara nie zacznie walki." NL,
+				"Nie zakradniesz siï¿½ dopï¿½ki twoja ofiara nie zacznie walki." NL,
 				ch);
 		return;
 	}
@@ -2943,14 +2945,14 @@ DEF_DO_FUN( circle )
 	if (victim->num_fighting < 2)
 	{
 		act( PLAIN,
-				"W walce bierze udzia³ zbyt ma³o osób. Nie uda ci siê skorzystaæ z nieuwagi." NL,
+				"W walce bierze udziaï¿½ zbyt maï¿½o osï¿½b. Nie uda ci siï¿½ skorzystaï¿½ z nieuwagi." NL,
 				ch, NULL, victim, TO_CHAR);
 		return;
 	}
 
 	if (get_curr_dex(victim) > get_curr_dex(ch))
 	{
-		send_to_char("Nie zakradniesz siê, twoja ofiara jest zbyt szybka." NL,
+		send_to_char("Nie zakradniesz siï¿½, twoja ofiara jest zbyt szybka." NL,
 				ch);
 		return;
 	}
@@ -2990,7 +2992,7 @@ DEF_DO_FUN( berserk )
 
 	if (IS_AFFECTED(ch, AFF_BERSERK))
 	{
-		send_to_char("Twoja w¶ciek³o¶æ jest ju¿ NiEoGrAnIcZoNa!" NL, ch);
+		send_to_char("Twoja wï¿½ciekï¿½oï¿½ï¿½ jest juï¿½ NiEoGrAnIcZoNa!" NL, ch);
 		return;
 	}
 
@@ -2999,9 +3001,9 @@ DEF_DO_FUN( berserk )
 	if (!chance(ch, percent))
 	{
 		send_to_char(
-				"Zbierasz w sobie ca³y gniew i... nic jako¶ siê nie dzieje." NL,
+				"Zbierasz w sobie caï¿½y gniew i... nic jakoï¿½ siï¿½ nie dzieje." NL,
 				ch);
-		act(PLAIN, "$n zbiera swój ca³y gniew i... Jako¶ nic siê nie dzieje.",
+		act(PLAIN, "$n zbiera swï¿½j caï¿½y gniew i... Jakoï¿½ nic siï¿½ nie dzieje.",
 				ch, NULL, NULL, TO_ROOM);
 		learn_from_failure(ch, gsn_berserk);
 		return;
@@ -3017,9 +3019,9 @@ DEF_DO_FUN( berserk )
 	af.modifier = 1;
 	af.bitvector = AFF_BERSERK;
 	affect_to_char(ch, &af);
-	send_to_char("Zbierasz w sobie ca³y gniew i... Tracisz nad sob± kontrolê! "
+	send_to_char("Zbierasz w sobie caï¿½y gniew i... Tracisz nad sobï¿½ kontrolï¿½! "
 	FB_RED "KRWII!" EOL, ch);
-	act(PLAIN, "$n zbiera swój ca³y gniew i... Wpada w SzA³!.", ch, NULL, NULL,
+	act(PLAIN, "$n zbiera swï¿½j caï¿½y gniew i... Wpada w SzAï¿½!.", ch, NULL, NULL,
 			TO_ROOM);
 	learn_from_success(ch, gsn_berserk);
 	return;
@@ -3029,27 +3031,25 @@ DEF_DO_FUN( berserk )
 ch_ret one_hit args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dt ) );
 DEF_DO_FUN( hitall )
 {
-	CHAR_DATA *vch;
-	CHAR_DATA *vch_next;
 	int nvict = 0;
 	int nhit = 0;
 	int percent;
 
 	if (IS_SET(ch->in_room->room_flags, ROOM_SAFE))
 	{
-		send_to_char("Nie mo¿esz zrobiæ tego tutaj." NL, ch);
+		send_to_char("Nie moï¿½esz zrobiï¿½ tego tutaj." NL, ch);
 		return;
 	}
 
-	if (!ch->in_room->first_person)
+	if (ch->in_room->people.empty())
 	{
-		send_to_char("Ale¿ tu nikogo nie ma!" NL, ch);
+		send_to_char("Aleï¿½ tu nikogo nie ma!" NL, ch);
 		return;
 	}
 	percent = IS_NPC(ch) ? 80 : ch->pcdata->learned[gsn_hitall];
-	for (vch = ch->in_room->first_person; vch; vch = vch_next)
+	auto people_snap = ch->in_room->people;
+	for (auto* vch : people_snap)
 	{
-		vch_next = vch->next_in_room;
 		if (is_same_group(ch, vch) || !is_legal_kill(ch, vch)
 				|| !can_see(ch, vch) || is_safe(ch, vch))
 			continue;
@@ -3069,7 +3069,7 @@ DEF_DO_FUN( hitall )
 	}
 	if (!nvict)
 	{
-		send_to_char("Ale¿ tu nikogo nie ma!" NL, ch);
+		send_to_char("Aleï¿½ tu nikogo nie ma!" NL, ch);
 		return;
 	}
 	ch->move = UMAX(0, ch->move - nvict * 3 + nhit);
@@ -3096,13 +3096,13 @@ DEF_DO_FUN( scan )
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Jaki kierunek chcesz przeskanowaæ?" NL, ch);
+		send_to_char("Jaki kierunek chcesz przeskanowaï¿½?" NL, ch);
 		return;
 	}
 
 	if ((dir = get_door(argument)) == -1)
 	{
-		send_to_char("Skanowaæ JAKI kierunek?" NL, ch);
+		send_to_char("Skanowaï¿½ JAKI kierunek?" NL, ch);
 		return;
 	}
 
@@ -3115,7 +3115,7 @@ DEF_DO_FUN( scan )
 	if ( IS_NPC( ch ) || (number_percent() > ch->pcdata->learned[gsn_scan]))
 	{
 		act( PLAIN,
-				"Przestajesz skanowaæ kierunek $t, obraz jest jaki¶ zamazany.",
+				"Przestajesz skanowaï¿½ kierunek $t, obraz jest jakiï¿½ zamazany.",
 				ch, dir_type_name[dir], NULL, TO_CHAR);
 		learn_from_failure(ch, gsn_scan);
 		return;
@@ -3137,10 +3137,10 @@ DEF_DO_FUN( scan )
 		if (IS_SET(pexit->flags, EX_CLOSED))
 		{
 			if (IS_SET(pexit->flags, EX_SECRET))
-				act( PLAIN, "Widok na $t blokuje ¶ciana.", ch,
+				act( PLAIN, "Widok na $t blokuje ï¿½ciana.", ch,
 						dir_where_name[dir], NULL, TO_CHAR);
 			else
-				act( PLAIN, "Widok na $t blokuj± drzwi.", ch,
+				act( PLAIN, "Widok na $t blokujï¿½ drzwi.", ch,
 						dir_where_name[dir], NULL, TO_CHAR);
 			break;
 		}
@@ -3158,7 +3158,7 @@ DEF_DO_FUN( scan )
 		if (room_is_private(ch, to_room) && get_trust(ch) < LEVEL_GREATER)
 		{
 			act( PLAIN,
-					"Na $t st±d jest prywatne pomieszczenie. Kto¶ je dyskretnie skrywa.",
+					"Na $t stï¿½d jest prywatne pomieszczenie. Ktoï¿½ je dyskretnie skrywa.",
 					ch, dir_where_name[dir], NULL, TO_CHAR);
 			break;
 		}
@@ -3167,8 +3167,8 @@ DEF_DO_FUN( scan )
 		send_to_char( COL_RMNAME, ch);
 		send_to_char(ch->in_room->name, ch);
 		send_to_char( EOL, ch);
-		show_list_to_char(ch->in_room->first_content, ch, false, false);
-		show_char_to_char(ch->in_room->first_person, ch);
+		show_list_to_char(ch->in_room->contents, ch, false, false);
+		show_char_to_char(ch->in_room->people, ch);
 
 		switch (ch->in_room->sector_type)
 		{
@@ -3203,13 +3203,13 @@ DEF_DO_FUN( scan )
 
 		if (dist >= max_dist)
 		{
-			act( PLAIN, "Obraz zamazuje siê i nie widzisz nic dalej.", ch, NULL,
+			act( PLAIN, "Obraz zamazuje siï¿½ i nie widzisz nic dalej.", ch, NULL,
 					NULL, TO_CHAR);
 			break;
 		}
 		if ((pexit = get_exit(ch->in_room, dir)) == NULL)
 		{
-			act( PLAIN, "Dalszy widok na $t blokuje ¶ciana.", ch,
+			act( PLAIN, "Dalszy widok na $t blokuje ï¿½ciana.", ch,
 					dir_where_name[dir], NULL, TO_CHAR);
 			break;
 		}

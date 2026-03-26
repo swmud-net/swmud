@@ -23,8 +23,6 @@
 
 struct course_data
 {
-	COURSE_DATA			* next;
-	COURSE_DATA			* prev;
 	int					stop_vnum;
 	char				* stop_name;
 };

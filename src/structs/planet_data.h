@@ -20,28 +20,22 @@
 #define PLANET_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	planet_data
 {
-	PLANET_DATA			* next;
-	PLANET_DATA			* prev;
-	PLANET_DATA			* next_in_system;
-	PLANET_DATA			* prev_in_system;
-	GUARD_DATA			* first_guard;
-	GUARD_DATA			* last_guard;
+	std::list<GUARD_DATA*> guards;
 	SPACE_DATA			* starsystem;
-	AREA_DATA			* first_area;
-	AREA_DATA			* last_area;
+	std::list<AREA_DATA*> areas;
 	CLAN_DATA			* governed_by;
-	DOCK_DATA			* first_dock;
-	DOCK_DATA			* last_dock;
+	std::list<DOCK_DATA*> docks;
 	char				* name;
 	char				* filename;
 	long				base_value;
 	int					population;
 	int64				flags;
 	float				pop_support;
-	int					first_jail;//added by Thanos (wiêzienia na planetach)
+	int					first_jail;//added by Thanos (wiï¿½zienia na planetach)
 	int					last_jail;
 	int					import;
 	int					_export;
@@ -56,12 +50,11 @@ struct	planet_data
 	int					version;//
 	char				* description;
 	char				* description2;
-	SEASON_DATA			* first_season; /* Thanos */
-	SEASON_DATA			* last_season;	/* Thanos */
+	std::list<SEASON_DATA*> seasons;
 	SEASON_DATA			* curr_season;	/* Thanos */
-	int					daylen;		/* domy¶lna d³ugo¶æ dnia */
-	int					nightlen;	/* domy¶lna d³ugo¶æ nocy */
-	int					monthlen;	/* domy¶lna d³ugo¶æ miesi±ca */
+	int					daylen;		/* domyï¿½lna dï¿½ugoï¿½ï¿½ dnia */
+	int					nightlen;	/* domyï¿½lna dï¿½ugoï¿½ï¿½ nocy */
+	int					monthlen;	/* domyï¿½lna dï¿½ugoï¿½ï¿½ miesiï¿½ca */
 	int					hour;		/* aktualna godzina */
 	int					day;		/* aktualny dzien */
 	int					month;		/* aktualny miesiac */
@@ -76,8 +69,7 @@ struct	planet_data
 	float				radius;
 	float				star_radius;
 	float				star_radius2;
-	DEPOSIT_DATA		* first_deposit;
-	DEPOSIT_DATA		* last_deposit;
+	std::list<DEPOSIT_DATA*> deposits;
 	WAREHOUSE_DATA		* pWarehouse;
 };
 

@@ -72,7 +72,6 @@ void show_room_resets(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom)
 {
 	ROOM_INDEX_DATA *room;
 	RESET_DATA *lo_reset;
-	RESET_DATA *pReset;
 	OBJ_INDEX_DATA *obj;
 	OBJ_INDEX_DATA *obj2;
 	OBJ_INDEX_DATA *lastobj;
@@ -85,7 +84,7 @@ void show_room_resets(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom)
 	int num = 0;
 	char *pbuf;
 
-	if (!pRoom->first_reset)
+	if (pRoom->resets.empty())
 	{
 		send_to_pager("This room has no resets defined." NL, ch);
 		return;
@@ -98,7 +97,7 @@ void show_room_resets(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom)
 	lo_reset = NULL;
 
 	num = 0;
-	for (pReset = pRoom->first_reset; pReset; pReset = pReset->next)
+	for (auto* pReset : pRoom->resets)
 	{
 		++num;
 		sprintf(buf, "[" FB_WHITE "%2d" PLAIN "]", num);
@@ -217,17 +216,23 @@ void show_room_resets(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom)
 			else
 			{
 				int iNest;
-				RESET_DATA *reset;
+				RESET_DATA *reset = NULL;
 
-				reset = lo_reset->next;
+				auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), lo_reset);
+				if (it != pRoom->resets.end()) ++it;
 				for (iNest = 0; iNest < pReset->extra; iNest++)
 				{
-					for (; reset; reset = reset->next)
+					reset = NULL;
+					for (; it != pRoom->resets.end(); ++it)
+					{
+						reset = *it;
 						if (reset->command == 'O' || reset->command == 'G'
 								|| reset->command == 'E'
 								|| (reset->command == 'P' && !reset->arg3
 										&& reset->extra == iNest))
 							break;
+						reset = NULL;
+					}
 
 					if (!reset || reset->command != 'P')
 						break;
@@ -456,7 +461,7 @@ void display_resets(CHAR_DATA *ch, bool area)
 		{
 			if (!(pRoom = get_room_index(i)))
 				continue;
-			if (pRoom->first_reset)
+			if (!pRoom->resets.empty())
 				show_room_resets(ch, pRoom);
 		}
 		return;
@@ -465,10 +470,9 @@ void display_resets(CHAR_DATA *ch, bool area)
 
 RESET_DATA* get_room_reset(ROOM_INDEX_DATA *pRoom, int num)
 {
-	RESET_DATA *pReset;
 	int nr = 0;
 
-	for (pReset = pRoom->first_reset; pReset; pReset = pReset->next)
+	for (auto* pReset : pRoom->resets)
 		if (++nr == num)
 			return pReset;
 
@@ -526,7 +530,7 @@ int mobs_in_area( MID *mob, AREA_DATA *area)
 
 	for (int vnum = area->lvnum; vnum <= area->uvnum; vnum++)
 		if ((room = get_room_index(vnum)))
-			for (CD *ch = room->first_person; ch; ch = ch->next_in_room)
+			for (auto* ch : room->people)
 				if ( IS_NPC( ch ) && ch->pIndexData == mob)
 					count++;
 
@@ -535,7 +539,6 @@ int mobs_in_area( MID *mob, AREA_DATA *area)
 
 void reset_room(ROOM_INDEX_DATA *pRoom)
 {
-	RESET_DATA *pReset;
 	CHAR_DATA *pMob;
 	OBJ_DATA *pObj;
 	OBJ_DATA *LastObj = NULL;
@@ -556,7 +559,7 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 	pObj = NULL;
 	LastObj = NULL;
 
-	for (pexit = pRoom->first_exit; pexit; pexit = pexit->next)
+	for (auto* pexit : pRoom->exits)
 	{
 		if (!IS_SET(pexit->flags, EX_BASHED))
 			pexit->flags = pexit->orig_flags;
@@ -567,7 +570,7 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 	}
 	pexit = NULL;
 
-	for (pReset = pRoom->first_reset; pReset; pReset = pReset->next)
+	for (auto* pReset : pRoom->resets)
 	{
 		MOB_INDEX_DATA *pMobIndex;
 		OBJ_INDEX_DATA *pObjIndex;
@@ -607,14 +610,12 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 				/* Trog: not in room, but in area as of Dungal's request */
 				if (IS_SET(pMobIndex->act, ACT_SENTINEL))
 				{
-					CHAR_DATA *ch;
 					int count = 0;
 
 					if (pRoomIndex->area)
 						count = mobs_in_area(pMobIndex, pRoomIndex->area);
 					else
-						for (ch = pRoomIndex->first_person; ch;
-								ch = ch->next_in_room)
+						for (auto* ch : pRoomIndex->people)
 							if ( IS_NPC( ch ) && ch->pIndexData == pMobIndex)
 								count++;
 
@@ -707,11 +708,11 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 			/* Tanglor - to takie uproszecznie dal limitu obiekt�w
 			 * count_obj_list jakos nie radzi sobie z tym limitem
 			 * */
-			for (pObj = pRoomIndex->first_content; pObj;
-					pObj = pObj->next_content)
-				if (pObj->pIndexData == pObjIndex
-						&& pObj->count >= pReset->arg2)
-					break;
+			pObj = NULL;
+			for (auto* tObj : pRoomIndex->contents)
+				if (tObj->pIndexData == pObjIndex
+						&& tObj->count >= pReset->arg2)
+				{ pObj = tObj; break; }
 			if (pObj)
 			{
 				LastObj = pObj;
@@ -721,16 +722,16 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 
 			}
 
-			if (count_obj_list(pObjIndex, pRoomIndex->first_content)
+			if (count_obj_list(pObjIndex, pRoomIndex->contents)
 					>= pReset->arg2)
 			{
 				/* Bugfix by Thanos: je�li obj jest ju� w pokoju, reset nie
 				 �aduje go ju�. Niby ok, ale powinni�my zapami�ta� go jako
 				 za�adowany, by poprawnie zadzia�a�y komendy 'P' */
-				for (pObj = pRoomIndex->first_content; pObj;
-						pObj = pObj->next_content)
-					if (pObj->pIndexData == pObjIndex)
-						break;
+				pObj = NULL;
+				for (auto* tObj : pRoomIndex->contents)
+					if (tObj->pIndexData == pObjIndex)
+					{ pObj = tObj; break; }
 
 				LastObj = pObj;
 				to_obj = pObj;
@@ -769,7 +770,7 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 				if ((pArea->nplayer > 0 && !forceReset)
 						//|| !(to_obj = get_obj_type(pObjToIndex))
 						|| !to_obj->in_room
-						|| count_obj_list(pObjIndex, to_obj->first_content)
+						|| count_obj_list(pObjIndex, to_obj->contents)
 								>= pReset->arg2)
 				{
 					pObj = NULL;
@@ -787,7 +788,7 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 				to_obj = LastObj;
 
 				for (iNest = 0; iNest < pReset->extra; iNest++)
-					if (!(to_obj = to_obj->last_content))
+					if (to_obj->contents.empty() || !(to_obj = to_obj->contents.back()))
 					{
 						bug("'P': Invalid nesting obj %d. (%s)", pReset->arg1,
 								pArea->filename);
@@ -866,7 +867,7 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 
 				if ((pArea->nplayer > 0 && !forceReset)
 						|| count_obj_list(get_obj_index(OBJ_VNUM_TRAP),
-								pRoomIndex->first_content) > 0)
+								pRoomIndex->contents) > 0)
 					break;
 
 				to_obj = make_trap(pReset->arg1, pReset->arg1, 10,
@@ -1046,7 +1047,6 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 		case 'C':
 		{
 			SHIP_INDEX_DATA *shrec;
-			SHIP_DATA *ship;
 			int count;
 			bool loop;
 
@@ -1110,7 +1110,7 @@ void reset_room(ROOM_INDEX_DATA *pRoom)
 
 			// limity (tylko do lokacji)
 			count = 0;
-			for (ship = pRoomIndex->first_ship; ship; ship = ship->next_in_room)
+			for (auto* ship : pRoomIndex->ships)
 			{
 				if (ship->pIndexData == shrec)
 					count++;
@@ -1156,84 +1156,107 @@ void reset_area(AREA_DATA *pArea)
 }
 
 /* Separate function for recursive purposes */
-#define DEL_RESET(area, reset, rprev) \
-do { \
-  rprev = reset->prev; \
-  delete_reset(area, reset); \
-  reset = rprev; \
-  continue; \
-} while(0)
 void delete_reset(ROOM_INDEX_DATA *pRoom, RESET_DATA *pReset)
 {
-	RESET_DATA *reset;
-	RESET_DATA *reset_prev;
+	auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), pReset);
+	if (it != pRoom->resets.end())
+		++it;
 
 	if (pReset->command == 'M')
 	{
-		for (reset = pReset->next; reset; reset = reset->next)
+		while (it != pRoom->resets.end())
 		{
+			RESET_DATA *reset = *it;
+
 			/* Break when a new mob found */
 			if (reset->command == 'M')
 				break;
 
 			/* Delete anything mob is holding */
 			if (reset->command == 'G' || reset->command == 'E')
-				DEL_RESET(pRoom, reset, reset_prev);
+			{
+				it = pRoom->resets.erase(it);
+				delete_reset(pRoom, reset);
+				continue;
+			}
 
 			if (reset->command == 'B'
 					&& (reset->arg2 & BIT_RESET_TYPE_MASK) == BIT_RESET_MOBILE
 					&& (!reset->arg1 || reset->arg1 == pReset->arg1))
-				DEL_RESET(pRoom, reset, reset_prev);
+			{
+				it = pRoom->resets.erase(it);
+				delete_reset(pRoom, reset);
+				continue;
+			}
+			++it;
 		}
 	}
 	else if (pReset->command == 'O' || pReset->command == 'P'
 			|| pReset->command == 'G' || pReset->command == 'E')
 	{
-		for (reset = pReset->next; reset; reset = reset->next)
+		while (it != pRoom->resets.end())
 		{
+			RESET_DATA *reset = *it;
+
 			if (reset->command == 'T'
 					&& (!reset->arg3 || reset->arg3 == pReset->arg1))
-				DEL_RESET(pRoom, reset, reset_prev);
+			{
+				it = pRoom->resets.erase(it);
+				delete_reset(pRoom, reset);
+				continue;
+			}
 
 			if (reset->command == 'H'
 					&& (!reset->arg1 || reset->arg1 == pReset->arg1))
-				DEL_RESET(pRoom, reset, reset_prev);
+			{
+				it = pRoom->resets.erase(it);
+				delete_reset(pRoom, reset);
+				continue;
+			}
 
 			/* Delete nested objects, even if they are the same object. */
 			if (reset->command == 'P'
 					&& (reset->arg3 > 0 || pReset->command != 'P'
 							|| reset->extra - 1 == pReset->extra)
 					&& (!reset->arg3 || reset->arg3 == pReset->arg1))
-				DEL_RESET(pRoom, reset, reset_prev);
+			{
+				it = pRoom->resets.erase(it);
+				delete_reset(pRoom, reset);
+				continue;
+			}
 
 			if (reset->command == 'B'
 					&& (reset->arg2 & BIT_RESET_TYPE_MASK) == BIT_RESET_OBJECT
 					&& (!reset->arg1 || reset->arg1 == pReset->arg1))
-				DEL_RESET(pRoom, reset, reset_prev);
+			{
+				it = pRoom->resets.erase(it);
+				delete_reset(pRoom, reset);
+				continue;
+			}
 
 			/* Break when a new object of same type is found */
 			if ((reset->command == 'O' || reset->command == 'P'
 					|| reset->command == 'G' || reset->command == 'E')
 					&& reset->arg1 == pReset->arg1)
 				break;
+			++it;
 		}
 	}
 
-	UNLINK(pReset, pRoom->first_reset, pRoom->last_reset, next, prev);
+	pRoom->resets.remove(pReset);
 	free_reset(pReset);
 	return;
 }
-#undef DEL_RESET
 
 RESET_DATA* find_oreset(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom, char *name)
 {
-	RESET_DATA *reset;
+	RESET_DATA *reset = NULL;
 
 	if (!*name)
 	{
-		for (reset = pRoom->last_reset; reset; reset = reset->prev)
+		for (auto it = pRoom->resets.rbegin(); it != pRoom->resets.rend(); ++it)
 		{
-			switch (reset->command)
+			switch ((*it)->command)
 			{
 			default:
 				continue;
@@ -1243,6 +1266,7 @@ RESET_DATA* find_oreset(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom, char *name)
 			case 'P':
 				break;
 			}
+			reset = *it;
 			break;
 		}
 		if (!reset)
@@ -1256,9 +1280,9 @@ RESET_DATA* find_oreset(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom, char *name)
 		int cnt = 0, num = number_argument(name, arg);
 		OBJ_INDEX_DATA *pObjTo = NULL;
 
-		for (reset = pRoom->first_reset; reset; reset = reset->next)
+		for (auto* r : pRoom->resets)
 		{
-			switch (reset->command)
+			switch (r->command)
 			{
 			default:
 				continue;
@@ -1269,9 +1293,9 @@ RESET_DATA* find_oreset(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom, char *name)
 				break;
 			}
 
-			if ((pObjTo = get_obj_index(reset->arg1))
+			if ((pObjTo = get_obj_index(r->arg1))
 					&& is_name(arg, pObjTo->name) && ++cnt == num)
-				break;
+			{ reset = r; break; }
 		}
 
 		if (!pObjTo || !reset)
@@ -1286,19 +1310,20 @@ RESET_DATA* find_oreset(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom, char *name)
 
 RESET_DATA* find_mreset(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom, char *name)
 {
-	RESET_DATA *reset;
+	RESET_DATA *reset = NULL;
 
 	if (!*name)
 	{
-		for (reset = pRoom->last_reset; reset; reset = reset->prev)
+		for (auto it = pRoom->resets.rbegin(); it != pRoom->resets.rend(); ++it)
 		{
-			switch (reset->command)
+			switch ((*it)->command)
 			{
 			default:
 				continue;
 			case 'M':
 				break;
 			}
+			reset = *it;
 			break;
 		}
 		if (!reset)
@@ -1312,18 +1337,18 @@ RESET_DATA* find_mreset(CHAR_DATA *ch, ROOM_INDEX_DATA *pRoom, char *name)
 		int cnt = 0, num = number_argument(name, arg);
 		MOB_INDEX_DATA *pMob = NULL;
 
-		for (reset = pRoom->first_reset; reset; reset = reset->next)
+		for (auto* r : pRoom->resets)
 		{
-			switch (reset->command)
+			switch (r->command)
 			{
 			default:
 				continue;
 			case 'M':
 				break;
 			}
-			if ((pMob = get_mob_index(reset->arg1))
+			if ((pMob = get_mob_index(r->arg1))
 					&& is_name(arg, pMob->player_name) && ++cnt == num)
-				break;
+			{ reset = r; break; }
 		}
 
 		if (!pMob || !reset)
@@ -1384,7 +1409,7 @@ DEF_DO_FUN( reset )
 
 	if (!str_cmp(arg1, "list"))
 	{
-		if (pRoom->first_reset)
+		if (!pRoom->resets.empty())
 		{
 			display_resets(ch, false);
 		}
@@ -1447,7 +1472,10 @@ DEF_DO_FUN( reset )
 			send_to_char("Error in reset. Reset not inserted." NL, ch);
 			return;
 		}
-		INSERT(pReset, reset, pRoom->first_reset, next, prev);
+		{
+			auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), reset);
+			pRoom->resets.insert(it, pReset);
+		}
 		send_to_char("Done." NL, ch);
 		return;
 	}
@@ -1456,7 +1484,7 @@ DEF_DO_FUN( reset )
 	{
 		int insert_loc = atoi(arg2);
 
-		if (!pRoom->first_reset)
+		if (pRoom->resets.empty())
 		{
 			send_to_char("There are no resets in this room." NL, ch);
 			return;
@@ -1562,11 +1590,19 @@ DEF_DO_FUN( reset )
 				return;
 
 			/* Put in_objects after hide and trap resets */
-			while (reset->next
-					&& (reset->next->command == 'H'
-							|| reset->next->command == 'T'
-							|| reset->next->command == 'B'))
-				reset = reset->next;
+			{
+				auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), reset);
+				auto next_it = std::next(it);
+				while (next_it != pRoom->resets.end()
+						&& ((*next_it)->command == 'H'
+								|| (*next_it)->command == 'T'
+								|| (*next_it)->command == 'B'))
+				{
+					it = next_it;
+					reset = *it;
+					++next_it;
+				}
+			}
 
 			if (atoi(arg5) < 1)
 				vnum = 1;
@@ -1576,9 +1612,12 @@ DEF_DO_FUN( reset )
 			pReset = make_reset('P', reset->extra + 1, pObj->vnum, vnum,
 					reset->arg1);
 
-			/* Grumble.. insert puts pReset before reset, and we need it after,
-			 so we make a hackup and reverse all the list params.. :P.. */
-			INSERT(pReset, reset, pRoom->last_reset, prev, next);
+			/* Insert after reset */
+			{
+				auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), reset);
+				if (it != pRoom->resets.end()) ++it;
+				pRoom->resets.insert(it, pReset);
+			}
 			send_to_char("Object reset in object created." NL, ch);
 			return;
 		}
@@ -1587,14 +1626,22 @@ DEF_DO_FUN( reset )
 			if (!(reset = find_mreset(ch, pRoom, arg4)))
 				return;
 
-			while (reset->next && reset->next->command == 'B')
-				reset = reset->next;
+			{
+				auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), reset);
+				auto next_it = std::next(it);
+				while (next_it != pRoom->resets.end() && (*next_it)->command == 'B')
+				{ it = next_it; reset = *it; ++next_it; }
+			}
 
 			if ((vnum = atoi(arg4)) < 1)
 				vnum = 1;
 
 			pReset = make_reset('G', 1, pObj->vnum, vnum, 0);
-			INSERT(pReset, reset, pRoom->last_reset, prev, next);
+			{
+				auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), reset);
+				if (it != pRoom->resets.end()) ++it;
+				pRoom->resets.insert(it, pReset);
+			}
 			send_to_char("Object reset to mobile created." NL, ch);
 			return;
 		}
@@ -1605,8 +1652,12 @@ DEF_DO_FUN( reset )
 			if (!(reset = find_mreset(ch, pRoom, arg4)))
 				return;
 
-			while (reset->next && reset->next->command == 'B')
-				reset = reset->next;
+			{
+				auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), reset);
+				auto next_it = std::next(it);
+				while (next_it != pRoom->resets.end() && (*next_it)->command == 'B')
+				{ it = next_it; reset = *it; ++next_it; }
+			}
 
 			num = flag_value(wear_types_list, arg5);
 
@@ -1616,12 +1667,16 @@ DEF_DO_FUN( reset )
 				return;
 			}
 
-			for (pReset = reset->next; pReset; pReset = pReset->next)
 			{
-				if (pReset->command == 'M')
-					break;
+				auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), reset);
+				if (it != pRoom->resets.end()) ++it;
+				for (; it != pRoom->resets.end(); ++it)
+				{
+					pReset = *it;
+					if (pReset->command == 'M')
+						break;
 
-				if (pReset->command == 'E' && pReset->arg3 == num)
+					if (pReset->command == 'E' && pReset->arg3 == num)
 				{
 					send_to_char(
 							"Mobile already has an item equipped there." NL,
@@ -1629,12 +1684,17 @@ DEF_DO_FUN( reset )
 					return;
 				}
 			}
+			}
 
 			if ((vnum = atoi(arg4)) < 1)
 				vnum = 1;
 
 			pReset = make_reset('E', 1, pObj->vnum, vnum, num);
-			INSERT(pReset, reset, pRoom->last_reset, prev, next);
+			{
+				auto it = std::find(pRoom->resets.begin(), pRoom->resets.end(), reset);
+				if (it != pRoom->resets.end()) ++it;
+				pRoom->resets.insert(it, pReset);
+			}
 			send_to_char("Object reset equipped by mobile created." NL, ch);
 			return;
 		}
@@ -1644,7 +1704,7 @@ DEF_DO_FUN( reset )
 				vnum = 1;
 
 			pReset = make_reset('O', 0, pObj->vnum, vnum, pRoom->vnum);
-			LINK(pReset, pRoom->first_reset, pRoom->last_reset, next, prev);
+			pRoom->resets.push_back(pReset);
 			send_to_char("Object reset added." NL, ch);
 			return;
 		}
@@ -1684,7 +1744,7 @@ RESET_DATA* add_reset(ROOM_INDEX_DATA *room, char letter, int extra, int arg1,
 	letter = UPPER(letter);
 	pReset = make_reset(letter, extra, arg1, arg2, arg3);
 
-	LINK(pReset, room->first_reset, room->last_reset, next, prev);
+	room->resets.push_back(pReset);
 	return pReset;
 }
 
@@ -1793,7 +1853,6 @@ void find_resets_in_area(const AREA_DATA *const area, const int64 vnum,
 		const LookingFor target, list<ROOM_INDEX_DATA*> &results)
 {
 	ROOM_INDEX_DATA *room;
-	RESET_DATA *reset;
 	bool loop_break = false;
 
 	if (!area)
@@ -1806,7 +1865,7 @@ void find_resets_in_area(const AREA_DATA *const area, const int64 vnum,
 		room = get_room_index(i);
 		if (!room)
 			continue;
-		for (reset = room->first_reset; reset; reset = reset->next)
+		for (auto* reset : room->resets)
 		{
 			switch (reset->command)
 			{
@@ -1856,7 +1915,6 @@ bool room_comp(ROOM_INDEX_DATA *r1, ROOM_INDEX_DATA *r2)
 /*Znajduje resety dotyczace danego moba lub itemu - Ganis */
 DEF_DO_FUN( findresets )
 {
-	AREA_DATA *area;
 	char arg1[MIL];	//mob/obj
 	char arg2[MIL];	//vnum
 	char arg3[MIL];	//world? - domyslnie area
@@ -1927,7 +1985,7 @@ DEF_DO_FUN( findresets )
 	//Lets look...
 	if (!strcmp(arg3, "world"))
 	{
-		for (area = first_area; area; area = area->next)
+		for (auto* area : area_list)
 		{
 			if (!is_builder(ch, area))
 				continue;

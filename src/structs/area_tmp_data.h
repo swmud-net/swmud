@@ -20,19 +20,15 @@
 #define AREA_TMP_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	area_tmp_data
 {
-	MID		*first_mob;
-	MID		*last_mob;
-	OID		*first_obj;
-	OID		*last_obj;
-	RID		*first_room;
-	RID		*last_room;
-	SHD		*first_shop;
-	SHD		*last_shop;
-	RHD		*first_repair;
-	RHD		*last_repair;
+	std::list<MID*> mobs;
+	std::list<OID*> objs;
+	std::list<RID*> rooms;
+	std::list<SHD*> shops;
+	std::list<RHD*> repairs;
 };
 
 #endif //AREA_TMP_DATA_H_

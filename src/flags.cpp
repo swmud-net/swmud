@@ -213,9 +213,9 @@ char *flag_string( const struct flag_type *flag_table, int64 bits )
 /* Trog */
 const   struct  flag_type       relation_types_list [ ] =
 {
-	{   FB_RED "wrog±" PLAIN,		POLITICS_ENEMY		},
-	{   FB_BLUE "neutraln±" PLAIN,	POLITICS_NEUTRAL        },
-	{   FB_GREEN "pokojow±" PLAIN,	POLITICS_ALLY           },
+	{   FB_RED "wrog\xb1" PLAIN,		POLITICS_ENEMY		},
+	{   FB_BLUE "neutraln\xb1" PLAIN,	POLITICS_NEUTRAL        },
+	{   FB_GREEN "pokojow\xb1" PLAIN,	POLITICS_ALLY           },
 	{	"",				POLITICS_MAX		}
 };
 
@@ -954,21 +954,21 @@ const	struct	flag_type	wear_flags_list[ ]	=
 	{	"", 			0 			}
 };
 
-/* mniej, bo to tylko do skilli in¿yniera */
+/* mniej, bo to tylko do skilli in\xbfyniera */
 const	struct	flag_type	pl_wear_flags_list[ ]	=
 {
 	{	"palce", 		ITEM_WEAR_FINGER	},
 	{	"szyja", 		ITEM_WEAR_NECK		},
-	{	"cia³o", 		ITEM_WEAR_BODY		},
-	{	"g³owa",		ITEM_WEAR_HEAD		},
+	{	"cia\xb3o", 		ITEM_WEAR_BODY		},
+	{	"g\xb3owa",		ITEM_WEAR_HEAD		},
 	{	"nogi",			ITEM_WEAR_LEGS		},
 	{	"stopy",		ITEM_WEAR_FEET		},
-	{	"rêce",			ITEM_WEAR_HANDS		},
+	{	"r\xea" "ce",			ITEM_WEAR_HANDS		},
 	{	"ramiona",		ITEM_WEAR_ARMS		},
 	{	"tarcza",		ITEM_WEAR_SHIELD	},
 	{	"pas",			ITEM_WEAR_WAIST		},
 	{	"nadgarstek",		ITEM_WEAR_WRIST		},
-	{	"broñ",			ITEM_WIELD		},
+	{	"bro\xf1",			ITEM_WIELD		},
 	{	"trzymany",		ITEM_HOLD		},
 	{	"uszy",			ITEM_WEAR_EARS		},
 	{	"oczy",			ITEM_WEAR_EYES		},
@@ -1223,7 +1223,7 @@ const	struct	flag_type	mont_types_list[ ]	=
 	{	"rivet",		MONT_RIVET		},
 	{	"sew",			MONT_SEW		},
 	{	"cook",			MONT_COOK		},
-	{	"tool",			MONT_TOOL		},	// obróbka
+	{	"tool",			MONT_TOOL		},	// obr\xf3bka
 	{	"", 			0				}
 };
 
@@ -1635,30 +1635,30 @@ const	struct	flag_type	ship_classes_list[ ]	=
 
 
 	{	"", 				0				}
-	/*, "¦wiat³o Statek"*/
+	/*, "\xa6wiat\xb3o Statek"*/
 };
 const	struct	flag_type	ship_classes_name_list[ ]	=
 {
-	{ 	"My¶liwiec TIE", 		TIE_FIGHTER_TIE_LN_SHIP 	},
-	{	"My¶liwiec rozpoznawczy TIE",		TIE_VANGUARD_TIE_RC_SHIP	},
+	{ 	"My\xb6liwiec TIE", 		TIE_FIGHTER_TIE_LN_SHIP 	},
+	{	"My\xb6liwiec rozpoznawczy TIE",		TIE_VANGUARD_TIE_RC_SHIP	},
 	{	"TIE_FIRE_CONTROL_TIE_FC", 	TIE_FIRE_CONTROL_TIE_FC_SHIP 	},
 	{	"TIE_GROUND_ATTACK_TIE_GT",	TIE_GROUND_ATTACK_TIE_GT_SHIP	},
 	{	"TIE_BOMBER_TIE_SA", 		TIE_BOMBER_TIE_SA_SHIP 		},
 	{	"TIE_SHUTTLE_TIE_SH", 		TIE_SHUTTLE_TIE_SH_SHIP 	},
 	{	"TIE_BOARDING_CRAFT_TIE_BC",	TIE_BOARDING_CRAFT_TIE_BC_SHIP 	},
-	{	"My¶liwiec TIE Interceptor", 		TIE_INTERCEPTOR_SHIP 		},
+	{	"My\xb6liwiec TIE Interceptor", 		TIE_INTERCEPTOR_SHIP 		},
 	{	"ASSAULT_GUNBOAT", 		ASSAULT_GUNBOAT_SHIP 		},
 	{	"TIE_X1_ADVANCED_TIE", 		TIE_X1_ADVANCED_TIE_SHIP	},
 	{	"TIE_AVENGER_TIE_AD", 		TIE_AVENGER_TIE_AD_SHIP 	},
 	{	"TIE_ADVANCED_AVENGER", 	TIE_ADVANCED_AVENGER_SHIP	},
-	{	"My¶liwiec X-Wing", 			XWING_SHIP 			},
+	{	"My\xb6liwiec X-Wing", 			XWING_SHIP 			},
 	{	"XWING_RECON", 			XWING_RECON_SHIP 		},
 	{	"YWING", 			YWING_SHIP 			},
 	{	"YWING_LONGPROBE", 		YWING_LONGPROBE_SHIP 		},
 	{	"AWING", 			AWING_SHIP 			},
 	{	"BWING", 			BWING_SHIP 			},
 	{	"TIE_RAPTOR", 			TIE_RAPTOR_SHIP 		},
-	{	"My¶liwiec TIE Defender", 		TIE_DEFENDER_SHIP 		},
+	{	"My\xb6liwiec TIE Defender", 		TIE_DEFENDER_SHIP 		},
 	{	"SCIMITAR_ASSAULT_BOMBER", 	SCIMITAR_ASSAULT_BOMBER_SHIP 	},
 	{	"A9_VIGILANCE", 		A9_VIGILANCE_SHIP 		},
 	{	"I7_HOWLRUNNER", 		I7_HOWLRUNNER_SHIP 		},
@@ -1799,15 +1799,15 @@ const	struct	flag_type	ship_classes_name_list[ ]	=
 	{ 	"LAND_CRAWLER",			LAND_CRAWLER			},
 	{ 	"WALKER", 			WALKER				},
 	{	"NO_SPACE_SHIP",		NO_SPACE_SHIP			},
-	{ 	"Nieokre¶lony SCOUTSHIP",			SCOUT_SHIP			},
-	{ 	"Nieokre¶lony FIGHTER",			FIGHTER_SHIP			},
-	{ 	"Nieokre¶lony MIDSHIP",			MIDSHIP_SHIP			},
-	{ 	"Nieokre¶lony FREIGHTER",			FREIGHTER_SHIP			},
-	{ 	"Nieokre¶lony CAPITAL",			CAPITAL_SHIP			},
+	{ 	"Nieokre\xb6lony SCOUTSHIP",			SCOUT_SHIP			},
+	{ 	"Nieokre\xb6lony FIGHTER",			FIGHTER_SHIP			},
+	{ 	"Nieokre\xb6lony MIDSHIP",			MIDSHIP_SHIP			},
+	{ 	"Nieokre\xb6lony FREIGHTER",			FREIGHTER_SHIP			},
+	{ 	"Nieokre\xb6lony CAPITAL",			CAPITAL_SHIP			},
 	{	"HUGE_SHIP",			HUGE_SHIP			},
 	{ 	"PLATFORMA",			PLATFORM_SHIP			},
 	{	"Koralowy Skoczek",		CORAL_FIGHTER_SHIP		},
-	{	"Yuuzhanski twór",		CORAL_BOMBER_SHIP		},
+	{	"Yuuzhanski tw\xf3r",		CORAL_BOMBER_SHIP		},
 	{	"Ssiruuvi Swarm",			SWARM_SHIP		},
 	{	"Ssiruuvi Shriwirr",			SHRIWIRR_SHIP		},
 	{	"Zonama Sekot Seedship",		JABITHA_SHIP	},
@@ -1824,9 +1824,9 @@ const	struct	flag_type	ship_classes_name_list[ ]	=
 	{	"Wurrif",		WURRIF_CLASS_CRUISER_SHIP	},
 	{	"Sh'ner mk2",		SHNER_CLASS_PLANETARY_ASSAULT_CARRIER_SHIP	},
 	{	"Shree",		SHREE_CLASS_BATTLE_CRUISER	},
-	{	"Kapsu³a ratunkowa",		ESCAPE_POD_SHIP	},
+	{	"Kapsu\xb3" "a ratunkowa",		ESCAPE_POD_SHIP	},
 	{	"", 				0				}
-	/*, "¦wiat³o Statek"*/
+	/*, "\xa6wiat\xb3o Statek"*/
 };
 
 

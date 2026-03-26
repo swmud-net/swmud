@@ -37,6 +37,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string>
+#include <list>
+#include <forward_list>
+#include <algorithm>
 #include "classes/SWPazaak.h"
 #include "mud.h"
 
@@ -65,68 +68,47 @@ void save_sysdata(SYSTEM_DATA sys);
  * Globals.
  */
 
-WIZENT *first_wiz;
-WIZENT *last_wiz;
+std::list<WIZENT*> wiz_list;
 
 time_t last_restore_all_time = 0;
 
-HELPS_FILE *first_helps_file;
-HELPS_FILE *last_helps_file;
+std::list<HELPS_FILE*> helps_file_list;
 
-SHOP_DATA *first_shop;
-SHOP_DATA *last_shop;
+std::list<SHOP_DATA*> shop_list;
 
-REPAIR_DATA *first_repair;
-REPAIR_DATA *last_repair;
+std::list<REPAIR_DATA*> repair_list;
 
-TELEPORT_DATA *first_teleport;
-TELEPORT_DATA *last_teleport;
+std::list<TELEPORT_DATA*> teleport_list;
 
-QUEST_DATA *first_quest;
-QUEST_DATA *last_quest;
-QUEST_INDEX_DATA *first_quest_index;
-QUEST_INDEX_DATA *last_quest_index;
+std::list<QUEST_DATA*> quest_list;
+std::list<QUEST_INDEX_DATA*> quest_index_list;
 
-SHIP_INDEX_DATA *first_ship_index;
-SHIP_INDEX_DATA *last_ship_index;
+std::list<SHIP_INDEX_DATA*> ship_index_list;
 
-CLONING_DATA *first_cloning;
-CLONING_DATA *last_cloning;
+std::list<CLONING_DATA*> cloning_list;
 
-OBJ_DATA *extracted_obj_queue;
-EXTRACT_CHAR_DATA *extracted_char_queue;
+std::list<OBJ_DATA*> extracted_obj_queue;
+std::list<EXTRACT_CHAR_DATA> extracted_char_queue;
 
-CHAR_DATA *first_char;
-CHAR_DATA *last_char;
+std::list<CHAR_DATA*> char_list;
 
-OBJ_DATA *first_object;
-OBJ_DATA *last_object;
+std::list<OBJ_DATA*> object_list;
 
-COMPLAIN_DATA *first_complain;
-COMPLAIN_DATA *last_complain;
+std::list<COMPLAIN_DATA*> complain_list;
 
-STOCK_EXCHANGE_DATA *first_stock_exchange;
-STOCK_EXCHANGE_DATA *last_stock_exchange;
+std::list<STOCK_EXCHANGE_DATA*> stock_exchange_list;
 time_t auction_pulse;
 
-MATERIAL_DATA *first_material;
-MATERIAL_DATA *last_material;
+std::list<MATERIAL_DATA*> material_list;
 
-DIALOG_DATA *first_dialog;
-DIALOG_DATA *last_dialog;
+std::list<DIALOG_DATA*> dialog_list;
 
-LAST_DATA *first_last_wiztalk;	//added by Thanos
-LAST_DATA *last_last_wiztalk;	//added by Thanos
-LAST_DATA *first_last_chat;		//zmienne do do_last (Ratma)
-LAST_DATA *last_last_chat;		//zmienne do do_last (Ratma)
-LAST_DATA *first_last_admin;		//by Trog
-LAST_DATA *last_last_admin;		//by Trog
-LAST_DATA *first_last_olctalk;	//by Trog
-LAST_DATA *last_last_olctalk;	//by Trog
-LAST_DATA *first_last_codertalk;	//by Trog
-LAST_DATA *last_last_codertalk;	//by Trog
-SCRIPT_DATA *first_script_prog; /* Thanos */
-SCRIPT_DATA *last_script_prog; /* Thanos */
+std::list<LAST_DATA*> last_wiztalk_list;	//added by Thanos
+std::list<LAST_DATA*> last_chat_list;		//zmienne do do_last (Ratma)
+std::list<LAST_DATA*> last_admin_list;		//by Trog
+std::list<LAST_DATA*> last_olctalk_list;	//by Trog
+std::list<LAST_DATA*> last_codertalk_list;	//by Trog
+std::list<SCRIPT_DATA*> script_prog_list; /* Thanos */
 
 void load_materials();
 
@@ -307,23 +289,18 @@ int gsn_top_sn;
 /*
  * Locals.
  */
-MOB_INDEX_DATA *mob_index_hash[MAX_KEY_HASH];
-OBJ_INDEX_DATA *obj_index_hash[MAX_KEY_HASH];
-ROOM_INDEX_DATA *room_index_hash[MAX_KEY_HASH] =
-{ 0 };
+std::forward_list<MOB_INDEX_DATA*> mob_index_hash[MAX_KEY_HASH];
+std::forward_list<OBJ_INDEX_DATA*> obj_index_hash[MAX_KEY_HASH];
+std::forward_list<ROOM_INDEX_DATA*> room_index_hash[MAX_KEY_HASH];
 
-AREA_DATA *first_area;
-AREA_DATA *last_area;
-AREA_DATA *first_build;
-AREA_DATA *last_build;
-AREA_DATA *first_asort;
-AREA_DATA *last_asort;
-AREA_DATA *first_bsort;
-AREA_DATA *last_bsort;
+std::list<AREA_DATA*> area_list;
+std::list<AREA_DATA*> build_list;
+std::list<AREA_DATA*> asort_list;
+std::list<AREA_DATA*> bsort_list;
 
 SYSTEM_DATA sysdata;
 
-bool CopyOver; /* czy mud ma siê zrebootowaæ: Thanos */
+bool CopyOver; /* czy mud ma siï¿½ zrebootowaï¿½: Thanos */
 
 int top_affect;
 int top_area;
@@ -402,12 +379,9 @@ void load_corpses args( ( void ) );
  * MUDprogram locals
  */
 
-MPROG_DATA* mprog_file_read args ( ( char* f, MPROG_DATA* mprg,
-				MOB_INDEX_DATA *pMobIndex ) );
-MPROG_DATA* oprog_file_read args ( ( char* f, MPROG_DATA* mprg,
-				OBJ_INDEX_DATA *pObjIndex ) );
-MPROG_DATA* rprog_file_read args ( ( char* f, MPROG_DATA* mprg,
-				ROOM_INDEX_DATA *pRoomIndex ) );
+void mprog_file_read args ( ( char* f, MOB_INDEX_DATA *pMobIndex ) );
+void oprog_file_read args ( ( char* f, OBJ_INDEX_DATA *pObjIndex ) );
+void rprog_file_read args ( ( char* f, ROOM_INDEX_DATA *pRoomIndex ) );
 void load_mudprogs args ( ( AREA_DATA *tarea, FILE* fp ) );
 void load_objprogs args ( ( AREA_DATA *tarea, FILE* fp ) );
 void load_roomprogs args ( ( AREA_DATA *tarea, FILE* fp ) );
@@ -446,8 +420,8 @@ void old_load_quests(AREA_DATA *tarea, FILE *fp)
 }
 
 /*
- * Added by Thanos: dziêki temu nie bêdzie ju¿ windowsiowatych
- * krainek na mudzie. Pliki konwertowane s± w locie.
+ * Added by Thanos: dziï¿½ki temu nie bï¿½dzie juï¿½ windowsiowatych
+ * krainek na mudzie. Pliki konwertowane sï¿½ w locie.
  */
 char __getc(FILE *fp)
 {
@@ -532,14 +506,10 @@ char* st_fread_string(FILE *fp)
 
 void reset_world()
 {
-	AREA_DATA *pArea;
-	SPACE_DATA *pStarsystem;
-
-	for (pArea = first_area; pArea; pArea = pArea->next)
+	for (auto* pArea : area_list)
 		reset_area(pArea);
 
-	for (pStarsystem = first_starsystem; pStarsystem;
-			pStarsystem = pStarsystem->next)
+	for (auto* pStarsystem : starsystem_list)
 		reset_starsystem(pStarsystem);
 
 	return;
@@ -590,32 +560,6 @@ void boot_db(bool fCopyOver)
 	numobjsloaded = 0;
 	physicalobjects = 0;
 	sysdata.maxplayers = 0;
-	first_object = NULL;
-	last_object = NULL;
-	first_char = NULL;
-	last_char = NULL;
-	first_area = NULL;
-	last_area = NULL;
-	first_build = NULL;
-	last_build = NULL;
-	first_uarea = NULL;
-	last_uarea = NULL;
-	first_shop = NULL;
-	last_shop = NULL;
-	first_repair = NULL;
-	last_repair = NULL;
-	first_teleport = NULL;
-	last_teleport = NULL;
-	first_asort = NULL;
-	last_asort = NULL;
-	first_stock_exchange = NULL;
-	last_stock_exchange = NULL;
-	first_material = NULL;
-	last_material = NULL;
-	first_dialog = NULL;
-	last_dialog = NULL;
-	extracted_obj_queue = NULL;
-	extracted_char_queue = NULL;
 	cur_qobjs = 0;
 	cur_qchars = 0;
 	cur_char = NULL;
@@ -627,10 +571,6 @@ void boot_db(bool fCopyOver)
 	quitting_char = NULL;
 	loading_char = NULL;
 	saving_char = NULL;
-	first_quest = NULL;
-	last_quest = NULL;
-	first_helps_file = NULL;
-	last_helps_file = NULL;
 	// Ratm
 	current_prog_line = -1;
 	current_prog_number = -1;
@@ -656,7 +596,7 @@ void boot_db(bool fCopyOver)
 		sysdata.downtype = DOWN_SHUTDOWN;
 	}
 	sysdata.tmpdowntype = sysdata.downtype;
-	sysdata.downtype = DOWN_CRASHED; // domy¶lnie, ¿e pad³
+	sysdata.downtype = DOWN_CRASHED; // domyï¿½lnie, ï¿½e padï¿½
 	save_sysdata(sysdata);		// od razu zapisz na wszelki
 
 	/*
@@ -843,7 +783,7 @@ void boot_db(bool fCopyOver)
 	}
 
 	//added by Thanos
-	//domy¶lne czyszczenie pêtli for i rat
+	//domyï¿½lne czyszczenie pï¿½tli for i rat
 	if (!sysdata.test_only)
 	{
 		log_string("Clearing For & Rat loops");
@@ -913,9 +853,9 @@ void boot_db(bool fCopyOver)
 	}
 
 	/*
-	 * Thanos: je¶li mud by³ odpalony z opcj± 'test', to po przeczytaniu
-	 *         krain (je¶li jeszcze nie pad³) mo¿e beztrosko zakoñczyæ
-	 *         dzia³anie.
+	 * Thanos: jeï¿½li mud byï¿½ odpalony z opcjï¿½ 'test', to po przeczytaniu
+	 *         krain (jeï¿½li jeszcze nie padï¿½) moï¿½e beztrosko zakoï¿½czyï¿½
+	 *         dziaï¿½anie.
 	 */
 	if (sysdata.test_only)
 	{
@@ -969,7 +909,7 @@ void boot_db(bool fCopyOver)
 
 		ILIST(CLAN_LISTXML)
 			if ((clan = load_clan2(ilist_buf)))
-				LINK(clan, first_clan, last_clan, next, prev);
+				clan_list.push_back(clan);
 		ICLEAN
 		;
 
@@ -1037,9 +977,9 @@ void boot_db(bool fCopyOver)
 	}
 
 	/*
-	 * St±d skaczemy do 'odzyskiwacza' (copyover_recover)
+	 * Stï¿½d skaczemy do 'odzyskiwacza' (copyover_recover)
 	 * i odnawiamy graczy
-	 * (Ale tylko, je¶li by³ CopyOver)  		--Thanos
+	 * (Ale tylko, jeï¿½li byï¿½ CopyOver)  		--Thanos
 	 */
 	if (fCopyOver)
 		copyover_recover();
@@ -1053,8 +993,7 @@ AREA_DATA* new_area()
 
 	CREATE(pArea, AREA_DATA, 1);
 
-	pArea->next_on_planet = NULL;
-	pArea->prev_on_planet = NULL;
+	/* next_on_planet / prev_on_planet removed - using std::list */
 	pArea->planet = NULL;
 	STRDUP(pArea->author, "unknown");
 	STRDUP(pArea->name, "New Area");
@@ -1068,7 +1007,7 @@ AREA_DATA* new_area()
 	pArea->low_range = 1;
 	pArea->high_range = LEVEL_AVATAR;
 	pArea->security = 2;
-	pArea->Envy = false; /* domy¶lnie krainki s± smaugowe */
+	pArea->Envy = false; /* domyï¿½lnie krainki sï¿½ smaugowe */
 	pArea->area_id = ++area_id;
 	pArea->area_tmp = NULL;
 
@@ -1082,10 +1021,12 @@ AREA_DATA* new_area()
  */
 void add_help(HELPS_FILE *fHelp, HELP_DATA *pHelp, bool moveto)
 {
-	HELP_DATA *tHelp;
 	int match;
+	bool inserted = false;
 
-	FOREACH( tHelp, fHelp->first_help )
+	for (auto it = fHelp->helps.begin(); it != fHelp->helps.end(); ++it)
+	{
+		HELP_DATA *tHelp = *it;
 		if (pHelp->level == tHelp->level
 				&& !str_cmp(pHelp->keyword, tHelp->keyword))
 		{
@@ -1101,21 +1042,14 @@ void add_help(HELPS_FILE *fHelp, HELP_DATA *pHelp, bool moveto)
 				tHelp->keyword[0] == '\'' ? tHelp->keyword + 1 : tHelp->keyword))
 				< 0 || (match == 0 && pHelp->level > tHelp->level))
 		{
-			/*
-			 if ( !tHelp->prev )
-			 fHelp->first_help	  = pHelp;
-			 else
-			 tHelp->prev->next = pHelp;
-			 pHelp->prev		  = tHelp->prev;
-			 pHelp->next		  = tHelp;
-			 tHelp->prev		  = pHelp;
-			 */
-			INSERT(pHelp, tHelp, fHelp->first_help, next, prev);
+			fHelp->helps.insert(it, pHelp);
+			inserted = true;
 			break;
 		}
+	}
 
-	if (!tHelp)
-		LINK(pHelp, fHelp->first_help, fHelp->last_help, next, prev);
+	if (!inserted)
+		fHelp->helps.push_back(pHelp);
 
 	pHelp->file = fHelp;
 	if (!moveto)
@@ -1202,7 +1136,7 @@ void load_helps(FILE *fpHelp, char *filename)
 
 	fHelp = new_helps_file();
 	STRDUP(fHelp->name, filename);
-	LINK(fHelp, first_helps_file, last_helps_file, next, prev);
+	helps_file_list.push_back(fHelp);
 
 	for (;;)
 	{
@@ -1233,7 +1167,7 @@ void load_helps(FILE *fpHelp, char *filename)
  */
 void add_char(CHAR_DATA *ch)
 {
-	LINK(ch, first_char, last_char, next, prev);
+	char_list.push_back(ch);
 }
 
 /*
@@ -1242,11 +1176,10 @@ void add_char(CHAR_DATA *ch)
  */
 void initialize_economy(void)
 {
-	AREA_DATA *tarea;
 	MOB_INDEX_DATA *mob;
 	int idx, gold, rng;
 
-	for (tarea = first_area; tarea; tarea = tarea->next)
+	for (auto* tarea : area_list)
 	{
 		/* skip area if they already got some gold */
 		if (tarea->high_economy > 0 || tarea->low_economy > 10000)
@@ -1271,22 +1204,20 @@ void initialize_economy(void)
  */
 void fix_exits(void)
 {
-	ROOM_INDEX_DATA *pRoomIndex;
-	EXIT_DATA *pexit, *pexit_next, *rev_exit;
+	EXIT_DATA *rev_exit;
 	int iHash;
 	char buf[MSL];
 
 	for (iHash = 0; iHash < MAX_KEY_HASH; iHash++)
 	{
-		for (pRoomIndex = room_index_hash[iHash]; pRoomIndex; pRoomIndex =
-				pRoomIndex->next)
+		for (auto* pRoomIndex : room_index_hash[iHash])
 		{
 			bool fexit;
 
 			fexit = false;
-			for (pexit = pRoomIndex->first_exit; pexit; pexit = pexit_next)
+			auto exit_snapshot = pRoomIndex->exits;
+			for (auto* pexit : exit_snapshot)
 			{
-				pexit_next = pexit->next;
 				pexit->rvnum = pRoomIndex->vnum;
 				if (pexit->vnum <= 0
 						|| (pexit->to_room = get_room_index(pexit->vnum))
@@ -1314,10 +1245,9 @@ void fix_exits(void)
 	/* Set all the rexit pointers 	-Thoric */
 	for (iHash = 0; iHash < MAX_KEY_HASH; iHash++)
 	{
-		for (pRoomIndex = room_index_hash[iHash]; pRoomIndex; pRoomIndex =
-				pRoomIndex->next)
+		for (auto* pRoomIndex : room_index_hash[iHash])
 		{
-			for (pexit = pRoomIndex->first_exit; pexit; pexit = pexit->next)
+			for (auto* pexit : pRoomIndex->exits)
 			{
 				if (pexit->to_room && !pexit->rexit)
 				{
@@ -1341,11 +1271,10 @@ void fix_exits(void)
  */
 EXIT_DATA* get_exit_number(ROOM_INDEX_DATA *room, int xit)
 {
-	EXIT_DATA *pexit;
 	int count;
 
 	count = 0;
-	for (pexit = room->first_exit; pexit; pexit = pexit->next)
+	for (auto* pexit : room->exits)
 		if (++count == xit)
 			return pexit;
 	return NULL;
@@ -1371,49 +1300,33 @@ int exit_comp(EXIT_DATA **xit1, EXIT_DATA **xit2)
 
 void sort_exits(ROOM_INDEX_DATA *room)
 {
-	EXIT_DATA *pexit; /* *texit *//* Unused */
-	EXIT_DATA *exits[MAX_REXITS];
+	EXIT_DATA *exit_arr[MAX_REXITS];
 	int x, nexits;
 
 	nexits = 0;
-	for (pexit = room->first_exit; pexit; pexit = pexit->next)
+	for (auto* pexit : room->exits)
 	{
-		exits[nexits++] = pexit;
+		exit_arr[nexits++] = pexit;
 		if (nexits > MAX_REXITS)
 		{
 			bug("more than %d exits in room... fatal", nexits);
 			return;
 		}
 	}
-	qsort(&exits[0], nexits, sizeof(EXIT_DATA*),
+	qsort(&exit_arr[0], nexits, sizeof(EXIT_DATA*),
 			(int (*)(const void*, const void*)) exit_comp);
+	room->exits.clear();
 	for (x = 0; x < nexits; x++)
-	{
-		if (x > 0)
-			exits[x]->prev = exits[x - 1];
-		else
-		{
-			exits[x]->prev = NULL;
-			room->first_exit = exits[x];
-		}
-		if (x >= (nexits - 1))
-		{
-			exits[x]->next = NULL;
-			room->last_exit = exits[x];
-		}
-		else
-			exits[x]->next = exits[x + 1];
-	}
+		room->exits.push_back(exit_arr[x]);
 }
 
 void randomize_exits(ROOM_INDEX_DATA *room, int maxdir)
 {
-	EXIT_DATA *pexit;
 	int nexits, /* maxd, */d0, d1, count, door; /* Maxd unused */
 	int vdirs[MAX_REXITS];
 
 	nexits = 0;
-	for (pexit = room->first_exit; pexit; pexit = pexit->next)
+	for (auto* pexit : room->exits)
 		vdirs[nexits++] = pexit->vdir;
 
 	for (d0 = 0; d0 < nexits; d0++)
@@ -1431,7 +1344,7 @@ void randomize_exits(ROOM_INDEX_DATA *room, int maxdir)
 		vdirs[d1] = door;
 	}
 	count = 0;
-	for (pexit = room->first_exit; pexit; pexit = pexit->next)
+	for (auto* pexit : room->exits)
 		pexit->vdir = vdirs[count++];
 
 	sort_exits(room);
@@ -1442,10 +1355,8 @@ void randomize_exits(ROOM_INDEX_DATA *room, int maxdir)
  */
 void area_update(void)
 {
-	AREA_DATA *pArea;
-	for (pArea = first_area; pArea; pArea = pArea->next)
+	for (auto* pArea : area_list)
 	{
-		CHAR_DATA *pch;
 		int reset_age;
 
 		reset_age =
@@ -1467,9 +1378,9 @@ void area_update(void)
 				sprintf(buf, NL "%s" EOL, pArea->resetmsg);
 			else
 				strcpy(buf,
-						NL "S³yszysz jakie¶ dziwne ³omotanie w oddali..." NL);
+						NL "Sï¿½yszysz jakieï¿½ dziwne ï¿½omotanie w oddali..." NL);
 
-			for (pch = first_char; pch; pch = pch->next)
+			for (auto* pch : char_list)
 			{
 				if (!IS_NPC(pch) && IS_AWAKE(pch)
 				&& pch->in_room
@@ -1631,9 +1542,9 @@ CHAR_DATA* create_mobile(MOB_INDEX_DATA *pMobIndex)
 	mob->position = pMobIndex->position;
 	mob->defposition = pMobIndex->defposition;
 
-	mob->mobthac0 = pMobIndex->mobthac0; /*Nieu¿ywane*/
+	mob->mobthac0 = pMobIndex->mobthac0; /*Nieuï¿½ywane*/
 	mob->hitplus = pMobIndex->hitplus;
-	mob->damplus = pMobIndex->damplus; /*Nieu¿ywane*/
+	mob->damplus = pMobIndex->damplus; /*Nieuï¿½ywane*/
 	mob->hitroll = UMAX(mob->top_level / 5, pMobIndex->hitroll);
 	mob->damroll = UMAX(mob->top_level / 5, pMobIndex->damroll);
 	mob->race = pMobIndex->race;
@@ -1880,11 +1791,11 @@ OBJ_DATA* create_object(OBJ_INDEX_DATA *pObjIndex, int level)
 		req->location   =   REQ_LEVEL;
 	req->modifier 	=   UMAX( 0, obj->level );
 		req->type       =   0;
-	LINK( req, obj->first_requirement, obj->last_requirement, next, prev );
+	obj->requirements.push_back(req);
 	}
 #endif
 
-	LINK(obj, first_object, last_object, next, prev);
+	object_list.push_back(obj);
 	++pObjIndex->count;
 	++numobjsloaded;
 	++physicalobjects;
@@ -1903,34 +1814,18 @@ void clear_char(CHAR_DATA *ch)
 	ch->fearing = NULL;
 	ch->hating = NULL;
 	ch->name = NULL;
-	ch->next = NULL;
-	ch->prev = NULL;
-	ch->first_carrying = NULL;
-	ch->last_carrying = NULL;
-	ch->next_in_room = NULL;
-	ch->prev_in_room = NULL;
 	ch->fighting = NULL;
 	ch->switched = NULL;
-	ch->first_affect = NULL;
-	ch->last_affect = NULL;
 	ch->last_cmd = NULL;
 	ch->mount = NULL;
 	ch->plr_home = NULL;
 	ch->was_sentinel = NULL;
-	ch->first_crime = NULL;
-	ch->last_crime = NULL;
 	ch->deposit = NULL; /* Thanos */
 	ch->inquest = NULL; /* Thanos */
-	ch->first_suspect = NULL; /* Thanos */
-	ch->last_suspect = NULL; /* Thanos */
 	ch->variables = NULL; /* Ratm */
-	ch->first_known = NULL; //Tanglor
-	ch->last_known = NULL; //Tanglor
 	ch->attribute1 = INT_MIN;
 	ch->attribute2 = INT_MIN; //Tanglor
 	ch->kins = 0; //Tanglor
-	ch->first_auction = NULL;		//pierwsza aukcja jakiej przewodzisz
-	ch->last_auction = NULL;
 
 	ch->in_room = get_room_index( ROOM_VNUM_LIMBO);
 
@@ -2042,8 +1937,6 @@ void clear_pcdata(PC_DATA *pcdata)
 	pcdata->practices			= 0;
 #endif
 	pcdata->pagerlen = 24;
-	pcdata->first_fevent = NULL;
-	pcdata->last_fevent = NULL;
 	pcdata->fevents = 0;
 	pcdata->remembered_mob_bounty = 0;
 }
@@ -2051,9 +1944,9 @@ void clear_pcdata(PC_DATA *pcdata)
 /*
  * Get an extra description from a list.
  */
-char* get_extra_descr(const char *name, EXTRA_DESCR_DATA *ed)
+char* get_extra_descr(const char *name, std::list<EXTRA_DESCR_DATA*>& edlist)
 {
-	for (; ed; ed = ed->next)
+	for (auto* ed : edlist)
 		//by Thanos: is_name na is_name_prefix
 		if (*ed->keyword && is_name_prefix(name, ed->keyword))
 			return ed->description;
@@ -2067,13 +1960,10 @@ char* get_extra_descr(const char *name, EXTRA_DESCR_DATA *ed)
  */
 MOB_INDEX_DATA* get_mob_index(int vnum)
 {
-	MOB_INDEX_DATA *pMobIndex;
-
 	if (vnum < 0)
 		vnum = 0;
 
-	for (pMobIndex = mob_index_hash[vnum % MAX_KEY_HASH]; pMobIndex; pMobIndex =
-			pMobIndex->next)
+	for (auto* pMobIndex : mob_index_hash[vnum % MAX_KEY_HASH])
 		if (pMobIndex->vnum == vnum)
 			return pMobIndex;
 
@@ -2089,13 +1979,10 @@ MOB_INDEX_DATA* get_mob_index(int vnum)
  */
 OBJ_INDEX_DATA* get_obj_index(int vnum)
 {
-	OBJ_INDEX_DATA *pObjIndex;
-
 	if (vnum < 0)
 		vnum = 0;
 
-	for (pObjIndex = obj_index_hash[vnum % MAX_KEY_HASH]; pObjIndex; pObjIndex =
-			pObjIndex->next)
+	for (auto* pObjIndex : obj_index_hash[vnum % MAX_KEY_HASH])
 		if (pObjIndex->vnum == vnum)
 			return pObjIndex;
 
@@ -2111,13 +1998,10 @@ OBJ_INDEX_DATA* get_obj_index(int vnum)
  */
 ROOM_INDEX_DATA* get_room_index(int vnum)
 {
-	ROOM_INDEX_DATA *pRoomIndex;
-
 	if (vnum <= 0 || vnum > MAX_VNUM)
 		return NULL;
 
-	for (pRoomIndex = room_index_hash[vnum % MAX_KEY_HASH]; pRoomIndex;
-			pRoomIndex = pRoomIndex->next)
+	for (auto* pRoomIndex : room_index_hash[vnum % MAX_KEY_HASH])
 		if (pRoomIndex->vnum == vnum)
 			return pRoomIndex;
 	/*
@@ -2302,7 +2186,7 @@ char* str_dup(char const *str)
 	int len;
 
 	/*
-	 * Poinformujmy, ¿e to nie jest dobry pomys³ 	--Thanos
+	 * Poinformujmy, ï¿½e to nie jest dobry pomysï¿½ 	--Thanos
 	 */
 
 	bug("*--> %s", str);
@@ -2625,9 +2509,9 @@ DEF_DO_FUN( memory )
 
 	/*
 	 * Added by Thanos:
-	 * ps sprawdza jak du¿o pamiêci aktualnie z¿era mud.
-	 * Szkoda tylko, ¿e ta komenda te¿ swoje zajmuje, wiêc ciê¿ko
-	 * z obiektywn± ocen± online.
+	 * ps sprawdza jak duï¿½o pamiï¿½ci aktualnie zï¿½era mud.
+	 * Szkoda tylko, ï¿½e ta komenda teï¿½ swoje zajmuje, wiï¿½c ciï¿½ko
+	 * z obiektywnï¿½ ocenï¿½ online.
 	 */
 	if (!str_cmp(arg, "status") && IS_CODER(ch->name))
 	{
@@ -2930,41 +2814,41 @@ char change_to_nopol(const char letter)
 {
 	switch (letter)
 	{
-	case '±':
+	case '\xb1':
 		return 'a';
-	case 'æ':
+	case '\xe6':
 		return 'c';
-	case 'ê':
+	case '\xea':
 		return 'e';
-	case '³':
+	case '\xb3':
 		return 'l';
-	case 'ñ':
+	case '\xf1':
 		return 'n';
-	case 'ó':
+	case '\xf3':
 		return 'o';
-	case '¶':
+	case '\xb6':
 		return 's';
-	case '¼':
+	case '\xbc':
 		return 'z';
-	case '¿':
+	case '\xbf':
 		return 'z';
-	case '¡':
+	case '\xa1':
 		return 'A';
-	case 'Æ':
+	case '\xc6':
 		return 'C';
-	case 'Ê':
+	case '\xca':
 		return 'E';
-	case '£':
+	case '\xa3':
 		return 'L';
-	case 'Ñ':
+	case '\xd1':
 		return 'N';
-	case 'Ó':
+	case '\xd3':
 		return 'O';
-	case '¦':
+	case '\xa6':
 		return 'S';
-	case '¬':
+	case '\xac':
 		return 'Z';
-	case '¯':
+	case '\xaf':
 		return 'Z';
 	default:
 		return letter;
@@ -3040,7 +2924,7 @@ bool str_cmp(const char *astr, const char *bstr)
 
 	for (; *astr || *bstr; astr++, bstr++)
 	{
-// Added by Ratm (doda³em poni¿sze aby mo¿na by³o graæ bez polskich znaków)
+// Added by Ratm (dodaï¿½em poniï¿½sze aby moï¿½na byï¿½o graï¿½ bez polskich znakï¿½w)
 		if ((a = LOWER(*astr)) != (b = LOWER(*bstr)))
 		{
 			if (ispolchar(a))
@@ -3078,7 +2962,7 @@ bool str_prefix(const char *astr, const char *bstr)
 
 	for (; *astr; astr++, bstr++)
 	{
-// Added by Ratm (doda³em poni¿sze aby mo¿na by³o graæ bez polskich znaków)
+// Added by Ratm (dodaï¿½em poniï¿½sze aby moï¿½na byï¿½o graï¿½ bez polskich znakï¿½w)
 		if ((a = LOWER(*astr)) != (b = LOWER(*bstr)))
 		{
 			if (ispolchar(a))
@@ -3123,10 +3007,10 @@ bool str_infix(const char *astr, const char *bstr)
  * Compare strings, case insensitive, for match anywhere.
  * Returns pointer to the begging of maching part of bstr.
  *   (like strstr).			-- from ROM 24
- * (dodane sprawdzanie polskich znaków -- Thanos )
+ * (dodane sprawdzanie polskich znakï¿½w -- Thanos )
  * Ta f-cja jest prwaie identyko jak str_infix, ale
  * zwraca wskaznik zamiast boola.
- * (nie chcia³o mi sie przerabiac str_infix - kod juz zbyt czesto tego uzywal)
+ * (nie chciaï¿½o mi sie przerabiac str_infix - kod juz zbyt czesto tego uzywal)
  */
 char* str_str(const char *astr, char *bstr)
 {
@@ -3162,7 +3046,7 @@ char* str_str(const char *astr, char *bstr)
 
 /*
  * Zamienia wyraz <old> wyrazem <new> w stringu <orig> i zwraca nowy str.
- * Ró¿ni siê od 'string_replace' (string.c), ¿e nie robi STRDUP
+ * Rï¿½ni siï¿½ od 'string_replace' (string.c), ï¿½e nie robi STRDUP
  * -- Thanos
  */
 char* str_repl(char *orig, const char *old, const char *_new, bool rAll)
@@ -3575,7 +3459,7 @@ void log_string_plus(const char *str, int log_type, int level)
 
  void add_to_wizlist( char *name, int level, int64 pcflags )
  {
- WIZENT *wiz, *tmp;
+ WIZENT *wiz;
 
  #ifdef DEBUG
  log_string( "Adding to wizlist..." );
@@ -3586,33 +3470,16 @@ void log_string_plus(const char *str, int log_type, int level)
  wiz->level	= level;
  wiz->pcflags	= pcflags;
 
- if ( !first_wiz )
- {
- wiz->last	= NULL;
- wiz->next	= NULL;
- first_wiz	= wiz;
- last_wiz	= wiz;
- return;
- }
-
  //  insert sort, of sorts
- for ( tmp = first_wiz; tmp; tmp = tmp->next )
- if ( level > tmp->level )
+ auto it = wiz_list.begin();
+ for ( ; it != wiz_list.end(); ++it )
+ if ( level > (*it)->level )
  {
- if ( !tmp->last )
- first_wiz	= wiz;
- else
- tmp->last->next = wiz;
- wiz->last = tmp->last;
- wiz->next = tmp;
- tmp->last = wiz;
+ wiz_list.insert(it, wiz);
  return;
  }
 
- wiz->last		= last_wiz;
- wiz->next		= NULL;
- last_wiz->next	= wiz;
- last_wiz		= wiz;
+ wiz_list.push_back(wiz);
  return;
  }
 
@@ -3628,11 +3495,9 @@ void log_string_plus(const char *str, int log_type, int level)
  char *word;
  int ilevel;
  int64 iflags;
- WIZENT *wiz, *wiznext;
  char buf[MAX_STRING_LENGTH];
 
- first_wiz = NULL;
- last_wiz  = NULL;
+ wiz_list.clear();
 
  dp = opendir( GOD_DIR );
 
@@ -3671,7 +3536,7 @@ void log_string_plus(const char *str, int log_type, int level)
  towizfile( " " );
  ilevel = 65535;
  towizfile( " Emeryci Muda" );
- for( wiz = first_wiz; wiz; wiz = wiz->next )
+ for( auto* wiz : wiz_list )
  {
  if( wiz->pcflags & PCFLAG_RETIRED )
  {
@@ -3689,7 +3554,7 @@ void log_string_plus(const char *str, int log_type, int level)
  }
  }
  }
- for ( wiz = first_wiz; wiz; wiz = wiz->next )
+ for ( auto* wiz : wiz_list )
  {
  if( wiz->pcflags & PCFLAG_RETIRED )
  continue;
@@ -3706,12 +3571,12 @@ void log_string_plus(const char *str, int log_type, int level)
  ilevel = wiz->level;
  switch(ilevel)
  {
- case MAX_LEVEL -  0: towizfile( " W³adcy Absolutni" );		break;
- case MAX_LEVEL -  1: towizfile( " Najwy¿szy Konsulat" );	break;
+ case MAX_LEVEL -  0: towizfile( " Wï¿½adcy Absolutni" );		break;
+ case MAX_LEVEL -  1: towizfile( " Najwyï¿½szy Konsulat" );	break;
  case MAX_LEVEL -  2: towizfile( " Senat" );			break;
  case MAX_LEVEL -  3: towizfile( " Galaktyczni Zwiadowcy" );	break;
- case MAX_LEVEL -  4: towizfile( " Mo¿ni Muda" );		break;
- default:             towizfile( " Zas³u¿eni Muda" );		break;
+ case MAX_LEVEL -  4: towizfile( " Moï¿½ni Muda" );		break;
+ default:             towizfile( " Zasï¿½uï¿½eni Muda" );		break;
  }
  }
  if ( strlen( buf ) + strlen( wiz->name ) > 76 )
@@ -3732,13 +3597,9 @@ void log_string_plus(const char *str, int log_type, int level)
  if ( buf[0] )
  towizfile( buf );
 
- for ( wiz = first_wiz; wiz; wiz = wiznext )
- {
- wiznext = wiz->next;
+ for ( auto* wiz : wiz_list )
  free_wiz( wiz );
- }
- first_wiz = NULL;
- last_wiz = NULL;
+ wiz_list.clear();
  #endif
  }
 
@@ -3829,21 +3690,19 @@ int64 mprog_name_to_type(char *name)
 		return USE_PROG;
 	if (!str_cmp(name, "extradesc_prog"))
 		return EXTRADESC_PROG;
-	/* UWAGA !!! Dodane ze wzglêdu na kompatybilno¶æ z Envy !!! */
+	/* UWAGA !!! Dodane ze wzglï¿½du na kompatybilnoï¿½ï¿½ z Envy !!! */
 	if (!str_cmp(name, "singlehitprcnt_prog"))
 		return SPEECH_PROG;
 	/* Thanos */
 	return ( ERROR_PROG);
 }
 
-MPROG_DATA* mprog_file_read(char *f, MPROG_DATA *mprg,
-		MOB_INDEX_DATA *pMobIndex)
+void mprog_file_read(char *f, MOB_INDEX_DATA *pMobIndex)
 {
 
 	char MUDProgfile[ MAX_INPUT_LENGTH];
 	FILE *progfile;
 	char letter;
-	MPROG_DATA *mprg_next, *mprg2;
 	bool done = false;
 
 	sprintf(MUDProgfile, "%s%s", PROG_DIR, f);
@@ -3855,7 +3714,6 @@ MPROG_DATA* mprog_file_read(char *f, MPROG_DATA *mprg,
 		exit(1);
 	}
 
-	mprg2 = mprg;
 	switch (letter = fread_letter(progfile))
 	{
 	case '>':
@@ -3872,8 +3730,10 @@ MPROG_DATA* mprog_file_read(char *f, MPROG_DATA *mprg,
 
 	while (!done)
 	{
-		mprg2->type = mprog_name_to_type(fread_word(progfile));
-		switch (mprg2->type)
+		MPROG_DATA *mprg;
+		CREATE(mprg, MPROG_DATA, 1);
+		mprg->type = mprog_name_to_type(fread_word(progfile));
+		switch (mprg->type)
 		{
 		case ERROR_PROG:
 			bug("mudprog file type error");
@@ -3884,15 +3744,13 @@ MPROG_DATA* mprog_file_read(char *f, MPROG_DATA *mprg,
 			exit(1);
 			break;
 		default:
-			pMobIndex->progtypes = pMobIndex->progtypes | mprg2->type;
-			STRDUP(mprg2->arglist, st_fread_string(progfile));
-			STRDUP(mprg2->comlist, st_fread_string(progfile));
+			pMobIndex->progtypes = pMobIndex->progtypes | mprg->type;
+			STRDUP(mprg->arglist, st_fread_string(progfile));
+			STRDUP(mprg->comlist, st_fread_string(progfile));
+			pMobIndex->mudprogs.push_back(mprg);
 			switch (letter = fread_letter(progfile))
 			{
 			case '>':
-				CREATE(mprg_next, MPROG_DATA, 1);
-				mprg_next->next = mprg2;
-				mprg2 = mprg_next;
 				break;
 			case '|':
 				done = true;
@@ -3906,7 +3764,6 @@ MPROG_DATA* mprog_file_read(char *f, MPROG_DATA *mprg,
 		}
 	}
 	fclose(progfile);
-	return mprg2;
 }
 
 /* Load a MUDprogram section from the area file.
@@ -3914,8 +3771,6 @@ MPROG_DATA* mprog_file_read(char *f, MPROG_DATA *mprg,
 void load_mudprogs(AREA_DATA *tarea, FILE *fp)
 {
 	MOB_INDEX_DATA *iMob;
-	MPROG_DATA *original;
-	MPROG_DATA *working;
 	char letter;
 	int value;
 
@@ -3942,20 +3797,7 @@ void load_mudprogs(AREA_DATA *tarea, FILE *fp)
 				exit(1);
 			}
 
-			/* Go to the end of the prog command list if other commands
-			 exist */
-
-			if ((original = iMob->mudprogs) != NULL)
-				for (; original->next; original = original->next)
-					;
-
-			CREATE(working, MPROG_DATA, 1);
-			if (original)
-				original->next = working;
-			else
-				iMob->mudprogs = working;
-			working = mprog_file_read(fread_word(fp), working, iMob);
-			working->next = NULL;
+			mprog_file_read(fread_word(fp), iMob);
 			fread_to_eol(fp);
 			break;
 		}
@@ -3978,11 +3820,10 @@ void mprog_read_programs(FILE *fp, MOB_INDEX_DATA *pMobIndex)
 		bug("vnum %d MUDPROG char", pMobIndex->vnum);
 		exit(1);
 	}
-	CREATE(mprg, MPROG_DATA, 1);
-	pMobIndex->mudprogs = mprg;
 
 	while (!done)
 	{
+		CREATE(mprg, MPROG_DATA, 1);
 		mprg->type = mprog_name_to_type(fread_word(fp));
 		switch (mprg->type)
 		{
@@ -3991,16 +3832,13 @@ void mprog_read_programs(FILE *fp, MOB_INDEX_DATA *pMobIndex)
 			exit(1);
 			break;
 		case IN_FILE_PROG:
-			mprg = mprog_file_read(st_fread_string(fp), mprg, pMobIndex);
+			mprog_file_read(st_fread_string(fp), pMobIndex);
 			fread_to_eol(fp);
 			switch (letter = fread_letter(fp))
 			{
 			case '>':
-				CREATE(mprg->next, MPROG_DATA, 1);
-				mprg = mprg->next;
 				break;
 			case '|':
-				mprg->next = NULL;
 				fread_to_eol(fp);
 				done = true;
 				break;
@@ -4016,14 +3854,12 @@ void mprog_read_programs(FILE *fp, MOB_INDEX_DATA *pMobIndex)
 			fread_to_eol(fp);
 			mprg->comlist = fread_string(fp);
 			fread_to_eol(fp);
+			pMobIndex->mudprogs.push_back(mprg);
 			switch (letter = fread_letter(fp))
 			{
 			case '>':
-				CREATE(mprg->next, MPROG_DATA, 1);
-				mprg = mprg->next;
 				break;
 			case '|':
-				mprg->next = NULL;
 				fread_to_eol(fp);
 				done = true;
 				break;
@@ -4047,14 +3883,12 @@ void mprog_read_programs(FILE *fp, MOB_INDEX_DATA *pMobIndex)
 
 /* This routine reads in scripts of OBJprograms from a file */
 
-MPROG_DATA* oprog_file_read(char *f, MPROG_DATA *mprg,
-		OBJ_INDEX_DATA *pObjIndex)
+void oprog_file_read(char *f, OBJ_INDEX_DATA *pObjIndex)
 {
 
 	char MUDProgfile[ MAX_INPUT_LENGTH];
 	FILE *progfile;
 	char letter;
-	MPROG_DATA *mprg_next, *mprg2;
 	bool done = false;
 
 	sprintf(MUDProgfile, "%s%s", PROG_DIR, f);
@@ -4066,7 +3900,6 @@ MPROG_DATA* oprog_file_read(char *f, MPROG_DATA *mprg,
 		exit(1);
 	}
 
-	mprg2 = mprg;
 	switch (letter = fread_letter(progfile))
 	{
 	case '>':
@@ -4083,8 +3916,10 @@ MPROG_DATA* oprog_file_read(char *f, MPROG_DATA *mprg,
 
 	while (!done)
 	{
-		mprg2->type = mprog_name_to_type(fread_word(progfile));
-		switch (mprg2->type)
+		MPROG_DATA *mprg;
+		CREATE(mprg, MPROG_DATA, 1);
+		mprg->type = mprog_name_to_type(fread_word(progfile));
+		switch (mprg->type)
 		{
 		case ERROR_PROG:
 			bug("objprog file type error");
@@ -4095,15 +3930,13 @@ MPROG_DATA* oprog_file_read(char *f, MPROG_DATA *mprg,
 			exit(1);
 			break;
 		default:
-			pObjIndex->progtypes = pObjIndex->progtypes | mprg2->type;
-			STRDUP(mprg2->arglist, st_fread_string(progfile));
-			STRDUP(mprg2->comlist, st_fread_string(progfile));
+			pObjIndex->progtypes = pObjIndex->progtypes | mprg->type;
+			STRDUP(mprg->arglist, st_fread_string(progfile));
+			STRDUP(mprg->comlist, st_fread_string(progfile));
+			pObjIndex->mudprogs.push_back(mprg);
 			switch (letter = fread_letter(progfile))
 			{
 			case '>':
-				CREATE(mprg_next, MPROG_DATA, 1);
-				mprg_next->next = mprg2;
-				mprg2 = mprg_next;
 				break;
 			case '|':
 				done = true;
@@ -4117,7 +3950,6 @@ MPROG_DATA* oprog_file_read(char *f, MPROG_DATA *mprg,
 		}
 	}
 	fclose(progfile);
-	return mprg2;
 }
 
 /* Load a MUDprogram section from the area file.
@@ -4125,8 +3957,6 @@ MPROG_DATA* oprog_file_read(char *f, MPROG_DATA *mprg,
 void load_objprogs(AREA_DATA *tarea, FILE *fp)
 {
 	OBJ_INDEX_DATA *iObj;
-	MPROG_DATA *original;
-	MPROG_DATA *working;
 	char letter;
 	int value;
 
@@ -4153,20 +3983,7 @@ void load_objprogs(AREA_DATA *tarea, FILE *fp)
 				exit(1);
 			}
 
-			/* Go to the end of the prog command list if other commands
-			 exist */
-
-			if ((original = iObj->mudprogs) != NULL)
-				for (; original->next; original = original->next)
-					;
-
-			CREATE(working, MPROG_DATA, 1);
-			if (original)
-				original->next = working;
-			else
-				iObj->mudprogs = working;
-			working = oprog_file_read(fread_word(fp), working, iObj);
-			working->next = NULL;
+			oprog_file_read(fread_word(fp), iObj);
 			fread_to_eol(fp);
 			break;
 		}
@@ -4189,11 +4006,10 @@ void oprog_read_programs(FILE *fp, OBJ_INDEX_DATA *pObjIndex)
 		bug("Load_objects: vnum %d OBJPROG char", pObjIndex->vnum);
 		exit(1);
 	}
-	CREATE(mprg, MPROG_DATA, 1);
-	pObjIndex->mudprogs = mprg;
 
 	while (!done)
 	{
+		CREATE(mprg, MPROG_DATA, 1);
 		mprg->type = mprog_name_to_type(fread_word(fp));
 		switch (mprg->type)
 		{
@@ -4202,16 +4018,13 @@ void oprog_read_programs(FILE *fp, OBJ_INDEX_DATA *pObjIndex)
 			exit(1);
 			break;
 		case IN_FILE_PROG:
-			mprg = oprog_file_read(st_fread_string(fp), mprg, pObjIndex);
+			oprog_file_read(st_fread_string(fp), pObjIndex);
 			fread_to_eol(fp);
 			switch (letter = fread_letter(fp))
 			{
 			case '>':
-				CREATE(mprg->next, MPROG_DATA, 1);
-				mprg = mprg->next;
 				break;
 			case '|':
-				mprg->next = NULL;
 				fread_to_eol(fp);
 				done = true;
 				break;
@@ -4227,14 +4040,12 @@ void oprog_read_programs(FILE *fp, OBJ_INDEX_DATA *pObjIndex)
 			fread_to_eol(fp);
 			mprg->comlist = fread_string(fp);
 			fread_to_eol(fp);
+			pObjIndex->mudprogs.push_back(mprg);
 			switch (letter = fread_letter(fp))
 			{
 			case '>':
-				CREATE(mprg->next, MPROG_DATA, 1);
-				mprg = mprg->next;
 				break;
 			case '|':
-				mprg->next = NULL;
 				fread_to_eol(fp);
 				done = true;
 				break;
@@ -4259,14 +4070,12 @@ void oprog_read_programs(FILE *fp, OBJ_INDEX_DATA *pObjIndex)
  */
 
 /* This routine reads in scripts of OBJprograms from a file */
-MPROG_DATA* rprog_file_read(char *f, MPROG_DATA *mprg,
-		ROOM_INDEX_DATA *RoomIndex)
+void rprog_file_read(char *f, ROOM_INDEX_DATA *RoomIndex)
 {
 
 	char MUDProgfile[ MAX_INPUT_LENGTH];
 	FILE *progfile;
 	char letter;
-	MPROG_DATA *mprg_next, *mprg2;
 	bool done = false;
 
 	sprintf(MUDProgfile, "%s%s", PROG_DIR, f);
@@ -4278,7 +4087,6 @@ MPROG_DATA* rprog_file_read(char *f, MPROG_DATA *mprg,
 		exit(1);
 	}
 
-	mprg2 = mprg;
 	switch (letter = fread_letter(progfile))
 	{
 	case '>':
@@ -4295,8 +4103,10 @@ MPROG_DATA* rprog_file_read(char *f, MPROG_DATA *mprg,
 
 	while (!done)
 	{
-		mprg2->type = mprog_name_to_type(fread_word(progfile));
-		switch (mprg2->type)
+		MPROG_DATA *mprg;
+		CREATE(mprg, MPROG_DATA, 1);
+		mprg->type = mprog_name_to_type(fread_word(progfile));
+		switch (mprg->type)
 		{
 		case ERROR_PROG:
 			bug("roomprog file type error");
@@ -4307,15 +4117,13 @@ MPROG_DATA* rprog_file_read(char *f, MPROG_DATA *mprg,
 			exit(1);
 			break;
 		default:
-			RoomIndex->progtypes = RoomIndex->progtypes | mprg2->type;
-			STRDUP(mprg2->arglist, st_fread_string(progfile));
-			STRDUP(mprg2->comlist, st_fread_string(progfile));
+			RoomIndex->progtypes = RoomIndex->progtypes | mprg->type;
+			STRDUP(mprg->arglist, st_fread_string(progfile));
+			STRDUP(mprg->comlist, st_fread_string(progfile));
+			RoomIndex->mudprogs.push_back(mprg);
 			switch (letter = fread_letter(progfile))
 			{
 			case '>':
-				CREATE(mprg_next, MPROG_DATA, 1);
-				mprg_next->next = mprg2;
-				mprg2 = mprg_next;
 				break;
 			case '|':
 				done = true;
@@ -4329,7 +4137,6 @@ MPROG_DATA* rprog_file_read(char *f, MPROG_DATA *mprg,
 		}
 	}
 	fclose(progfile);
-	return mprg2;
 }
 
 /* Load a ROOMprogram section from the area file.
@@ -4337,8 +4144,6 @@ MPROG_DATA* rprog_file_read(char *f, MPROG_DATA *mprg,
 void load_roomprogs(AREA_DATA *tarea, FILE *fp)
 {
 	ROOM_INDEX_DATA *iRoom;
-	MPROG_DATA *original;
-	MPROG_DATA *working;
 	char letter;
 	int value;
 
@@ -4365,20 +4170,7 @@ void load_roomprogs(AREA_DATA *tarea, FILE *fp)
 				exit(1);
 			}
 
-			/* Go to the end of the prog command list if other commands
-			 exist */
-
-			if ((original = iRoom->mudprogs) != NULL)
-				for (; original->next; original = original->next)
-					;
-
-			CREATE(working, MPROG_DATA, 1);
-			if (original)
-				original->next = working;
-			else
-				iRoom->mudprogs = working;
-			working = rprog_file_read(fread_word(fp), working, iRoom);
-			working->next = NULL;
+			rprog_file_read(fread_word(fp), iRoom);
 			fread_to_eol(fp);
 			break;
 		}
@@ -4401,11 +4193,10 @@ void rprog_read_programs(FILE *fp, ROOM_INDEX_DATA *pRoomIndex)
 		bug("vnum %d ROOMPROG char!='>' (%c)", pRoomIndex->vnum, letter);
 		exit(1);
 	}
-	CREATE(mprg, MPROG_DATA, 1);
-	pRoomIndex->mudprogs = mprg;
 
 	while (!done)
 	{
+		CREATE(mprg, MPROG_DATA, 1);
 		mprg->type = mprog_name_to_type(fread_word(fp));
 		switch (mprg->type)
 		{
@@ -4414,16 +4205,13 @@ void rprog_read_programs(FILE *fp, ROOM_INDEX_DATA *pRoomIndex)
 			exit(1);
 			break;
 		case IN_FILE_PROG:
-			mprg = rprog_file_read(st_fread_string(fp), mprg, pRoomIndex);
+			rprog_file_read(st_fread_string(fp), pRoomIndex);
 			fread_to_eol(fp);
 			switch (letter = fread_letter(fp))
 			{
 			case '>':
-				CREATE(mprg->next, MPROG_DATA, 1);
-				mprg = mprg->next;
 				break;
 			case '|':
-				mprg->next = NULL;
 				fread_to_eol(fp);
 				done = true;
 				break;
@@ -4439,14 +4227,12 @@ void rprog_read_programs(FILE *fp, ROOM_INDEX_DATA *pRoomIndex)
 			fread_to_eol(fp);
 			mprg->comlist = fread_string(fp);
 			fread_to_eol(fp);
+			pRoomIndex->mudprogs.push_back(mprg);
 			switch (letter = fread_letter(fp))
 			{
 			case '>':
-				CREATE(mprg->next, MPROG_DATA, 1);
-				mprg = mprg->next;
 				break;
 			case '|':
-				mprg->next = NULL;
 				fread_to_eol(fp);
 				done = true;
 				break;
@@ -4470,23 +4256,7 @@ void unlink_room(RID *room)
 		return;
 
 	int iHash = room->vnum % MAX_KEY_HASH;
-	RID *rid = room_index_hash[iHash];
-
-	if (rid == room)
-	{
-		room_index_hash[iHash] = rid->next;
-		rid->next = NULL;
-	}
-	else if (rid)
-	{
-		FOREACH(rid, rid)
-			if (rid->next == room)
-			{
-				rid->next = room->next;
-				room->next = NULL;
-				break;
-			}
-	}
+	room_index_hash[iHash].remove(room);
 }
 
 /*! Trog: sprawdzanie czy room jest w room_index_hash */
@@ -4495,25 +4265,10 @@ bool is_room_unlinked(RID *room)
 	IF_BUG(room == NULL, "NULL room")
 		return true;
 
-	IF_BUG(room->next != NULL, "room probably not unlinked %d, %s", room->vnum,
-			room->name)
-		;
-
 	int iHash = room->vnum % MAX_KEY_HASH;
-	RID *rid = room_index_hash[iHash];
-
-	if (rid == room)
-	{
-		return false;
-	}
-	else if (rid)
-	{
-		FOREACH(rid, rid)
-			if (rid->next == room)
-			{
-				return false;
-			}
-	}
+	for (auto* rid : room_index_hash[iHash])
+		if (rid == room)
+			return false;
 
 	return true;
 }
@@ -4525,32 +4280,29 @@ bool is_room_unlinked(RID *room)
 bool delete_room(ROOM_INDEX_DATA *room)
 {
 	int iHash;
-	RID *tmp;
-	RID *prev = 0;
 
 	bug("delete_room used");
 
 	iHash = room->vnum % MAX_KEY_HASH;
 
 	/* Take the room index out of the hash list. */
-	for (tmp = room_index_hash[iHash]; tmp && tmp != room; tmp = tmp->next)
+	auto& bucket = room_index_hash[iHash];
+	auto prev = bucket.before_begin();
+	bool found = false;
+	for (auto it = bucket.begin(); it != bucket.end(); ++it)
 	{
-		prev = tmp;
+		if (*it == room)
+		{
+			bucket.erase_after(prev);
+			found = true;
+			break;
+		}
+		prev = it;
 	}
-
-	if (!tmp)
+	if (!found)
 	{
 		bug("room not found");
 		return false;
-	}
-
-	if (prev)
-	{
-		prev->next = room->next;
-	}
-	else
-	{
-		room_index_hash[iHash] = room->next;
 	}
 
 	free_room(room);
@@ -4579,14 +4331,6 @@ ROOM_INDEX_DATA* make_room(int vnum, int svnum)
 	int iHash;
 
 	CREATE(pRoomIndex, ROOM_INDEX_DATA, 1);
-	pRoomIndex->first_person = NULL;
-	pRoomIndex->last_person = NULL;
-	pRoomIndex->first_content = NULL;
-	pRoomIndex->last_content = NULL;
-	pRoomIndex->first_extradesc = NULL;
-	pRoomIndex->last_extradesc = NULL;
-	pRoomIndex->first_ship = NULL;
-	pRoomIndex->last_ship = NULL;
 	pRoomIndex->area = NULL;
 	pRoomIndex->vnum = vnum;
 	pRoomIndex->svnum = svnum;	//Thanos -- do statkow
@@ -4597,15 +4341,12 @@ ROOM_INDEX_DATA* make_room(int vnum, int svnum)
 	pRoomIndex->room_flags = ROOM_PROTOTYPE;
 	pRoomIndex->sector_type = 1;
 	pRoomIndex->light = 0;
-	pRoomIndex->first_exit = NULL;
-	pRoomIndex->last_exit = NULL;
 
 	CREATE(pRoomIndex->variables, VAR_DATA, 1);	// Ratm mem alloc dla zmiennych
 	bzero(pRoomIndex->variables, sizeof(VAR_DATA)); // w progach
 
 	iHash = vnum % MAX_KEY_HASH;
-	pRoomIndex->next = room_index_hash[iHash];
-	room_index_hash[iHash] = pRoomIndex;
+	room_index_hash[iHash].push_front(pRoomIndex);
 
 	if (vnum)
 		top_room++;
@@ -4632,10 +4373,6 @@ OBJ_INDEX_DATA* make_object(int vnum, int cvnum, char *name)
 	CREATE(pObjIndex, OBJ_INDEX_DATA, 1);
 	pObjIndex->vnum = vnum;
 	STRDUP(pObjIndex->name, name);
-	pObjIndex->first_affect = NULL;
-	pObjIndex->last_affect = NULL;
-	pObjIndex->first_extradesc = NULL;
-	pObjIndex->last_extradesc = NULL;
 	if (!cObjIndex)
 	{
 		sprintf(buf, "%s", name);
@@ -4643,7 +4380,7 @@ OBJ_INDEX_DATA* make_object(int vnum, int cvnum, char *name)
 		for (i = 0; i < 6; i++)
 			STRDUP(pObjIndex->przypadki[i], buf);
 
-		sprintf(buf, "Le¿y tu %s.", name);
+		sprintf(buf, "Leï¿½y tu %s.", name);
 		STRDUP(pObjIndex->description, buf);
 		STRDUP(pObjIndex->action_desc, "");
 		pObjIndex->przypadki[0][0] = LOWER(pObjIndex->przypadki[0][0]);
@@ -4663,8 +4400,8 @@ OBJ_INDEX_DATA* make_object(int vnum, int cvnum, char *name)
 	}
 	else
 	{
-		EXTRA_DESCR_DATA *ed, *ced;
-		AFFECT_DATA *paf, *cpaf;
+		EXTRA_DESCR_DATA *ed;
+		AFFECT_DATA *paf;
 
 		for (i = 0; i < 6; i++)
 			STRDUP(pObjIndex->przypadki[i], cObjIndex->przypadki[i]);
@@ -4683,16 +4420,15 @@ OBJ_INDEX_DATA* make_object(int vnum, int cvnum, char *name)
 		pObjIndex->cost = cObjIndex->cost;
 		//added by Thanos
 		pObjIndex->gender = cObjIndex->gender;
-		for (ced = cObjIndex->first_extradesc; ced; ced = ced->next)
+		for (auto* ced : cObjIndex->extradesc)
 		{
 			CREATE(ed, EXTRA_DESCR_DATA, 1);
 			STRDUP(ed->keyword, ced->keyword);
 			STRDUP(ed->description, ced->description);
-			LINK(ed, pObjIndex->first_extradesc, pObjIndex->last_extradesc,
-					next, prev);
+			pObjIndex->extradesc.push_back(ed);
 			top_ed++;
 		}
-		for (cpaf = cObjIndex->first_affect; cpaf; cpaf = cpaf->next)
+		for (auto* cpaf : cObjIndex->affects)
 		{
 			CREATE(paf, AFFECT_DATA, 1);
 			paf->type = cpaf->type;
@@ -4700,15 +4436,13 @@ OBJ_INDEX_DATA* make_object(int vnum, int cvnum, char *name)
 			paf->location = cpaf->location;
 			paf->modifier = cpaf->modifier;
 			paf->bitvector = cpaf->bitvector;
-			LINK(paf, pObjIndex->first_affect, pObjIndex->last_affect, next,
-					prev);
+			pObjIndex->affects.push_back(paf);
 			top_affect++;
 		}
 	}
 	pObjIndex->count = 0;
 	iHash = vnum % MAX_KEY_HASH;
-	pObjIndex->next = obj_index_hash[iHash];
-	obj_index_hash[iHash] = pObjIndex;
+	obj_index_hash[iHash].push_front(pObjIndex);
 	top_obj_index++;
 
 	return pObjIndex;
@@ -4740,7 +4474,7 @@ MOB_INDEX_DATA* make_mobile(int vnum, int cvnum, char *name)
 		for (i = 0; i < 6; i++)
 			STRDUP(pMobIndex->przypadki[i], buf);
 
-		sprintf(buf, "Stoi tu %s i niebardzo wie co ma pocz±æ." NL, name);
+		sprintf(buf, "Stoi tu %s i niebardzo wie co ma poczï¿½ï¿½." NL, name);
 		STRDUP(pMobIndex->long_descr, buf);
 		STRDUP(pMobIndex->s_vip_flags, "");
 
@@ -4754,7 +4488,6 @@ MOB_INDEX_DATA* make_mobile(int vnum, int cvnum, char *name)
 		pMobIndex->rShop = NULL;
 		pMobIndex->spec_fun = NULL;
 		pMobIndex->spec_2 = NULL;
-		pMobIndex->mudprogs = NULL;
 		pMobIndex->progtypes = 0;
 		pMobIndex->alignment = 0;
 		pMobIndex->level = 1;
@@ -4801,7 +4534,6 @@ MOB_INDEX_DATA* make_mobile(int vnum, int cvnum, char *name)
 		pMobIndex->rShop = NULL;
 		pMobIndex->spec_fun = cMobIndex->spec_fun;
 		pMobIndex->spec_2 = cMobIndex->spec_2;
-		pMobIndex->mudprogs = NULL;
 		pMobIndex->progtypes = 0;
 		pMobIndex->alignment = cMobIndex->alignment;
 		pMobIndex->level = cMobIndex->level;
@@ -4836,8 +4568,7 @@ MOB_INDEX_DATA* make_mobile(int vnum, int cvnum, char *name)
 		pMobIndex->speaking = cMobIndex->speaking;
 	}
 	iHash = vnum % MAX_KEY_HASH;
-	pMobIndex->next = mob_index_hash[iHash];
-	mob_index_hash[iHash] = pMobIndex;
+	mob_index_hash[iHash].push_front(pMobIndex);
 	top_mob_index++;
 
 	/* Trog
@@ -4857,7 +4588,6 @@ EXIT_DATA* make_exit(ROOM_INDEX_DATA *pRoomIndex, ROOM_INDEX_DATA *to_room,
 		int door)
 {
 	EXIT_DATA *pexit, *texit;
-	bool broke;
 
 	CREATE(pexit, EXIT_DATA, 1);
 	pexit->vdir = door;
@@ -4874,35 +4604,17 @@ EXIT_DATA* make_exit(ROOM_INDEX_DATA *pRoomIndex, ROOM_INDEX_DATA *to_room,
 			pexit->rexit = texit;
 		}
 	}
-	broke = false;
-	for (texit = pRoomIndex->first_exit; texit; texit = texit->next)
-		if (door < texit->vdir)
-		{
-			broke = true;
-			break;
-		}
-	if (!pRoomIndex->first_exit)
-		pRoomIndex->first_exit = pexit;
-	else
+	/* keep exits in incremental order - insert exit into list */
+	for (auto it = pRoomIndex->exits.begin(); it != pRoomIndex->exits.end(); ++it)
 	{
-		/* keep exits in incremental order - insert exit into list */
-		if (broke && texit)
+		if (door < (*it)->vdir)
 		{
-			if (!texit->prev)
-				pRoomIndex->first_exit = pexit;
-			else
-				texit->prev->next = pexit;
-			pexit->prev = texit->prev;
-			pexit->next = texit;
-			texit->prev = pexit;
+			pRoomIndex->exits.insert(it, pexit);
 			top_exit++;
 			return pexit;
 		}
-		pRoomIndex->last_exit->next = pexit;
 	}
-	pexit->next = NULL;
-	pexit->prev = pRoomIndex->last_exit;
-	pRoomIndex->last_exit = pexit;
+	pRoomIndex->exits.push_back(pexit);
 	top_exit++;
 	return pexit;
 }
@@ -4910,7 +4622,7 @@ EXIT_DATA* make_exit(ROOM_INDEX_DATA *pRoomIndex, ROOM_INDEX_DATA *to_room,
 void fix_area_exits(AREA_DATA *tarea)
 {
 	ROOM_INDEX_DATA *pRoomIndex;
-	EXIT_DATA *pexit, *rev_exit;
+	EXIT_DATA *rev_exit;
 	int rnum;
 	bool fexit;
 
@@ -4920,7 +4632,7 @@ void fix_area_exits(AREA_DATA *tarea)
 			continue;
 
 		fexit = false;
-		for (pexit = pRoomIndex->first_exit; pexit; pexit = pexit->next)
+		for (auto* pexit : pRoomIndex->exits)
 		{
 			fexit = true;
 			pexit->rvnum = pRoomIndex->vnum;
@@ -4938,7 +4650,7 @@ void fix_area_exits(AREA_DATA *tarea)
 		if ((pRoomIndex = get_room_index(rnum)) == NULL)
 			continue;
 
-		for (pexit = pRoomIndex->first_exit; pexit; pexit = pexit->next)
+		for (auto* pexit : pRoomIndex->exits)
 		{
 			if (pexit->to_room && !pexit->rexit)
 			{
@@ -5050,8 +4762,7 @@ void fread_quest_header(QUEST_INDEX_DATA *quest, FILE *fp)
 
 				CREATE(action_cmd, QUEST_ACTION_DATA, 1);
 				fread_action_cmd(action_cmd, fp);
-				LINK(action_cmd, quest->first_action, quest->last_action, next,
-						prev);
+				quest->actions.push_back(action_cmd);
 				fMatch = true;
 				break;
 			}
@@ -5075,8 +4786,7 @@ void fread_quest_header(QUEST_INDEX_DATA *quest, FILE *fp)
 
 				CREATE(init_cmd, QUEST_CMND_DATA, 1);
 				fread_init_cmd(init_cmd, fp);
-				LINK(init_cmd, quest->first_init_cmd, quest->last_init_cmd,
-						next, prev);
+				quest->init_cmds.push_back(init_cmd);
 				fMatch = true;
 				break;
 			}
@@ -5146,16 +4856,14 @@ void fread_quest_chapter(QUEST_INDEX_DATA *quest, FILE *fp)
 
 				CREATE(action_cmd, QUEST_ACTION_DATA, 1);
 				fread_action_cmd(action_cmd, fp);
-				LINK(action_cmd, chapter->first_action, chapter->last_action,
-						next, prev);
+				chapter->actions.push_back(action_cmd);
 				fMatch = true;
 				break;
 			}
 		case 'E':
 			if (!str_cmp(word, "End"))
 			{
-				LINK(chapter, quest->first_chapter, quest->last_chapter, next,
-						prev);
+				quest->chapters.push_back(chapter);
 				return;
 			}
 			if (!str_cmp(word, "Event"))
@@ -5164,8 +4872,7 @@ void fread_quest_chapter(QUEST_INDEX_DATA *quest, FILE *fp)
 
 				CREATE(event_cmd, QUEST_CMND_DATA, 1);
 				fread_event_cmd(event_cmd, fp);
-				LINK(event_cmd, chapter->first_event, chapter->last_event, next,
-						prev);
+				chapter->events.push_back(event_cmd);
 				fMatch = true;
 				break;
 			}
@@ -5177,8 +4884,7 @@ void fread_quest_chapter(QUEST_INDEX_DATA *quest, FILE *fp)
 
 				CREATE(init_cmd, QUEST_CMND_DATA, 1);
 				fread_init_cmd(init_cmd, fp);
-				LINK(init_cmd, chapter->first_init_cmd, chapter->last_init_cmd,
-						next, prev);
+				chapter->init_cmds.push_back(init_cmd);
 				fMatch = true;
 				break;
 			}
@@ -5257,7 +4963,7 @@ bool load_quest_file(char *filename)
 		else if (!str_cmp(word, "END"))
 		{
 			fclose(fp);
-			LINK(quest, first_quest_index, last_quest_index, next, prev);
+			quest_index_list.push_back(quest);
 			top_quest_index++;
 			return true;
 		}
@@ -5349,7 +5055,7 @@ void load_clonings(void)
 						cloning->entrance = entrance;
 						cloning->cylinder = cylinder;
 						cloning->leaving = leaving;
-						LINK(cloning, first_cloning, last_cloning, next, prev);
+						cloning_list.push_back(cloning);
 						top_cloning++;
 					}
 				}
@@ -5373,72 +5079,24 @@ void load_clonings(void)
  */
 void sort_area(AREA_DATA *pArea, bool proto)
 {
-	AREA_DATA *area = NULL;
-	AREA_DATA *first_sort, *last_sort;
-	bool found;
-
 	if (!pArea)
 	{
 		bug("NULL pArea");
 		return;
 	}
 
-	if (proto)
-	{
-		first_sort = first_bsort;
-		last_sort = last_bsort;
-	}
-	else
-	{
-		first_sort = first_asort;
-		last_sort = last_asort;
-	}
+	std::list<AREA_DATA*>& sort_list = proto ? bsort_list : asort_list;
 
-	found = false;
-	pArea->next_sort = NULL;
-	pArea->prev_sort = NULL;
-
-	if (!first_sort)
+	/* Insert in sorted order by lvnum */
+	for (auto it = sort_list.begin(); it != sort_list.end(); ++it)
 	{
-		pArea->prev_sort = NULL;
-		pArea->next_sort = NULL;
-		first_sort = pArea;
-		last_sort = pArea;
-		found = true;
+		if (pArea->lvnum < (*it)->lvnum)
+		{
+			sort_list.insert(it, pArea);
+			return;
+		}
 	}
-	else
-		for (area = first_sort; area; area = area->next_sort)
-			if (pArea->lvnum < area->lvnum)
-			{
-				if (!area->prev_sort)
-					first_sort = pArea;
-				else
-					area->prev_sort->next_sort = pArea;
-				pArea->prev_sort = area->prev_sort;
-				pArea->next_sort = area;
-				area->prev_sort = pArea;
-				found = true;
-				break;
-			}
-
-	if (!found)
-	{
-		pArea->prev_sort = last_sort;
-		pArea->next_sort = NULL;
-		last_sort->next_sort = pArea;
-		last_sort = pArea;
-	}
-
-	if (proto)
-	{
-		first_bsort = first_sort;
-		last_bsort = last_sort;
-	}
-	else
-	{
-		first_asort = first_sort;
-		last_asort = last_sort;
-	}
+	sort_list.push_back(pArea);
 }
 
 /*
@@ -5448,16 +5106,12 @@ void sort_area(AREA_DATA *pArea, bool proto)
 void show_vnums(CHAR_DATA *ch, int low, int high, bool proto, bool shownl,
 		char *loadst, char *notloadst)
 {
-	AREA_DATA *pArea, *first_sort;
 	int count, loaded;
 
 	count = 0;
 	loaded = 0;
-	if (proto)
-		first_sort = first_bsort;
-	else
-		first_sort = first_asort;
-	for (pArea = first_sort; pArea; pArea = pArea->next_sort)
+	auto& sort_list_ref = proto ? bsort_list : asort_list;
+	for (auto* pArea : sort_list_ref)
 	{
 		if (IS_SET(pArea->status, AREA_DELETED))
 			continue;
@@ -5484,7 +5138,6 @@ void show_vnums(CHAR_DATA *ch, int low, int high, bool proto, bool shownl,
 /* Trog: wyswietlanie krain. */
 DEF_DO_FUN( alist )
 {
-	AREA_DATA *area;
 	int i, low, high;
 	char arg1[MIL];
 	char arg2[MIL];
@@ -5553,8 +5206,10 @@ DEF_DO_FUN( alist )
 	"[" FB_YELLOW "Builders        " FB_CYAN "]"
 	"[" FB_YELLOW "Filename      " FB_CYAN "]" EOL);
 
-	for (i = 1, area = sort ? first_asort : first_area; area;
-			i++, area = sort ? area->next_sort : area->next)
+	{
+	auto& alist_ref = sort ? asort_list : area_list;
+	i = 1;
+	for (auto* area : alist_ref)
 	{
 		if (area->lvnum < low || area->uvnum > high
 				|| (name
@@ -5580,10 +5235,12 @@ DEF_DO_FUN( alist )
 				strip_colors(area->builder, 16));
 		pager_printf(ch, "[" PLAIN "%-14s" FB_CYAN "]" EOL,
 				strip_colors(area->filename, 14));
+		i++;
+	}
 	}
 
 	/* Trog: niezainstalowane (uarea) krainki */
-	FOREACH( area, first_uarea )
+	for (auto* area : uarea_list)
 	{
 		if (area->lvnum < low || area->uvnum > high
 				|| (name
@@ -5730,7 +5387,7 @@ void fread_sysdata(SYSTEM_DATA *sys, FILE *fp)
 				if (!sys->time_of_max)
 					STRDUP(sys->time_of_max, "(not recorded)");
 
-				/* Thanos      domy¶lnie ustawiamy na reboot */
+				/* Thanos      domyï¿½lnie ustawiamy na reboot */
 				if (sys->reboot_type == REB_SHUTDOWN)
 					sys->reboot_type = REB_REBOOT;
 				return;
@@ -5912,7 +5569,7 @@ void load_banlist(void)
 			ungetc(letter, fp);
 			STRDUP(pban->ban_time, "(unrecorded)");
 		}
-		LINK(pban, first_ban, last_ban, next, prev);
+		ban_list.push_back(pban);
 	}
 }
 
@@ -5920,7 +5577,6 @@ void load_banlist(void)
 
 DEF_DO_FUN( check_vnums )
 {
-	AREA_DATA *pArea;
 	char buf[MAX_STRING_LENGTH];
 	char buf2[MAX_STRING_LENGTH];
 	char arg1[MAX_STRING_LENGTH];
@@ -5958,7 +5614,7 @@ DEF_DO_FUN( check_vnums )
 		return;
 	}
 
-	for (pArea = first_asort; pArea; pArea = pArea->next_sort)
+	for (auto* pArea : asort_list)
 	{
 		area_conflict = false;
 
@@ -5988,7 +5644,7 @@ DEF_DO_FUN( check_vnums )
 		}
 	}
 
-	for (pArea = first_bsort; pArea; pArea = pArea->next_sort)
+	for (auto* pArea : bsort_list)
 	{
 		area_conflict = false;
 
@@ -6040,8 +5696,8 @@ void tail_chain(void)
 }
 
 /*
- * Ratm napisa³ tê funkcjê, a ja j± troszkê pozmienia³em i proszê
- * jaki ³adny copyoverek wyszed³ :P			--Thanos
+ * Ratm napisaï¿½ tï¿½ funkcjï¿½, a ja jï¿½ troszkï¿½ pozmieniaï¿½em i proszï¿½
+ * jaki ï¿½adny copyoverek wyszedï¿½ :P			--Thanos
  */
 DEF_DO_FUN( copyover )
 {
@@ -6061,7 +5717,7 @@ DEF_DO_FUN( copyover )
 	copyover();
 
 	/*
-	 * Tutaj nie powinni¶my doj¶æ...
+	 * Tutaj nie powinniï¿½my dojï¿½ï¿½...
 	 */
 	send_to_char("CopyOver failed." NL, ch);
 	sysdata.downtype = down;
@@ -6070,7 +5726,7 @@ DEF_DO_FUN( copyover )
 }
 
 /*
- * Added by Ratm te funkcje pochodz± z kodu copyover napisanego przez:
+ * Added by Ratm te funkcje pochodzï¿½ z kodu copyover napisanego przez:
  * (chwilowo nie wiem przez kogo)
  *
  *                                                 Copied & Pasted by
@@ -6079,16 +5735,13 @@ DEF_DO_FUN( copyover )
 void copyover(void)
 {
 	FILE *fp;
-	DESCRIPTOR_DATA *d;
-	DESCRIPTOR_DATA *d_next;
-	PLANET_DATA *planet;
 	char buf[MSL];
 	char cbuf[MSL];
 	char buf2[100];
 	char buf3[100];
 
 	//Get everybody out of homes if they are guests
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		CHAR_DATA *ch = CH(d);
 		if (!ch)
@@ -6098,7 +5751,7 @@ void copyover(void)
 			evacuate_guests(ch->in_room);
 	}
 	/*
-	 * write_do_descriptor nie uznaje kolorków w naszym kodowaniu
+	 * write_do_descriptor nie uznaje kolorkï¿½w w naszym kodowaniu
 	 * hardcoding sucks...
 	 */
 	sprintf(cbuf,
@@ -6107,7 +5760,7 @@ void copyover(void)
 			"[1;32m*[0m                       [1;37m!!! UWAGA !!!                         [1;32m*[0m" NL "       "
 			"[1;32m*[0m                                                             [1;32m*[0m" NL "       "
 			"[1;32m*[0m        SW-Mud wlasnie sie restartuje. Odradza sie caly      [1;32m*[0m" NL "       "
-			"[1;32m*[0m        swiat i wszechswiat. Nie przejmuj siê wiec tym       [1;32m*[0m" NL "       "
+			"[1;32m*[0m        swiat i wszechswiat. Nie przejmuj siï¿½ wiec tym       [1;32m*[0m" NL "       "
 			"[1;32m*[0m        malym lagiem, bo zaraz bedzie mozna grac dalej.      [1;32m*[0m" NL "       "
 			"[1;32m*[0m                                                             [1;32m*[0m" NL "       "
 			"[1;32m*[0m                       Administratorzy                       [1;32m*[0m" NL "       "
@@ -6136,11 +5789,11 @@ void copyover(void)
 	}
 
 	/* For each playing descriptor, save its state */
-	for (d = first_descriptor; d; d = d_next)
+	{
+	auto desc_snapshot = descriptor_list;
+	for (auto* d : desc_snapshot)
 	{
 		CHAR_DATA *och = CH(d);
-
-		d_next = d->next;
 
 		if (!d->character || d->connected < CON_PLAYING)
 		{
@@ -6182,9 +5835,10 @@ void copyover(void)
 			save_char_obj(och);
 		}
 	}
+	}
 
 	/* Save time and weather */
-	for (planet = first_planet; planet; planet = planet->next)
+	for (auto* planet : planet_list)
 		save_planet(planet);
 
 	fprintf(fp, "-1\n");
@@ -6219,7 +5873,7 @@ void copyover(void)
 	RESERVE_OPEN;
 	LOG_OPEN;
 
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 	{
 		CHAR_DATA *och = CH(d);
 
@@ -6260,7 +5914,7 @@ void copyover_recover(void)
 
 		/* Write something, and check if it goes error-free */
 		if (!write_to_descriptor(desc, NL
-		"Gor±cy reboot zakoñczony." NL, 0))
+		"Gorï¿½cy reboot zakoï¿½czony." NL, 0))
 		{
 #if !defined( WIN32 )
 			close(desc); /* nope */
@@ -6279,14 +5933,14 @@ void copyover_recover(void)
 		d->ipv6 = ipv6 ? true : false;
 
 		d->connected = CON_COPYOVER_RECOVER;
-		LINK(d, first_descriptor, last_descriptor, next, prev);
+		descriptor_list.push_back(d);
 
 		fOld = load_char_obj(d, name, false);
 		if (!fOld)
 		{
 			write_to_descriptor(desc,
-					"Jakim¶ cudem twoja postaæ uleg³a zniszczeniu podczas rebootu." NL
-					"Skontaktuj siê z w³adcami muda by j± odzyskaæ: mud@swmud.pl." NL,
+					"Jakimï¿½ cudem twoja postaï¿½ ulegï¿½a zniszczeniu podczas rebootu." NL
+					"Skontaktuj siï¿½ z wï¿½adcami muda by jï¿½ odzyskaï¿½: mud@swmud.pl." NL,
 					0);
 			close_socket(d, true);
 		}
@@ -6315,20 +5969,20 @@ void copyover_recover(void)
 			if (!d->character->in_room)
 				d->character->in_room = get_room_index(ROOM_VNUM_LIMBO);
 
-			LINK(d->character, first_char, last_char, next, prev);
+			char_list.push_back(d->character);
 
 			load_home(CH(d));
 
 			char_to_room(d->character, d->character->in_room);
 			do_look(d->character, (char*) "");
-			act(COL_FORCE, "$n materializuje siê tutaj!", d->character, NULL,
+			act(COL_FORCE, "$n materializuje siï¿½ tutaj!", d->character, NULL,
 					NULL, TO_ROOM);
 			d->connected = CON_PLAYING;
 
 			load_deposit(CH(d));
 
 			send_to_char(NL NL NL FB_WHITE "                    "
-			"Ju¿ w porz±dku. Mo¿esz graæ dalej."
+			"Juï¿½ w porzï¿½dku. Moï¿½esz graï¿½ dalej."
 			EOL NL NL, d->character);
 
 			if (IS_SET(d->character->act, PLR_STATUS_BAR))
@@ -6341,7 +5995,7 @@ void copyover_recover(void)
 				if ((questor = get_mob_index(
 						CH( d )->inquest->pIndexData->questor)) != NULL)
 					ch_printf(CH(d), NL "                "
-					FB_GREEN "*** Pamiêtaj o zadaniu dla %s ***" EOL,
+					FB_GREEN "*** Pamiï¿½taj o zadaniu dla %s ***" EOL,
 							questor->przypadki[1]);
 				else
 					bug("No questor found for %s's quest", CH( d )->name);
@@ -6363,8 +6017,6 @@ void init_descriptor(DESCRIPTOR_DATA *dnew, int desc)
 // removed by Thanos
 //    static DESCRIPTOR_DATA d_zero;
 //    *dnew = d_zero;
-	dnew->prev = NULL;
-	dnew->next = NULL;
 	dnew->descriptor = desc;
 	dnew->connected = CON_GET_NAME;
 	dnew->outsize = 2000;
@@ -6388,7 +6040,7 @@ void init_descriptor(DESCRIPTOR_DATA *dnew, int desc)
 
 /*
  * Added by Thanos:      ustala nowy czas na planecie lub przywraca
- *			 stan sprzed rebootu. Tak samo z pogod±.
+ *			 stan sprzed rebootu. Tak samo z pogodï¿½.
  */
 void reset_planet(PLANET_DATA *planet)
 {
@@ -6396,14 +6048,14 @@ void reset_planet(PLANET_DATA *planet)
 	int hours, months;
 	SEASON_DATA *season;
 
-	if (!planet->first_season)
+	if (planet->seasons.empty())
 	{
 		season = new_season(planet, "pora nieznana");
-		LINK(season, planet->first_season, planet->last_season, next, prev);
+		planet->seasons.push_back(season);
 	}
 
 	if (!planet->curr_season)
-		planet->curr_season = planet->first_season;
+		planet->curr_season = planet->seasons.front();
 
 	hours = planet->curr_season->day_length + planet->curr_season->night_length;
 
@@ -6468,9 +6120,7 @@ void reset_planet(PLANET_DATA *planet)
 
 void set_timeweather()
 {
-	PLANET_DATA *planet;
-
-	for (planet = first_planet; planet; planet = planet->next)
+	for (auto* planet : planet_list)
 		reset_planet(planet);
 
 	if (!sysdata.silent)
@@ -6552,7 +6202,7 @@ void fread_race(FILE *fpRace, char *filename)
 
 	pRace = new_race();
 	STRDUP(pRace->filename, filename);
-	LINK(pRace, first_race, last_race, next, prev);
+	race_list.push_back(pRace);
 
 	for (;;)
 	{
@@ -6635,7 +6285,7 @@ void fread_race(FILE *fpRace, char *filename)
 			;
 			if (!str_cmp(pRace->name, base_race->name))
 			{
-				UNLINK(pRace, first_race, last_race, next, prev);
+				race_list.remove(pRace);
 				free_race(pRace);
 				return;
 			}
@@ -6754,7 +6404,7 @@ RACE_DATA* load_race(const char *filename)
 
 	root = xmlDocGetRootElement(doc);
 
-	FOREACH( node, root->children )
+	for (node = root->children; node; node = node->next)
 	{
 		EONLY(node);
 
@@ -6762,7 +6412,7 @@ RACE_DATA* load_race(const char *filename)
 			swGetContent(&race->name, node);
 		else if (!swXmlStrcmp(node->name, "short"))
 		{
-			FOREACH( child, node->children )
+			for (child = node->children; child; child = child->next)
 			{
 				EONLY(child);
 
@@ -6814,7 +6464,7 @@ RACE_DATA* load_race(const char *filename)
 			swGetContentInt64(&race->immune, node);
 		else if (!swXmlStrcmp(node->name, "languages"))
 		{
-			FOREACH( child, node->children )
+			for (child = node->children; child; child = child->next)
 			{
 				EONLY(child);
 
@@ -6905,7 +6555,7 @@ void fread_turbocar(FILE *fpTurbocar, char *filename)
 
 	pTurbocar = new_turbocar();
 	STRDUP(pTurbocar->filename, filename);
-	LINK(pTurbocar, first_turbocar, last_turbocar, next, prev);
+	turbocar_list.push_back(pTurbocar);
 
 	for (;;)
 	{
@@ -6930,8 +6580,7 @@ void fread_turbocar(FILE *fpTurbocar, char *filename)
 			if (!str_cmp(word, "Station"))
 			{
 				station = new_station();
-				LINK(station, pTurbocar->first_station, pTurbocar->last_station,
-						next, prev);
+				pTurbocar->stations.push_back(station);
 				station->vnum = fread_number(fpTurbocar);
 				STRDUP(station->name, st_fread_string(fpTurbocar));
 			}
@@ -6958,7 +6607,6 @@ void save_languages()
 	xmlDocPtr doc;
 	xmlNodePtr root;
 	xmlNodePtr node;
-	LANG_DATA *lang;
 
 	swXmlInitIO();
 	doc = xmlNewDoc( BC"1.0" );
@@ -6969,7 +6617,7 @@ void save_languages()
 			"http://swmud.pl/ns/swmud/1.0/languages languages.xsd");
 	xmlDocSetRootElement(doc, root);
 
-	FOREACH( lang, first_lang )
+	for (auto* lang : lang_list)
 	{
 		node = xmlNewChild( root, NULL, BC"language", NULL );
 		swNewChildText(node, NULL, "name", lang->name);
@@ -7012,12 +6660,12 @@ void load_languages()
 
 	root = xmlDocGetRootElement(doc);
 
-	FOREACH( node, root->children )
+	for (node = root->children; node; node = node->next)
 	{
 		EONLY(node);
 
 		lang = new_lang();
-		FOREACH( child, node->children )
+		for (child = node->children; child; child = child->next)
 		{
 			EONLY(child);
 
@@ -7036,7 +6684,7 @@ void load_languages()
 			else if (!swXmlStrcmp(child->name, "difficulty"))
 				swGetContentInt(&lang->difficulty, child);
 		}
-		LINK(lang, first_lang, last_lang, next, prev);
+		lang_list.push_back(lang);
 	}
 
 	swXmlCleanIO();

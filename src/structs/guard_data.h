@@ -23,10 +23,6 @@
 
 struct guard_data
 {
-	GUARD_DATA			* next;
-	GUARD_DATA			* prev;
-	GUARD_DATA			* next_on_planet;
-	GUARD_DATA			* prev_on_planet;
 	ROOM_INDEX_DATA		* reset_loc;
 	PLANET_DATA			* planet;
 	CHAR_DATA			* mob;

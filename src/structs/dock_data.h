@@ -23,8 +23,6 @@
 
 struct dock_data
 {
-	DOCK_DATA			* next;
-	DOCK_DATA			* prev;
 	char				* name;
 	int					vnum;
 	float				capacity;

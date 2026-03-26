@@ -69,7 +69,6 @@ void save_room_storage(ROOM_INDEX_DATA *room)
 
 	FILE *fp;
 	char filename[256];
-	OBJ_DATA *contents;
 
 	sprintf(filename, "%s%d", STORAGES_DIR, room->vnum);
 	fp = fopen(filename, "w");
@@ -77,11 +76,10 @@ void save_room_storage(ROOM_INDEX_DATA *room)
 	{
 		fprintf(fp, "#STORAGEDATA\n");
 		fprintf(fp, "End\n\n#END\n\n");
-		contents = room->last_content;
-		if (contents)
+		for (auto* cobj : room->contents)
 		{
 			//First argument isn't used anyway
-			fwrite_obj(NULL, contents, fp, 0, OS_CARRY);
+			fwrite_obj(NULL, cobj, fp, 0, OS_CARRY);
 		}
 		fprintf(fp, "#END\n");
 		fclose(fp);
@@ -101,14 +99,12 @@ void load_room_storage(ROOM_INDEX_DATA *room)
 
 	char filename[256];
 	FILE *fph;
-	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	ROOM_INDEX_DATA *storeroom = room;
 
-	for (obj = storeroom->first_content; obj; obj = obj_next)
 	{
-		obj_next = obj->next_content;
-		extract_obj(obj);
+		auto snapshot = storeroom->contents;
+		for (auto* obj : snapshot)
+			extract_obj(obj);
 	}
 
 	sprintf(filename, "%s%d", STORAGES_DIR, room->vnum);
@@ -117,7 +113,6 @@ void load_room_storage(ROOM_INDEX_DATA *room)
 	if (fph)
 	{
 		int iNest;
-		OBJ_DATA *tobj, *tobj_next;
 
 		rset_supermob(storeroom);
 		for (iNest = 0; iNest < MAX_NEST; iNest++)
@@ -158,11 +153,13 @@ void load_room_storage(ROOM_INDEX_DATA *room)
 
 		fclose(fph);
 
-		for (tobj = supermob->first_carrying; tobj; tobj = tobj_next)
 		{
-			tobj_next = tobj->next_content;
-			obj_from_char(tobj);
-			obj_to_room(tobj, storeroom);
+			auto snapshot = supermob->carrying;
+			for (auto* tobj : snapshot)
+			{
+				obj_from_char(tobj);
+				obj_to_room(tobj, storeroom);
+			}
 		}
 		release_supermob();
 	}
@@ -179,7 +176,6 @@ void save_home(CHAR_DATA *ch)
 		FILE *fp;
 		char filename[256];
 		int templvl;
-		OBJ_DATA *contents;
 
 		/* NOWE zapisywanie dom�w */
 		sprintf(filename, "%s%s", PHOME_DIR, capitalize(ch->name));
@@ -191,9 +187,8 @@ void save_home(CHAR_DATA *ch)
 			fprintf(fp, "End\n\n#END\n\n");
 			templvl = ch->top_level;
 			ch->top_level = LEVEL_HERO; /* make sure EQ doesn't get lost */
-			contents = ch->plr_home->last_content;
-			if (contents)
-				fwrite_obj(ch, contents, fp, 0, OS_CARRY);
+			for (auto* cobj : ch->plr_home->contents)
+				fwrite_obj(ch, cobj, fp, 0, OS_CARRY);
 			fprintf(fp, "#END\n");
 			ch->top_level = templvl;
 			fclose(fp);
@@ -208,20 +203,17 @@ void load_home(CHAR_DATA *ch)
 		char filename[256];
 		FILE *fph;
 		ROOM_INDEX_DATA *storeroom = ch->plr_home;
-		OBJ_DATA *obj;
-		OBJ_DATA *obj_next;
 
-		for (obj = storeroom->first_content; obj; obj = obj_next)
 		{
-			obj_next = obj->next_content;
-			extract_obj(obj);
+			auto snapshot = storeroom->contents;
+			for (auto* obj : snapshot)
+				extract_obj(obj);
 		}
 
 		sprintf(filename, "%s%s", PHOME_DIR, capitalize(ch->name));
 		if ((fph = fopen(filename, "r")) != NULL)
 		{
 			int iNest;
-			OBJ_DATA *tobj, *tobj_next;
 
 			rset_supermob(storeroom);
 			for (iNest = 0; iNest < MAX_NEST; iNest++)
@@ -262,11 +254,13 @@ void load_home(CHAR_DATA *ch)
 
 			fclose(fph);
 
-			for (tobj = supermob->first_carrying; tobj; tobj = tobj_next)
 			{
-				tobj_next = tobj->next_content;
-				obj_from_char(tobj);
-				obj_to_room(tobj, storeroom);
+				auto snapshot = supermob->carrying;
+				for (auto* tobj : snapshot)
+				{
+					obj_from_char(tobj);
+					obj_to_room(tobj, storeroom);
+				}
 			}
 			release_supermob();
 		}
@@ -394,13 +388,12 @@ void load_home_flags()
  */
 void de_equip_char(CHAR_DATA *ch)
 {
-	OBJ_DATA *obj;
 	int x, y;
 
 	for (x = 0; x < MAX_WEAR; x++)
 		for (y = 0; y < MAX_LAYERS; y++)
 			save_equipment[x][y] = NULL;
-	for (obj = ch->first_carrying; obj; obj = obj->next_content)
+	for (auto* obj : ch->carrying)
 		if (obj->wear_loc > -1 && obj->wear_loc < MAX_WEAR)
 		{
 
@@ -532,24 +525,20 @@ void save_pdata2(CHAR_DATA *ch)
 		swNewChildInt(node, NULL, "until", ch->pcdata->unsilence_date);
 		swNewChildText(node, NULL, "by", ch->pcdata->silenced_by);
 	}
-	if (ch->pcdata->first_alias)
+	if (!ch->pcdata->aliases.empty())
 	{
-		ALIAS_DATA *alias;
-
 		node = xmlNewChild( root, NULL, BC"aliases", NULL );
-		FOREACH( alias, ch->pcdata->first_alias )
+		for (auto* alias : ch->pcdata->aliases)
 		{
 			child = xmlNewChild( node, NULL, BC"alias", NULL );
 			swNewChildText(child, NULL, "name", alias->name);
 			swNewChildText(child, NULL, "sub", alias->sub);
 		}
 	}
-	if (ch->first_crime)
+	if (!ch->crimes.empty())
 	{
-		CRIME_DATA *crime;
-
 		node = xmlNewChild( root, NULL, BC"crimes", NULL );
-		FOREACH( crime, ch->first_crime )
+		for (auto* crime : ch->crimes)
 		{
 			child = xmlNewChild( node, NULL, BC"crime", NULL );
 			swNewChildText(child, NULL, "name", crime->planet);
@@ -598,7 +587,6 @@ void save_pdata2(CHAR_DATA *ch)
 
 void save_pdata(CHAR_DATA *ch)
 {
-	CRIME_DATA *crime;
 	FILE *fp;
 	char filename[256];
 	char bckupname[256];
@@ -694,21 +682,21 @@ void save_pdata(CHAR_DATA *ch)
 		fprintf(fp, "Silenced     %d %s~\n", (int) ch->pcdata->unsilence_date,
 				ch->pcdata->silenced_by);
 
-	if (ch->pcdata->first_alias)
+	if (!ch->pcdata->aliases.empty())
 	{
-		ALIAS_DATA *alias;
 		int pos = 0;
 
-		for (alias = ch->pcdata->first_alias; alias; alias = alias->next, pos++)
+		for (auto* alias : ch->pcdata->aliases)
 		{
 			if (pos >= MAX_ALIAS && !IS_IMMORTAL(ch))
 				break;
 			fprintf(fp, "Alias        %d '%s' %s~\n", pos, alias->name,
 					alias->sub);
+			pos++;
 		}
 	}
 
-	for (crime = ch->first_crime; crime; crime = crime->next)
+	for (auto* crime : ch->crimes)
 	{
 		fprintf(fp, "CrimeData    %s~ %d %d %d %d %d\n", crime->planet,
 				crime->type, crime->level, crime->jail_vnum, crime->jail_end,
@@ -921,13 +909,12 @@ void save_char_data2(CHAR_DATA *ch)
 		}
 	}
 
-	if (ch->first_affect)
+	if (!ch->affects.empty())
 	{
-		AFFECT_DATA *af;
 		SKILLTYPE *skill = 0;
 
 		node = xmlNewChild( root, NULL, BC"affects", NULL );
-		FOREACH( af, ch->first_affect )
+		for (auto* af : ch->affects)
 		{
 			if (af->type >= 0 && !(skill = get_skilltype(af->type)))
 				continue;
@@ -958,12 +945,10 @@ void save_char_data2(CHAR_DATA *ch)
 		swNewChildInt(child, NULL, "vnum", ch->pcdata->killed[i].vnum);
 		swNewChildInt(child, NULL, "count", ch->pcdata->killed[i].count);
 	}
-	if (ch->first_known)
+	if (!ch->known.empty())
 	{
-		KNOWN_CHAR_DATA *_friend;
-
 		node = xmlNewChild( root, NULL, BC"_friends", NULL );
-		FOREACH( _friend, ch->first_known )
+		for (auto* _friend : ch->known)
 			if (_friend->is_remembered > 0)
 			{
 				child = xmlNewChild( node, NULL, BC"_friend", NULL );
@@ -974,11 +959,9 @@ void save_char_data2(CHAR_DATA *ch)
 	}
 	if (ch->pcdata->fevents)
 	{
-		FEVENT_DATA *fevent;
-
 		node = xmlNewChild( root, NULL, BC"fevents", NULL );
 		swNewChildIntNE(node, NULL, "number", ch->pcdata->fevents);
-		FOREACH( fevent, ch->pcdata->first_fevent )
+		for (auto* fevent : ch->pcdata->fevents_list)
 		{
 			child = xmlNewChild( node, NULL, BC"fevent", NULL );
 			swNewChildInt(child, NULL, "trigger", fevent->trigger);
@@ -1007,9 +990,6 @@ void save_char_data2(CHAR_DATA *ch)
 void save_char_data(CHAR_DATA *ch, FILE *fp)
 {
 	SKILLTYPE *skill = 0;
-	AFFECT_DATA *paf;
-	FEVENT_DATA *fevent;
-	KNOWN_LANG *klang;
 	int sn;
 	int drug;
 	int track;
@@ -1028,7 +1008,7 @@ void save_char_data(CHAR_DATA *ch, FILE *fp)
 	fprintf(fp, "Sex          %d\n", ch->sex);
 	fprintf(fp, "Race         %s~\n", ch->race->name);
 	fprintf(fp, "MainAbility  %d\n", ch->main_ability);
-	FOREACH( klang, ch->first_klang )
+	for (auto* klang : ch->klangs)
 		fprintf(fp, "Language     %s~ %d\n", klang->language->name,
 				klang->learned);
 	fprintf(fp, "Speaking     %s~\n", ch->speaking->name);
@@ -1155,7 +1135,7 @@ void save_char_data(CHAR_DATA *ch, FILE *fp)
 		}
 	}
 
-	for (paf = ch->first_affect; paf; paf = paf->next)
+	for (auto* paf : ch->affects)
 	{
 		if (paf->type >= 0 && (skill = get_skilltype(paf->type)) == NULL)
 			continue;
@@ -1179,15 +1159,14 @@ void save_char_data(CHAR_DATA *ch, FILE *fp)
 		fprintf(fp, "Killed       %d %d\n", ch->pcdata->killed[sn].vnum,
 				ch->pcdata->killed[sn].count);
 	}
-	KNOWN_CHAR_DATA *_friend;
-	for (_friend = ch->first_known; _friend; _friend = _friend->next)
+	for (auto* _friend : ch->known)
 		if (_friend->is_remembered > 0)
 			fprintf(fp, "Friend	%s %d %d 0 0 0 0 0 0 0 0 \n", _friend->name,/*_friend->race*/
 					0, _friend->sex);
-#warning Powyzsze do poprawy
+/* TODO: Powyzsze do poprawy */
 
 	fprintf(fp, "FEvents       %d\n", ch->pcdata->fevents);
-	FOREACH( fevent, ch->pcdata->first_fevent )
+	for (auto* fevent : ch->pcdata->fevents_list)
 	{
 		fprintf(fp, "FEvent       %d %s~", fevent->trigger, fevent->sattr);
 		for (i = 0; i < FE_MAX_ATTR; i++)
@@ -1285,8 +1264,8 @@ void save_char_obj(CHAR_DATA *ch)
 	else
 	{
 		save_char_data(ch, fp);
-		if (ch->first_carrying)
-			fwrite_obj(ch, ch->last_carrying, fp, 0, OS_CARRY);
+		for (auto* cobj : ch->carrying)
+			fwrite_obj(ch, cobj, fp, 0, OS_CARRY);
 		fprintf(fp, "#END\n");
 		fclose(fp);
 	}
@@ -1364,9 +1343,6 @@ void save_clone(CHAR_DATA *ch)
 void fwrite_obj_raw(OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
 {
 
-	EXTRA_DESCR_DATA *ed;
-	AFFECT_DATA *paf;
-	REQUIREMENT_DATA *req;
 	int wear, wear_loc, x;
 
 	/* Corpse saving. -- Altrag */
@@ -1480,7 +1456,7 @@ void fwrite_obj_raw(OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
 		break;
 	}
 
-	for (paf = obj->first_affect; paf; paf = paf->next)
+	for (auto* paf : obj->affects)
 	{
 		/*
 		 * Save extra object affects				-Thoric
@@ -1509,7 +1485,7 @@ void fwrite_obj_raw(OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
 					paf->location, paf->bitvector);
 	}
 
-	for (req = obj->first_requirement; req; req = req->next)
+	for (auto* req : obj->requirements)
 	{
 		char _buf[MSL];
 
@@ -1524,7 +1500,7 @@ void fwrite_obj_raw(OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
 				req->modifier, _buf);
 	}
 
-	for (ed = obj->first_extradesc; ed; ed = ed->next)
+	for (auto* ed : obj->extradesc)
 		fprintf(fp, "ExtraDescr   %s~ %s~\n", ed->keyword, ed->description);
 
 	fprintf(fp, "End\n\n");
@@ -1532,23 +1508,15 @@ void fwrite_obj_raw(OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
 }
 
 /*
- * Write an object and its contents.
+ * Write a single object and its contents.
  */
-void fwrite_obj(CHAR_DATA *ch, OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
+static void fwrite_obj_single(CHAR_DATA *ch, OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
 {
-
 	if (iNest >= MAX_NEST)
 	{
 		bug("iNest hit MAX_NEST %d", iNest);
 		return;
 	}
-
-	/*
-	 * Slick recursion to write lists backwards,
-	 *   so loading them will load in forwards order.
-	 */
-	if (obj->prev_content && os_type == OS_CARRY)
-		fwrite_obj(ch, obj->prev_content, fp, iNest, OS_CARRY);
 
 	/*
 	 * Castrate storage characters.
@@ -1570,10 +1538,18 @@ void fwrite_obj(CHAR_DATA *ch, OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
 
 	fwrite_obj_raw(obj, fp, iNest, os_type);
 
-	if (obj->first_content)
-		fwrite_obj(ch, obj->last_content, fp, iNest + 1, OS_CARRY);
+	for (auto* cobj : obj->contents)
+		fwrite_obj_single(ch, cobj, fp, iNest + 1, OS_CARRY);
+}
 
-	return;
+/*
+ * Write an object and its contents.
+ * For OS_CARRY, obj is now expected to be a single object (callers iterate lists directly).
+ * For OS_CORPSE, writes a single corpse object.
+ */
+void fwrite_obj(CHAR_DATA *ch, OBJ_DATA *obj, FILE *fp, int iNest, int os_type)
+{
+	fwrite_obj_single(ch, obj, fp, iNest, os_type);
 }
 
 #if defined(KEY)
@@ -1628,8 +1604,7 @@ void fread_pdata(CHAR_DATA *ch, FILE *fp, bool preload)
 				CREATE(alias, ALIAS_DATA, 1);
 				STRDUP(alias->name, fread_word(fp));
 				alias->sub = fread_string(fp);
-				LINK(alias, ch->pcdata->first_alias, ch->pcdata->last_alias,
-						next, prev);
+				ch->pcdata->aliases.push_back(alias);
 				fMatch = true;
 			}
 			break;
@@ -1667,7 +1642,7 @@ void fread_pdata(CHAR_DATA *ch, FILE *fp, bool preload)
 				str = fread_line(fp);
 				sscanf(str, "%d %d %d %d %d", &crime->type, &crime->level,
 						&crime->jail_vnum, &crime->jail_end, &crime->released);
-				LINK(crime, ch->first_crime, ch->last_crime, next, prev);
+				ch->crimes.push_back(crime);
 				fMatch = true;
 				break;
 			}
@@ -1865,7 +1840,6 @@ void fread_pdata(CHAR_DATA *ch, FILE *fp, bool preload)
 		case 'E':
 			if (word[0] == 'E' && word[1] == 'n' && word[2] == 'd')
 			{
-				CLAN_DATA *clan;
 				MEMBER_DATA *member;
 
 				if (!ch->pcdata->prompt)
@@ -1877,7 +1851,7 @@ void fread_pdata(CHAR_DATA *ch, FILE *fp, bool preload)
 				if (ch->pcdata->security > 10)
 					ch->pcdata->security = 10;
 
-				FOREACH( clan, first_clan )
+				for (auto* clan : clan_list)
 					if ((member = get_member(clan, ch->name))
 							&& member->status >= CLAN_MEMBER)
 					{
@@ -2147,7 +2121,7 @@ void fread_char(CHAR_DATA *ch, FILE *fp)
 				paf->modifier = fread_number(fp);
 				paf->location = fread_number(fp);
 				paf->bitvector = fread_number64(fp);
-				LINK(paf, ch->first_affect, ch->last_affect, next, prev);
+				ch->affects.push_back(paf);
 				fMatch = true;
 				break;
 			}
@@ -2273,11 +2247,11 @@ void fread_char(CHAR_DATA *ch, FILE *fp)
 
 				CREATE(_friend, KNOWN_CHAR_DATA, 1);
 				STRDUP(_friend->name, fread_word(fp));
-#warning ponizsza linijka do poprawy
+/* TODO: ponizsza linijka do poprawy */
 				_friend->race = 0/*fread_number( fp )*/;
 				_friend->is_remembered = 1;
 				_friend->sex = fread_number(fp);
-				LINK(_friend, ch->first_known, ch->last_known, next, prev);
+				ch->known.push_back(_friend);
 				ch->kins++;
 				fread_to_eol(fp);
 				fMatch = true;
@@ -2292,8 +2266,7 @@ void fread_char(CHAR_DATA *ch, FILE *fp)
 				int i;
 
 				fevent = new_fevent();
-				LINK(fevent, ch->pcdata->first_fevent, ch->pcdata->last_fevent,
-						next, prev);
+				ch->pcdata->fevents_list.push_back(fevent);
 				fevent->trigger = (fe_trigger) fread_number(fp);
 				STRDUP(fevent->sattr, st_fread_string(fp));
 				for (i = 0; i < FE_MAX_ATTR; i++)
@@ -2382,7 +2355,7 @@ void fread_char(CHAR_DATA *ch, FILE *fp)
 					klang = new_known_lang();
 					klang->language = lang;
 					klang->learned = fread_number(fp);
-					LINK(klang, ch->first_klang, ch->last_klang, next, prev);
+					ch->klangs.push_back(klang);
 				}
 				else
 					fread_to_eol(fp);
@@ -2770,7 +2743,7 @@ void fread_obj(CHAR_DATA *ch, FILE *fp, int os_type)
 					paf->modifier = slot_lookup(pafmod);
 				else
 					paf->modifier = pafmod;
-				LINK(paf, obj->first_affect, obj->last_affect, next, prev);
+				obj->affects.push_back(paf);
 				fMatch = true;
 				break;
 			}
@@ -2801,7 +2774,7 @@ void fread_obj(CHAR_DATA *ch, FILE *fp, int os_type)
 				CREATE(ed, EXTRA_DESCR_DATA, 1);
 				ed->keyword = fread_string(fp);
 				ed->description = fread_string(fp);
-				LINK(ed, obj->first_extradesc, obj->last_extradesc, next, prev);
+				obj->extradesc.push_back(ed);
 				fMatch = true;
 			}
 
@@ -2832,7 +2805,7 @@ void fread_obj(CHAR_DATA *ch, FILE *fp, int os_type)
 					if (!obj->action_desc)
 						STRDUP(obj->action_desc, obj->pIndexData->action_desc);
 
-					LINK(obj, first_object, last_object, next, prev);
+					object_list.push_back(obj);
 
 					obj->pIndexData->count += obj->count;
 					if (!obj->serial)
@@ -2903,8 +2876,7 @@ void fread_obj(CHAR_DATA *ch, FILE *fp, int os_type)
 
 						obj->inquest = ch->inquest;
 						CREATE(qObj, QUEST_OBJ_DATA, 1);
-						LINK(qObj, ch->inquest->first_obj,
-								ch->inquest->last_obj, next, prev);
+						ch->inquest->objs.push_back(qObj);
 						qObj->obj = obj;
 					}
 					return;
@@ -2975,8 +2947,7 @@ void fread_obj(CHAR_DATA *ch, FILE *fp, int os_type)
 					pReq->location = loc;
 					pReq->type = type;
 					pReq->modifier = mod;
-					LINK(pReq, obj->first_requirement, obj->last_requirement,
-							next, prev);
+					obj->requirements.push_back(pReq);
 				}
 			}
 			// done requirements
@@ -3106,15 +3077,16 @@ void fread_obj(CHAR_DATA *ch, FILE *fp, int os_type)
 			bug("no match. (%s)", word);
 			fread_to_eol(fp);
 
-			while ((ed = obj->first_extradesc) != NULL)
+			while (!obj->extradesc.empty())
 			{
-				UNLINK(ed, obj->first_extradesc, obj->last_extradesc, next,
-						prev);
+				ed = obj->extradesc.front();
+				obj->extradesc.pop_front();
 				free_ed(ed);
 			}
-			while ((paf = obj->first_affect) != NULL)
+			while (!obj->affects.empty())
 			{
-				UNLINK(paf, obj->first_affect, obj->last_affect, next, prev);
+				paf = obj->affects.front();
+				obj->affects.pop_front();
 				DISPOSE(paf);
 			}
 			free_obj(obj);
@@ -3362,7 +3334,6 @@ DEF_DO_FUN( whowas )
 
 void write_corpses(CHAR_DATA *ch, char *name)
 {
-	OBJ_DATA *corpse;
 	FILE *fp = NULL;
 
 	/* Name and ch support so that we dont have to have a char to save their
@@ -3377,7 +3348,7 @@ void write_corpses(CHAR_DATA *ch, char *name)
 		name = ch->name;
 
 	/* Go by vnum, less chance of screwups. -- Altrag */
-	for (corpse = first_object; corpse; corpse = corpse->next)
+	for (auto* corpse : object_list)
 		if (corpse->pIndexData->vnum == OBJ_VNUM_CORPSE_PC
 				&& corpse->in_room != NULL && corpse->action_desc[0] != '\0'
 				&& !str_cmp(name, corpse->action_desc))

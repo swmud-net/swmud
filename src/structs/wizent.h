@@ -23,8 +23,6 @@
 
 struct	wizent
 {
-	WIZENT				* next;
-	WIZENT				* last;
 	char				* name;
 	int					level;
 	int64				pcflags;

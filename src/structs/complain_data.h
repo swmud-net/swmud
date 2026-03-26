@@ -25,8 +25,6 @@ struct complain_data
 {
 	typedef enum { COMPLAIN_BUG, COMPLAIN_TYPO, COMPLAIN_IDEA } Type;
 
-	COMPLAIN_DATA		* next;
-	COMPLAIN_DATA		* prev;
 	char				* text;
 	char				* author;
 	char				* date;

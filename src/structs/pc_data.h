@@ -20,6 +20,7 @@
 #define PC_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	pc_data
 {
@@ -69,25 +70,23 @@ struct	pc_data
 	long				bank;
 	int					security; //byTrog
 	/* Added by Thanos */
-	int					status_width; //szeroko¶æ i wysokosc lini statusu
+	int					status_width; //szerokoï¿½ï¿½ i wysokosc lini statusu
 	int					status_height;
 	int					status_type;			//typ linii statusu
 	char				* forbidden_cmd;			//zabrane komendy
 	char				* afk_reason;			//powod awaya
-	ALIAS_DATA			* first_alias;
-	ALIAS_DATA			* last_alias;
-	LAST_DATA			* first_last_tell;//last_tell
-	LAST_DATA			* last_last_tell; //last_tell
+	std::list<ALIAS_DATA*> aliases;
+	std::list<LAST_DATA*> last_tells;
 	time_t				last_note;	//ostatnio przeczytana notka
 	int					quest_points; // suma wszystkich zdobytych qp
 	char				* quest_done;	// wszystkie questy zrobione przez gracza
-	int					line_nr; // w której lini jest kursor (do qedit () )
+	int					line_nr; // w ktï¿½rej lini jest kursor (do qedit () )
 	int					mprog_edit;
 #if defined( ARMAGEDDON )
 	int					practices;
 #endif
-	char				* editinfo;	/* w³asne notatki olcmanów */
-	char				* ignorelist;	/* lista ignorowanych osób */
+	char				* editinfo;	/* wï¿½asne notatki olcmanï¿½w */
+	char				* ignorelist;	/* lista ignorowanych osï¿½b */
 	/* handel data */
 	CHAR_DATA			* trader;	  //sprzedawca
 	OBJ_DATA			* trade_item;	  //przedmiot
@@ -105,9 +104,8 @@ struct	pc_data
 	char				* user;		// tamte zmieniaja sie np. przy disco,
 									// a te nie
 	char				* last_dialog;	//ostatnio wypowiedziany tekst moba
-	CHAR_DATA			* pMob_speaking; //mob z którym rozmawiamy
-	FEVENT_DATA			* first_fevent; /*!< Trog: Force Events */
-	FEVENT_DATA			* last_fevent;
+	CHAR_DATA			* pMob_speaking; //mob z ktï¿½rym rozmawiamy
+	std::list<FEVENT_DATA*> fevents_list;
 	int					fevents;
 	int					remembered_mob_bounty; /*!< Trog: vnum zapamietanego moba, za ktorego chcemy wystawic bounty */
 	short int			hotel_safe_time; //Ganis: Przez ile sekund jeszcze gracz bedzie bezpieczny w hotelu

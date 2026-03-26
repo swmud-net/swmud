@@ -23,8 +23,6 @@
 
 struct ilist_data
 {
-	ILD		*next;
-	ILD		*prev;
 	char	*data;
 };
 

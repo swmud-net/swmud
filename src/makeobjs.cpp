@@ -61,13 +61,13 @@ void make_scraps(OBJ_DATA *obj)
 	/* don't make scraps of scraps of scraps of ... */
 	if (obj->pIndexData->vnum == OBJ_VNUM_SCRAPS)
 	{
-		STRDUP( scraps->przypadki[0], "szcz±tki" );
-		STRDUP( scraps->przypadki[1], "szcz±tek" );
-		STRDUP( scraps->przypadki[2], "szcz±tkom" );
-		STRDUP( scraps->przypadki[3], "szcz±tki" );
-		STRDUP( scraps->przypadki[4], "szcz±tkami" );
-		STRDUP( scraps->przypadki[5], "szcz±tkach" );
-		STRDUP( scraps->description , "Le¿± tu niezydentyfikowane szcz±tki." );
+		STRDUP( scraps->przypadki[0], "szczï¿½tki" );
+		STRDUP( scraps->przypadki[1], "szczï¿½tek" );
+		STRDUP( scraps->przypadki[2], "szczï¿½tkom" );
+		STRDUP( scraps->przypadki[3], "szczï¿½tki" );
+		STRDUP( scraps->przypadki[4], "szczï¿½tkami" );
+		STRDUP( scraps->przypadki[5], "szczï¿½tkach" );
+		STRDUP( scraps->description , "Leï¿½ï¿½ tu niezydentyfikowane szczï¿½tki." );
 	}
 	else
 	{
@@ -82,7 +82,7 @@ void make_scraps(OBJ_DATA *obj)
 
 	if (obj->carried_by)
 	{
-		act(COL_OBJECT, "$p rozpada siê na szcz±tki!", obj->carried_by, obj,
+		act(COL_OBJECT, "$p rozpada siï¿½ na szczï¿½tki!", obj->carried_by, obj,
 				NULL, TO_CHAR);
 		if (obj == get_eq_char(obj->carried_by, WEAR_WIELD) && (tmpobj
 				= get_eq_char(obj->carried_by, WEAR_DUAL_WIELD)) != NULL)
@@ -92,23 +92,23 @@ void make_scraps(OBJ_DATA *obj)
 	}
 	else if (obj->in_room)
 	{
-		if ((ch = obj->in_room->first_person) != NULL)
+		if ((ch = obj->in_room->people.empty() ? nullptr : obj->in_room->people.front()) != NULL)
 		{
-			act(COL_OBJECT, "$p rozpada siê na szcz±tki!", ch, obj, NULL,
+			act(COL_OBJECT, "$p rozpada siï¿½ na szczï¿½tki!", ch, obj, NULL,
 					TO_ROOM);
-			act(COL_OBJECT, "$p rozpada siê na szcz±tki!", ch, obj, NULL,
+			act(COL_OBJECT, "$p rozpada siï¿½ na szczï¿½tki!", ch, obj, NULL,
 					TO_CHAR);
 		}
 		obj_to_room(scraps, obj->in_room);
 	}
 	if ((obj->item_type == ITEM_CONTAINER || obj->item_type == ITEM_CORPSE_PC)
-			&& obj->first_content)
+			&& !obj->contents.empty())
 	{
 		if (ch && ch->in_room)
 		{
-			act(COL_OBJECT, "Zawarto¶æ $p$1 spada na ziemiê.", ch, obj, NULL,
+			act(COL_OBJECT, "Zawartoï¿½ï¿½ $p$1 spada na ziemiï¿½.", ch, obj, NULL,
 					TO_ROOM);
-			act(COL_OBJECT, "Zawarto¶æ $p$1 spada na ziemiê.", ch, obj, NULL,
+			act(COL_OBJECT, "Zawartoï¿½ï¿½ $p$1 spada na ziemiï¿½.", ch, obj, NULL,
 					TO_CHAR);
 		}
 		if (obj->carried_by)
@@ -128,8 +128,6 @@ void make_corpse(CHAR_DATA *ch, CHAR_DATA *killer, int suicide)
 {
 	char buf[MAX_STRING_LENGTH];
 	OBJ_DATA *corpse;
-	OBJ_DATA *obj;
-	OBJ_DATA *obj_next;
 	char *name;
 	char *pname;
 	int i;
@@ -160,17 +158,17 @@ void make_corpse(CHAR_DATA *ch, CHAR_DATA *killer, int suicide)
 		corpse->gender = GENDER_NEUTRAL;
 		corpse->value[2] = corpse->timer;
 
-		/* Thanos 	-- niewidzialne poza questem zw³oki */
+		/* Thanos 	-- niewidzialne poza questem zwï¿½oki */
 		if (ch->inquest)
 		{
 			QUEST_OBJ_DATA * qObj;
 			QUEST_DATA * quest = ch->inquest;
 
-			/* zw³oki odziedziczaj± w³a¶ciwo¶ci questowe postaci ;) */
+			/* zwï¿½oki odziedziczajï¿½ wï¿½aï¿½ciwoï¿½ci questowe postaci ;) */
 			corpse->inquest = quest;
 			CREATE( qObj, QUEST_OBJ_DATA, 1 );
 			qObj->obj = corpse;
-			LINK( qObj, quest->first_obj, quest->last_obj, next, prev );
+			quest->objs.push_back(qObj);
 
 			corpse->timer = 10;
 		}
@@ -178,7 +176,7 @@ void make_corpse(CHAR_DATA *ch, CHAR_DATA *killer, int suicide)
 			corpse->timer = 6;
 
 		/* Added corpse name - make locate easier , other skills */
-		sprintf(buf, "cia³o %s corpse m%d", name, ch->pIndexData->vnum);
+		sprintf(buf, "ciaï¿½o %s corpse m%d", name, ch->pIndexData->vnum);
 		STRDUP( corpse->name, buf );
 	}
 	else
@@ -200,7 +198,7 @@ void make_corpse(CHAR_DATA *ch, CHAR_DATA *killer, int suicide)
 		STRDUP( corpse->action_desc, pname );
 
 		/* Added corpse name - make locate easier , other skills */
-		sprintf(buf, "cia³o %s corpse %s", name, ch->name);
+		sprintf(buf, "ciaï¿½o %s corpse %s", name, ch->name);
 		STRDUP( corpse->name, buf );
 	}
 
@@ -213,9 +211,9 @@ void make_corpse(CHAR_DATA *ch, CHAR_DATA *killer, int suicide)
 	sprintf(buf, corpse->description, name);
 	STRDUP( corpse->description, buf );
 
-	for (obj = ch->first_carrying; obj; obj = obj_next)
+	auto carrying_snapshot = ch->carrying;
+	for (auto* obj : carrying_snapshot)
 	{
-		obj_next = obj->next_content;
 		obj_from_char(obj);
 		if (IS_OBJ_STAT( obj, ITEM_INVENTORY ))
 			extract_obj(obj);

@@ -30,13 +30,13 @@ ROOM_INDEX_DATA * get_sroom		args( ( SHIP_DATA *ship, int svnum ) );
 SHIP_DATA * 	  constr_ship		args( ( SHIP_INDEX_DATA *shrec ) );
 
 /*
- * Za³o¿enia zapisu stanu statków:
- * - zapisuj± siê tylko nowe statki (instancje prototypów)
- * - zapisuj± siê tylko statki nale¿±ce do graczy
- * - zapisuj± siê tylko statki bêd±ce w lokacji, lub w systemie gwiezdnym
- * - je¶li statek znajduje siê w innym stanie (nie jest w lokacji, ani
- *   w systemie gwiezdnym, albo jest w stanie startu/l±dowania), do za³adowania
- *   u¿yty zostanie stary save.
+ * Zaï¿½oï¿½enia zapisu stanu statkï¿½w:
+ * - zapisujï¿½ siï¿½ tylko nowe statki (instancje prototypï¿½w)
+ * - zapisujï¿½ siï¿½ tylko statki naleï¿½ï¿½ce do graczy
+ * - zapisujï¿½ siï¿½ tylko statki bï¿½dï¿½ce w lokacji, lub w systemie gwiezdnym
+ * - jeï¿½li statek znajduje siï¿½ w innym stanie (nie jest w lokacji, ani
+ *   w systemie gwiezdnym, albo jest w stanie startu/lï¿½dowania), do zaï¿½adowania
+ *   uï¿½yty zostanie stary save.
  */
 
 void save_ship_state( SHIP_DATA *ship )
@@ -77,15 +77,15 @@ void save_ship_state( SHIP_DATA *ship )
 
 
 
-	/* TA SEKCJA MA BYÆ ZAWSZE NA KOÑCU PLIKU!			*/
+	/* TA SEKCJA MA BYï¿½ ZAWSZE NA KOï¿½CU PLIKU!			*/
 	fprintf( fp, "#LOCATION    "					);
 	if( ship->in_room )
 	{
-	    /* je¶li statek jest zadokowany na innym statku */
+	    /* jeï¿½li statek jest zadokowany na innym statku */
 	    if( ship->in_room->ship && ship->in_room->ship->pIndexData )
 		fprintf( fp, "Ship: %s~ %d\n", ship->in_room->ship->transponder,
 					      ship->in_room->svnum	);
-	    /* w zwyk³ej lokacji */
+	    /* w zwykï¿½ej lokacji */
 	    else
 		fprintf( fp, "Room: %d\n", ship->in_room->vnum		);
 	}
@@ -109,9 +109,6 @@ void save_ship_state( SHIP_DATA *ship )
 
 void add_ship_to_list_file( FILE *fp, SHIP_DATA *ship )
 {
-    ROOM_INDEX_DATA *	room;
-    SHIP_DATA * 	docked;
-
     if( !ship->vnum || !ship->pIndexData )
         return;
 
@@ -122,24 +119,23 @@ void add_ship_to_list_file( FILE *fp, SHIP_DATA *ship )
     fprintf( fp, "%s.dat\n", ship->transponder );	
     SET_BIT( ship->tmp_flags, xSHIP_SAVED );
 
-    for( room = ship->first_location; room; room = room->next_on_ship )
-		for( docked = room->first_ship; docked; docked = docked->next_in_room )
+    for( auto* room : ship->locations )
+		for( auto* docked : room->ships )
 	    	if( !IS_SET( docked->tmp_flags, xSHIP_SAVED ) )
 				add_ship_to_list_file( fp, docked );
 }
 
-/* Zeby statki zapisa³y siê w ³adnej kolejno¶ci, musimy troszkê namieszaæ:
- * Zapisujemy do listy tylko te statki, które NIE S¡ zaparkowane na innych
- * statkach. Dopiero te zapisywane sprawdzaj± swoje pok³ady i je¶li znajdzie
- * siê na nich jaki¶ statek - ka¿± mu siê dopisaæ do listy. Ten z kolei 
- * podczas dopisywania sprawdzi swój pok³ad itd... ¯eby sprawdziæ, czy statek
- * ju¿ by³ zapisany najlepiej jest pos³u¿yæ siê jak±¶ flag± tymczasow±.
- * Dziêki temu statki zapisane s± w kolejno¶ci od zewnêtrznego wg³±b, co
- * znacznie u³atwi sprawê ich wczytywania i umieszczania w lokacjach, kosmosie,
+/* Zeby statki zapisaï¿½y siï¿½ w ï¿½adnej kolejnoï¿½ci, musimy troszkï¿½ namieszaï¿½:
+ * Zapisujemy do listy tylko te statki, ktï¿½re NIE Sï¿½ zaparkowane na innych
+ * statkach. Dopiero te zapisywane sprawdzajï¿½ swoje pokï¿½ady i jeï¿½li znajdzie
+ * siï¿½ na nich jakiï¿½ statek - kaï¿½ï¿½ mu siï¿½ dopisaï¿½ do listy. Ten z kolei 
+ * podczas dopisywania sprawdzi swï¿½j pokï¿½ad itd... ï¿½eby sprawdziï¿½, czy statek
+ * juï¿½ byï¿½ zapisany najlepiej jest posï¿½uï¿½yï¿½ siï¿½ jakï¿½ï¿½ flagï¿½ tymczasowï¿½.
+ * Dziï¿½ki temu statki zapisane sï¿½ w kolejnoï¿½ci od zewnï¿½trznego wgï¿½ï¿½b, co
+ * znacznie uï¿½atwi sprawï¿½ ich wczytywania i umieszczania w lokacjach, kosmosie,
  * a przede wszystkim w innych statkach. */
 void save_ship_states_list()
 {
-    SHIP_DATA * 	ship;
     FILE * 		fp;
 
     RESERVE_CLOSE;
@@ -149,13 +145,13 @@ void save_ship_states_list()
     	perror( SHIP_TMP_LIST );
     }
 
-    for( ship = first_ship; ship; ship = ship->next )
+    for( auto* ship : ship_list )
     {
-	/* zapisujemy tylko te statki, które nie stoj± na innych statkach */
+	/* zapisujemy tylko te statki, ktï¿½re nie stojï¿½ na innych statkach */
 	if( IS_SET( ship->tmp_flags, xSHIP_SAVED ) )
-	    continue;	
+	    continue;
 
-	/* reszta (te zadokowane na statkach), zapisze siê rekursywnie */
+	/* reszta (te zadokowane na statkach), zapisze siï¿½ rekursywnie */
 	add_ship_to_list_file( fp, ship );
     }
 
@@ -169,16 +165,14 @@ void save_ship_states_list()
 
 void save_all_ship_states()
 {
-    SHIP_DATA *		ship;
-
-    for( ship = first_ship; ship; ship = ship->next )
+    for( auto* ship : ship_list )
 	REMOVE_BIT( ship->tmp_flags, xSHIP_SAVED );
         
     save_ship_states_list();
 
-    for( ship = first_ship; ship; ship = ship->next )
+    for( auto* ship : ship_list )
     {
-		/* zapisz tylko z listy (ona decyduje co ma byæ zapisane) */
+		/* zapisz tylko z listy (ona decyduje co ma byï¿½ zapisane) */
 		if( IS_SET( ship->tmp_flags, xSHIP_SAVED ) )
     	{
     	    save_ship_state( ship );
@@ -275,9 +269,10 @@ void fread_ship_location( SHIP_DATA *ship, FILE *fp )
         tmpTransponder = st_fread_string( fp );
         toRoomVnum = fread_number( fp );
 
-	for ( dock = first_ship; dock; dock = dock->next )
-    	    if ( !str_cmp( tmpTransponder, dock->transponder ) )
-		break;
+	dock = nullptr;
+	for ( auto* s : ship_list )
+    	    if ( !str_cmp( tmpTransponder, s->transponder ) )
+		{ dock = s; break; }
 	if( !dock )
 	{
 	    bug( "Ship '%s' doesn't exist.", tmpTransponder );

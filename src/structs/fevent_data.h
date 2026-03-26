@@ -23,8 +23,6 @@
 
 struct fevent_data
 {
-	FEVENT_DATA	*next;
-	FEVENT_DATA	*prev;
 	fe_trigger	trigger;
 	int64		attr[FE_MAX_ATTR];
 	char		*sattr;

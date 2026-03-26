@@ -23,8 +23,6 @@
 
 struct cloning_data
 {
-	CLONING_DATA		* next;
-	CLONING_DATA		* prev;
 	ROOM_INDEX_DATA		* entrance;
 	ROOM_INDEX_DATA		* cylinder;
 	ROOM_INDEX_DATA		* leaving;

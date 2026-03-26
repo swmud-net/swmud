@@ -20,19 +20,16 @@
 #define CLAN_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct	clan_data
 {
 	/* common members */
-	CLAN_DATA			* next;
-	CLAN_DATA			* prev;
-	MEMBER_DATA			* first_member;
-	MEMBER_DATA			* last_member;
+	std::list<MEMBER_DATA*> member_list;
 	MEMBER_DATA			* leader;
 	MEMBER_DATA			* first;
 	MEMBER_DATA			* second;
-	LAST_DATA			* first_last_ctalk;
-	LAST_DATA			* last_last_ctalk;
+	std::list<LAST_DATA*> ctalk_history;
 	clan_type			type;
 	char				* filename;
 	char				* name;
@@ -42,16 +39,11 @@ struct	clan_data
 	int64				flags;
 	long				penalty;
 	/* organization members */
-	CLAN_DATA			* next_suborg;
-	CLAN_DATA			* prev_suborg;
-	CLAN_DATA			* first_suborg;
-	CLAN_DATA			* last_suborg;
+	std::list<CLAN_DATA*> suborgs;
 	CLAN_DATA			* mainorg;
 	CLAN_DATA			* vClan;	//Trog: do votingu politycznego
-	HQ_DATA				* first_hq; //@xmlnodump
-	HQ_DATA				* last_hq;
-	POLITICS_DATA		* first_politics;
-	POLITICS_DATA		* last_politics;
+	std::list<HQ_DATA*> hqs;
+	std::list<POLITICS_DATA*> politics;
 	MEMBER_DATA			* diplomat;
 	char				* vYes; //Trog: do votingu politycznego (vno sie doda w przyszlosci)
 	int					vRelations;	//Trog: do votingu politycznego

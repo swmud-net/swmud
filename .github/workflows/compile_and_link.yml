@@ -1,0 +1,23 @@
+name: Compile and Link
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libxml2-dev libpqxx-dev libpq-dev libcrypt-dev
+
+      - name: Build
+        run: |
+          mkdir -p bin
+          mv .mudrc.dist .mudrc
+          cd src
+          make MUD_DIR=.. MUD_BIN=swmud CPUs=-j$(nproc)

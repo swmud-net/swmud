@@ -56,8 +56,8 @@ bool quest_create( CHAR_DATA *ch, char *argument )
 		return false;
 	}
 
-	for( pQuest = first_quest_index; pQuest; pQuest = pQuest->next )
-		if ( pQuest->quest_id == value )
+	for( auto* pq : quest_index_list )
+		if ( pq->quest_id == value )
 	{
 		send_to_char( "There is a quest with that ID." NL, ch );
 		return false;
@@ -70,7 +70,7 @@ bool quest_create( CHAR_DATA *ch, char *argument )
 	pQuest->questor 		= MOB_VNUM_QUEST_MASTER;
 	pQuest->quest_id 		= value;
 	pArea->quest 		= pQuest;
-	LINK( pQuest, first_quest_index, last_quest_index, next, prev );
+	quest_index_list.push_back( pQuest );
 	top_quest_index++;
 
 	ch->desc->olc_editing   	= (void *)pQuest;
@@ -102,9 +102,11 @@ DEF_DO_FUN( qedit )
 	if ( is_number( arg1 ) )
 	{
 		value = atoi( arg1 );
-		for( pQuest = first_quest_index; pQuest; pQuest = pQuest->next )
-			if ( pQuest->quest_id == value )
+		pQuest = nullptr;
+		for( auto* pq : quest_index_list )
+			if ( pq->quest_id == value )
 		{
+			pQuest = pq;
 			send_to_char( " Editing quest." NL, ch );
 			break;
 		}
@@ -134,9 +136,7 @@ DEF_DO_FUN( qedit )
 
 CHAPTER_INDEX_DATA *get_chapter_index( QUEST_INDEX_DATA *quest, int nr )
 {
-	CHAPTER_INDEX_DATA *    	chptr;
 	int				i 	= 1;
-	bool			found 	= false;
 
 	if( nr <= 0 )
 		return NULL;
@@ -144,17 +144,12 @@ CHAPTER_INDEX_DATA *get_chapter_index( QUEST_INDEX_DATA *quest, int nr )
 	if( !quest )
 		return NULL;
 
-	for( chptr = quest->first_chapter; chptr; chptr = chptr->next, i++ )
+	for( auto* chptr : quest->chapters )
 	{
 		if( i == nr )
-		{
-			found = true;
-			break;
-		}
+			return chptr;
+		i++;
 	}
-
-	if( chptr && found )
-		return chptr;
 
 	return NULL;
 }
@@ -163,8 +158,6 @@ CHAPTER_INDEX_DATA *get_chapter_index( QUEST_INDEX_DATA *quest, int nr )
 void show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 {
 	CHAPTER_INDEX_DATA *	pChapter;
-	QUEST_CMND_DATA *		pCmnd;
-	QUEST_ACTION_DATA *		pAction;
 	int				i;
 
 	if( (i = nr) == 0 )
@@ -182,8 +175,8 @@ void show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 				  FB_CYAN "[" PLAIN "%d" FB_CYAN "] Chapter '%s'   Type: %s" EOL,
 				  i, pChapter->name, bit_name( quest_chapter_types, pChapter->type ) );
 
-	if( pChapter->first_init_cmd )
-		for( pCmnd = pChapter->first_init_cmd; pCmnd; pCmnd = pCmnd->next )
+	if( !pChapter->init_cmds.empty() )
+		for( auto* pCmnd : pChapter->init_cmds )
 			pager_printf( ch, FB_WHITE
 					FG_CYAN " Init   %10s" PLAIN " %6d %6d %6d %s" EOL,
 					bit_name(quest_init_types, pCmnd->command),
@@ -192,8 +185,8 @@ void show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 	else
 		send_to_pager( " No init Cmnds" NL, ch );
 
-	if( pChapter->first_event )
-		for( pCmnd = pChapter->first_event; pCmnd; pCmnd = pCmnd->next )
+	if( !pChapter->events.empty() )
+		for( auto* pCmnd : pChapter->events )
 			pager_printf( ch, FB_WHITE
 					FG_CYAN " Event  %10s" PLAIN " %6d %6d %6d %s" EOL,
 					bit_name(quest_event_types, pCmnd->command),
@@ -202,8 +195,8 @@ void show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 	else
 		send_to_pager( " No Events" NL, ch );
 
-	if( pChapter->first_action )
-		FOREACH( pAction, pChapter->first_action )
+	if( !pChapter->actions.empty() )
+		for( auto* pAction : pChapter->actions )
 			pager_printf( ch, FB_WHITE
 					FG_CYAN " Action %10s" PLAIN " %6d %6d %6d %s" EOL,
 					bit_name(quest_action_types, pAction->command),
@@ -376,24 +369,12 @@ void qprepare_comment( QUEST_CMND_DATA *pCmnd, int type )
 			break;
 			case INIT_EQUIP_MOB:
 			{
-				QUEST_CMND_DATA *	pc;
 				OBJ_INDEX_DATA *	pObj;
-				MOB_INDEX_DATA *	pMob = NULL;
 
 				pObj = get_obj_index( pCmnd->arg1 );
 
-					// szukamy ostatnio zaladowanego moba
-				for( pc=pCmnd; pc; pc=pc->prev )
-					if( pc->command == INIT_LOAD_MOB )
-				{
-					pMob = get_mob_index( pc->arg1 );
-					break;
-				}
-
-
-				sprintf( buf, "# %s -> %s (%s)",
+				sprintf( buf, "# %s -> last_mob (%s)",
 						 pObj ? pObj->przypadki[0] : "???",
-						 pMob ? pMob->przypadki[0] : "???",
 						 bit_name( wear_types_list, pCmnd->arg3 ) );
 
 			}
@@ -528,8 +509,6 @@ void qprepare_comment( QUEST_CMND_DATA *pCmnd, int type )
 void adv_show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 {
 	CHAPTER_INDEX_DATA *	pChapter;
-	QUEST_CMND_DATA *		pCmnd;
-	QUEST_ACTION_DATA *		pAction;
 	int				i;
 
 	if( (i = nr) == 0 )
@@ -548,38 +527,47 @@ void adv_show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 						  "--------------------------------------------------------" NL,
 				  i, pChapter->name, bit_name( quest_chapter_types, pChapter->type ) );
 
-	if( pChapter->first_init_cmd )
-		for( pCmnd = pChapter->first_init_cmd, i = 1; pCmnd; pCmnd = pCmnd->next, i++ )
+	if( !pChapter->init_cmds.empty() )
 	{
-		pager_printf( ch, FG_CYAN
+		i = 1;
+		for( auto* pCmnd : pChapter->init_cmds )
+		{
+			pager_printf( ch, FG_CYAN
 				" Init   " FB_WHITE "%d" FG_CYAN "      Cmd: " FB_CYAN "%s" EOL,
-				i, bit_name(quest_init_types, pCmnd->command) );
+				i++, bit_name(quest_init_types, pCmnd->command) );
 
-		show_args( ch, CMD_INIT, pCmnd );
+			show_args( ch, CMD_INIT, pCmnd );
+		}
 	}
 	else
 		send_to_pager( " No init Cmnds" NL, ch );
 
-	if( pChapter->first_event )
-		for( pCmnd = pChapter->first_event, i = 1; pCmnd; pCmnd = pCmnd->next, i++ )
+	if( !pChapter->events.empty() )
 	{
-		pager_printf( ch, FG_CYAN
+		i = 1;
+		for( auto* pCmnd : pChapter->events )
+		{
+			pager_printf( ch, FG_CYAN
 				" Event  " FB_WHITE "%d" FG_CYAN "      Cmd: " FB_CYAN "%s" EOL,
-				i, bit_name(quest_event_types, pCmnd->command) );
+				i++, bit_name(quest_event_types, pCmnd->command) );
 
-		show_args( ch, CMD_EVENT, pCmnd );
+			show_args( ch, CMD_EVENT, pCmnd );
+		}
 	}
 	else
 		send_to_pager( " No Events" NL, ch );
 
-	if( pChapter->first_action )
-		for( pAction = pChapter->first_action, i = 1; pAction; pAction = pAction->next, i++ )
+	if( !pChapter->actions.empty() )
 	{
-		pager_printf( ch, FG_CYAN
+		i = 1;
+		for( auto* pAction : pChapter->actions )
+		{
+			pager_printf( ch, FG_CYAN
 				" Action " FB_WHITE "%d" FG_CYAN "      Cmd: " FB_CYAN "%s" EOL,
-				i, bit_name(quest_action_types, pAction->command) );
+				i++, bit_name(quest_action_types, pAction->command) );
 
-		show_args( ch, CMD_ACTION, pAction );
+			show_args( ch, CMD_ACTION, pAction );
+		}
 	}
 	else
 		send_to_pager( " No Actions" NL, ch );
@@ -589,10 +577,7 @@ void adv_show_chapter( CHAR_DATA *ch, QUEST_INDEX_DATA *quest, int nr )
 
 DEF_DO_FUN( qstat )
 {
-	QUEST_CMND_DATA *	pCmnd;
-	QUEST_ACTION_DATA *	pAction;
 	QUEST_INDEX_DATA *	pQuest;
-	CHAPTER_INDEX_DATA *pChapter;
 	char            	arg  [ MAX_INPUT_LENGTH  ];
 	int			value, i;
 
@@ -602,9 +587,13 @@ DEF_DO_FUN( qstat )
 	else
 	{
 		value = atoi( arg );
-		for( pQuest = first_quest_index; pQuest; pQuest = pQuest->next )
-			if( pQuest->quest_id == value )
+		pQuest = nullptr;
+		for( auto* pq : quest_index_list )
+			if( pq->quest_id == value )
+			{
+				pQuest = pq;
 				break;
+			}
 	}
 
 	if ( !pQuest )
@@ -656,40 +645,46 @@ DEF_DO_FUN( qstat )
 		   &&  ch->pcdata->line_nr   == 0 )
 	{
 
-		if( pQuest->first_init_cmd )
-			for( pCmnd = pQuest->first_init_cmd, i = 1; pCmnd; pCmnd = pCmnd->next, i++ )
+		if( !pQuest->init_cmds.empty() )
 		{
-			pager_printf( ch, FG_CYAN
+			i = 1;
+			for( auto* pCmnd : pQuest->init_cmds )
+			{
+				pager_printf( ch, FG_CYAN
 					" Init   " FB_WHITE "%d" FG_CYAN "      Cmd: " FB_CYAN "%s" EOL,
-					i, bit_name(quest_init_types, pCmnd->command) );
+					i++, bit_name(quest_init_types, pCmnd->command) );
 
-			show_args( ch, CMD_INIT, pCmnd );
+				show_args( ch, CMD_INIT, pCmnd );
+			}
 		}
 		else
 			send_to_pager( " No init Cmnds" NL, ch );
 
-		if( pQuest->first_action )
-			for( pAction = pQuest->first_action, i = 1; pAction; pAction = pAction->next, i++ )
+		if( !pQuest->actions.empty() )
 		{
-			pager_printf( ch, FG_CYAN
+			i = 1;
+			for( auto* pAction : pQuest->actions )
+			{
+				pager_printf( ch, FG_CYAN
 					" Action " FB_WHITE "%d" FG_CYAN "      Cmd: " FB_CYAN "%s" EOL,
-					i, bit_name(quest_action_types, pAction->command) );
+					i++, bit_name(quest_action_types, pAction->command) );
 
-			show_args( ch, CMD_ACTION, pAction );
+				show_args( ch, CMD_ACTION, pAction );
+			}
 		}
 		else
 			send_to_pager( " No Actions" NL, ch );
 	}
 	else
 	{
-		for( pCmnd = pQuest->first_init_cmd; pCmnd; pCmnd = pCmnd->next )
+		for( auto* pCmnd : pQuest->init_cmds )
 			pager_printf( ch, FB_WHITE
 					FG_CYAN " Init   %10s" PLAIN " %6d %6d %6d %s" EOL,
 					bit_name(quest_init_types, pCmnd->command),
 					pCmnd->arg1, 	pCmnd->arg2,
 					pCmnd->arg3, 	pCmnd->arg4 );
 
-		FOREACH( pAction, pQuest->first_action )
+		for( auto* pAction : pQuest->actions )
 			pager_printf( ch, FB_WHITE
 					FG_CYAN " Action %10s" PLAIN " %6d %6d %6d %s" EOL,
 					bit_name(quest_action_types, pAction->command),
@@ -707,8 +702,7 @@ DEF_DO_FUN( qstat )
 		return;
 	}
 
-	i=1;
-	for( pChapter = pQuest->first_chapter; pChapter; pChapter = pChapter->next, i++ )
+	for( i = 1; i <= (int)pQuest->chapters.size(); i++ )
 		show_chapter( ch, pQuest, i );
 	return;
 }
@@ -789,7 +783,7 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 	{
 		if ( !is_number( argument ) || argument[0] == '\0' )
 		{
-			send_to_char( "Sk³adnia:  security <poziom>" NL, ch );
+			send_to_char( "Skï¿½adnia:  security <poziom>" NL, ch );
 			return;
 		}
 
@@ -799,11 +793,11 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 		{
 			if ( ch->pcdata->security != 0 )
 			{
-				sprintf( buf, "W³a¶ciwe security:  0-%d." NL, ch->pcdata->security );
+				sprintf( buf, "Wï¿½aï¿½ciwe security:  0-%d." NL, ch->pcdata->security );
 				send_to_char( buf, ch );
 			}
 			else
-				send_to_char( "Jedyne w³a¶ciwe security to 0." NL, ch );
+				send_to_char( "Jedyne wï¿½aï¿½ciwe security to 0." NL, ch );
 			return;
 		}
 
@@ -897,7 +891,6 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 
 	if ( !str_prefix( arg1, "id" ) )
 	{
-		QUEST_INDEX_DATA* pQu;
 		int	nr;
 
 		if ( argument[0] == '\0' || !is_number( argument ) )
@@ -907,7 +900,7 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 		}
 
 		nr = atoi( argument );
-		for( pQu = first_quest_index; pQu; pQu = pQu->next )
+		for( auto* pQu : quest_index_list )
 			if ( pQu->quest_id == nr && pQu != pQuest)
 		{
 			send_to_char( "There is a quest with that ID. Choose another." NL, ch );
@@ -1083,9 +1076,12 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 			chapt_new->type	= CHAPTER_CRITICAL;
 
 			if ( (chapt = get_chapter_index(pQuest, nr)) != NULL )
-				INSERT( chapt_new, chapt, pQuest->first_chapter, next, prev);
+			{
+				auto it = std::find(pQuest->chapters.begin(), pQuest->chapters.end(), chapt);
+				pQuest->chapters.insert(it, chapt_new);
+			}
 			else
-				LINK( chapt_new, pQuest->first_chapter, pQuest->last_chapter, next, prev);
+				pQuest->chapters.push_back( chapt_new );
 
 			send_to_char( "Chapter added." NL, ch );
 			ch->pcdata->line_nr = nr;
@@ -1114,8 +1110,7 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 				return;
 			}
 
-			UNLINK( chapt, pQuest->first_chapter, pQuest->last_chapter,
-					next, prev);
+			pQuest->chapters.remove( chapt );
 			free_chapter( chapt );
 
 			if( ch->pcdata->line_nr == nr )
@@ -1136,7 +1131,7 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 	action <nr>  <add|delete|command|arg>
 
 
-	Jest 2.00 w nocy -- to MO¯E byæ lamerskie :P
+	Jest 2.00 w nocy -- to MOï¿½E byï¿½ lamerskie :P
 	*/
 	if ( !str_prefix( arg1, "init" ) )
 	{
@@ -1151,11 +1146,11 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 
 #define get_init_cmd( src, nr )					        \
 {												\
-			for( pCmnd = (src)->first_init_cmd, ii=1; 	\
-		    	 pCmnd; 								\
-		     	 pCmnd = pCmnd->next, ii++ )			\
-		    		if( ii == nr )						\
-						break;							\
+			pCmnd = nullptr; ii = 1;				\
+			for( auto* _ic : (src)->init_cmds ) {	\
+		    		if( ii == (nr) ) { pCmnd = _ic; break; }	\
+					ii++;							\
+			}										\
 	}
 
 
@@ -1195,21 +1190,23 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 	{
 		get_init_cmd(pChapter, nr);
 		if ( pCmnd )
-			INSERT( pCmnd_new, pCmnd,
-					pChapter->first_init_cmd, next, prev );
+		{
+			auto it = std::find(pChapter->init_cmds.begin(), pChapter->init_cmds.end(), pCmnd);
+			pChapter->init_cmds.insert(it, pCmnd_new);
+		}
 		else
-			LINK( pCmnd_new, pChapter->first_init_cmd,
-				  pChapter->last_init_cmd, next, prev );
+			pChapter->init_cmds.push_back( pCmnd_new );
 	}
 	else
 	{
 		get_init_cmd(pQuest, nr);
 		if ( pCmnd )
-			INSERT( pCmnd_new, pCmnd,
-					pQuest->first_init_cmd, next, prev);
+		{
+			auto it = std::find(pQuest->init_cmds.begin(), pQuest->init_cmds.end(), pCmnd);
+			pQuest->init_cmds.insert(it, pCmnd_new);
+		}
 		else
-			LINK( pCmnd_new, pQuest->first_init_cmd,
-				  pQuest->last_init_cmd, next, prev);
+			pQuest->init_cmds.push_back( pCmnd_new );
 	}
 
 	send_to_char( "Init Command Added." NL, ch );
@@ -1281,11 +1278,9 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 {
 
 	if( pChapter )
-		UNLINK( pCmnd, pChapter->first_init_cmd,
-				pChapter->last_init_cmd, next, prev );
+		pChapter->init_cmds.remove( pCmnd );
 	else
-		UNLINK( pCmnd, pQuest->first_init_cmd,
-				pQuest->last_init_cmd, next, prev );
+		pQuest->init_cmds.remove( pCmnd );
 
 	free_qcmd( pCmnd );
 	send_to_char( "Init command deleted." NL, ch );
@@ -1311,11 +1306,11 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 
 #define get_event( src, nr )					        \
 {								\
-		for( pCmnd = (src)->first_event, ii=1; 			\
-		     pCmnd; 						\
-		     pCmnd = pCmnd->next, ii++ )			\
-		    if( ii == nr )					\
-			break;						\
+		pCmnd = nullptr; ii = 1;			\
+		for( auto* _ev : (src)->events ) {	\
+		    if( ii == (nr) ) { pCmnd = _ev; break; }	\
+			ii++;						\
+		}							\
 }
 
 
@@ -1358,11 +1353,12 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 	get_event(pChapter, nr);
 
 	if ( pCmnd )
-		INSERT( pCmnd_new, pCmnd,
-				pChapter->first_event, next, prev );
+	{
+		auto it = std::find(pChapter->events.begin(), pChapter->events.end(), pCmnd);
+		pChapter->events.insert(it, pCmnd_new);
+	}
 	else
-		LINK( pCmnd_new, pChapter->first_event,
-			  pChapter->last_event, next, prev );
+		pChapter->events.push_back( pCmnd_new );
 
 	send_to_char( "Event Added." NL, ch );
 	return;
@@ -1424,8 +1420,7 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 
 	if( !str_cmp( arg3, "delete" ) )
 {
-	UNLINK( pCmnd, pChapter->first_event,
-			pChapter->last_event, next, prev );
+	pChapter->events.remove( pCmnd );
 	free_qcmd( pCmnd );
 	send_to_char( "Event deleted." NL, ch );
 	return;
@@ -1451,11 +1446,11 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 
 #define get_action( src, nr )					        \
 {								\
-		for( pCmnd = (src)->first_action, ii=1; 		\
-		     pCmnd; 						\
-		     pCmnd = pCmnd->next, ii++ )			\
-		    if( ii == nr )					\
-			break;						\
+		pCmnd = nullptr; ii = 1;			\
+		for( auto* _ac : (src)->actions ) {	\
+		    if( ii == (nr) ) { pCmnd = _ac; break; }	\
+			ii++;						\
+		}							\
 }
 
 
@@ -1495,21 +1490,23 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 	{
 		get_action(pChapter, nr);
 		if ( pCmnd )
-			INSERT( pCmnd_new, pCmnd,
-					pChapter->first_action, next, prev );
+		{
+			auto it = std::find(pChapter->actions.begin(), pChapter->actions.end(), pCmnd);
+			pChapter->actions.insert(it, pCmnd_new);
+		}
 		else
-			LINK( pCmnd_new, pChapter->first_action,
-				  pChapter->last_action, next, prev );
+			pChapter->actions.push_back( pCmnd_new );
 	}
 	else
 	{
 		get_action(pQuest, nr);
 		if ( pCmnd )
-			INSERT( pCmnd_new, pCmnd,
-					pQuest->first_action, next, prev);
+		{
+			auto it = std::find(pQuest->actions.begin(), pQuest->actions.end(), pCmnd);
+			pQuest->actions.insert(it, pCmnd_new);
+		}
 		else
-			LINK( pCmnd_new, pQuest->first_action,
-				  pQuest->last_action, next, prev);
+			pQuest->actions.push_back( pCmnd_new );
 	}
 
 	send_to_char( "Action Added." NL, ch );
@@ -1581,11 +1578,9 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 {
 
 	if( pChapter )
-		UNLINK( pCmnd, pChapter->first_action,
-				pChapter->last_action, next, prev );
+		pChapter->actions.remove( pCmnd );
 	else
-		UNLINK( pCmnd, pQuest->first_action,
-				pQuest->last_action, next, prev );
+		pQuest->actions.remove( pCmnd );
 
 	free_qaction( pCmnd );
 	send_to_char( "Action deleted." NL, ch );
@@ -1607,9 +1602,6 @@ void qedit( DESCRIPTOR_DATA *d, char *argument )
 
 void save_quest( QUEST_INDEX_DATA * pQuest )
 {
-	QUEST_CMND_DATA	*	pCmnd;
-	QUEST_ACTION_DATA	*	pAction;
-	CHAPTER_INDEX_DATA *	pChapter;
 	char			buf		[MSL];
 	FILE *			fpout;
 
@@ -1640,13 +1632,13 @@ void save_quest( QUEST_INDEX_DATA * pQuest )
 	fprintf( fpout, "Security     %d\n",    pQuest->security	);
 	fprintf( fpout, "Desc\n%s~\n",strip_cr( pQuest->description ) );
 
-	for( pCmnd = pQuest->first_init_cmd; pCmnd; pCmnd = pCmnd->next )
+	for( auto* pCmnd : pQuest->init_cmds )
 		fprintf( fpout, " Init    %-8s %6d %6d %6d %s~\n",
 				 bit_name( quest_init_types, pCmnd->command ),
 				 pCmnd->arg1,     pCmnd->arg2,
 				 pCmnd->arg3,     pCmnd->arg4 );
 
-	FOREACH( pAction, pQuest->first_action )
+	for( auto* pAction : pQuest->actions )
 		fprintf( fpout, " Action  %-8s %6d %6d %6d %s~\n",
 				 bit_name( quest_action_types, pAction->command ),
 				 pAction->arg1,     pAction->arg2,
@@ -1654,26 +1646,26 @@ void save_quest( QUEST_INDEX_DATA * pQuest )
 
 	fprintf( fpout, "End\n" );
 
-	for( pChapter = pQuest->first_chapter; pChapter; pChapter = pChapter->next )
+	for( auto* pChapter : pQuest->chapters )
 	{
 
 		fprintf( fpout, "#CHAPTER %s\n", *pChapter->name ?
 				pChapter->name : "no_name" );
 		fprintf( fpout, " Type    %d\n",  pChapter->type );
 
-		for( pCmnd = pChapter->first_init_cmd; pCmnd; pCmnd = pCmnd->next )
+		for( auto* pCmnd : pChapter->init_cmds )
 			fprintf( fpout, " Init    %-8s %6d %6d %6d %s~\n",
 					 bit_name( quest_init_types, pCmnd->command ),
 					 pCmnd->arg1,     pCmnd->arg2,
 					 pCmnd->arg3,     pCmnd->arg4 );
 
-		for( pCmnd = pChapter->first_event; pCmnd; pCmnd = pCmnd->next )
+		for( auto* pCmnd : pChapter->events )
 			fprintf( fpout, " Event   %-8s %6d %6d %6d %s~\n",
 					 bit_name( quest_event_types, pCmnd->command ),
 					 pCmnd->arg1,     pCmnd->arg2,
 					 pCmnd->arg3,     pCmnd->arg4 );
 
-		FOREACH( pAction, pChapter->first_action )
+		for( auto* pAction : pChapter->actions )
 			fprintf( fpout, " Action  %-8s %6d %6d %6d %s~\n",
 					 bit_name( quest_action_types, pAction->command ),
 					 pAction->arg1,     pAction->arg2,
@@ -1690,7 +1682,6 @@ void save_quest( QUEST_INDEX_DATA * pQuest )
 
 void write_quest_list( )
 {
-	QUEST_INDEX_DATA *	quest;
 	FILE *		fpout;
 
 	fpout = fopen( QUEST_LIST, "w" );
@@ -1699,7 +1690,7 @@ void write_quest_list( )
 		bug( "Cannot open quest.lst for writing!" );
 		return;
 	}
-	for ( quest = first_quest_index; quest; quest = quest->next )
+	for ( auto* quest : quest_index_list )
 		fprintf( fpout, "%d.dat\n", quest->quest_id );
 	fprintf( fpout, "$\n" );
 	fclose( fpout );

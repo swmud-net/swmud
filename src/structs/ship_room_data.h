@@ -20,22 +20,18 @@
 #define SHIP_ROOM_DATA_H_
 #include "../defines.h"
 #include "../typedefs.h"
+#include <list>
 
 struct ship_room_data
 {
-	SHIP_ROOM_DATA		* next;
-	SHIP_ROOM_DATA		* prev;
-	EXTRA_DESCR_DATA	* first_extradesc;
-	EXTRA_DESCR_DATA	* last_extradesc;
-	SHIP_EXIT_DATA		* first_exit;
-	SHIP_EXIT_DATA		* last_exit;
-	RESET_DATA			* first_reset;
-	RESET_DATA			* last_reset;
+	std::list<EXTRA_DESCR_DATA*> extradesc;
+	std::list<SHIP_EXIT_DATA*> exits;
+	std::list<RESET_DATA*> resets;
 	char				* name;
 	char				* description;
 	int					vnum;
 	int64				room_flags;
-	MPROG_DATA			* mudprogs;
+	std::list<MPROG_DATA*> mudprogs;
 	int64				progtypes;
 	int					light;
 	int					sector_type;

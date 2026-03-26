@@ -23,8 +23,6 @@
 
 struct	quest_obj_data
 {
-	QUEST_OBJ_DATA		* next;
-	QUEST_OBJ_DATA		* prev;
 	OBJ_DATA			* obj;
 };
 

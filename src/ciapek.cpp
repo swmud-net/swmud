@@ -20,7 +20,7 @@
  * (c) 2001, 2002            M       U        D                Ver 1.1      *
  * ------------------------------------------------------------------------ *
  *			  Made by Thanos 4 SW-Mud			   *
- *  Plik ten zawierac ma funkcje, które u¿ywane by³y na starym engine'ie    *
+ *  Plik ten zawierac ma funkcje, ktï¿½re uï¿½ywane byï¿½y na starym engine'ie    *
  *                                sw-muda                                   *
  ****************************************************************************/
 
@@ -82,13 +82,12 @@ DEF_DO_FUN( dump )
 
 	/* mobs */
 	count = 0;
-	for (fch = first_char; fch != NULL; fch = fch->next)
+	for (auto* fch : char_list)
 	{
 		count++;
 		if (fch->pcdata != NULL)
 			num_pcs++;
-		for (af = fch->first_affect; af != NULL; af = af->next)
-			aff_count++;
+		aff_count += fch->affects.size();
 	}
 
 	Mem = count * (sizeof(*fch));
@@ -101,9 +100,7 @@ DEF_DO_FUN( dump )
 			Mem / 1024);
 
 	/* descriptors */
-	count = 0;
-	for (d = first_descriptor; d != NULL; d = d->next)
-		count++;
+	count = descriptor_list.size();
 
 	Mem = count * (sizeof(*d));
 	TotMem += Mem;
@@ -135,11 +132,8 @@ DEF_DO_FUN( dump )
 	for (vnum = 0; nMatch < top_obj_index; vnum++)
 		if ((pObjIndex = get_obj_index(vnum)) != NULL)
 		{
-			for (af = pObjIndex->first_affect; af != NULL; af = af->next)
-				aff_count++;
-
-			for (req = pObjIndex->first_requirement; req; req = req->next)
-				req_count++;
+			aff_count += pObjIndex->affects.size();
+			req_count += pObjIndex->requirements.size();
 			nMatch++;
 		}
 
@@ -150,14 +144,12 @@ DEF_DO_FUN( dump )
 
 	/* objects */
 	count = 0;
-	for (obj = first_object; obj != NULL; obj = obj->next)
+	for (auto* obj : object_list)
 	{
 		count++;
-		for (af = obj->first_affect; af != NULL; af = af->next)
-			aff_count++;
+		aff_count += obj->affects.size();
 
-		for (req = pObjIndex->first_requirement; req; req = req->next)
-			req_count++;
+		req_count += pObjIndex->requirements.size();
 	}
 
 	Mem = count * (sizeof(*obj));
@@ -194,8 +186,7 @@ DEF_DO_FUN( dump )
 	fprintf(fp, "ExtrDes %5d    [%8d bytes (%5d KB)]\n", top_ed, Mem,
 			Mem / 1024);
 
-	for (n = 0, sh = first_ship; sh; sh = sh->next, n++)
-		;
+	n = (int)ship_list.size();
 	Mem = n * (sizeof(*sh));
 	TotMem += Mem;
 	fprintf(fp, "Ships   %5d    [%8d bytes (%5d KB)]\n", n, Mem, Mem / 1024);
@@ -298,11 +289,10 @@ char* my_one_argument(char *argument, char *arg_first)
 	return argument;
 }
 
-//dwie poni¿sze funkcje s³u¿± do edycji kursów statków publicznych OLCem
+//dwie poniï¿½sze funkcje sï¿½uï¿½ï¿½ do edycji kursï¿½w statkï¿½w publicznych OLCem
 bool save_bus_list()
 {
 	FILE *fp;
-	SHIP_DATA *ship;
 	char buf[MAX_STRING_LENGTH];
 	int i = 0;
 
@@ -313,8 +303,8 @@ bool save_bus_list()
 		return false;
 	}
 
-	for (ship = first_ship; ship; ship = ship->next)
-		if (ship->ship_public && ship->first_stop)
+	for (auto* ship : ship_list)
+		if (ship->ship_public && !ship->stops.empty())
 		{
 			i++;
 			fprintf(fp, "P %s~\n", ship->filename);
@@ -333,7 +323,6 @@ bool save_ship_course(SHIP_DATA *ship)
 {
 	FILE *fp;
 	char filename[256];
-	COURSE_DATA *course;
 
 	sprintf(filename, "%s%s.course", SHIP_DIR, ship->filename);
 
@@ -344,7 +333,7 @@ bool save_ship_course(SHIP_DATA *ship)
 		return false;
 	}
 
-	for (course = ship->first_stop; course; course = course->next)
+	for (auto* course : ship->stops)
 		fprintf(fp, "%d %s~\n", course->stop_vnum, course->stop_name);
 
 	fprintf(fp, "0\n");
@@ -356,38 +345,32 @@ bool save_ship_course(SHIP_DATA *ship)
 
 void showcourse(CHAR_DATA *ch, SHIP_DATA *ship)
 {
-	COURSE_DATA *course;
-	int i;
-
-	if (!ship->ship_public || !ship->first_stop)
+	if (!ship->ship_public || ship->stops.empty())
 		return;
 
 	ch_printf(ch, FB_WHITE "Nr   StationName       StationVnum" EOL);
-	for (i = 0, course = ship->first_stop; course; i++, course = course->next)
+	int i = 0;
+	for (auto* course : ship->stops)
 	{
 		ch_printf(ch, "%-2d]  %-20s" PLAIN "-%-8d (%s" PLAIN ")" EOL, i,
 				course->stop_name, course->stop_vnum,
 				get_room_index(course->stop_vnum) ?
 						get_room_index(course->stop_vnum)->name :
 						MOD_BLINK FB_GREEN "NO_SUCH_LOCATION" MOD_NORMAL PLAIN);
+		i++;
 	}
 	return;
 }
 
 COURSE_DATA* get_course(SHIP_DATA *ship, int nr)
 {
-	COURSE_DATA *course;
-	int i;
-
-	if (!ship->first_stop)
+	if (ship->stops.empty())
 		return NULL;
 
-	for (i = 0, course = ship->first_stop; course; course = course->next, i++)
-		if (i == nr)
-			break;
-
-	if (course)
-		return course;
+	int i = 0;
+	for (auto* course : ship->stops)
+		if (i++ == nr)
+			return course;
 
 	return NULL;
 }
@@ -454,14 +437,14 @@ DEF_DO_FUN( setcourse )
 
 	argument = one_argument(argument, arg3);
 
-	if (!str_cmp(arg2, "add")) //dodajemy stacjê na koniec listy
+	if (!str_cmp(arg2, "add")) //dodajemy stacjï¿½ na koniec listy
 	{
 		CREATE(course, COURSE_DATA, 1);
 		STRDUP(course->stop_name, argument);
 		course->stop_vnum = atoi(arg3);
-		LINK(course, ship->first_stop, ship->last_stop, next, prev);
+		ship->stops.push_back(course);
 	}
-	else if (!str_cmp(arg2, "edit")) //edytujemy istniej±c± stacjê
+	else if (!str_cmp(arg2, "edit")) //edytujemy istniejï¿½cï¿½ stacjï¿½
 	{
 		int nr;
 
@@ -481,7 +464,7 @@ DEF_DO_FUN( setcourse )
 	}
 	else
 
-	if (!str_cmp(arg2, "delete")) //wywalamy stacjê z listy
+	if (!str_cmp(arg2, "delete")) //wywalamy stacjï¿½ z listy
 	{
 		int nr;
 
@@ -493,17 +476,17 @@ DEF_DO_FUN( setcourse )
 			return;
 		}
 
-		UNLINK(course, ship->first_stop, ship->last_stop, next, prev);
+		ship->stops.remove(course);
 		free_course(course);
 
-		if (!ship->first_stop)
+		if (ship->stops.empty())
 		{
 			ship->curr_stop = NULL;
 			send_to_char("Warning! Ship has no station!\n\r", ch);
 		}
 		else
 		{
-			ship->curr_stop = ship->first_stop;
+			ship->curr_stop = ship->stops.front();
 			send_to_char("Done." NL "Resetting course" NL, ch);
 		}
 	}
@@ -522,7 +505,7 @@ DEF_DO_FUN( setcourse )
 	showcourse(ch, ship);
 }
 
-//pokazuje exp w gwiazdkach (pomys³ Troga)
+//pokazuje exp w gwiazdkach (pomysï¿½ Troga)
 char* show_exp_stars(CHAR_DATA *ch, int ability)
 {
 	int all;
@@ -569,12 +552,10 @@ char* show_exp_stars(CHAR_DATA *ch, int ability)
 
 void show_tick()
 {
-	DESCRIPTOR_DATA *d;
-
-	for (d = first_descriptor; d; d = d->next)
+	for (auto* d : descriptor_list)
 		if (d->connected == CON_PLAYING)
 			if (IS_SET(d->character->act, PLR_TICK))
-				send_to_char( EOL "Minê³a godzina." NL, d->character);
+				send_to_char( EOL "Minï¿½a godzina." NL, d->character);
 
 	return;
 }
@@ -582,13 +563,13 @@ void show_tick()
 /* LAST CHANNELS -- Originally by Ratm, ale VERY VERY MOCNO MODIFIED
  by Thanos
  Zmiany:
- -zwracanie uwagi na jêzyk mówi±cego i s³uchacza
- -last zapamiêtuje teraz invisa mówi±cego (wraz z wizinvis)
- -zmieni³em ca³kowicie typ last_bufora - teraz jest to lista struktur
- a nie tak jak doytchczas - tablica stringów
+ -zwracanie uwagi na jï¿½zyk mï¿½wiï¿½cego i sï¿½uchacza
+ -last zapamiï¿½tuje teraz invisa mï¿½wiï¿½cego (wraz z wizinvis)
+ -zmieniï¿½em caï¿½kowicie typ last_bufora - teraz jest to lista struktur
+ a nie tak jak doytchczas - tablica stringï¿½w
  */
 
-/* sprawdza czy gracz ma szansê zobaczyæ autora textu */
+/* sprawdza czy gracz ma szansï¿½ zobaczyï¿½ autora textu */
 bool check_invis(CHAR_DATA *ch, LAST_DATA *last)
 {
 	if (IS_NPC(ch))
@@ -634,13 +615,13 @@ bool check_invis(CHAR_DATA *ch, LAST_DATA *last)
 	return true;
 }
 
-/* sprawdza jakie jêzyki zna s³uchacz */
+/* sprawdza jakie jï¿½zyki zna sï¿½uchacz */
 LANG_DATA* get_speaking(CHAR_DATA *ch)
 {
 	return ch->speaking;
 }
 
-/* sprawdza jak dobrze s³uchacz zna jêzyk */
+/* sprawdza jak dobrze sï¿½uchacz zna jï¿½zyk */
 int check_lang(CHAR_DATA *ch, LANG_DATA *language)
 {
 	/* everyone KNOWS common tongue */
@@ -650,7 +631,7 @@ int check_lang(CHAR_DATA *ch, LANG_DATA *language)
 	if (!IS_NPC(ch) && IS_IMMORTAL(ch))
 		return 100;
 
-	if ( IS_NPC(ch) && !ch->first_klang) /* No langs = knows all for npcs */
+	if ( IS_NPC(ch) && ch->klangs.empty()) /* No langs = knows all for npcs */
 		return 100;
 
 	if (!IS_NPC(ch))
@@ -668,7 +649,7 @@ int check_lang(CHAR_DATA *ch, LANG_DATA *language)
 	return 0;
 }
 
-/* obrabia stringa last->text je¶li s³uchacz nie mia³ prawa zrozumieæ textu*/
+/* obrabia stringa last->text jeï¿½li sï¿½uchacz nie miaï¿½ prawa zrozumieï¿½ textu*/
 char* convert_lang(LAST_DATA *last, CHAR_DATA *ch)
 {
 	static char sbuf[MSL];
@@ -693,7 +674,7 @@ char* convert_lang(LAST_DATA *last, CHAR_DATA *ch)
 }
 
 /*
- * Funkcja wy¶wietla co by³o ostatnio mówione na danym kanale
+ * Funkcja wyï¿½wietla co byï¿½o ostatnio mï¿½wione na danym kanale
  */
 DEF_DO_FUN( last )
 {
@@ -701,7 +682,6 @@ DEF_DO_FUN( last )
 	int64 channel = 0;
 	char buf[ MSL * (MAX_LAST / 20)];
 	char buf1[ MIL * 2];
-	LAST_DATA *last;
 
 	if (IS_NPC(ch))
 	{
@@ -711,7 +691,7 @@ DEF_DO_FUN( last )
 
 	if (argument[0] == '\0')
 	{
-		send_to_char("Sk³adnia: last <nazwa_kana³u>" NL, ch);
+		send_to_char("Skï¿½adnia: last <nazwa_kanaï¿½u>" NL, ch);
 		return;
 	}
 
@@ -738,7 +718,7 @@ DEF_DO_FUN( last )
 		return;
 	}
 
-	sprintf(buf, "Ostatnio mówiono %s:" NL,
+	sprintf(buf, "Ostatnio mï¿½wiono %s:" NL,
 			channel == CHANNEL_CHAT ? "na kanale chat" :
 			channel == CHANNEL_IMMTALK ? "na wiztalku" :
 			channel == CHANNEL_CLAN ? "do twojego klanu" :
@@ -749,37 +729,45 @@ DEF_DO_FUN( last )
 
 	if (channel == CHANNEL_TELLS)
 	{
-		if (!ch->pcdata || !ch->pcdata->first_last_tell)
+		if (!ch->pcdata || ch->pcdata->last_tells.empty())
 			strcat(buf, "Nic." NL);
 		else
-			for (i = 0, last = ch->pcdata->first_last_tell;
-					i < MAX_LAST_TELL && last; last = last->next, i++)
+		{
+			i = 0;
+			for (auto* last : ch->pcdata->last_tells)
 			{
+				if (i >= MAX_LAST_TELL)
+					break;
 				char *sbuf = convert_lang(last, ch);
 
-				if (!last || *last->text == '\0')
+				if (*last->text == '\0')
 					break;
 
 				sprintf(buf1, "%s %s" PLAIN ": %s" NL, last->time,
 						check_invis(ch, last) ?
 								does_knows_name(ch, last->teller) ?
-										last->teller : "Kto¶"
-								: "Kto¶",
+										last->teller : "Ktoï¿½"
+								: "Ktoï¿½",
 
 						sbuf);
 				strcat(buf, buf1);
+				i++;
 			}
+		}
 	}
 	else if (channel == CHANNEL_CLAN)
 	{
 		if (!ch->pcdata || !ch->pcdata->clan
-				|| !ch->pcdata->clan->first_last_ctalk)
+				|| ch->pcdata->clan->ctalk_history.empty())
 			strcat(buf, "Nic." NL);
 		else
-			for (i = 0, last = ch->pcdata->clan->first_last_ctalk;
-					i < MAX_LAST_CTALK && last; last = last->next, i++)
+		{
+			i = 0;
+			for (auto* last : ch->pcdata->clan->ctalk_history)
 			{
-				if (!last || *last->text == '\0')
+				if (i >= MAX_LAST_CTALK)
+					break;
+				if (*last->text == '\0')
 					break;
 
 				if (is_name(last->teller,
@@ -789,26 +777,31 @@ DEF_DO_FUN( last )
 				sprintf(buf1, "%s %s" PLAIN ": %s" NL, last->time,
 						check_invis(ch, last) ?
 								does_knows_name(ch, last->teller) ?
-										last->teller : "Kto¶"
-								: "Kto¶", last->text);
+										last->teller : "Ktoï¿½"
+								: "Ktoï¿½", last->text);
 				strcat(buf, buf1);
+				i++;
 			}
+		}
 	}
 	else
 	{
-		for (i = 0, last =
-				(channel == CHANNEL_ADMINTALK) ? first_last_admin :
-				(channel == CHANNEL_OLCTALK) ? first_last_olctalk :
-				(channel == CHANNEL_CODERTALK) ? first_last_codertalk :
+		auto& the_list =
+				(channel == CHANNEL_ADMINTALK) ? last_admin_list :
+				(channel == CHANNEL_OLCTALK) ? last_olctalk_list :
+				(channel == CHANNEL_CODERTALK) ? last_codertalk_list :
 				(channel == CHANNEL_IMMTALK) ?
-						first_last_wiztalk : first_last_chat;
-				i < MAX_LAST && last; last = last->next, i++)
+						last_wiztalk_list : last_chat_list;
+		i = 0;
+		for (auto* last : the_list)
 		{
+			if (i >= MAX_LAST)
+				break;
 			char *sbuf =
 					(channel == CHANNEL_CHAT) ?
 							convert_lang(last, ch) : last->text;
 
-			if (!last || *last->text == '\0')
+			if (*last->text == '\0')
 				break;
 
 			if (is_name(last->teller,
@@ -819,15 +812,16 @@ DEF_DO_FUN( last )
 				sprintf(buf1, "%s %s %s '%s" PLAIN "'" NL, last->time,
 						check_invis(ch, last) ?
 								does_knows_name(ch, last->teller) ?
-										last->teller : "Kto¶"
-								: "Kto¶", last->verb, sbuf);
+										last->teller : "Ktoï¿½"
+								: "Ktoï¿½", last->verb, sbuf);
 			else
 				sprintf(buf1, "%s %s: %s" EOL, last->time,
 						check_invis(ch, last) ?
 								does_knows_name(ch, last->teller) ?
-										last->teller : "Kto¶"
-								: "Kto¶", sbuf);
+										last->teller : "Ktoï¿½"
+								: "Ktoï¿½", sbuf);
 			strcat(buf, buf1);
+			i++;
 		}
 
 	}
@@ -863,10 +857,10 @@ void set_last_invis(LAST_DATA *last, CHAR_DATA *sender)
 	return;
 }
 
-/* ustalamy w jakim jêzyku jest dany last */
+/* ustalamy w jakim jï¿½zyku jest dany last */
 LANG_DATA* set_last_lang(CHAR_DATA *ch)
 {
-	if (IS_NPC(ch) && !ch->first_klang)
+	if (IS_NPC(ch) && ch->klangs.empty())
 		return NULL;
 
 	return ch->speaking;
@@ -874,7 +868,6 @@ LANG_DATA* set_last_lang(CHAR_DATA *ch)
 
 void add_to_last_tell(CHAR_DATA *ch, CHAR_DATA *sender, const char *linia)
 {
-	int i;
 	LAST_DATA *last;
 
 	if (IS_NPC(ch))
@@ -883,16 +876,10 @@ void add_to_last_tell(CHAR_DATA *ch, CHAR_DATA *sender, const char *linia)
 		return;
 	}
 
-	for (i = 0, last = ch->pcdata->first_last_tell; i < MAX_LAST_TELL && last;
-			last = last->next, i++)
-		if (!last)
-			break;
-
-	if (i == MAX_LAST_TELL)
+	if ((int)ch->pcdata->last_tells.size() >= MAX_LAST_TELL)
 	{
-		last = ch->pcdata->first_last_tell;
-		UNLINK(last, ch->pcdata->first_last_tell, ch->pcdata->last_last_tell,
-				next, prev);
+		last = ch->pcdata->last_tells.front();
+		ch->pcdata->last_tells.pop_front();
 		free_last(last);
 	}
 
@@ -904,25 +891,18 @@ void add_to_last_tell(CHAR_DATA *ch, CHAR_DATA *sender, const char *linia)
 	STRDUP(last->teller, sender->przypadki[0]);
 	last->language = set_last_lang(sender);
 
-	LINK(last, ch->pcdata->first_last_tell, ch->pcdata->last_last_tell, next,
-			prev);
+	ch->pcdata->last_tells.push_back(last);
 	return;
 }
 
 void add_to_last_ctalk(CLAN_DATA *clan, CHAR_DATA *sender, const char *linia)
 {
-	int i;
 	LAST_DATA *last;
 
-	for (i = 0, last = clan->first_last_ctalk; i < MAX_LAST_CTALK && last;
-			last = last->next, i++)
-		if (!last)
-			break;
-
-	if (i == MAX_LAST_CTALK)
+	if ((int)clan->ctalk_history.size() >= MAX_LAST_CTALK)
 	{
-		last = clan->first_last_ctalk;
-		UNLINK(last, clan->first_last_ctalk, clan->last_last_ctalk, next, prev);
+		last = clan->ctalk_history.front();
+		clan->ctalk_history.pop_front();
 		free_last(last);
 	}
 
@@ -934,53 +914,28 @@ void add_to_last_ctalk(CLAN_DATA *clan, CHAR_DATA *sender, const char *linia)
 	STRDUP(last->teller, NAME(sender,0));
 	last->language = set_last_lang(sender);
 
-	LINK(last, clan->first_last_ctalk, clan->last_last_ctalk, next, prev);
+	clan->ctalk_history.push_back(last);
 	return;
 }
 
 /*
- * Funkcja dopisuje tekst do bufora przechowuj±cego tekst z kana³u
+ * Funkcja dopisuje tekst do bufora przechowujï¿½cego tekst z kanaï¿½u
  */
 void add_to_last_buf(CHAR_DATA *ch, char *tekst, const char *verb,
 		int64 channel)
 {
-	int i;
 	LAST_DATA *last;
 
-	for (i = 0, last =
-			(channel == CHANNEL_ADMINTALK) ? first_last_admin :
-			(channel == CHANNEL_OLCTALK) ? first_last_olctalk :
-			(channel == CHANNEL_CODERTALK) ? first_last_codertalk :
-			(channel == CHANNEL_IMMTALK) ? first_last_wiztalk : first_last_chat;
-			i < MAX_LAST && last; last = last->next, i++)
-		if (!last)
-			break;
+	auto& the_buf_list =
+			(channel == CHANNEL_ADMINTALK) ? last_admin_list :
+			(channel == CHANNEL_OLCTALK) ? last_olctalk_list :
+			(channel == CHANNEL_CODERTALK) ? last_codertalk_list :
+			(channel == CHANNEL_IMMTALK) ? last_wiztalk_list : last_chat_list;
 
-	if (i == MAX_LAST)
+	if ((int)the_buf_list.size() >= MAX_LAST)
 	{
-		switch (channel)
-		{
-		case CHANNEL_ADMINTALK:
-			last = first_last_admin;
-			UNLINK(last, first_last_admin, last_last_admin, next, prev);
-			break;
-		case CHANNEL_OLCTALK:
-			last = first_last_olctalk;
-			UNLINK(last, first_last_olctalk, last_last_olctalk, next, prev);
-			break;
-		case CHANNEL_CODERTALK:
-			last = first_last_codertalk;
-			UNLINK(last, first_last_codertalk, last_last_codertalk, next, prev);
-			break;
-		case CHANNEL_IMMTALK:
-			last = first_last_wiztalk;
-			UNLINK(last, first_last_wiztalk, last_last_wiztalk, next, prev);
-			break;
-		default:
-			last = first_last_chat;
-			UNLINK(last, first_last_chat, last_last_chat, next, prev);
-		}
-
+		last = the_buf_list.front();
+		the_buf_list.pop_front();
 		free_last(last);
 	}
 
@@ -1003,20 +958,20 @@ void add_to_last_buf(CHAR_DATA *ch, char *tekst, const char *verb,
 	switch (channel)
 	{
 	case CHANNEL_IMMTALK:
-		LINK(last, first_last_wiztalk, last_last_wiztalk, next, prev);
+		last_wiztalk_list.push_back(last);
 		break;
 	case CHANNEL_ADMINTALK:
-		LINK(last, first_last_admin, last_last_admin, next, prev);
+		last_admin_list.push_back(last);
 		break;
 	case CHANNEL_CODERTALK:
-		LINK(last, first_last_codertalk, last_last_codertalk, next, prev);
+		last_codertalk_list.push_back(last);
 		break;
 	case CHANNEL_OLCTALK:
-		LINK(last, first_last_olctalk, last_last_olctalk, next, prev);
+		last_olctalk_list.push_back(last);
 		break;
 	case CHANNEL_CHAT:
 	case CHANNEL_OOC:
-		LINK(last, first_last_chat, last_last_chat, next, prev);
+		last_chat_list.push_back(last);
 		break;
 	default:
 		bug("unknown channel: %d.", channel);
@@ -1028,7 +983,7 @@ void add_to_last_buf(CHAR_DATA *ch, char *tekst, const char *verb,
 DEF_DO_FUN( prefi )
 {
 	send_to_char(
-			"Je¶li chcesz u¿yæ prefixu, wpisz komendê 'prefix' w ca³o¶ci." NL,
+			"Jeï¿½li chcesz uï¿½yï¿½ prefixu, wpisz komendï¿½ 'prefix' w caï¿½oï¿½ci." NL,
 			ch);
 	return;
 }
@@ -1037,7 +992,7 @@ DEF_DO_FUN( prefix )
 {
 	if (!ch->pcdata)
 	{
-		send_to_char("Eee tam prefixy.. obejdzie siê.." NL, ch);
+		send_to_char("Eee tam prefixy.. obejdzie siï¿½.." NL, ch);
 		return;
 	}
 
@@ -1045,20 +1000,20 @@ DEF_DO_FUN( prefix )
 	{
 		if (!*ch->pcdata->prefix)
 		{
-			send_to_char("Nie u¿ywasz obecnie ¿adnego prefixu." NL, ch);
+			send_to_char("Nie uï¿½ywasz obecnie ï¿½adnego prefixu." NL, ch);
 			return;
 		}
 		else
 		{
 			STRDUP(ch->pcdata->prefix, "");
-			send_to_char("Twój prefix zosta³ usuniêty." NL, ch);
+			send_to_char("Twï¿½j prefix zostaï¿½ usuniï¿½ty." NL, ch);
 			return;
 		}
 	}
 
 	STRDUP(ch->pcdata->prefix, argument);
 
-	ch_printf(ch, "Twój prefix zosta³ ustawiony jako '%s" RESET PLAIN "'." NL,
+	ch_printf(ch, "Twï¿½j prefix zostaï¿½ ustawiony jako '%s" RESET PLAIN "'." NL,
 			argument);
 	return;
 }
@@ -1069,13 +1024,13 @@ DEF_DO_FUN( prefix )
  */
 DEF_DO_FUN( alia )
 {
-	send_to_char("Je¶li chcesz zrobiæ ALIAS, napisz to w ca³o¶ci." NL, ch);
+	send_to_char("Jeï¿½li chcesz zrobiï¿½ ALIAS, napisz to w caï¿½oï¿½ci." NL, ch);
 	return;
 }
 
 DEF_DO_FUN( unalia )
 {
-	send_to_char("Jesli chcesz wykonaæ UNALIAS, napisz to w ca³o¶ci." NL, ch);
+	send_to_char("Jesli chcesz wykonaï¿½ UNALIAS, napisz to w caï¿½oï¿½ci." NL, ch);
 	return;
 }
 
@@ -1097,17 +1052,17 @@ DEF_DO_FUN( alias )
 
 	if (arg[0] == '\0')
 	{
-		if (!rch->pcdata->first_alias)
+		if (rch->pcdata->aliases.empty())
 		{
-			send_to_char("Nie masz zdefiniowanych ¿adnych aliasów." NL, ch);
+			send_to_char("Nie masz zdefiniowanych ï¿½adnych aliasï¿½w." NL, ch);
 			return;
 		}
-		send_to_pager("Masz zdefiniowane nastêpuj±ce aliasy:" NL, ch);
+		send_to_pager("Masz zdefiniowane nastï¿½pujï¿½ce aliasy:" NL, ch);
 
-		for (alias = rch->pcdata->first_alias; alias; alias = alias->next)
+		for (auto* alias : rch->pcdata->aliases)
 		{
 			pager_printf(rch,
-					"Alias '" FB_WHITE "%s" PLAIN "' dzia³a jako: '" FG_CYAN "%s" PLAIN "'" NL,
+					"Alias '" FB_WHITE "%s" PLAIN "' dziaï¿½a jako: '" FG_CYAN "%s" PLAIN "'" NL,
 					alias->name, alias->sub);
 		}
 
@@ -1116,18 +1071,18 @@ DEF_DO_FUN( alias )
 
 	if (!str_prefix("unalias", arg) || !str_cmp("alias", arg))
 	{
-		send_to_char("Przykro mi, ale to s³owo jest zarezerwowane." NL, ch);
+		send_to_char("Przykro mi, ale to sï¿½owo jest zarezerwowane." NL, ch);
 		return;
 	}
 
 	if (argument[0] == '\0')
 	{
-		for (alias = rch->pcdata->first_alias; alias; alias = alias->next)
+		for (auto* alias : rch->pcdata->aliases)
 		{
 			if (!str_cmp(arg, alias->name))
 			{
 				ch_printf(rch,
-				FB_WHITE "%s" PLAIN " dzia³a jako " FG_CYAN "%s" PLAIN "." NL,
+				FB_WHITE "%s" PLAIN " dziaï¿½a jako " FG_CYAN "%s" PLAIN "." NL,
 						alias->name, alias->sub);
 				return;
 			}
@@ -1140,19 +1095,19 @@ DEF_DO_FUN( alias )
 	if (!str_prefix(argument, "delete") || !str_prefix(argument, "suicide")
 			|| !str_prefix(argument, "quit"))
 	{
-		send_to_char("To nie mo¿e byæ wykonane!" NL, ch);
+		send_to_char("To nie moï¿½e byï¿½ wykonane!" NL, ch);
 		return;
 	}
 
 	pos = 0;
-	for (alias = rch->pcdata->first_alias; alias; alias = alias->next)
+	for (auto* alias : rch->pcdata->aliases)
 	{
 		pos++;
 		if (!str_cmp(arg, alias->name)) /* redefine an alias */
 		{
 			STRDUP(alias->sub, argument);
 			ch_printf(rch,
-					FB_WHITE "%s" PLAIN " zosta³o przedefiniowane na: " FG_CYAN "%s" PLAIN "." NL,
+					FB_WHITE "%s" PLAIN " zostaï¿½o przedefiniowane na: " FG_CYAN "%s" PLAIN "." NL,
 					arg, argument);
 			return;
 		}
@@ -1161,7 +1116,7 @@ DEF_DO_FUN( alias )
 	if (pos >= MAX_ALIAS && !IS_IMMORTAL(ch))
 	{
 		send_to_char(
-				"Przykro mi, ale twój limit aliasów zosta³ przekroczny." NL,
+				"Przykro mi, ale twï¿½j limit aliasï¿½w zostaï¿½ przekroczny." NL,
 				ch);
 		return;
 	}
@@ -1170,10 +1125,10 @@ DEF_DO_FUN( alias )
 	CREATE(alias, ALIAS_DATA, 1);
 	STRDUP(alias->name, arg);
 	STRDUP(alias->sub, argument);
-	LINK(alias, ch->pcdata->first_alias, ch->pcdata->last_alias, next, prev);
+	ch->pcdata->aliases.push_back(alias);
 
 	ch_printf(rch, FB_WHITE
-	"%s" PLAIN " dzia³a od teraz jako: " FG_CYAN "%s" PLAIN "." NL, arg,
+	"%s" PLAIN " dziaï¿½a od teraz jako: " FG_CYAN "%s" PLAIN "." NL, arg,
 			argument);
 	return;
 }
@@ -1181,7 +1136,6 @@ DEF_DO_FUN( alias )
 DEF_DO_FUN( unalias )
 {
 	CHAR_DATA *rch;
-	ALIAS_DATA *alias;
 	char arg[ MAX_INPUT_LENGTH];
 
 	rch = (!ch->pcdata ? ch->desc->original : ch);
@@ -1193,18 +1147,17 @@ DEF_DO_FUN( unalias )
 
 	if (*arg == '\0')
 	{
-		send_to_char("Sk³adnia: unalias <nazwa_aliasa>." NL, ch);
+		send_to_char("Skï¿½adnia: unalias <nazwa_aliasa>." NL, ch);
 		return;
 	}
 
-	for (alias = rch->pcdata->first_alias; alias; alias = alias->next)
+	for (auto* alias : rch->pcdata->aliases)
 	{
 		if (!str_cmp(arg, alias->name))
 		{
-			UNLINK(alias, rch->pcdata->first_alias, rch->pcdata->last_alias,
-					next, prev);
+			rch->pcdata->aliases.remove(alias);
 			free_alias(alias);
-			send_to_char("Alias usuniêty." NL, ch);
+			send_to_char("Alias usuniï¿½ty." NL, ch);
 			return;
 		}
 	}
@@ -1232,7 +1185,7 @@ DEF_DO_FUN( forbid )
 
 	if (!argument || argument[0] == '\0')
 	{
-		send_to_char("Sk³adnia: forbid <ofiara> [komenda]\n\r"
+		send_to_char("Skï¿½adnia: forbid <ofiara> [komenda]\n\r"
 				"Lub:      forbid <ofiara> clear\n\r", ch);
 		return;
 	}
@@ -1247,7 +1200,7 @@ DEF_DO_FUN( forbid )
 
 	if (IS_NPC(victim))
 	{
-		send_to_char("Nie mo¿esz odebraæ komendy mobowi.\n\r", ch);
+		send_to_char("Nie moï¿½esz odebraï¿½ komendy mobowi.\n\r", ch);
 		return;
 	}
 
@@ -1269,14 +1222,14 @@ DEF_DO_FUN( forbid )
 
 	if (ch == victim && !IS_ADMIN(ch->name))
 	{
-		send_to_char("Nie mo¿esz dodawaæ ani zabieraæ komend sobie.\n\r", ch);
+		send_to_char("Nie moï¿½esz dodawaï¿½ ani zabieraï¿½ komend sobie.\n\r", ch);
 		return;
 	}
 
 	if (get_trust(rch) <= get_trust(victim) && rch != victim)
 	{
 		send_to_char(
-				"Nie mo¿esz odebraæ komendy w³adcom lub graczom równym rang±.\n\r",
+				"Nie moï¿½esz odebraï¿½ komendy wï¿½adcom lub graczom rï¿½wnym rangï¿½.\n\r",
 				ch);
 		return;
 	}
@@ -1287,7 +1240,7 @@ DEF_DO_FUN( forbid )
 		if (victim->pcdata->forbidden_cmd)
 		{
 			send_to_char(
-					"Mo¿esz znów pos³ugiwaæ siê odebranymi ci wcze¶niej komendami.\n\rU¿ywaj ich z rozwag±.\n\r",
+					"Moï¿½esz znï¿½w posï¿½ugiwaï¿½ siï¿½ odebranymi ci wczeï¿½niej komendami.\n\rUï¿½ywaj ich z rozwagï¿½.\n\r",
 					victim);
 			STRDUP(victim->pcdata->forbidden_cmd, "");
 		}
@@ -1314,25 +1267,25 @@ DEF_DO_FUN( forbid )
 
 	if (!IS_ADMIN(ch->name) && (cmd->level > get_trust(ch)))
 	{
-		send_to_char("Tej komendy nie mo¿esz odebraæ!\n\r", ch);
+		send_to_char("Tej komendy nie moï¿½esz odebraï¿½!\n\r", ch);
 		return;
 	}
 
-	/* usuwamy jedn± komendê z listy */
+	/* usuwamy jednï¿½ komendï¿½ z listy */
 	if (victim->pcdata->forbidden_cmd
 			&& is_name(skill_name(cmd->do_fun), victim->pcdata->forbidden_cmd))
 	{
 		strcpy(buf, victim->pcdata->forbidden_cmd);
 		STRDUP(victim->pcdata->forbidden_cmd,
 				cut_from_string(buf, skill_name(cmd->do_fun)));
-		ch_printf(ch, "Komenda '%s' (%s) zwrócona.\n\r", cmd->name,
+		ch_printf(ch, "Komenda '%s' (%s) zwrï¿½cona.\n\r", cmd->name,
 				skill_name(cmd->do_fun));
-		ch_printf(victim, "Komenda '%s' zosta³a ci przywrócona.\n\r"
-				"Nastêpnym razem u¿ywaj jej z rozwag±.\n\r", cmd->name);
+		ch_printf(victim, "Komenda '%s' zostaï¿½a ci przywrï¿½cona.\n\r"
+				"Nastï¿½pnym razem uï¿½ywaj jej z rozwagï¿½.\n\r", cmd->name);
 		save_char_obj(victim);
 		do_forbid(ch, victim->name);
 	}
-	/* dodajemy jedn± komendê do listy */
+	/* dodajemy jednï¿½ komendï¿½ do listy */
 	else
 	{
 		if (*victim->pcdata->forbidden_cmd)
@@ -1347,8 +1300,8 @@ DEF_DO_FUN( forbid )
 		STRDUP(victim->pcdata->forbidden_cmd, buf);
 		ch_printf(ch, "Komenda '%s' (%s) odebrana.\n\r", cmd->name,
 				skill_name(cmd->do_fun));
-//        ch_printf( victim, "Zosta³a ci odebrana komenda '%s'.\n\r"
-//	                   "W razie pretensji zg³o¶ siê do administratorów muda.\n\r",
+//        ch_printf( victim, "Zostaï¿½a ci odebrana komenda '%s'.\n\r"
+//	                   "W razie pretensji zgï¿½oï¿½ siï¿½ do administratorï¿½w muda.\n\r",
 //			   cmd->name );
 		save_char_obj(victim);
 		do_forbid(ch, victim->name);
@@ -1356,7 +1309,7 @@ DEF_DO_FUN( forbid )
 	return;
 }
 
-//Linia statusu (ofcoz te¿ Ratma ;)
+//Linia statusu (ofcoz teï¿½ Ratma ;)
 void update_status_bar(CHAR_DATA *ch)
 {
 	char bufor[MAX_STATUS_WIDTH + 1];
@@ -1511,7 +1464,7 @@ DEF_DO_FUN( stbar )
 
 	if (*argument == '\0')
 	{
-		send_to_char("Sk³adnia: stbar on/off\n\r", ch);
+		send_to_char("Skï¿½adnia: stbar on/off\n\r", ch);
 		return;
 	}
 
@@ -1520,7 +1473,7 @@ DEF_DO_FUN( stbar )
 	if (!str_cmp("on", buf))
 	{
 		init_status_bar(ch);
-		send_to_char("\n\rLinia statusu w³±czona\n\r", ch);
+		send_to_char("\n\rLinia statusu wï¿½ï¿½czona\n\r", ch);
 		return;
 	}
 
@@ -1529,7 +1482,7 @@ DEF_DO_FUN( stbar )
 		ch->pcdata->status_type = STATUS_TYPE_NONE; //added by Thanos
 		REMOVE_BIT(ch->act, PLR_STATUS_BAR);
 		ch_printf(ch, "\e[r%s", VT_CLEAR_SCREEN);
-		send_to_char("Linia statusu wy³±czona\n\r", ch);
+		send_to_char("Linia statusu wyï¿½ï¿½czona\n\r", ch);
 		return;
 	}
 	if (!str_prefix(buf, "width"))
@@ -1540,7 +1493,7 @@ DEF_DO_FUN( stbar )
 		if ((i < 40) || (i > MAX_STATUS_WIDTH))
 		{
 			send_to_char(
-					"Szeroko¶æ linii statusu musi byæ z przedzia³u: 40 - 160.\n\r",
+					"Szerokoï¿½ï¿½ linii statusu musi byï¿½ z przedziaï¿½u: 40 - 160.\n\r",
 					ch);
 			return;
 		}
@@ -1548,7 +1501,7 @@ DEF_DO_FUN( stbar )
 		{
 			ch->pcdata->status_width = i;
 			init_status_bar(ch);
-			send_to_char("Szeroko¶æ linii statusu ustawiona.\n\r", ch);
+			send_to_char("Szerokoï¿½ï¿½ linii statusu ustawiona.\n\r", ch);
 			return;
 		}
 
@@ -1562,7 +1515,7 @@ DEF_DO_FUN( stbar )
 		if ((i < 15) || (i > MAX_STATUS_HEIGHT))
 		{
 			send_to_char(
-					"Wysoko¶æ linii statusu musi byæ z przedzia³u: 15 - 60.\n\r",
+					"Wysokoï¿½ï¿½ linii statusu musi byï¿½ z przedziaï¿½u: 15 - 60.\n\r",
 					ch);
 			return;
 		}
@@ -1575,7 +1528,7 @@ DEF_DO_FUN( stbar )
 			}
 
 			init_status_bar(ch);
-			send_to_char("Wysoko¶æ linii statusu ustawiona.\n\r", ch);
+			send_to_char("Wysokoï¿½ï¿½ linii statusu ustawiona.\n\r", ch);
 			return;
 		}
 		return;
@@ -1606,8 +1559,8 @@ DEF_DO_FUN( stbar )
 	send_to_char("Co? Wpisz: help stbar\n\r", ch);
 }
 
-/* Funkcja zamienia wszystkie ma³e litery wyra¿enia na wielkie */
-/* potrzebna by³a mi do do_wizinfo, ale mo¿e jeszcze siê przyda*/
+/* Funkcja zamienia wszystkie maï¿½e litery wyraï¿½enia na wielkie */
+/* potrzebna byï¿½a mi do do_wizinfo, ale moï¿½e jeszcze siï¿½ przyda*/
 char* all_capitalize(const char *str)
 {
 	static char strcap[ MAX_STRING_LENGTH];
@@ -1619,13 +1572,14 @@ char* all_capitalize(const char *str)
 	return strcap;
 }
 
-/* Funkcje Ratma do zmiany znaków CP/ISO/NOPOL */
+/* Funkcje Ratma do zmiany znakï¿½w CP/ISO/NOPOL */
 bool ispolchar(const char letter)
 {
 	int i;
 	const char polchars[22] =
-	{ '±', 'æ', 'ê', '³', 'ñ', 'ó', '¶', '¼', '¿', '¡', 'Æ', 'Ê', '£', 'Ñ', 'Ó',
-			'¦', '¬', '¯', '¹', '¥', '¿', '¯' };
+	{ '\xb1', '\xe6', '\xea', '\xb3', '\xf1', '\xf3', '\xb6', '\xbc', '\xbf',
+	  '\xa1', '\xc6', '\xca', '\xa3', '\xd1', '\xd3', '\xa6', '\xac', '\xaf',
+	  '\xb9', '\xa5', '\xbf', '\xaf' };
 
 	if (letter >= 'A' && letter <= 'z')
 		return false;
@@ -1639,17 +1593,17 @@ bool ispolchar(const char letter)
 }
 
 /*
- * Funkcja zamienia polskie znaki z "ogonkami" z du¿ych na ma³e i na odwrót
+ * Funkcja zamienia polskie znaki z "ogonkami" z duï¿½ych na maï¿½e i na odwrï¿½t
  */
 char shiftpl(bool shift, char letter)
 {
 	int i;
 	const char uchars[9] =
-	{ '¡', 'Æ', 'Ê', '£', 'Ñ', 'Ó', '¦', '¬', '¯' };
+	{ '\xa1', '\xc6', '\xca', '\xa3', '\xd1', '\xd3', '\xa6', '\xac', '\xaf' };
 	const char lchars[9] =
-	{ '±', 'æ', 'ê', '³', 'ñ', 'ó', '¶', '¼', '¿' };
+	{ '\xb1', '\xe6', '\xea', '\xb3', '\xf1', '\xf3', '\xb6', '\xbc', '\xbf' };
 
-	if (shift) //zamieñ z ma³ych na du¿e
+	if (shift) //zamieï¿½ z maï¿½ych na duï¿½e
 	{
 		for (i = 0; i < 9; i++)
 			if (letter == lchars[i])
@@ -1674,10 +1628,10 @@ DEF_DO_FUN( iso )
 
 	ch->charset = CHARSET_ISO;
 	send_to_char(
-			"Standard kodowania polskich liter zosta³ ustawiony jako: ISO-8859-2\n\r",
+			"Standard kodowania polskich liter zostaï¿½ ustawiony jako: ISO-8859-2\n\r",
 			ch);
 	send_to_char(
-			"Test polskich liter: -±-æ-ê-³-ñ-ó-¶-¼-¿- -¡-Æ-Ê-£-Ñ-Ó-¦-¬-¯-\n\r",
+			"Test polskich liter: -ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½- -ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-\n\r",
 			ch);
 	return;
 }
@@ -1688,10 +1642,10 @@ DEF_DO_FUN( win )
 		return;
 	ch->charset = CHARSET_WIN;
 	send_to_char(
-			"Standard kodowania polskich liter zosta³ ustawiony jako: WIN CP-1250\n\r",
+			"Standard kodowania polskich liter zostaï¿½ ustawiony jako: WIN CP-1250\n\r",
 			ch);
 	send_to_char(
-			"Test polskich liter: -±-æ-ê-³-ñ-ó-¶-¼-¿- -¡-Æ-Ê-£-Ñ-Ó-¦-¬-¯-\n\r",
+			"Test polskich liter: -ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½- -ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-\n\r",
 			ch);
 	return;
 }
@@ -1702,10 +1656,10 @@ DEF_DO_FUN( nopol )
 		return;
 	ch->charset = CHARSET_NOPOL;
 	send_to_char(
-			"Standard kodowania polskich liter zosta³ ustawiony jako: NOPOL\n\r",
+			"Standard kodowania polskich liter zostaï¿½ ustawiony jako: NOPOL\n\r",
 			ch);
 	send_to_char(
-			"Test polskich liter: -±-æ-ê-³-ñ-ó-¶-¼-¿- -¡-Æ-Ê-£-Ñ-Ó-¦-¬-¯-\n\r",
+			"Test polskich liter: -ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½- -ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-ï¿½-\n\r",
 			ch);
 	return;
 }

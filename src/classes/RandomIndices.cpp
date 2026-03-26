@@ -1,34 +1,20 @@
-/*
- * RandomIndices.cpp
- *
- *  Created on: 2009-04-04
- *      Author: Trog
- */
-
+#include "../mud.h"
 #include "RandomIndices.h"
-#include <stdlib.h>
-#include "../fun_decls.h"
-
-RandomIndices::RandomIndices() {
-}
-
-RandomIndices::~RandomIndices() {
-}
 
 MOB_INDEX_DATA *RandomIndices::getMobIndex()
 {
 
-	MOB_INDEX_DATA *pMobIndex;
 	int count = 0;
 
 	for( int key = 0; key < MAX_KEY_HASH; key++ )
-		for( pMobIndex  = mob_index_hash[key]; pMobIndex; pMobIndex = pMobIndex->next )
+		for( [[maybe_unused]] auto* pMobIndex : mob_index_hash[key] )
 			count++;
 
 	int rnd = number_range( 0, count );
+	count = 0;
 
-	for( int key = 0, count = 0; key < MAX_KEY_HASH; key++ )
-		for( pMobIndex = mob_index_hash[key]; pMobIndex; pMobIndex = pMobIndex->next )
+	for( int key = 0; key < MAX_KEY_HASH; key++ )
+		for( auto* pMobIndex : mob_index_hash[key] )
 			if( count++ == rnd )
 				return pMobIndex;
 
@@ -39,17 +25,16 @@ MOB_INDEX_DATA *RandomIndices::getMobIndex()
 
 ROOM_INDEX_DATA *RandomIndices::getRoomIndex()
 {
-	ROOM_INDEX_DATA *pRoomIndex;
 	int count = 0;
 
 	for( int key = 0; key < MAX_KEY_HASH; key++ )
-		for( pRoomIndex  = room_index_hash[key]; pRoomIndex; pRoomIndex = pRoomIndex->next )
+		for( [[maybe_unused]] auto* pRoomIndex : room_index_hash[key] )
 			count++;
 
 	int rnd = number_range( 0, count );
 
 	for( int key = 0, count = 0; key < MAX_KEY_HASH; key++ )
-		for( pRoomIndex = room_index_hash[key]; pRoomIndex; pRoomIndex = pRoomIndex->next )
+		for( auto* pRoomIndex : room_index_hash[key] )
 			if( count++ == rnd )
 				return pRoomIndex;
 
@@ -59,17 +44,16 @@ ROOM_INDEX_DATA *RandomIndices::getRoomIndex()
 
 OBJ_INDEX_DATA *RandomIndices::getObjIndex()
 {
-	OBJ_INDEX_DATA *pObjIndex;
 	int count = 0;
 
 	for( int key = 0; key < MAX_KEY_HASH; key++ )
-		for( pObjIndex  = obj_index_hash[key]; pObjIndex; pObjIndex = pObjIndex->next )
+		for( [[maybe_unused]] auto* pObjIndex : obj_index_hash[key] )
 			count++;
 
 	int rnd = number_range( 0, count );
 
 	for( int key = 0, count = 0; key < MAX_KEY_HASH; key++ )
-		for( pObjIndex = obj_index_hash[key]; pObjIndex; pObjIndex = pObjIndex->next )
+		for( auto* pObjIndex : obj_index_hash[key] )
 			if( count++ == rnd )
 				return pObjIndex;
 

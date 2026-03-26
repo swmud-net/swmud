@@ -23,8 +23,6 @@
 
 struct	known_lang
 {
-	KNOWN_LANG			* next;
-	KNOWN_LANG			* prev;
 	LANG_DATA			* language;
 	int					learned;	/* % znajomosci jezyka (1-100) */
 /*Trog: przyda sie to?

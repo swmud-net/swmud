@@ -23,8 +23,6 @@
 
 struct alias_data
 {
-	ALIAS_DATA			* next;
-	ALIAS_DATA			* prev;
 	char				* name;
 	char				* sub;
 };

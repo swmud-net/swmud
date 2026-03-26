@@ -46,9 +46,7 @@ void hq_build_area(CHAR_DATA *ch);
 
 int hq_build_highest_vnum( CHAR_DATA * ch )
 {
-	RID *		pRoom=NULL;
 	CLAN_DATA * pClan=NULL;
-	HQ_DATA *	pHq=NULL;
 	int			vnum=0;
 
 	pClan = ch->pcdata->clan;
@@ -57,8 +55,8 @@ int hq_build_highest_vnum( CHAR_DATA * ch )
 //		log_string();
 		return -1;
 	}
-	FOREACH(pHq, pClan->first_hq)
-		for(pRoom=pHq->first_room; pRoom; pRoom = pRoom->next_in_hq)
+	for (auto* pHq : pClan->hqs)
+		for(auto* pRoom : pHq->rooms)
 		{
 			if (pRoom->vnum > vnum)
 				vnum = pRoom->vnum;
@@ -78,7 +76,7 @@ int hq_build_highest_vnum( CHAR_DATA * ch )
 HQ_ROOM_DESC * hq_build_get_room_type(CLAN_DATA * ch, int room_type)
 {
 	HQ_ROOM_DESC * pHqRoom = NULL;
-	FOREACH(pHqRoom,first_hq_room_desc)
+	for (auto* pHqRoom : hq_room_desc_list)
 	{
 		if (room_type == pHqRoom->type)
 			break;
@@ -114,7 +112,7 @@ EXIT_DATA * hq_build_exit(CHAR_DATA *ch, ROOM_INDEX_DATA * pRoom, int door)
 	pExit = get_exit(pRoom,revdir[door]);
 	if (pExit)
 	{
-		ch_printf(ch, "Z pomieszczenia docelowego prowadzi ju¿ wyj¶cie w kierunku Twojego pomieszczenia");
+		ch_printf(ch, "Z pomieszczenia docelowego prowadzi juï¿½ wyjï¿½cie w kierunku Twojego pomieszczenia");
 		return NULL;
 	}
 	pExit = make_exit(pBackRoom, pRoom, door);
@@ -126,7 +124,6 @@ void hq_build_remove_room(CHAR_DATA *ch, EXIT_DATA * pExit)
 {
 //	HQ_ROOM_DESC * pHqRoom = NULL;
 	HQ_DATA *	pHq = NULL;
-	EXIT_DATA *	pDestExit = NULL;
 	RID *		pRoom = NULL;
 	RID *		pDestRoom = NULL;
 
@@ -135,35 +132,30 @@ void hq_build_remove_room(CHAR_DATA *ch, EXIT_DATA * pExit)
 	pRoom = ch->in_room;
 	pDestRoom = pExit->to_room;
 
-	//musimy sprawdziæ ka¿de pomieszczenie s±siaduj±ce z usuwanym
-	//je¶li którekolwiek z pomieszczen ma wiêcej ni¿ jedno z wyj¶æ
+	//musimy sprawdziï¿½ kaï¿½de pomieszczenie sï¿½siadujï¿½ce z usuwanym
+	//jeï¿½li ktï¿½rekolwiek z pomieszczen ma wiï¿½cej niï¿½ jedno z wyjï¿½ï¿½
 	//przerwij proces usuwania
 	if (!pDestRoom)
 	{
 		bug("Exit pointer isn't pointing to NULL room");
 		return;
 	}
-	if (pDestRoom->first_exit == pDestRoom->last_exit )
+	if (pDestRoom->exits.size() <= 1 )
 	{
-		//mo¿emy usuwaæ pomieszczenie
-		UNLINK(pDestRoom,pHq->first_room,pHq->last_room,next_in_hq,prev_in_hq);
+		//moï¿½emy usuwaï¿½ pomieszczenie
+		pHq->rooms.remove(pDestRoom);
 		unlink_room(pDestRoom);
 		free_room(pDestRoom);
 		if (pExit)
-		for(pDestExit=pRoom->first_exit;pDestExit;pDestExit=pDestExit->next)
 		{
-			if(pDestExit == pExit)
-			{
-				UNLINK(pDestExit,pRoom->first_exit,pRoom->last_exit,next,prev);
-				free_exit(pDestExit);
-				break;
-			}
+			pRoom->exits.remove(pExit);
+			free_exit(pExit);
 		}
 	}
 	else
 	{
-		ch_printf(ch,"Nie mo¿esz usun±æ pomieszczenie, do którego" NL
-				"prowadzi wiêcej ni¿ jedno przej¶cie" NL NL);
+		ch_printf(ch,"Nie moï¿½esz usunï¿½ï¿½ pomieszczenie, do ktï¿½rego" NL
+				"prowadzi wiï¿½cej niï¿½ jedno przejï¿½cie" NL NL);
 		return;
 	}
 }
@@ -208,7 +200,7 @@ void hq_build_room(CHAR_DATA * ch, int door,bool enter, int room_type )
 	STRDUP(pRoom->description,pHqRoom->room_desc);
 
 	pRoom->area = ch->pcdata->area;
-	LINK(pRoom,pHq->first_room,pHq->last_room,next_in_hq,prev_in_hq);
+	pHq->rooms.push_back(pRoom);
 	pExit = hq_build_exit(ch, pRoom, door);
 	//skoro chcemy wejsc do lokacji - to smialo
 	if (pExit && enter)
@@ -237,7 +229,7 @@ void hq_build_entrance(CHAR_DATA * ch, char * argument)
 	if (door == 10 ) return;
 
 	pHq = new_hq_data();
-	LINK(pHq,pClan->first_hq,pClan->last_hq,next,prev);
+	pClan->hqs.push_back(pHq);
 	ch->desc->olc_editing	= (void*)pHq;
 
 	hq_build_room( ch, door, true, CLAN_HQ_ENTRANCE );
@@ -278,14 +270,13 @@ void hq_build_show_rooms_list( CHAR_DATA * ch)
 {
 	HQ_DATA *	pHq = NULL;
 //	EXIT_DATA *	pExit = NULL;
-	RID *		pRoom = NULL;
 
 	if (IS_NPC(ch)) return;
 
 	pHq = (HQ_DATA*)ch->desc->olc_editing;
 	ch_printf(ch, "  [Vnum][%-40s]" NL,"Nazwa");
 	ch_printf(ch, "  [-----------------------------------------------]" NL);
-	for(pRoom=pHq->first_room; pRoom; pRoom = pRoom->next_in_hq)
+	for(auto* pRoom : pHq->rooms)
 	{
 		ch_printf(ch, "  [%4d][%-40s]" NL,pRoom->vnum,pRoom->name);
 	}
@@ -294,7 +285,6 @@ void hq_build_show_rooms_list( CHAR_DATA * ch)
 
 bool hq_build_is_clan_room(CHAR_DATA * ch, bool only_this_hq)
 {
-	RID *		pRoom=NULL;
 	RID *		pRoom1=NULL;
 	CLAN_DATA * pClan=NULL;
 	HQ_DATA *	pHq=NULL;
@@ -309,7 +299,7 @@ bool hq_build_is_clan_room(CHAR_DATA * ch, bool only_this_hq)
 	if (only_this_hq)
 	{
 		pHq = (HQ_DATA*)ch->desc->olc_editing;
-		for(pRoom=pHq->first_room; pRoom; pRoom = pRoom->next_in_hq)
+		for(auto* pRoom : pHq->rooms)
 		{
 			if (pRoom == pRoom1)
 			{
@@ -320,8 +310,8 @@ bool hq_build_is_clan_room(CHAR_DATA * ch, bool only_this_hq)
 	}
 	else
 	{
-	FOREACH(pHq, pClan->first_hq)
-		for(pRoom=pHq->first_room; pRoom; pRoom = pRoom->next_in_hq)
+	for (auto* pHq : pClan->hqs)
+		for(auto* pRoom : pHq->rooms)
 		{
 			if (pRoom == pRoom1)
 			{
@@ -354,11 +344,11 @@ void build_hq(DESCRIPTOR_DATA * d, char * argument)
 	if (IS_NPC(ch))
 		return;
 
-	//teraz robimy interpretacje dostêpnych polecen buduj±cych
+	//teraz robimy interpretacje dostï¿½pnych polecen budujï¿½cych
 
 	if ( arg1[0]=='\0' )
 	{
-		ch_printf(ch, "Dostêpne polecenia : " NL);
+		ch_printf(ch, "Dostï¿½pne polecenia : " NL);
 		ch_printf(ch, "      croom new <dir>" NL
 					  "  lub croom delete <dir>" NL);
 		ch_printf(ch, "      cexit new <dir> <vnum>" NL
@@ -387,7 +377,7 @@ void build_hq(DESCRIPTOR_DATA * d, char * argument)
 				//sprawdz kierunek
 				if (hq_build_dir_free(ch, argument) == false)
 				{
-					ch_printf(ch, "W tym kierunku istnieje juz przej¶cie. Musisz wybraæ inny" NL);
+					ch_printf(ch, "W tym kierunku istnieje juz przejï¿½cie. Musisz wybraï¿½ inny" NL);
 					return;
 				}
 				else
@@ -409,12 +399,12 @@ void build_hq(DESCRIPTOR_DATA * d, char * argument)
 				}
 				else
 				{
-					ch_printf(ch, "W tym kierunku nie ma ¿adnego przej¶cia. Musisz wybraæ inny" NL);
+					ch_printf(ch, "W tym kierunku nie ma ï¿½adnego przejï¿½cia. Musisz wybraï¿½ inny" NL);
 					return;
 				}
 			}
 		}
-		ch_printf(ch, "Sk³adnia to croom new <dir>" NL
+		ch_printf(ch, "Skï¿½adnia to croom new <dir>" NL
 					  "        lub croom delete <dir>" NL);
         return;
     }
@@ -428,7 +418,7 @@ void build_hq(DESCRIPTOR_DATA * d, char * argument)
 				//sprawdz kierunek
 				if (hq_build_dir_free(ch, argument) == false)
 				{
-					ch_printf(ch, "W tym kierunku istnieje juz przej¶cie. Musisz wybraæ inny" NL);
+					ch_printf(ch, "W tym kierunku istnieje juz przejï¿½cie. Musisz wybraï¿½ inny" NL);
 					return;
 				}
 				else
@@ -438,22 +428,22 @@ void build_hq(DESCRIPTOR_DATA * d, char * argument)
 					argument = one_argument( argument, arg2 );
 					if (!is_number(arg2))
 					{
-						ch_printf(ch, "Zabrak³o numeru Vnum do pomieszczenia docelowego" NL);
+						ch_printf(ch, "Zabrakï¿½o numeru Vnum do pomieszczenia docelowego" NL);
 						return;
 					}
 					vnum = atoi(arg2);
-					for(pRoom=pHq->first_room; pRoom; pRoom = pRoom->next_in_hq)
+					for(auto* pRoom : pHq->rooms)
 					{
 						if (pRoom->vnum == vnum)
 							break;
 					}
 					if (!pRoom)
 					{
-						ch_printf(ch, "W tej bazie nie istnieje pomieszczenie o takim numerze porz±dkowym" NL);
+						ch_printf(ch, "W tej bazie nie istnieje pomieszczenie o takim numerze porzï¿½dkowym" NL);
 						return;
 					}
 					if (hq_build_exit( ch, pRoom, door))
-						ch_printf(ch, "Przej¶cie zosta³o utworzone" NL);
+						ch_printf(ch, "Przejï¿½cie zostaï¿½o utworzone" NL);
 					return;
 				}
 
@@ -469,25 +459,25 @@ void build_hq(DESCRIPTOR_DATA * d, char * argument)
 					{
 						extract_exit(pExit->to_room,pDestExit);
 						extract_exit(ch->in_room, pExit);
-						ch_printf(ch,"Przej¶cie zosta³o usuniête" NL);
+						ch_printf(ch,"Przejï¿½cie zostaï¿½o usuniï¿½te" NL);
 					}
 					else
 					{
-						ch_printf(ch,"Niestety dosz³o do b³êdu." NL
-								"Przej¶cie z lokacji docelowej wskazuje w z³± stronê" NL
-								"Budowniczy tego kompleksu doprowadzi³ do karygodnych b³êdów" NL);
+						ch_printf(ch,"Niestety doszï¿½o do bï¿½ï¿½du." NL
+								"Przejï¿½cie z lokacji docelowej wskazuje w zï¿½ï¿½ stronï¿½" NL
+								"Budowniczy tego kompleksu doprowadziï¿½ do karygodnych bï¿½ï¿½dï¿½w" NL);
 						bug("Clan %s, HeadQuater");
 					}
 					return;
 				}
 				else
 				{
-					ch_printf(ch, "W tym kierunku nie ma ¿adnego przej¶cia. Musisz wybraæ inny" NL);
+					ch_printf(ch, "W tym kierunku nie ma ï¿½adnego przejï¿½cia. Musisz wybraï¿½ inny" NL);
 					return;
 				}
 			}
 		}
-		ch_printf(ch, "Sk³adnia to cexit new <dir> <vnum>" NL
+		ch_printf(ch, "Skï¿½adnia to cexit new <dir> <vnum>" NL
 					  "        lub cexit delete <dir>" NL);
         return;
     }
@@ -497,7 +487,7 @@ void build_hq(DESCRIPTOR_DATA * d, char * argument)
 	//trzeba dodac test sprawdzajacy czy gracz opuscil obszar bazy
 	if ( hq_build_is_clan_room(ch,true) == false )
 	{
-		ch_printf( ch,NL "Opu¶ci³e¶ teren bazy" NL);
+		ch_printf( ch,NL "Opuï¿½ciï¿½eï¿½ teren bazy" NL);
 		ch->desc->olc_editing	= NULL;
 		ch->desc->connected		= CON_PLAYING;
 		return;
@@ -515,7 +505,7 @@ DEF_DO_FUN( build_hq )
 
 	if ( hq_build_check_permision(ch,CLAN_HQ_ENTRANCE) == false)
 	{
-		ch_printf(ch, "Nie masz uprawnieñ do budowania" NL);
+		ch_printf(ch, "Nie masz uprawnieï¿½ do budowania" NL);
 		return;
 	}
 
@@ -524,17 +514,17 @@ DEF_DO_FUN( build_hq )
 	{
 		if (hq_build_dir_free(ch, argument) == false)
 		{
-			ch_printf(ch, "W tym kierunku istnieje juz przej¶cie. Musisz wybraæ inny" NL);
+			ch_printf(ch, "W tym kierunku istnieje juz przejï¿½cie. Musisz wybraï¿½ inny" NL);
 			return;
 		}
 		if (hq_build_check_cash(ch) == false)
 		{
-			ch_printf(ch, "Nie masz do¶æ gotówki, by rozpocz±æ budowê." NL);
+			ch_printf(ch, "Nie masz doï¿½ï¿½ gotï¿½wki, by rozpoczï¿½ï¿½ budowï¿½." NL);
 			return;
 		}
 		if (hq_build_planet_free(ch) == false)
 		{
-			ch_printf(ch, "Na tej planecie jest ju¿ zbudowana kwatera g³ówna innego klanu." NL);
+			ch_printf(ch, "Na tej planecie jest juï¿½ zbudowana kwatera gï¿½ï¿½wna innego klanu." NL);
 			return;
 		}
 		hq_build_entrance(ch, argument);
@@ -561,17 +551,19 @@ void hq_build_area(CHAR_DATA *ch)
 		return;
 	sprintf(buf,"Kwatera %s",ch->pcdata->clan->name);
 
-	FOREACH(pArea,first_area)
+	pArea = nullptr;
+	for (auto* a : area_list)
 	{
-		if (!str_cmp( buf, pArea->name ) )
+		if (!str_cmp( buf, a->name ) )
 		{
+			pArea = a;
 			break;
 		}
 	}
 
 	if (!pArea)
 	{
-		//trzeba zamieniæ spacje w pliku
+		//trzeba zamieniï¿½ spacje w pliku
 		pArea = new_area();
 		pArea->lvnum = 1;
 		STRDUP( pArea->name,buf);
@@ -579,7 +571,7 @@ void hq_build_area(CHAR_DATA *ch)
 		SET_BIT(pArea->flags,AFLAG_HIDDEN);
 		SET_BIT(pArea->flags,AFLAG_DONTSHOWPLANET);
 		SET_BIT(pArea->flags,AFLAG_NOHAIL);
-		LINK( pArea, first_area, last_area, next, prev );
+		area_list.push_back(pArea);
 //		fold_area(pArea,pArea->filename,false);
 		save_area(pArea);
 		write_area_list();

@@ -33,14 +33,12 @@
 /* Trog: wlasciwie to wszystko w tym pliq jest moje, wiec nie bede sie
  juz podpisywal pod tym co robie bo mi sie nie chce.
 
- Ju¿ nie - Pixel :) */
+ Juï¿½ nie - Pixel :) */
 
 //static	OBJ_DATA *	rgObjNest	[MAX_NEST];
 
-CLAN_DATA *first_clan = NULL;
-CLAN_DATA *last_clan = NULL;
-HQ_ROOM_DESC *first_hq_room_desc;
-HQ_ROOM_DESC *last_hq_room_desc;
+std::list<CLAN_DATA *> clan_list;
+std::list<HQ_ROOM_DESC *> hq_room_desc_list;
 
 /* local routines */
 void fread_clan args( ( CLAN_DATA *clan, FILE *fp ) );
@@ -58,26 +56,24 @@ void clan_loan args( ( CHAR_DATA *ch, char *argument ) );
 const char *clantypename[CLAN_MAXTYPE][6] =
 {
 { "organizacja nieautoryzowana", "organizacji nieautoryzowanej",
-		"organizacji nieautoryzowanej", "organizacjê nieautoryzowan±",
-		"organizacji nieautoryzowanej", "organizacj± nieautoryzowan±" },
-{ "organizacja", "organizacji", "organizacji", "organizacjê", "organizacji",
-		"organizacj±" },
-{ "organizacja podporz±dkowana", "organizacji podporz±dkowanej",
-		"organizacji podporz±dkowanej", "organizacjê podporz±dkowan±",
-		"organizacji podporz±dkowanej", "organizacj± podporz±dkowan±" },
-{ "gildia", "gildii", "gildii", "gildiê", "gildii", "gildi±" },
+		"organizacji nieautoryzowanej", "organizacjï¿½ nieautoryzowanï¿½",
+		"organizacji nieautoryzowanej", "organizacjï¿½ nieautoryzowanï¿½" },
+{ "organizacja", "organizacji", "organizacji", "organizacjï¿½", "organizacji",
+		"organizacjï¿½" },
+{ "organizacja podporzï¿½dkowana", "organizacji podporzï¿½dkowanej",
+		"organizacji podporzï¿½dkowanej", "organizacjï¿½ podporzï¿½dkowanï¿½",
+		"organizacji podporzï¿½dkowanej", "organizacjï¿½ podporzï¿½dkowanï¿½" },
+{ "gildia", "gildii", "gildii", "gildiï¿½", "gildii", "gildiï¿½" },
 { "zakon", "zakonu", "zakonowi", "zakon", "zakonie", "zakonem" } };
 
 const char *defaultrank[CLAN_LEADER + 1] =
 { "Rekrut", "Szeregowy", "Starszy szeregowy", "Kadet", "Starszy Kadet",
-		"Pomocnik", "M³odszy oficer", "Oficer", "Starszy oficer", "Weteran",
-		"Dyplomata", "Drugi mo¿ny", "Pierwszy mo¿ny", "Lider" };
+		"Pomocnik", "Mï¿½odszy oficer", "Oficer", "Starszy oficer", "Weteran",
+		"Dyplomata", "Drugi moï¿½ny", "Pierwszy moï¿½ny", "Lider" };
 
 void write_clan_all()
 {
-	CLAN_DATA *clan;
-
-	FOREACH( clan, first_clan )
+	for( auto* clan : clan_list )
 		save_clan2(clan);
 	save_clan_list();
 }
@@ -87,9 +83,7 @@ void write_clan_all()
  */
 CLAN_DATA* get_clan(char *name)
 {
-	CLAN_DATA *clan;
-
-	for (clan = first_clan; clan; clan = clan->next)
+	for (auto* clan : clan_list)
 		if (!str_cmp(name, clan->name)
 				|| (is_number(name) && (clan->clan_id == atoi(name))))
 			return clan;
@@ -99,7 +93,6 @@ CLAN_DATA* get_clan(char *name)
 
 void write_clan_list()
 {
-	CLAN_DATA *tclan;
 	FILE *fpout;
 
 	RESERVE_CLOSE;
@@ -109,7 +102,7 @@ void write_clan_list()
 		perror( CLAN_LIST);
 		return;
 	}
-	FOREACH( tclan, first_clan )
+	for( auto* tclan : clan_list )
 		fprintf(fpout, "%s\n", tclan->filename);
 	fprintf(fpout, "$\n");
 	fclose(fpout);
@@ -120,12 +113,17 @@ void write_clan_list()
 
 void save_clan_list()
 {
-	ILD *first_ild = NULL;
-	ILD *last_ild = NULL;
+	std::list<ILD*> ild_list;
 
-	ILD_CREATE(CLAN_DATA, clan, filename, first_ild, last_ild);
-	save_list( CLAN_LISTXML, first_ild);
-	ILD_FREE(first_ild);
+	for( auto* ptr : clan_list )
+	{
+		ILD *ild = new_ild();
+		STRDUP( ild->data, ptr->filename );
+		ild_list.push_back( ild );
+	}
+	save_list( CLAN_LISTXML, ild_list);
+	for (auto* ild : ild_list)
+		free_ild(ild);
 }
 
 /*
@@ -134,8 +132,6 @@ void save_clan_list()
 void save_clan(CLAN_DATA *clan)
 {
 	FILE *fp;
-	MEMBER_DATA *member;
-	POLITICS_DATA *politics;
 	char filename[256];
 	int i;
 
@@ -186,11 +182,11 @@ void save_clan(CLAN_DATA *clan)
 			fprintf(fp, "\n");
 		}
 		/* Thanos */
-		FOREACH( member, clan->first_member )
+		for( auto* member : clan->member_list )
 			fprintf(fp, "Member       %s~ %d %s~\n", member->name,
 					member->status, member->bestowments);
 		/* Polityka */
-		FOREACH( politics, clan->first_politics )
+		for( auto* politics : clan->politics )
 		{
 			fprintf(fp, "Politics     %d %d\n", politics->clan->clan_id,
 					politics->relations);
@@ -213,9 +209,6 @@ CLAN_DATA* load_clan2(const char *filename)
 {
 	xmlDocPtr doc;
 	xmlNodePtr root;
-	xmlNodePtr node;
-	xmlNodePtr child;
-	xmlNodePtr gchild;
 	CLAN_DATA *clan;
 	CLAN_DATA *pClan;
 	MEMBER_DATA *member;
@@ -234,7 +227,7 @@ CLAN_DATA* load_clan2(const char *filename)
 
 	root = xmlDocGetRootElement(doc);
 
-	FOREACH( node, root->children )
+	for (auto node = root->children; node; node = node->next)
 	{
 		EONLY(node);
 
@@ -273,7 +266,7 @@ CLAN_DATA* load_clan2(const char *filename)
 		else if (!swXmlStrcmp(node->name, "ranks"))
 		{
 			i = 0;
-			FOREACH( child, node->children )
+			for (auto child = node->children; child; child = child->next)
 			{
 				EONLY(child);
 
@@ -283,14 +276,14 @@ CLAN_DATA* load_clan2(const char *filename)
 		}
 		else if (!swXmlStrcmp(node->name, "members"))
 		{
-			FOREACH( child, node->children )
+			for (auto child = node->children; child; child = child->next)
 			{
 				EONLY(child);
 
 				if (!swXmlStrcmp(child->name, "member"))
 				{
 					member = new_member( CLAN_MEMBER);
-					FOREACH( gchild, child->children )
+					for (auto gchild = child->children; gchild; gchild = gchild->next)
 					{
 						EONLY(gchild);
 
@@ -301,14 +294,13 @@ CLAN_DATA* load_clan2(const char *filename)
 						else if (!swXmlStrcmp(gchild->name, "bestowments"))
 							swGetContent(&member->bestowments, gchild);
 					}
-					LINK(member, clan->first_member, clan->last_member, next,
-							prev);
+					clan->member_list.push_back(member);
 				}
 			}
 		}
 		else if (!swXmlStrcmp(node->name, "relations"))
 		{
-			FOREACH( child, node->children )
+			for (auto child = node->children; child; child = child->next)
 			{
 				EONLY(child);
 
@@ -316,7 +308,7 @@ CLAN_DATA* load_clan2(const char *filename)
 				{
 					politics = new_politics();
 					found = true;
-					FOREACH( gchild, child->children )
+					for (auto gchild = child->children; gchild; gchild = gchild->next)
 					{
 						EONLY(gchild);
 
@@ -337,8 +329,7 @@ CLAN_DATA* load_clan2(const char *filename)
 							swGetContentInt(&politics->relations, gchild);
 					}
 					if (found)
-						LINK(politics, clan->first_politics,
-								clan->last_politics, next, prev);
+						clan->politics.push_back(politics);
 				}
 			}
 		}
@@ -358,8 +349,6 @@ void save_clan2(CLAN_DATA *clan)
 	xmlNodePtr root;
 	xmlNodePtr node;
 	xmlNodePtr child;
-	MEMBER_DATA *member;
-	POLITICS_DATA *politics;
 	char buf[MSL];
 	int i;
 
@@ -397,7 +386,7 @@ void save_clan2(CLAN_DATA *clan)
 		for (i = 0; i <= CLAN_LEADER; i++)
 			swNewChildText(node, NULL, "rank", clan->rank[i]);
 	node = xmlNewChild( root, NULL, BC"members", NULL );
-	FOREACH( member, clan->first_member )
+	for( auto* member : clan->member_list )
 	{
 		child = xmlNewChild( node, NULL, BC"member", NULL );
 		swNewChildText(child, NULL, "name", member->name);
@@ -405,7 +394,7 @@ void save_clan2(CLAN_DATA *clan)
 		swNewChildText(child, NULL, "bestowments", member->bestowments);
 	}
 	node = xmlNewChild( root, NULL, BC"relations", NULL );
-	FOREACH( politics, clan->first_politics )
+	for( auto* politics : clan->politics )
 	{
 		child = xmlNewChild( node, NULL, BC"relation", NULL );
 		swNewChildInt(child, NULL, "clan", politics->clan->clan_id);
@@ -518,7 +507,7 @@ void fread_clan(CLAN_DATA *clan, FILE *fp)
 				STRDUP(member->name, st_fread_string(fp));
 				member->status = fread_number(fp);
 				STRDUP(member->bestowments, st_fread_string(fp));
-				LINK(member, clan->first_member, clan->last_member, next, prev);
+				clan->member_list.push_back(member);
 				fread_to_eol(fp);
 				fMatch = true;
 			}
@@ -637,7 +626,7 @@ bool load_clan_file(char *clanfile)
 
 	if (found)
 	{
-		LINK(clan, first_clan, last_clan, next, prev);
+		clan_list.push_back(clan);
 
 		/*
 		 sprintf( filename, "%s%s.vault", CLAN_DIR, clan->filename );
@@ -686,9 +675,9 @@ bool load_clan_file(char *clanfile)
 		 }
 		 }
 		 fclose( fp );
-		 for ( tobj = supermob->first_carrying; tobj; tobj = tobj_next )
+		 auto snapshot = supermob->carrying;
+		 for ( auto* tobj : snapshot )
 		 {
-		 tobj_next = tobj->next_content;
 		 obj_from_char	( tobj );
 		 obj_to_room	( tobj, storeroom );
 		 }
@@ -717,8 +706,7 @@ bool load_clan_file(char *clanfile)
  char *	filename;
  CLAN_DATA *clan;
 
- first_clan	= NULL;
- last_clan	= NULL;
+ clan_list.clear();
 
  RESERVE_CLOSE;
  if ( !(fpList = fopen( CLAN_LIST, "r" )) )
@@ -746,7 +734,7 @@ bool load_clan_file(char *clanfile)
  log_string(" Done clans" );
 
  log_string( "Loading politics" );
- for ( clan=first_clan ; clan ; clan = clan->next )
+ for ( auto* clan : clan_list )
  fread_politics( clan, clan->filename );
  if( !sysdata.silent )
  log_string(" Done politics" );
@@ -789,7 +777,7 @@ bool load_clan_file(char *clanfile)
  if( !str_cmp( word, "Politics" ) )
  {
  CREATE( politics, POLITICS_DATA, 1 );
- LINK( politics, clan->first_politics, clan->last_politics, next, prev );
+ clan->politics.push_back( politics );
  politics->clan		= get_clan( itoa(fread_number( fp )) );
  politics->relations	= fread_number( fp );
  }
@@ -813,27 +801,27 @@ bool load_clan_file(char *clanfile)
  {
  if( !IS_LEADER( ch ) )
  {
- send_to_char( "Nie jeste¶ osob± upowa¿nion±." NL, ch );
+ send_to_char( "Nie jesteï¿½ osobï¿½ upowaï¿½nionï¿½." NL, ch );
  return;
  }
 
  if( ch == victim )
  {
- send_to_char( "Sobie nie mo¿esz!" NL, ch );
+ send_to_char( "Sobie nie moï¿½esz!" NL, ch );
  return;
  }
 
  if( victim->crank || IS_FIRST( victim ) || IS_SECOND( victim ) )
  {
- ch_printf( ch, "%s ma ju¿ nadany stopieñ." NL,
+ ch_printf( ch, "%s ma juï¿½ nadany stopieï¿½." NL,
  victim->przypadki[0] );
  return;
  }
 
  victim->crank = ch->pcdata->clan->first_crank;
- ch_printf( ch, "Nadajesz " FB_WHITE "%s" PLAIN " pierwszy stopieñ w %s." NL,
+ ch_printf( ch, "Nadajesz " FB_WHITE "%s" PLAIN " pierwszy stopieï¿½ w %s." NL,
  victim->przypadki[2], CLANTYPE( ch->pcdata->clan, 5 ) );
- ch_printf( victim, "%s nadaje Ci pierwszy stopieñ w %s." NL,
+ ch_printf( victim, "%s nadaje Ci pierwszy stopieï¿½ w %s." NL,
  ch->przypadki[0], CLANTYPE( ch->pcdata->clan, 5 ) );
  save_char_obj( victim );
  return;
@@ -843,27 +831,27 @@ bool load_clan_file(char *clanfile)
  {
  if( !IS_LEADER( ch ) )
  {
- send_to_char( "Nie jeste¶ osob± upowa¿nion±." NL, ch );
+ send_to_char( "Nie jesteï¿½ osobï¿½ upowaï¿½nionï¿½." NL, ch );
  return;
  }
 
  if( ch == victim )
  {
- send_to_char( "Chcesz siê podaæ do dymisji?!" NL, ch );
+ send_to_char( "Chcesz siï¿½ podaï¿½ do dymisji?!" NL, ch );
  return;
  }
 
  if( victim->crank )
  {
  victim->crank = NULL;
- ch_printf( ch, "Usuwasz " FB_WHITE "%s" PLAIN " stopieñ w %s." NL,
+ ch_printf( ch, "Usuwasz " FB_WHITE "%s" PLAIN " stopieï¿½ w %s." NL,
  victim->przypadki[2], CLANTYPE( ch->pcdata->clan, 5 ) );
- ch_printf( victim, "%s usuwa Ci stopieñ w %s." NL,
+ ch_printf( victim, "%s usuwa Ci stopieï¿½ w %s." NL,
  victim->przypadki[2], CLANTYPE( ch->pcdata->clan, 5 ) );
  save_char_obj( victim );
  }
  else
- ch_printf( ch, "%s nie posiada ¿adnego stopnia." NL,
+ ch_printf( ch, "%s nie posiada ï¿½adnego stopnia." NL,
  victim->przypadki[0] );
  return;
  }
@@ -881,19 +869,19 @@ DEF_DO_FUN( crank )
 
 	 if( IS_NPC( ch ) || !(clan = ch->pcdata->clan) )
 	 {
-	 send_to_char("Nie nale¿ysz do ¿adnej organizacji!" NL, ch );
+	 send_to_char("Nie naleï¿½ysz do ï¿½adnej organizacji!" NL, ch );
 	 return;
 	 }
 	 if( !IS_LEADER( ch ) )
 	 {
-	 send_to_char( "Nie jeste¶ osob± upowa¿nion±!" NL, ch );
+	 send_to_char( "Nie jesteï¿½ osobï¿½ upowaï¿½nionï¿½!" NL, ch );
 	 return;
 	 }
 
 	 if( *arg=='\0' )
 	 {
-	 ch_printf( ch, "Zarz±dzanie stopniem %s:" NL
-	 "Sk³adnia: crank <akcja> [imiê]" NL
+	 ch_printf( ch, "Zarzï¿½dzanie stopniem %s:" NL
+	 "Skï¿½adnia: crank <akcja> [imiï¿½]" NL
 	 NL "Akcje:\n\r set inc dec rem show." NL,
 	 CLANTYPE( ch->pcdata->clan, 1 ) );
 	 return;
@@ -918,7 +906,7 @@ DEF_DO_FUN( crank )
 	 if( !victim->pcdata->clan
 	 || ch->pcdata->clan != victim->pcdata->clan )
 	 {
-	 ch_printf( ch, "Ta osoba nie nale¿y do Twoje%s %s." NL,
+	 ch_printf( ch, "Ta osoba nie naleï¿½y do Twoje%s %s." NL,
 	 CLANSUFFIX( ch->pcdata->clan, "go", "j" ), CLANTYPE( ch->pcdata->clan, 1 ) );
 	 return;
 	 }
@@ -937,7 +925,7 @@ DEF_DO_FUN( crank )
 	 if( !victim->pcdata->clan
 	 || ch->pcdata->clan != victim->pcdata->clan )
 	 {
-	 ch_printf( ch, "Ta osoba nie nale¿y do Twoje%s %s." NL,
+	 ch_printf( ch, "Ta osoba nie naleï¿½y do Twoje%s %s." NL,
 	 CLANSUFFIX( ch->pcdata->clan, "go", "j" ), CLANTYPE( ch->pcdata->clan, 1 ) );
 	 return;
 	 }
@@ -956,22 +944,22 @@ DEF_DO_FUN( crank )
 	 if( !victim->pcdata->clan
 	 || clan != victim->pcdata->clan )
 	 {
-	 ch_printf( ch, "Ta osoba nie nale¿y do Twoje%s %s." NL,
+	 ch_printf( ch, "Ta osoba nie naleï¿½y do Twoje%s %s." NL,
 	 CLANSUFFIX( clan, "go", "j" ), CLANTYPE( clan, 1 ) );
 	 return;
 	 }
 	 if( victim->crank == clan->last_crank || !victim->crank->next )
 	 {
-	 ch_printf( ch, FB_WHITE "%s" PLAIN " posiada najwy¿szy mo¿liwy stopieñ." NL,
+	 ch_printf( ch, FB_WHITE "%s" PLAIN " posiada najwyï¿½szy moï¿½liwy stopieï¿½." NL,
 	 victim->przypadki[0] );
 	 return;
 	 }
 
 	 victim->crank = victim->crank->next;
-	 ch_printf( ch, "Zwiêkszasz " FB_WHITE "%s" PLAIN " stopieñ w swo%s %s." NL,
+	 ch_printf( ch, "Zwiï¿½kszasz " FB_WHITE "%s" PLAIN " stopieï¿½ w swo%s %s." NL,
 	 victim->przypadki[2],
 	 CLANSUFFIX( clan, "im", "jej" ), CLANTYPE( clan, 4 ) );
-	 ch_printf( victim, "%s zwiêksza Ci stopieñ w swo%s %s." NL,
+	 ch_printf( victim, "%s zwiï¿½ksza Ci stopieï¿½ w swo%s %s." NL,
 	 ch->przypadki[0],
 	 CLANSUFFIX( clan, "im", "jej" ), CLANTYPE( clan, 4 ) );
 
@@ -988,22 +976,22 @@ DEF_DO_FUN( crank )
 	 if( !victim->pcdata->clan
 	 || clan != victim->pcdata->clan )
 	 {
-	 ch_printf( ch, "Ta osoba nie nale¿y do Twoje%s %s." NL,
+	 ch_printf( ch, "Ta osoba nie naleï¿½y do Twoje%s %s." NL,
 	 IS_ORDER( clan ) ? "go" : "j", CLANTYPE( clan, 1 ) );
 	 return;
 	 }
 	 if( victim->crank == clan->first_crank || !victim->crank->prev )
 	 {
-	 ch_printf( ch, FB_WHITE "%s" PLAIN " posiada najni¿szy mo¿liwy stopieñ." NL,
+	 ch_printf( ch, FB_WHITE "%s" PLAIN " posiada najniï¿½szy moï¿½liwy stopieï¿½." NL,
 	 victim->przypadki[0] );
 	 return;
 	 }
 
 	 victim->crank = victim->crank->prev;
-	 ch_printf( ch, "Zmniejszasz " FB_WHITE "%s" PLAIN " stopieñ w swo%s %s." NL,
+	 ch_printf( ch, "Zmniejszasz " FB_WHITE "%s" PLAIN " stopieï¿½ w swo%s %s." NL,
 	 victim->przypadki[2],
 	 CLANSUFFIX( clan, "im", "jej" ), CLANTYPE( clan, 4 ) );
-	 ch_printf( victim, "%s zmniejsza Ci stopieñ w swo%s %s." NL,
+	 ch_printf( victim, "%s zmniejsza Ci stopieï¿½ w swo%s %s." NL,
 	 ch->przypadki[0],
 	 CLANSUFFIX( clan, "im", "jej" ), CLANTYPE( clan, 4 ) );
 
@@ -1020,9 +1008,7 @@ DEF_DO_FUN( crank )
 
 MEMBER_DATA* get_member(CLAN_DATA *clan, char *name)
 {
-	MEMBER_DATA *member;
-
-	FOREACH( member, clan->first_member )
+	for( auto* member : clan->member_list )
 		if (!str_cmp(member->name, name))
 			return member;
 	return NULL;
@@ -1030,11 +1016,10 @@ MEMBER_DATA* get_member(CLAN_DATA *clan, char *name)
 
 MEMBER_DATA* highest_ranked(CLAN_DATA *clan, int max_rank)
 {
-	MEMBER_DATA *member;
 	MEMBER_DATA *rmember = NULL;
 	int rank = CLAN_WAITING;
 
-	FOREACH( member, clan->first_member )
+	for( auto* member : clan->member_list )
 		if (member->status <= max_rank && member->status > rank)
 		{
 			rank = member->status;
@@ -1065,7 +1050,7 @@ void add_member(CLAN_DATA *clan, char *name, int status)
 
 		member = new_member(status);
 		STRDUP(member->name, name);
-		LINK(member, clan->first_member, clan->last_member, next, prev);
+		clan->member_list.push_back(member);
 	}
 
 	adjust_clan(clan);
@@ -1098,7 +1083,7 @@ void remove_member(CLAN_DATA *clan, char *name)
 
 		if (clan->members > 0)
 			clan->members--;
-		UNLINK(member, clan->first_member, clan->last_member, next, prev);
+		clan->member_list.remove(member);
 		free_member(member);
 		adjust_clan(clan);
 	}
@@ -1113,11 +1098,8 @@ void remove_member(CLAN_DATA *clan, char *name)
  */
 void rename_member(const char *name, const char *newname)
 {
-	CLAN_DATA *clan;
-	MEMBER_DATA *member;
-
-	FOREACH( clan, first_clan )
-		FOREACH( member, clan->first_member )
+	for( auto* clan : clan_list )
+		for( auto* member : clan->member_list )
 			if (!str_cmp(member->name, name))
 				STRDUP(member->name, newname);
 }
@@ -1133,14 +1115,13 @@ void induct_member(CLAN_DATA *clan, CHAR_DATA *ch)
 
 void outcast_member(CLAN_DATA *clan, CHAR_DATA *ch)
 {
-	CLAN_DATA *pClan;
 	MEMBER_DATA *member;
 	bool found = false;
 
 	if (ch->pcdata->clan == clan)
 		ch->pcdata->clan = NULL;
 
-	FOREACH( pClan, first_clan )
+	for( auto* pClan : clan_list )
 		if (pClan
 				!= clan&& (member = get_member( pClan, ch->name )) && member->status > CLAN_WAITING)
 		{
@@ -1184,9 +1165,7 @@ void adjust_only(CLAN_DATA *clan)
 
 void adjust_clan(CLAN_DATA *clan)
 {
-	MEMBER_DATA *member;
-
-	FOREACH( member, clan->first_member )
+	for( auto* member : clan->member_list )
 		switch (member->status)
 		{
 		case CLAN_LEADER:
@@ -1224,7 +1203,7 @@ void application(CHAR_DATA *ch, char *argument)
 
 	if (!*argument)
 	{
-		send_to_char("Gdzie chcesz z³o¿yæ podanie o przyjêcie?" NL, ch);
+		send_to_char("Gdzie chcesz zï¿½oï¿½yï¿½ podanie o przyjï¿½cie?" NL, ch);
 		return;
 	}
 
@@ -1236,14 +1215,15 @@ void application(CHAR_DATA *ch, char *argument)
 	else /* Jesli to jest tajny klan, to czlonek z induct musi stac obok nas. */
 	if (IS_SET(clan->flags, CLAN_NOINFO))
 	{
-		CHAR_DATA *victim;
 		bool found = false;
 
-		for (victim = ch->in_room->first_person; victim && !found; victim =
-				victim->next_in_room)
+		for (auto* victim : ch->in_room->people)
+		{
+			if (found) break;
 			if (!IS_NPC(victim) && (member = get_member( clan, victim->name ))
 			&& MEMBER_BESTOW( member, "induct" ))
 				found = true;
+		}
 
 		if (!found)
 		{
@@ -1255,20 +1235,20 @@ void application(CHAR_DATA *ch, char *argument)
 
 	if ((member = get_member(clan, ch->name)) && member->status == CLAN_WAITING)
 	{
-		send_to_char("Podanie o przyjêcie zosta³o ju¿ z³o¿one wcze¶niej." NL,
+		send_to_char("Podanie o przyjï¿½cie zostaï¿½o juï¿½ zï¿½oï¿½one wczeï¿½niej." NL,
 				ch);
 		return;
 	}
 
 	if (member)
 	{
-		ch_printf(ch, "Jeste¶ ju¿ cz³onki%s te%s %s." NL,
-				MALE( ch ) ? "em" : "ni±", CLANSUFFIX(clan, "go", "j"),
+		ch_printf(ch, "Jesteï¿½ juï¿½ czï¿½onki%s te%s %s." NL,
+				MALE( ch ) ? "em" : "niï¿½", CLANSUFFIX(clan, "go", "j"),
 				CLANTYPE(clan, 1));
 		return;
 	}
 
-	act( COL_FORCE, "Sk³adasz podanie o przyjêcie do $t.", ch, clan->name, NULL,
+	act( COL_FORCE, "Skï¿½adasz podanie o przyjï¿½cie do $t.", ch, clan->name, NULL,
 			TO_CHAR);
 	add_member(clan, ch->name, CLAN_WAITING);
 	return;
@@ -1290,7 +1270,7 @@ DEF_DO_FUN( induct )
 
 	if (!clan_bestow(ch, "induct"))
 	{
-		send_to_char("Nie masz odpowiednich uprawnieñ." NL, ch);
+		send_to_char("Nie masz odpowiednich uprawnieï¿½." NL, ch);
 		return;
 	}
 
@@ -1299,9 +1279,9 @@ DEF_DO_FUN( induct )
 	if (arg[0] == '\0')
 	{
 		ch_printf(ch,
-				"Oto lista osób ubiegaj±cych siê o wst±pienie do twoje%s %s:" NL,
+				"Oto lista osï¿½b ubiegajï¿½cych siï¿½ o wstï¿½pienie do twoje%s %s:" NL,
 				CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
-		FOREACH( member, clan->first_member )
+		for( auto* member : clan->member_list )
 			if (member->status == CLAN_WAITING)
 			{
 				if ((i % 3) && i > 1)
@@ -1310,7 +1290,7 @@ DEF_DO_FUN( induct )
 				i++;
 			}
 		if (i < 1)
-			ch_printf(ch, "Nikt nie ubiega siê o wst±pienie do twoje%s %s." NL,
+			ch_printf(ch, "Nikt nie ubiega siï¿½ o wstï¿½pienie do twoje%s %s." NL,
 					CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 		else
 			send_to_char( NL, ch);
@@ -1326,7 +1306,7 @@ DEF_DO_FUN( induct )
 
 	if (IS_NPC(victim))
 	{
-		ch_printf(ch, "Tej osoby nie mo¿esz przyj±æ do %s." NL,
+		ch_printf(ch, "Tej osoby nie moï¿½esz przyjï¿½ï¿½ do %s." NL,
 				CLANTYPE(clan, 1));
 		return;
 	}
@@ -1334,28 +1314,28 @@ DEF_DO_FUN( induct )
 	if (!(member = get_member(clan, victim->name)))
 	{
 		ch_printf(ch,
-				"Nikt taki nie zg³asza³ chêci wst±pienia do twoje%s %s." NL,
+				"Nikt taki nie zgï¿½aszaï¿½ chï¿½ci wstï¿½pienia do twoje%s %s." NL,
 				CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 		return;
 	}
 
 	if (member->status != CLAN_WAITING)
 	{
-		ch_printf(ch, "Ta osoba jest ju¿ cz³onkiem twoje%s %s." NL,
+		ch_printf(ch, "Ta osoba jest juï¿½ czï¿½onkiem twoje%s %s." NL,
 				CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 		return;
 	}
 
 	if (!*argument)
 	{
-		send_to_char("Chcesz zaakceptowaæ podanie czy je odrzuciæ?" NL, ch);
+		send_to_char("Chcesz zaakceptowaï¿½ podanie czy je odrzuciï¿½?" NL, ch);
 		return;
 	}
 
 	if (!str_cmp(argument, "accept") || !str_cmp(argument, "tak"))
 	{
 		if (IS_IMMORTAL(victim) /* || ... */)
-			send_to_char("Podanie tej osoby mo¿esz tylko odrzuciæ." NL, ch);
+			send_to_char("Podanie tej osoby moï¿½esz tylko odrzuciï¿½." NL, ch);
 		else
 		{
 			induct_member(clan, victim);
@@ -1363,7 +1343,7 @@ DEF_DO_FUN( induct )
 					TO_CHAR);
 			act( COL_FORCE, "$n przyjmuje $N$3 do $t.", ch, clan->name, victim,
 					TO_NOTVICT);
-			act( COL_FORCE, "$n przyjmuje Ciê do $t.", ch, clan->name, victim,
+			act( COL_FORCE, "$n przyjmuje Ciï¿½ do $t.", ch, clan->name, victim,
 					TO_VICT);
 		}
 		return;
@@ -1372,11 +1352,11 @@ DEF_DO_FUN( induct )
 	if (!str_cmp(argument, "deny") || !str_cmp(argument, "nie"))
 	{
 		remove_member(clan, victim->name);
-		act( COL_FORCE, "Odrzucasz podanie $N$1 o przyjêcie do $t.", ch,
+		act( COL_FORCE, "Odrzucasz podanie $N$1 o przyjï¿½cie do $t.", ch,
 				clan->name, victim, TO_CHAR);
-		act( COL_FORCE, "$n odrzuca podanie $N$1 o przyjêcie do $t.", ch,
+		act( COL_FORCE, "$n odrzuca podanie $N$1 o przyjï¿½cie do $t.", ch,
 				clan->name, victim, TO_NOTVICT);
-		act( COL_FORCE, "$n odrzuca twoje podanie o przyjêcie do $t.", ch,
+		act( COL_FORCE, "$n odrzuca twoje podanie o przyjï¿½cie do $t.", ch,
 				clan->name, victim, TO_VICT);
 		return;
 	}
@@ -1402,7 +1382,7 @@ DEF_DO_FUN( outcast )
 
 	if (!(member = get_member(clan, ch->name)) || !clan_bestow(ch, "outcast"))
 	{
-		send_to_char("Nie masz odpowiednich uprawnieñ." NL, ch);
+		send_to_char("Nie masz odpowiednich uprawnieï¿½." NL, ch);
 		return;
 	}
 
@@ -1410,7 +1390,7 @@ DEF_DO_FUN( outcast )
 
 	if (!*arg)
 	{
-		ch_printf(ch, "Kogo chcesz usun±æ z %s?" NL, CLANTYPE(clan, 1));
+		ch_printf(ch, "Kogo chcesz usunï¿½ï¿½ z %s?" NL, CLANTYPE(clan, 1));
 		return;
 	}
 
@@ -1423,8 +1403,8 @@ DEF_DO_FUN( outcast )
 
 	if (!(vmember = get_member(clan, arg)))
 	{
-		ch_printf(ch, "Tw%s %s nie posiada takiego cz³onka jak %s." NL,
-				CLANSUFFIX(clan, "ój", "oja"), CLANTYPE(clan, 1),
+		ch_printf(ch, "Tw%s %s nie posiada takiego czï¿½onka jak %s." NL,
+				CLANSUFFIX(clan, "ï¿½j", "oja"), CLANTYPE(clan, 1),
 				capitalize(arg));
 		return;
 	}
@@ -1441,15 +1421,15 @@ DEF_DO_FUN( outcast )
 				TO_CHAR);
 		act( COL_FORCE, "$n usuwa $N$3 z $t." NL, ch, clan->name, victim,
 				TO_NOTVICT);
-		act( COL_FORCE, "$n usuwa Ciê z $t." NL, ch, clan->name, victim,
+		act( COL_FORCE, "$n usuwa Ciï¿½ z $t." NL, ch, clan->name, victim,
 				TO_VICT);
 		char_from_room(ch);
 		char_to_room(ch, location);
 		/*}
 		 else
 		 {
-		 send_to_char( "Nie mo¿esz usun±æ kogo¶ wy¿szego stopniem." NL, ch );
-		 ch_printf( victim, "W³a¶nie dosz³a do ciebie informacja, ¿e %s probowa³%s usun±æ cie z" NL
+		 send_to_char( "Nie moï¿½esz usunï¿½ï¿½ kogoï¿½ wyï¿½szego stopniem." NL, ch );
+		 ch_printf( victim, "Wï¿½aï¿½nie doszï¿½a do ciebie informacja, ï¿½e %s probowaï¿½%s usunï¿½ï¿½ cie z" NL
 		 "%s %s." NL, PERS( ch, victim, 0 ), SEX_SUFFIX__AO( ch ), CLANTYPE( clan, 1 ), clan->name );
 		 } Pixel tu byl */
 	}
@@ -1549,7 +1529,7 @@ DEF_DO_FUN( setclan )
 		 suborg = get_clan( argument );
 		 */
 		send_to_char(
-				"Chwilowo nie dzialaja organizacje podporz±dkowane (suborg)." NL,
+				"Chwilowo nie dzialaja organizacje podporzï¿½dkowane (suborg)." NL,
 				ch);
 		return;
 	}
@@ -1744,9 +1724,8 @@ DEF_DO_FUN( setclan )
 //polityka i glosowanie.
 DEF_DO_FUN( relations )
 {
-	POLITICS_DATA *politics;
+	POLITICS_DATA *politics = nullptr;
 	CLAN_DATA *clan = CLAN(ch);
-	CLAN_DATA *sclan;
 	CLAN_DATA *tclan;
 	CLAN_DATA *vclan;
 	MEMBER_DATA *member;
@@ -1775,7 +1754,7 @@ DEF_DO_FUN( relations )
 	if (!IS_ORG(clan))
 	{
 		send_to_char(
-				"Tylko organizacje niezale¿ne mog± zajmowaæ siê polityk±." NL,
+				"Tylko organizacje niezaleï¿½ne mogï¿½ zajmowaï¿½ siï¿½ politykï¿½." NL,
 				ch);
 		return;
 	}
@@ -1783,14 +1762,14 @@ DEF_DO_FUN( relations )
 	if (*arg1 == '\0')
 	{
 		ch_printf(ch,
-				FB_CYAN "Oto jak przedstawia siê polityka prowadzona przez twoj± organizacjê:" EOL NL);
+				FB_CYAN "Oto jak przedstawia siï¿½ polityka prowadzona przez twojï¿½ organizacjï¿½:" EOL NL);
 		if (clan->diplomat)
 			ch_printf(ch, FB_CYAN "Dyplomata: " PLAIN "%s" FB_CYAN "." EOL NL,
 					clan->diplomat->name);
 
-		FOREACH( politics, clan->first_politics )
+		for( auto* politics : clan->politics )
 			ch_printf(ch,
-					"Twoja organizacja prowadzi %s politykê w stosunku do: " FG_CYAN "%s" PLAIN "." NL,
+					"Twoja organizacja prowadzi %s politykï¿½ w stosunku do: " FG_CYAN "%s" PLAIN "." NL,
 					bit_name(relation_types_list, politics->relations),
 					CLANNAME(politics->clan));
 
@@ -1800,17 +1779,17 @@ DEF_DO_FUN( relations )
 
 		send_to_char( NL, ch);
 
-		FOREACH( sclan, first_clan )
+		for( auto* sclan : clan_list )
 		{
 			if (sclan == clan)
 				continue;
 
 			pnone = true;
-			FOREACH( politics, sclan->first_politics )
+			for( auto* politics : sclan->politics )
 				if (politics->clan == clan)
 				{
 					ch_printf(ch,
-							"Organizacja " FG_CYAN "%s" PLAIN " prowadzi %s politykê z twoj± organizacj±." NL,
+							"Organizacja " FG_CYAN "%s" PLAIN " prowadzi %s politykï¿½ z twojï¿½ organizacjï¿½." NL,
 							CLANNAME(sclan),
 							bit_name(relation_types_list, politics->relations));
 					pnone = false;
@@ -1818,7 +1797,7 @@ DEF_DO_FUN( relations )
 
 			if (pnone)
 				ch_printf(ch,
-						"Organizacja " FG_CYAN "%s" PLAIN " nie prowadzi ¿adnej polityki z twoj± organizacj±." NL,
+						"Organizacja " FG_CYAN "%s" PLAIN " nie prowadzi ï¿½adnej polityki z twojï¿½ organizacjï¿½." NL,
 						CLANNAME(sclan));
 		}
 
@@ -1829,19 +1808,19 @@ DEF_DO_FUN( relations )
 	{
 		if (!IS_DIPLOMAT(ch))
 		{
-			send_to_char("Nie jeste¶ dyplomat± tej organizacji." NL, ch);
+			send_to_char("Nie jesteï¿½ dyplomatï¿½ tej organizacji." NL, ch);
 			return;
 		}
 
 		if (!*arg2)
 		{
-			send_to_char("Jak± politykê chcesz prowadziæ?" NL, ch);
+			send_to_char("Jakï¿½ politykï¿½ chcesz prowadziï¿½?" NL, ch);
 			return;
 		}
 
 		if (*argument == '\0')
 		{
-			send_to_char("Z jak± organizacj± chcesz prowadziæ t± politykê?" NL,
+			send_to_char("Z jakï¿½ organizacjï¿½ chcesz prowadziï¿½ tï¿½ politykï¿½?" NL,
 					ch);
 			return;
 		}
@@ -1861,16 +1840,16 @@ DEF_DO_FUN( relations )
 		if (clan->vClan)
 		{
 			send_to_char(
-					"Musisz poczekaæ na zakoñczenie obecnego g³osowania." NL,
+					"Musisz poczekaï¿½ na zakoï¿½czenie obecnego gï¿½osowania." NL,
 					ch);
 			return;
 		}
 
-		FOREACH( politics, clan->first_politics )
+		for( auto* politics : clan->politics )
 			if (politics->clan == tclan && politics->relations == value)
 			{
 				send_to_char(
-						"Obecnie prowadzisz w³a¶nie tak± politykê. Po co g³osowaæ drugi raz?" NL,
+						"Obecnie prowadzisz wï¿½aï¿½nie takï¿½ politykï¿½. Po co gï¿½osowaï¿½ drugi raz?" NL,
 						ch);
 				return;
 			}
@@ -1879,7 +1858,7 @@ DEF_DO_FUN( relations )
 		clan->vClan = tclan;
 		ch_printf(ch,
 				"Zmiana polityki w stosunku od organizacji: " FG_CYAN "%s" EOL
-				"poddana pod g³osowanie" NL, CLANNAME(tclan));
+				"poddana pod gï¿½osowanie" NL, CLANNAME(tclan));
 
 		save_clan(clan);
 		return;
@@ -1890,14 +1869,14 @@ DEF_DO_FUN( relations )
 		if (!(member = get_member(clan, ch->name))
 				|| member->status < CLAN_DIPLOMAT)
 		{
-			send_to_char("Nie masz uprawnieñ." NL, ch);
+			send_to_char("Nie masz uprawnieï¿½." NL, ch);
 			return;
 		}
 
 		if (!(vclan = clan->vClan))
 		{
 			send_to_char(
-					"Obecnie nie ma ¿adnego g³osowania dotycz±cego polityki." NL,
+					"Obecnie nie ma ï¿½adnego gï¿½osowania dotyczï¿½cego polityki." NL,
 					ch);
 			return;
 		}
@@ -1907,13 +1886,13 @@ DEF_DO_FUN( relations )
 		if (*arg2 == '\0')
 		{
 			send_to_char(
-					FB_CYAN "Temat g³osowania dotycz±cego zmiany polityki w Twojej organizacji:" EOL NL,
+					FB_CYAN "Temat gï¿½osowania dotyczï¿½cego zmiany polityki w Twojej organizacji:" EOL NL,
 					ch);
 			ch_printf(ch,
-					"G³osowanie dotyczy zmiany polityki na %s w stosunku do organizacji: "
+					"Gï¿½osowanie dotyczy zmiany polityki na %s w stosunku do organizacji: "
 					FG_CYAN "%s" PLAIN "." NL NL,
 					bit_name(relation_types_list, vrelations), CLANNAME(vclan));
-			ch_printf(ch, "G³osy oddane na TAK: %s." NL,
+			ch_printf(ch, "Gï¿½osy oddane na TAK: %s." NL,
 					(*clan->vYes != '\0') ? clan->vYes : "");
 
 			return;
@@ -1924,22 +1903,22 @@ DEF_DO_FUN( relations )
 			if (member->status == CLAN_DIPLOMAT)
 			{
 				send_to_char(
-						"Nie masz uprawnieñ do g³osowania na temat polityki." NL,
+						"Nie masz uprawnieï¿½ do gï¿½osowania na temat polityki." NL,
 						ch);
 				return;
 			}
 
 			if (is_name(ch->name, clan->vYes))
 			{
-				send_to_char("Nie mo¿esz g³osowac dwukrotnie." NL, ch);
+				send_to_char("Nie moï¿½esz gï¿½osowac dwukrotnie." NL, ch);
 				return;
 			}
 
 			ch_printf(ch,
-					"G³osowanie dotyczy zmiany polityki na %s w stosunku do organizacji: "
+					"Gï¿½osowanie dotyczy zmiany polityki na %s w stosunku do organizacji: "
 					FG_CYAN "%s" PLAIN "." NL NL,
 					bit_name(relation_types_list, vrelations), CLANNAME(vclan));
-			send_to_char("Oddajesz swój g³os na TAK." NL, ch);
+			send_to_char("Oddajesz swï¿½j gï¿½os na TAK." NL, ch);
 			sprintf(namebuf, " %s", ch->name);
 			if (*clan->vYes == '\0')
 				STRDUP(clan->vYes, namebuf);
@@ -1963,9 +1942,10 @@ DEF_DO_FUN( relations )
 			}
 
 			match = false;
-			FOREACH( politics, clan->first_politics )
-				if (politics->clan == vclan)
+			for( auto* pol : clan->politics )
+				if (pol->clan == vclan)
 				{
+					politics = pol;
 					match = true;
 					break;
 				}
@@ -1978,14 +1958,13 @@ DEF_DO_FUN( relations )
 			else
 			{
 				CREATE(politics, POLITICS_DATA, 1);
-				LINK(politics, clan->first_politics, clan->last_politics, next,
-						prev);
+				clan->politics.push_back(politics);
 				politics->clan = vclan;
 				politics->relations = vrelations;
 			}
 			ch_printf(ch,
 					"Polityka w stosunku do organizacji: " FG_CYAN "%s" EOL
-					"zosta³a zmieniona pomy¶lnie i wprowadzona w ¿ycie." NL,
+					"zostaï¿½a zmieniona pomyï¿½lnie i wprowadzona w ï¿½ycie." NL,
 					CLANNAME(vclan));
 
 			pclan_voting_end(clan);
@@ -1998,25 +1977,25 @@ DEF_DO_FUN( relations )
 			if (member->status == CLAN_DIPLOMAT)
 			{
 				send_to_char(
-						"Nie masz uprawnieñ do g³osowania na temat polityki." NL,
+						"Nie masz uprawnieï¿½ do gï¿½osowania na temat polityki." NL,
 						ch);
 				return;
 			}
 
 			if (is_name(ch->name, clan->vYes))
 			{
-				send_to_char("Nie mo¿esz g³osowac dwukrotnie." NL, ch);
+				send_to_char("Nie moï¿½esz gï¿½osowac dwukrotnie." NL, ch);
 				return;
 			}
 
 			ch_printf(ch,
-					"G³osowanie dotyczy zmiany polityki na %s w stosunku do organizacji: "
+					"Gï¿½osowanie dotyczy zmiany polityki na %s w stosunku do organizacji: "
 					FG_CYAN "%s" PLAIN "." NL NL,
 					bit_name(relation_types_list, vrelations), CLANNAME(vclan));
-			send_to_char("Oddajesz swój g³os na NIE." NL, ch);
+			send_to_char("Oddajesz swï¿½j gï¿½os na NIE." NL, ch);
 			ch_printf(ch,
 					"Polityka w stosunku od organizacji: " FG_CYAN "%s" EOL
-					"nie zosta³a zmieniona. G³osowanie nie przebieg³o pomy¶lnie." NL,
+					"nie zostaï¿½a zmieniona. Gï¿½osowanie nie przebiegï¿½o pomyï¿½lnie." NL,
 					CLANNAME(vclan));
 			pclan_voting_end(clan);
 			save_clan(clan);
@@ -2027,14 +2006,14 @@ DEF_DO_FUN( relations )
 
 	if (!str_cmp(arg1, "help") || !str_cmp(arg1, "pomoc"))
 	{
-		send_to_char("Sk³adnia: relations [komenda] [warto¶æ] [organizacja]" NL
+		send_to_char("Skï¿½adnia: relations [komenda] [wartoï¿½ï¿½] [organizacja]" NL
 		" komenda: change vote" NL
 		" wartosc: tak nie typ_polityki" NL
 		" organizacja: nazwa_organizacji id_organizacji" NL NL, ch);
 		return;
 	}
 
-	send_to_char("Nie znana komenda. Spróbój: relations pomoc." NL, ch);
+	send_to_char("Nie znana komenda. Sprï¿½bï¿½j: relations pomoc." NL, ch);
 	return;
 }
 
@@ -2051,8 +2030,6 @@ void pclan_voting_end(CLAN_DATA *clan)
 DEF_DO_FUN( showclan )
 {
 	CLAN_DATA *clan;
-	POLITICS_DATA *politics;
-	MEMBER_DATA *member;
 	int i = 0;
 	int applicants = 0;
 
@@ -2091,7 +2068,7 @@ DEF_DO_FUN( showclan )
 
 	ch_printf(ch, FG_CYAN "Members(" PLAIN "%d" FG_CYAN "):" PLAIN,
 			clan->members);
-	FOREACH( member, clan->first_member )
+	for( auto* member : clan->member_list )
 		if (member->status != CLAN_WAITING)
 			ch_printf(ch, "%s%s", (i++) % 4 ? "    " : NL, member->name);
 		else
@@ -2100,12 +2077,12 @@ DEF_DO_FUN( showclan )
 	i = 0;
 	ch_printf(ch, NL FG_CYAN "Applicants(" PLAIN "%d" FG_CYAN "):" PLAIN,
 			applicants);
-	FOREACH( member, clan->first_member )
+	for( auto* member : clan->member_list )
 		if (member->status == CLAN_WAITING)
 			ch_printf(ch, "%s%s", (i++) % 4 ? "    " : NL, member->name);
 
 	send_to_char( NL FG_CYAN "Politics:" EOL, ch);
-	FOREACH( politics, clan->first_politics )
+	for( auto* politics : clan->politics )
 		ch_printf(ch, "%s %d" NL, politics->clan->name, politics->relations);
 
 	send_to_char( FG_CYAN "Ranks:" NL, ch);
@@ -2142,7 +2119,7 @@ DEF_DO_FUN( makeclan )
 	clan->clan_id = ++sysdata.max_clan_id;
 	save_sysdata(sysdata);
 	STRDUP(clan->filename, mk_filename(clan->clan_id));
-	LINK(clan, first_clan, last_clan, next, prev);
+	clan_list.push_back(clan);
 }
 
 DEF_DO_FUN( clan )
@@ -2252,11 +2229,10 @@ DEF_DO_FUN( clan )
 
 DEF_DO_FUN( clans )
 {
-	CLAN_DATA *clan;
 	int count = 0;
 
 	ch_printf(ch, FB_WHITE "Lista autoryzowanych organizacji:" EOL);
-	FOREACH( clan, first_clan )
+	for( auto* clan : clan_list )
 		if (IS_ORG(clan))
 		{
 			if ( IS_SET(clan->flags,
@@ -2265,12 +2241,9 @@ DEF_DO_FUN( clans )
 
 			ch_printf(ch, "%-35s", clan->name);
 			ch_printf(ch, "  [Id:%2d]" NL, clan->clan_id);
-			if (clan->first_suborg)
+			if (!clan->suborgs.empty())
 			{
-				CLAN_DATA *suborg;
-
-				for (suborg = clan->first_suborg; suborg;
-						suborg = suborg->next_suborg)
+				for (auto* suborg : clan->suborgs)
 					ch_printf(ch, "   %-22s  [Id:%2d]" NL, suborg->name,
 							suborg->clan_id);
 			}
@@ -2278,7 +2251,7 @@ DEF_DO_FUN( clans )
 		}
 
 	ch_printf(ch, FB_WHITE "Gildie:" EOL);
-	FOREACH( clan, first_clan )
+	for( auto* clan : clan_list )
 		if (IS_GUILD(clan))
 		{
 			if ( IS_SET(clan->flags,
@@ -2290,7 +2263,7 @@ DEF_DO_FUN( clans )
 		}
 
 	ch_printf(ch, FB_WHITE "Zakony:" EOL);
-	FOREACH( clan, first_clan )
+	for( auto* clan : clan_list )
 		if (IS_ORDER(clan))
 		{
 			if ( IS_SET(clan->flags,
@@ -2303,18 +2276,15 @@ DEF_DO_FUN( clans )
 
 	if (!count)
 		send_to_char(
-				"Nie ma ¿adnych organizacji, gildii ani zakonów... jeszcze." NL,
+				"Nie ma ï¿½adnych organizacji, gildii ani zakonï¿½w... jeszcze." NL,
 				ch);
 
-	send_to_char( NL "Patrz te¿: Planets" NL, ch);
+	send_to_char( NL "Patrz teï¿½: Planets" NL, ch);
 }
 
 DEF_DO_FUN( claninfo )
 {
 	CLAN_DATA *clan;
-	CLAN_DATA *suborg;
-	PLANET_DATA *planet;
-	SHIP_DATA *ship;
 	MEMBER_DATA *member;
 	long revenue;
 	int support;
@@ -2361,7 +2331,7 @@ DEF_DO_FUN( claninfo )
 	if (clan->first)
 	{
 		ch_printf(ch, FG_CYAN "W dowodzeniu pomag%s mu " PLAIN "%s",
-				clan->second ? "aj±" : "a", FIRST_NAME(clan));
+				clan->second ? "ajï¿½" : "a", FIRST_NAME(clan));
 
 		if (clan->second)
 			ch_printf(ch, FG_CYAN " i " PLAIN "%s" FG_CYAN "." EOL,
@@ -2375,12 +2345,12 @@ DEF_DO_FUN( claninfo )
 
 	if ( IS_ORG( clan ) && clan->diplomat)
 		ch_printf(ch,
-				FG_CYAN "Polityk± organizacji zajmuje siê " PLAIN "%s" FG_CYAN "." EOL,
+				FG_CYAN "Politykï¿½ organizacji zajmuje siï¿½ " PLAIN "%s" FG_CYAN "." EOL,
 				DIPLOMAT_NAME(clan));
 
-	ch_printf(ch, FG_CYAN "%s posiada " PLAIN "%d" FG_CYAN " cz³onk%s",
+	ch_printf(ch, FG_CYAN "%s posiada " PLAIN "%d" FG_CYAN " czï¿½onk%s",
 			capitalize(CLANTYPE(clan, 0)), clan->members,
-			NUMBER_SUFF(clan->members, "a", "ów", "ów"));
+			NUMBER_SUFF(clan->members, "a", "ï¿½w", "ï¿½w"));
 	if (is_member)
 		ch_printf(ch,
 				FG_CYAN " a na koncie ma " PLAIN "%d" FG_CYAN " kredytek." EOL,
@@ -2396,7 +2366,7 @@ DEF_DO_FUN( claninfo )
 			char buf[MSL];
 
 			buf[0] = '\0';
-			FOREACH( planet, first_planet )
+			for( auto* planet : planet_list )
 				if (clan == planet->governed_by)
 				{
 					x++;
@@ -2405,7 +2375,7 @@ DEF_DO_FUN( claninfo )
 				}
 			if (x)
 				ch_printf(ch,
-						FG_CYAN "Planety podlegaj±ce organizacji:" PLAIN "%s" FG_CYAN "." EOL,
+						FG_CYAN "Planety podlegajï¿½ce organizacji:" PLAIN "%s" FG_CYAN "." EOL,
 						buf);
 		}
 
@@ -2414,11 +2384,11 @@ DEF_DO_FUN( claninfo )
 
 		if (clan->loan)
 			ch_printf(ch,
-					FG_CYAN "Organizacja musi sp³aciæ po¿yczkê wysoko¶ci: " PLAIN "%ld"
+					FG_CYAN "Organizacja musi spï¿½aciï¿½ poï¿½yczkï¿½ wysokoï¿½ci: " PLAIN "%ld"
 					FG_CYAN " do dnia: " PLAIN "%s" FG_CYAN "." NL, clan->loan,
 					static_cast<SWString>(SWTimeStamp(clan->repay_date)).c_str());
 
-		FOREACH( planet, first_planet )
+		for( auto* planet : planet_list )
 			if (clan == planet->governed_by)
 			{
 				support += planet->pop_support;
@@ -2431,29 +2401,29 @@ DEF_DO_FUN( claninfo )
 
 		ch_printf(ch,
 				FG_CYAN
-				"Dziêki poparciu " PLAIN "%d" FG_CYAN ", przychody organizacji wynosz± " PLAIN "%ld" FG_CYAN "." EOL,
+				"Dziï¿½ki poparciu " PLAIN "%d" FG_CYAN ", przychody organizacji wynoszï¿½ " PLAIN "%ld" FG_CYAN "." EOL,
 				support, revenue);
 
 		ch_printf(ch, FG_CYAN "Organizacje podlegajace:" EOL);
-		for (suborg = clan->first_suborg; suborg; suborg = suborg->next_suborg)
+		for (auto* suborg : clan->suborgs)
 		{
 			j++;
 			ch_printf(ch,
-					FG_CYAN "%d." FG_YELLOW " %s" FG_CYAN ", Lider:" PLAIN " %s" FG_CYAN ", Mo¿ni:" PLAIN
+					FG_CYAN "%d." FG_YELLOW " %s" FG_CYAN ", Lider:" PLAIN " %s" FG_CYAN ", Moï¿½ni:" PLAIN
 					" %s" FG_CYAN " i" PLAIN " %s" FG_CYAN "." NL, j,
 					CLANNAME(suborg), suborg->leader, suborg->first,
 					suborg->second);
 		}
 		ch_printf(ch,
-				FG_CYAN "Ilo¶æ organizacji podlegaj±cych:" PLAIN " %d" FG_CYAN "." NL,
+				FG_CYAN "Iloï¿½ï¿½ organizacji podlegajï¿½cych:" PLAIN " %d" FG_CYAN "." NL,
 				j);
 
 		ch_printf(ch,
-				FG_CYAN "Bilans zgonów:" PLAIN " %d " FG_CYAN "zabójstw," PLAIN " %d " FG_CYAN "zgonów." NL,
+				FG_CYAN "Bilans zgonï¿½w:" PLAIN " %d " FG_CYAN "zabï¿½jstw," PLAIN " %d " FG_CYAN "zgonï¿½w." NL,
 				clan->pkills, clan->pdeaths);
 
 		ch_printf(ch, FG_CYAN "Statki kosmiczne:" NL);
-		FOREACH( ship, first_ship )
+		for( auto* ship : ship_list )
 			if (!str_cmp(clan->name, ship->owner))
 			{
 				i++;
@@ -2463,7 +2433,7 @@ DEF_DO_FUN( claninfo )
 						ship->copilot);
 			}
 		ch_printf(ch,
-				FG_CYAN "Ilo¶æ statków kosmicznych:" PLAIN " %d" FG_CYAN "." EOL,
+				FG_CYAN "Iloï¿½ï¿½ statkï¿½w kosmicznych:" PLAIN " %d" FG_CYAN "." EOL,
 				i);
 	}
 }
@@ -2471,32 +2441,31 @@ DEF_DO_FUN( claninfo )
 void clan_members(CHAR_DATA *ch)
 {
 	CLAN_DATA *clan = CLAN(ch);
-	MEMBER_DATA *member;
 	int i;
 
 	if (!clan)
 	{
 		send_to_char(
-				"Nie nale¿ysz do ¿adnej organizacji, gildii ani ¿adnego zakonu." NL,
+				"Nie naleï¿½ysz do ï¿½adnej organizacji, gildii ani ï¿½adnego zakonu." NL,
 				ch);
 		return;
 	}
 
 	ch_printf(ch,
-			FG_CYAN "%s: " PLAIN "%s" FG_CYAN ". Pomagaj± mu: %s: " PLAIN "%s" FG_CYAN
+			FG_CYAN "%s: " PLAIN "%s" FG_CYAN ". Pomagajï¿½ mu: %s: " PLAIN "%s" FG_CYAN
 			" i %s: " PLAIN "%s" FG_CYAN "." EOL, CRANK(clan, CLAN_LEADER),
 			LEADER_NAME(clan), CRANK(clan, CLAN_FIRST), FIRST_NAME(clan),
 			CRANK(clan, CLAN_SECOND), SECOND_NAME(clan));
 
 	if ( IS_ORG( clan ) && clan->diplomat)
 		ch_printf(ch,
-				FG_CYAN "Polityk± organizacji zajmuje siê: " PLAIN "%s" FG_CYAN "." EOL,
+				FG_CYAN "Politykï¿½ organizacji zajmuje siï¿½: " PLAIN "%s" FG_CYAN "." EOL,
 				DIPLOMAT_NAME(clan));
 
-	ch_printf(ch, FG_CYAN "Oto lista cz³onków twoje%s %s:" EOL,
+	ch_printf(ch, FG_CYAN "Oto lista czï¿½onkï¿½w twoje%s %s:" EOL,
 			CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 	i = 0;
-	FOREACH( member, clan->first_member )
+	for( auto* member : clan->member_list )
 		if (member->status > CLAN_WAITING)
 		{
 			if ((i % 3 == 0) && i > 1)
@@ -2506,9 +2475,9 @@ void clan_members(CHAR_DATA *ch)
 		}
 
 	ch_printf(ch,
-			NL NL FG_CYAN "%s posiada " PLAIN "%d" FG_CYAN " cz³onk%s." EOL,
+			NL NL FG_CYAN "%s posiada " PLAIN "%d" FG_CYAN " czï¿½onk%s." EOL,
 			capitalize(CLANTYPE(clan, 0)), clan->members,
-			(clan->members == 1) ? "a" : "ów");
+			(clan->members == 1) ? "a" : "ï¿½w");
 
 	return;
 }
@@ -2528,11 +2497,11 @@ void clan_switch(CHAR_DATA *ch, char *argument)
 	{
 		ch->pcdata->clan = clan;
 		save_char_obj(ch);
-		ch_printf(ch, "Zaczynasz zajmowaæ siê %s %s." NL, CLANTYPE(clan, 5),
+		ch_printf(ch, "Zaczynasz zajmowaï¿½ siï¿½ %s %s." NL, CLANTYPE(clan, 5),
 				clan->name);
 	}
 	else
-		ch_printf(ch, "Nie nale¿ysz do te%s %s." NL,
+		ch_printf(ch, "Nie naleï¿½ysz do te%s %s." NL,
 				CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 }
 
@@ -2549,7 +2518,7 @@ DEF_DO_FUN( resign )
 
 	if (IS_SET(clan->flags, CLAN_NOQUIT))
 	{
-		ch_printf(ch, "Nie mo¿esz zrezygnowaæ z cz³onkostwa w %s." NL,
+		ch_printf(ch, "Nie moï¿½esz zrezygnowaï¿½ z czï¿½onkostwa w %s." NL,
 				CLANTYPE(clan, 4));
 		return;
 	}
@@ -2559,7 +2528,7 @@ DEF_DO_FUN( resign )
 		if ((ch->gold < clan->penalty) && (ch->pcdata->bank < clan->penalty))
 		{
 			ch_printf(ch,
-					"Nie masz tyle kredytek aby zap³aciæ karê za rezygnacjê z cz³onkostwa w %s." NL,
+					"Nie masz tyle kredytek aby zapï¿½aciï¿½ karï¿½ za rezygnacjï¿½ z czï¿½onkostwa w %s." NL,
 					CLANTYPE(clan, 4));
 			return;
 		}
@@ -2568,7 +2537,7 @@ DEF_DO_FUN( resign )
 			long penalty;
 			penalty = clan->penalty;
 			ch_printf(ch,
-					"P³acisz %ld kredytek kary za rezygnacjê z cz³onkostwa w %s." NL,
+					"Pï¿½acisz %ld kredytek kary za rezygnacjï¿½ z czï¿½onkostwa w %s." NL,
 					clan->penalty, CLANTYPE(clan, 4));
 			(ch->gold >= penalty) ? (ch->gold -= penalty) : (ch->pcdata->bank -=
 											penalty);
@@ -2576,7 +2545,7 @@ DEF_DO_FUN( resign )
 	}
 
 	outcast_member(ch->pcdata->clan, ch);
-	act( COL_FORCE, "Rezygnujesz z cz³onkostwa w $t", ch, clan->name, NULL,
+	act( COL_FORCE, "Rezygnujesz z czï¿½onkostwa w $t", ch, clan->name, NULL,
 			TO_CHAR);
 	loose_exp =
 			UMAX(
@@ -2586,7 +2555,7 @@ DEF_DO_FUN( resign )
 	ch->experience[DIPLOMACY_ABILITY] = URANGE(0,
 			ch->experience[DIPLOMACY_ABILITY],
 			ch->experience[DIPLOMACY_ABILITY]);
-	ch_printf(ch, "Tracisz %ld punktów do¶wiadczenia w dyplomacji." NL,
+	ch_printf(ch, "Tracisz %ld punktï¿½w doï¿½wiadczenia w dyplomacji." NL,
 			loose_exp);
 }
 
@@ -2598,45 +2567,45 @@ DEF_DO_FUN( clan_withdraw )
 	if (!clan)
 	{
 		send_to_char(
-				"Musisz najpierw nale¿eæ do jakiej¶ organizacji, gildii, lub zakonu." NL,
+				"Musisz najpierw naleï¿½eï¿½ do jakiejï¿½ organizacji, gildii, lub zakonu." NL,
 				ch);
 		return;
 	}
 
 	if ( /*!ch->in_room ||*/!IS_SET(ch->in_room->room_flags, ROOM_BANK))
 	{
-		send_to_char("Mo¿esz to zrobiæ jedynie w banku!" NL, ch);
+		send_to_char("Moï¿½esz to zrobiï¿½ jedynie w banku!" NL, ch);
 		return;
 	}
 
 	if (!clan_bestow(ch, "withdraw"))
 	{
-		send_to_char( FB_RED "Chyba nikt ciê do tego nie upowa¿ni³!" NL, ch);
+		send_to_char( FB_RED "Chyba nikt ciï¿½ do tego nie upowaï¿½niï¿½!" NL, ch);
 		return;
 	}
 
 	if ( /*(IS_ORG( clan ) || IS_SUBORG( clan )) &&*/clan->loan)
 	{
 		send_to_char(
-				"Aby wyp³acaæ gotówkê z konta organizacji trzeba najpierw sp³aciæ po¿yczkê." NL,
+				"Aby wypï¿½acaï¿½ gotï¿½wkï¿½ z konta organizacji trzeba najpierw spï¿½aciï¿½ poï¿½yczkï¿½." NL,
 				ch);
 		return;
 	}
 
 	if (!(ammount = atoi(argument)) || ammount < 0)
 	{
-		send_to_char("Ile chcesz wyp³aciæ?" NL, ch);
+		send_to_char("Ile chcesz wypï¿½aciï¿½?" NL, ch);
 		return;
 	}
 
 	if (ammount > clan->funds)
 	{
-		ch_printf(ch, "%s nie ma a¿ tyle w kasie!" NL, clan->name);
+		ch_printf(ch, "%s nie ma aï¿½ tyle w kasie!" NL, clan->name);
 		return;
 	}
 
-	ch_printf(ch, "Wyp³acasz %ld kredyt%s z funduszy %s." NL, ammount,
-			NUMBER_SUFF(ammount, "kê", "ki", "ek"), clan->name);
+	ch_printf(ch, "Wypï¿½acasz %ld kredyt%s z funduszy %s." NL, ammount,
+			NUMBER_SUFF(ammount, "kï¿½", "ki", "ek"), clan->name);
 	clan->funds -= ammount;
 	ch->gold += ammount;
 	save_clan(clan);
@@ -2651,20 +2620,20 @@ DEF_DO_FUN( clan_donate )
 	if (!clan)
 	{
 		send_to_char(
-				"Musisz najpierw nale¿eæ do jakiej¶ organizacji, gildii, lub zakonu." NL,
+				"Musisz najpierw naleï¿½eï¿½ do jakiejï¿½ organizacji, gildii, lub zakonu." NL,
 				ch);
 		return;
 	}
 
 	if (/*!ch->in_room ||*/!IS_SET(ch->in_room->room_flags, ROOM_BANK))
 	{
-		send_to_char("By to zrobiæ musisz byæ w banku!" NL, ch);
+		send_to_char("By to zrobiï¿½ musisz byï¿½ w banku!" NL, ch);
 		return;
 	}
 
 	if (!(ammount = atoi(argument)) || ammount < 0)
 	{
-		send_to_char("Ile chcesz wyp³aciæ?" NL, ch);
+		send_to_char("Ile chcesz wypï¿½aciï¿½?" NL, ch);
 		return;
 	}
 
@@ -2674,8 +2643,8 @@ DEF_DO_FUN( clan_donate )
 		return;
 	}
 
-	ch_printf(ch, "Wp³acasz %ld kredyt%s na konto %s." NL, ammount,
-			NUMBER_SUFF(ammount, "kê", "ki", "ek"), clan->name);
+	ch_printf(ch, "Wpï¿½acasz %ld kredyt%s na konto %s." NL, ammount,
+			NUMBER_SUFF(ammount, "kï¿½", "ki", "ek"), clan->name);
 	clan->funds += ammount;
 	ch->gold -= ammount;
 	save_clan(clan);
@@ -2707,67 +2676,67 @@ DEF_DO_FUN( appoint )
 
 	if (!IS_LEADER(ch))
 	{
-		send_to_char("Tylko lider mo¿e to zrobiæ!" NL, ch);
+		send_to_char("Tylko lider moï¿½e to zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	if (!*argument)
 	{
 		send_to_char(
-				"Sk³adnia: appoint <imiê> stopieñ | pierwszy | drugi | dyplomata" NL,
+				"Skï¿½adnia: appoint <imiï¿½> stopieï¿½ | pierwszy | drugi | dyplomata" NL,
 				ch);
 		return;
 	}
 
 	if (!(member = get_member(clan, arg)))
 	{
-		ch_printf(ch, "Nikt taki nie nale¿y do twoje%s %s." NL,
+		ch_printf(ch, "Nikt taki nie naleï¿½y do twoje%s %s." NL,
 				CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 		return;
 	}
 
 	if (!(victim = get_char_room(ch, arg)) || IS_NPC(victim))
 	{
-		ch_printf(ch, "Aby awansowac cz³onka %s, koniecznie jest spotkanie." NL,
+		ch_printf(ch, "Aby awansowac czï¿½onka %s, koniecznie jest spotkanie." NL,
 				CLANTYPE(clan, 1));
 		return;
 	}
 
 	if (victim == ch)
 	{
-		ch_printf(ch, "Jeste¶ liderem - to najwy¿sze stanowisko w %s." NL,
+		ch_printf(ch, "Jesteï¿½ liderem - to najwyï¿½sze stanowisko w %s." NL,
 				CLANTYPE(clan, 4));
 		return;
 	}
 
 	if (member->status == CLAN_WAITING)
 	{
-		ch_printf(ch, "%s dopiero oczekuje na zostanie cz³onki%s." NL,
-				SEX_STR(victim, "ni±", "em", "em"));
+		ch_printf(ch, "%s dopiero oczekuje na zostanie czï¿½onki%s." NL,
+				SEX_STR(victim, "niï¿½", "em", "em"));
 		return;
 	}
 
 	if (is_name(argument, "rank stopien"))
 	{
 		if (member->status > 9)
-			ch_printf(ch, "%s posiada ju¿ najwy¿szy stopieñ w %s." NL,
+			ch_printf(ch, "%s posiada juï¿½ najwyï¿½szy stopieï¿½ w %s." NL,
 					victim->przypadki[0], CLANTYPE(clan, 4));
 		else
 		{
 			member->status++;
-			act( COL_FORCE, "Zwiêkszasz $N$3 stopieñ w $t.", ch, clan->name,
+			act( COL_FORCE, "Zwiï¿½kszasz $N$3 stopieï¿½ w $t.", ch, clan->name,
 					victim, TO_CHAR);
-			act( COL_FORCE, "$n zwiêksza $N$3 stopieñ w $t.", ch, clan->name,
+			act( COL_FORCE, "$n zwiï¿½ksza $N$3 stopieï¿½ w $t.", ch, clan->name,
 					victim, TO_NOTVICT);
-			act( COL_FORCE, "$n zwiêksza ci stopieñ w $t.", ch, clan->name,
+			act( COL_FORCE, "$n zwiï¿½ksza ci stopieï¿½ w $t.", ch, clan->name,
 					victim, TO_VICT);
 		}
 	}
 	else if (is_name(argument, "first pierwszy"))
 	{
 		if (member->status == CLAN_FIRST)
-			ch_printf(ch, "%s jest ju¿ pierwsz%s twoj%s %s." NL,
-					victim->przypadki[0], SEX_STR(victim, "±", "ym", "ym"),
+			ch_printf(ch, "%s jest juï¿½ pierwsz%s twoj%s %s." NL,
+					victim->przypadki[0], SEX_STR(victim, "ï¿½", "ym", "ym"),
 					CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 		else
 		{
@@ -2775,7 +2744,7 @@ DEF_DO_FUN( appoint )
 					victim, TO_CHAR);
 			act( COL_FORCE, "$n czyni $N$3 pierwszym w $t.", ch, clan->name,
 					victim, TO_NOTVICT);
-			act( COL_FORCE, "$n czyni ciê pierwszym w $t.", ch, clan->name,
+			act( COL_FORCE, "$n czyni ciï¿½ pierwszym w $t.", ch, clan->name,
 					victim, TO_VICT);
 			clan->first = member;
 			member->status = CLAN_FIRST;
@@ -2784,8 +2753,8 @@ DEF_DO_FUN( appoint )
 	else if (is_name(argument, "second drugi"))
 	{
 		if (member->status == CLAN_SECOND)
-			ch_printf(ch, "%s jest ju¿ drug%s twoj%s %s." NL,
-					victim->przypadki[0], SEX_STR(victim, "±", "im", "im"),
+			ch_printf(ch, "%s jest juï¿½ drug%s twoj%s %s." NL,
+					victim->przypadki[0], SEX_STR(victim, "ï¿½", "im", "im"),
 					CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 		else
 		{
@@ -2793,7 +2762,7 @@ DEF_DO_FUN( appoint )
 					TO_CHAR);
 			act( COL_FORCE, "$n czyni $N$3 drugim w $t.", ch, clan->name,
 					victim, TO_NOTVICT);
-			act( COL_FORCE, "$n czyni ciê drugim w $t.", ch, clan->name, victim,
+			act( COL_FORCE, "$n czyni ciï¿½ drugim w $t.", ch, clan->name, victim,
 					TO_VICT);
 			clan->second = member;
 			member->status = CLAN_SECOND;
@@ -2803,7 +2772,7 @@ DEF_DO_FUN( appoint )
 			&& clan->type <= CLAN_SUBORG)
 	{
 		if (member->status == CLAN_DIPLOMAT)
-			ch_printf(ch, "%s jest ju¿ dyplomat± twoj%s %s." NL,
+			ch_printf(ch, "%s jest juï¿½ dyplomatï¿½ twoj%s %s." NL,
 					victim->przypadki[0], CLANSUFFIX(clan, "go", "j"),
 					CLANTYPE(clan, 1));
 		else
@@ -2812,16 +2781,16 @@ DEF_DO_FUN( appoint )
 					|| victim->skill_level[DIPLOMACY_ABILITY] < 90)
 			{
 				send_to_char(
-						"Ta osoba nie jest odpowiednim kandydatem na dyplomatê Twojej organizacji." NL,
+						"Ta osoba nie jest odpowiednim kandydatem na dyplomatï¿½ Twojej organizacji." NL,
 						ch);
 				return;
 			}
 
-			act( COL_FORCE, "Czynisz $N$3 dyplomat± w $t.", ch, clan->name,
+			act( COL_FORCE, "Czynisz $N$3 dyplomatï¿½ w $t.", ch, clan->name,
 					victim, TO_CHAR);
-			act( COL_FORCE, "$n czyni $N$3 dyplomat± w $t.", ch, clan->name,
+			act( COL_FORCE, "$n czyni $N$3 dyplomatï¿½ w $t.", ch, clan->name,
 					victim, TO_NOTVICT);
-			act( COL_FORCE, "$n czyni ciê dyplomat± w $t.", ch, clan->name,
+			act( COL_FORCE, "$n czyni ciï¿½ dyplomatï¿½ w $t.", ch, clan->name,
 					victim, TO_VICT);
 			clan->diplomat = member;
 			member->status = CLAN_DIPLOMAT;
@@ -2849,40 +2818,40 @@ DEF_DO_FUN( demote )
 
 	if (!IS_LEADER(ch))
 	{
-		send_to_char("Tylko lider mo¿e to zrobiæ!" NL, ch);
+		send_to_char("Tylko lider moï¿½e to zrobiï¿½!" NL, ch);
 		return;
 	}
 
 	if (!*argument)
 	{
 		send_to_char(
-				"Sk³adnia: demote <imiê> stopieñ | pierwszy | drugi | dyplomata" NL,
+				"Skï¿½adnia: demote <imiï¿½> stopieï¿½ | pierwszy | drugi | dyplomata" NL,
 				ch);
 		return;
 	}
 
 	if (!(member = get_member(clan, arg)))
 	{
-		ch_printf(ch, "Nikt taki nie nale¿y do twoje%s %s." NL,
+		ch_printf(ch, "Nikt taki nie naleï¿½y do twoje%s %s." NL,
 				CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 		return;
 	}
 
 	if (member->status == CLAN_WAITING)
 	{
-		ch_printf(ch, "%s dopiero oczekuje na przyjêcie." NL, member->name);
+		ch_printf(ch, "%s dopiero oczekuje na przyjï¿½cie." NL, member->name);
 		return;
 	}
 
 	if (is_name(argument, "rank stopien"))
 	{
 		if (member->status <= CLAN_MEMBER)
-			ch_printf(ch, "%s posiada ju¿ najni¿szy stopieñ w %s." NL,
+			ch_printf(ch, "%s posiada juï¿½ najniï¿½szy stopieï¿½ w %s." NL,
 					member->name, CLANTYPE(clan, 4));
 		else
 		{
 			member->status--;
-			act( COL_FORCE, "$T uzyskuje ni¿szy stopieñ w $t.", ch, clan->name,
+			act( COL_FORCE, "$T uzyskuje niï¿½szy stopieï¿½ w $t.", ch, clan->name,
 					member->name, TO_CHAR);
 		}
 	}
@@ -2916,7 +2885,7 @@ DEF_DO_FUN( demote )
 			&& clan->type <= CLAN_SUBORG)
 	{
 		if (member->status != CLAN_DIPLOMAT)
-			ch_printf(ch, "%s nie jest dyplomat± twoj%s %s." NL, member->name,
+			ch_printf(ch, "%s nie jest dyplomatï¿½ twoj%s %s." NL, member->name,
 					CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 		else
 		{
@@ -2936,9 +2905,7 @@ DEF_DO_FUN( capture )
 {
 	CLAN_DATA *clan = CLAN(ch);
 	PLANET_DATA *planet;
-	PLANET_DATA *cPlanet;
 	float support = 0.0;
-	int pCount = 0;
 	char buf[MSL];
 
 	if (!clan || !ch->in_room || !ch->in_room->area)
@@ -2950,34 +2917,32 @@ DEF_DO_FUN( capture )
 	if (!IS_ORG(clan) && !IS_SUBORG(clan))
 	{
 		send_to_char(
-				"Tylko organizacje mog± przejmowaæ w³adze na planetach." NL,
+				"Tylko organizacje mogï¿½ przejmowaï¿½ wï¿½adze na planetach." NL,
 				ch);
 		return;
 	}
 
 	if (!(planet = ch->in_room->area->planet))
 	{
-		send_to_char("Musisz byæ na planecie by móc j± przej±æ." NL, ch);
+		send_to_char("Musisz byï¿½ na planecie by mï¿½c jï¿½ przejï¿½ï¿½." NL, ch);
 		return;
 	}
 
 	if (clan == planet->governed_by)
 	{
-		send_to_char("Ta planeta ju¿ nale¿y do twojej organizacji." NL, ch);
+		send_to_char("Ta planeta juï¿½ naleï¿½y do twojej organizacji." NL, ch);
 		return;
 	}
 
 	if (planet->starsystem)
 	{
-		SHIP_DATA *ship;
 		CLAN_DATA *sClan;
 
-		for (ship = planet->starsystem->first_ship; ship;
-				ship = ship->next_in_starsystem)
+		for (auto* ship : planet->starsystem->ships)
 			if ((sClan = get_clan(ship->owner)) && sClan == planet->governed_by)
 			{
 				send_to_char(
-						"Planeta nie mo¿e byæ przejêta, gdy¿ jest chroniona przez orbituj±cy statek." NL,
+						"Planeta nie moï¿½e byï¿½ przejï¿½ta, gdyï¿½ jest chroniona przez orbitujï¿½cy statek." NL,
 						ch);
 				return;
 			}
@@ -2985,29 +2950,28 @@ DEF_DO_FUN( capture )
 
 	if (IS_SET(planet->flags, PLANET_NOCAPTURE))
 	{
-		send_to_char("Ta planeta nie mo¿e byæ przejêta." NL, ch);
+		send_to_char("Ta planeta nie moï¿½e byï¿½ przejï¿½ta." NL, ch);
 		return;
 	}
 
 	if (planet->pop_support > 0)
 	{
 		send_to_char(
-				"Mieszkañcy planety nie zgadzaj± siê na t± zmianê w tej chwili." NL,
+				"Mieszkaï¿½cy planety nie zgadzajï¿½ siï¿½ na tï¿½ zmianï¿½ w tej chwili." NL,
 				ch);
 		return;
 	}
 
-	FOREACH( cPlanet, first_planet )
+	for( auto* cPlanet : planet_list )
 		if (clan == cPlanet->governed_by)
 		{
-			pCount++;
 			support += cPlanet->pop_support;
 		}
 
 	if (support < 0)
 	{
-		send_to_char("Poparcie dla twojej organizacji jest niewystarczaj±ce!" NL
-		"Spróbuj polepszyæ lojalno¶æ na planetach, które ju¿ kontrolujesz." NL,
+		send_to_char("Poparcie dla twojej organizacji jest niewystarczajï¿½ce!" NL
+		"Sprï¿½buj polepszyï¿½ lojalnoï¿½ï¿½ na planetach, ktï¿½re juï¿½ kontrolujesz." NL,
 				ch);
 		return;
 	}
@@ -3015,7 +2979,7 @@ DEF_DO_FUN( capture )
 	planet->governed_by = clan;
 	planet->pop_support = 50;
 
-	sprintf(buf, "%s przejmuje kontrolê nad planet± %s!", clan->name,
+	sprintf(buf, "%s przejmuje kontrolï¿½ nad planetï¿½ %s!", clan->name,
 			planet->name);
 	echo_to_all(buf, 0);
 	save_planet(planet);
@@ -3038,7 +3002,7 @@ DEF_DO_FUN( empower )
 
 	if (!IS_LEADER(ch))
 	{
-		send_to_char("Tylko lider mo¿e tego dokonaæ." NL, ch);
+		send_to_char("Tylko lider moï¿½e tego dokonaï¿½." NL, ch);
 		return;
 	}
 
@@ -3047,13 +3011,13 @@ DEF_DO_FUN( empower )
 
 	if (!*arg)
 	{
-		send_to_char("Kogo (i do czego) chcesz upowa¿niæ?" NL, ch);
+		send_to_char("Kogo (i do czego) chcesz upowaï¿½niï¿½?" NL, ch);
 		return;
 	}
 
 	if (!str_cmp(arg, "list"))
 	{
-		send_to_char("Obecnie mo¿esz upowa¿niaæ do:" NL NL
+		send_to_char("Obecnie moï¿½esz upowaï¿½niaï¿½ do:" NL NL
 		" withdraw induct outcast" NL
 		" clear", ch);
 		if ( IS_ORG( clan ) || IS_SUBORG(clan))
@@ -3063,7 +3027,7 @@ DEF_DO_FUN( empower )
 
 	if (!(member = get_member(clan, arg)))
 	{
-		ch_printf(ch, "Ta osoba nie nale¿y do twoje%s %s." NL,
+		ch_printf(ch, "Ta osoba nie naleï¿½y do twoje%s %s." NL,
 				CLANSUFFIX(clan, "go", "j"), CLANTYPE(clan, 1));
 		return;
 	}
@@ -3071,7 +3035,7 @@ DEF_DO_FUN( empower )
 	if (!str_cmp(ch->name, member->name))
 	{
 		ch_printf(ch,
-				"Po co? Przecie¿ i tak bêdziesz mia³%s wszystkie uprawnienia." NL,
+				"Po co? Przecieï¿½ i tak bï¿½dziesz miaï¿½%s wszystkie uprawnienia." NL,
 				SEX_SUFFIX__AO(ch));
 		return;
 	}
@@ -3091,19 +3055,19 @@ DEF_DO_FUN( empower )
 
 	if (victim == ch)
 	{
-		send_to_char("Po co? Przecie¿ masz wszystkie uprawnienia." NL, ch);
+		send_to_char("Po co? Przecieï¿½ masz wszystkie uprawnienia." NL, ch);
 		return;
 	}
 
 	if (!*arg2 || !str_cmp(arg2, "list"))
 	{
-		ch_printf(ch, "%s jest upowa¿nion%s do: %s." NL, victim->przypadki[0],
+		ch_printf(ch, "%s jest upowaï¿½nion%s do: %s." NL, victim->przypadki[0],
 				SEX_SUFFIX_YAE(victim), member->bestowments);
 		return;
 	}
 	else if (is_name(arg2, member->bestowments))
 	{
-		ch_printf(ch, "%s jest ju¿ upowa¿nion%s do: %s." NL,
+		ch_printf(ch, "%s jest juï¿½ upowaï¿½nion%s do: %s." NL,
 				victim->przypadki[0], SEX_SUFFIX_YAE(victim), arg2);
 		return;
 	}
@@ -3111,18 +3075,18 @@ DEF_DO_FUN( empower )
 	{
 		sprintf(buf, "%s %s", member->bestowments, "pilot");
 		STRDUP(member->bestowments, buf);
-		ch_printf(victim, "%s upowa¿nia ciê do latania statkami organiacji." NL,
+		ch_printf(victim, "%s upowaï¿½nia ciï¿½ do latania statkami organiacji." NL,
 				PERS(ch, victim, 0));
-		send_to_char("Ok. Upowa¿aniasz do latania statkami organizacji." NL,
+		send_to_char("Ok. Upowaï¿½aniasz do latania statkami organizacji." NL,
 				ch);
 	}
 	else if (!str_cmp(arg2, "withdraw"))
 	{
 		sprintf(buf, "%s %s", member->bestowments, "withdraw");
 		STRDUP(member->bestowments, buf);
-		ch_printf(victim, "%s upowa¿nia ciê do wyp³acania funduszy %s." NL,
+		ch_printf(victim, "%s upowaï¿½nia ciï¿½ do wypï¿½acania funduszy %s." NL,
 				PERS(ch, victim, 0), CLANTYPE(clan, 1));
-		ch_printf(ch, "Ok. Upowa¿aniasz %s do wyp³acania funduszy %s." NL,
+		ch_printf(ch, "Ok. Upowaï¿½aniasz %s do wypï¿½acania funduszy %s." NL,
 				victim->przypadki[1], CLANTYPE(clan, 1));
 	}
 	else if (!str_cmp(arg2, "clanbuyship")
@@ -3131,10 +3095,10 @@ DEF_DO_FUN( empower )
 		sprintf(buf, "%s %s", member->bestowments, "clanbuyship");
 		STRDUP(member->bestowments, buf);
 		ch_printf(victim,
-				"%s przydziela ci prawo do kupowania statków dla organizacji." NL,
+				"%s przydziela ci prawo do kupowania statkï¿½w dla organizacji." NL,
 				PERS(ch, victim, 0));
 		send_to_char(
-				"Ok. Upowa¿aniasz do kupowania statków na rzecz organizacji." NL,
+				"Ok. Upowaï¿½aniasz do kupowania statkï¿½w na rzecz organizacji." NL,
 				ch);
 	}
 	else if (!str_cmp(arg2, "clansellship")
@@ -3143,10 +3107,10 @@ DEF_DO_FUN( empower )
 		sprintf(buf, "%s %s", member->bestowments, "clansellship");
 		STRDUP(member->bestowments, buf);
 		ch_printf(victim,
-				"%s przydziela ci prawo do sprzedawania statków nale¿±cych do organizacji." NL,
+				"%s przydziela ci prawo do sprzedawania statkï¿½w naleï¿½ï¿½cych do organizacji." NL,
 				PERS(ch, victim, 0));
 		send_to_char(
-				"Ok. Upowa¿aniasz do sprzedawania statków nale¿±cych do organizacji." NL,
+				"Ok. Upowaï¿½aniasz do sprzedawania statkï¿½w naleï¿½ï¿½cych do organizacji." NL,
 				ch);
 	}
 	else if (!str_cmp(arg2, "induct"))
@@ -3154,28 +3118,28 @@ DEF_DO_FUN( empower )
 		sprintf(buf, "%s %s", member->bestowments, "induct");
 		STRDUP(member->bestowments, buf);
 		ch_printf(victim,
-				"%s upowa¿nia ciê do przyjmowania nowych cz³onków w szeregi %s." NL,
+				"%s upowaï¿½nia ciï¿½ do przyjmowania nowych czï¿½onkï¿½w w szeregi %s." NL,
 				PERS(ch, victim, 0), CLANTYPE(clan, 2));
-		send_to_char("Ok. Upowa¿aniasz do przyjmowania nowych cz³onków." NL,
+		send_to_char("Ok. Upowaï¿½aniasz do przyjmowania nowych czï¿½onkï¿½w." NL,
 				ch);
 	}
 	else if (!str_cmp(arg2, "outcast"))
 	{
 		sprintf(buf, "%s %s", member->bestowments, "outcast");
 		STRDUP(member->bestowments, buf);
-		ch_printf(victim, "%s upowa¿nia ciê do usuwani± cz³onków z %s." NL,
+		ch_printf(victim, "%s upowaï¿½nia ciï¿½ do usuwaniï¿½ czï¿½onkï¿½w z %s." NL,
 				PERS(ch, victim, 0), CLANTYPE(clan, 2));
-		send_to_char("Ok. Upowa¿aniasz do usuwania cz³onków." NL, ch);
+		send_to_char("Ok. Upowaï¿½aniasz do usuwania czï¿½onkï¿½w." NL, ch);
 	}
 	else if (!str_cmp(arg2, "loan") && (IS_ORG( clan ) || IS_SUBORG(clan)))
 	{
 		sprintf(buf, "%s %s", member->bestowments, "loan");
 		STRDUP(member->bestowments, buf);
 		ch_printf(victim,
-				"%s upowa¿nia ciê do pobierania po¿yczek na rzecz organizacji." NL,
+				"%s upowaï¿½nia ciï¿½ do pobierania poï¿½yczek na rzecz organizacji." NL,
 				PERS(ch, victim, 0));
 		send_to_char(
-				"Ok. Upowa¿aniasz do brania po¿yczek na rzecz organizacji." NL,
+				"Ok. Upowaï¿½aniasz do brania poï¿½yczek na rzecz organizacji." NL,
 				ch);
 	}
 	else
@@ -3204,14 +3168,14 @@ void clan_loan(CHAR_DATA *ch, char *argument)
 
 	if (!clan || (!IS_ORG(clan) && !IS_SUBORG(clan)))
 	{
-		send_to_char("Nie zajmujesz siê ¿adn± organizacj± w tej chwili." NL,
+		send_to_char("Nie zajmujesz siï¿½ ï¿½adnï¿½ organizacjï¿½ w tej chwili." NL,
 				ch);
 		return;
 	}
 
 	if (!clan_bestow(ch, "loan"))
 	{
-		send_to_char("Nie masz odpowiednich uprawnieñ." NL, ch);
+		send_to_char("Nie masz odpowiednich uprawnieï¿½." NL, ch);
 		return;
 	}
 
@@ -3220,7 +3184,7 @@ void clan_loan(CHAR_DATA *ch, char *argument)
 	if (!*arg)
 	{
 		send_to_char(
-				"Chcesz wzi±æ po¿yczkê (borrow), czy j± sp³aciæ (repay)?" NL,
+				"Chcesz wziï¿½ï¿½ poï¿½yczkï¿½ (borrow), czy jï¿½ spï¿½aciï¿½ (repay)?" NL,
 				ch);
 		return;
 	}
@@ -3231,14 +3195,14 @@ void clan_loan(CHAR_DATA *ch, char *argument)
 
 		if ((ammount = atoi(argument)) < CLAN_MINLOAN)
 		{
-			ch_printf(ch, "Nie op³aca siê braæ mniejszej po¿yczki ni¿ %ld." NL,
+			ch_printf(ch, "Nie opï¿½aca siï¿½ braï¿½ mniejszej poï¿½yczki niï¿½ %ld." NL,
 					CLAN_MINLOAN);
 			return;
 		}
 
 		if ((ammount + clan->loan) > CLAN_MAXLOAN(clan))
 		{
-			ch_printf(ch, "Nie mo¿esz wzi±æ wiêkszej po¿yczki ni¿ %ld." NL,
+			ch_printf(ch, "Nie moï¿½esz wziï¿½ï¿½ wiï¿½kszej poï¿½yczki niï¿½ %ld." NL,
 					CLAN_MAXLOAN(clan));
 			return;
 		}
@@ -3248,7 +3212,7 @@ void clan_loan(CHAR_DATA *ch, char *argument)
 		tms = localtime(&current_time);
 		tms->tm_mday += CLAN_LOANTIME(clan);
 		clan->repay_date = mktime(tms);
-		ch_printf(ch, "Bierzesz po¿yczkê wysoko¶ci: %ld." NL, ammount);
+		ch_printf(ch, "Bierzesz poï¿½yczkï¿½ wysokoï¿½ci: %ld." NL, ammount);
 
 		save_clan(clan);
 	}
@@ -3257,14 +3221,14 @@ void clan_loan(CHAR_DATA *ch, char *argument)
 		if (clan->loan > clan->funds)
 		{
 			ch_printf(ch,
-					"Organizacja nie posiada wystarczaj±cych funduszy aby sp³aciæ po¿yczkê." NL);
+					"Organizacja nie posiada wystarczajï¿½cych funduszy aby spï¿½aciï¿½ poï¿½yczkï¿½." NL);
 			return;
 		}
 
 		clan->funds -= clan->loan;
 		clan->loan = 0;
 		clan->repay_date = 0;
-		send_to_char("Sp³acasz po¿yczkê." NL, ch);
+		send_to_char("Spï¿½acasz poï¿½yczkï¿½." NL, ch);
 
 		save_clan(clan);
 	}
