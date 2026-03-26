@@ -793,9 +793,13 @@ int swsnprintf(char *str, size_t size, const char *format, ...)
 
 char *swstrncpy(char *dest, const char *src, size_t n)
 {
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-truncation"
+#endif
     return strncpy(dest, src, n);
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
 }
 

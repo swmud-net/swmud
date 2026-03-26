@@ -2023,7 +2023,6 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 	if (victim->hit <= 0 && !IS_NPC(victim))
 	{
 		OBJ_DATA *obj;
-		int cnt = 0;
 
 		REMOVE_BIT(victim->act, PLR_ATTACKER);
 
@@ -2055,13 +2054,11 @@ ch_ret damage(CHAR_DATA *ch, CHAR_DATA *victim, int dam, int dt)
 			{
 				if ((obj->pIndexData->progtypes & DROP_PROG) && obj->count > 1)
 				{
-					++cnt;
 					separate_obj(obj);
 					obj_from_char(obj);
 				}
 				else
 				{
-					cnt += obj->count;
 					obj_from_char(obj);
 				}
 				act( COL_ACTION, "$n odrzuca $p$3.", victim, obj, NULL,

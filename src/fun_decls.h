@@ -1622,7 +1622,7 @@ bool	saves_spell_staff	args( ( int level, CHAR_DATA *victim ) );
 ch_ret	obj_cast_spell		args( ( int sn, int level, CHAR_DATA *ch, CHAR_DATA *victim, OBJ_DATA *obj ) );
 int	dice_parse		args( (CHAR_DATA *ch, int level, char *exp) );
 SK *	get_skilltype		args( ( int sn ) );
-void	fevent_trigger		args( ( CHAR_DATA *ch, fe_trigger trigger, ... ) );
+void	fevent_trigger		args( ( CHAR_DATA *ch, int trigger, ... ) );
 void	drawlots_fevents	args( ( CHAR_DATA *ch ) );
 
 /* olc.c ??? */

@@ -831,7 +831,7 @@ DEF_DO_FUN( gouge )
 DEF_DO_FUN( detrap )
 {
 	char arg[MAX_INPUT_LENGTH];
-	OBJ_DATA *obj;
+	OBJ_DATA *obj = nullptr;
 	OBJ_DATA *trap;
 	int percent;
 	bool found;
@@ -868,10 +868,11 @@ DEF_DO_FUN( detrap )
 			its_not_here_msg(ch);
 			return;
 		}
-		for (auto* obj : ch->in_room->contents)
+		for (auto* o : ch->in_room->contents)
 		{
-			if (can_see_obj(ch, obj) && nifty_is_name(arg, obj->name))
+			if (can_see_obj(ch, o) && nifty_is_name(arg, o->name))
 			{
+				obj = o;
 				found = true;
 				break;
 			}
@@ -1105,7 +1106,7 @@ DEF_DO_FUN( dig )
 DEF_DO_FUN( search )
 {
 	char arg[MAX_INPUT_LENGTH];
-	OBJ_DATA *obj;
+	OBJ_DATA *obj = nullptr;
 	OBJ_DATA *container;
 	int percent, door;
 	bool found;
@@ -1188,7 +1189,7 @@ DEF_DO_FUN( search )
 
 	found = false;
 
-	if ((!search_list || search_list->empty()) && door == -1 || IS_NPC(ch))
+	if (((!search_list || search_list->empty()) && door == -1) || IS_NPC(ch))
 	{
 		send_to_char("Nie uda�o ci si� niczego znale��." NL, ch);
 		learn_from_failure(ch, gsn_search);
@@ -1218,11 +1219,12 @@ DEF_DO_FUN( search )
 	}
 	else
 	{
-		for (auto* obj : *search_list)
+		for (auto* o : *search_list)
 		{
-			if (IS_OBJ_STAT(obj, ITEM_HIDDEN)
+			if (IS_OBJ_STAT(o, ITEM_HIDDEN)
 					&& percent < ch->pcdata->learned[gsn_search])
 			{
+				obj = o;
 				found = true;
 				break;
 			}
@@ -2704,8 +2706,8 @@ bool check_dodge(CHAR_DATA *ch, CHAR_DATA *victim)
 DEF_DO_FUN( poison_weapon )
 {
 	OBJ_DATA *obj;
-	OBJ_DATA *pobj;
-	OBJ_DATA *wobj;
+	OBJ_DATA *pobj = nullptr;
+	OBJ_DATA *wobj = nullptr;
 	char arg[ MAX_INPUT_LENGTH];
 	int percent;
 
@@ -2755,10 +2757,13 @@ DEF_DO_FUN( poison_weapon )
 		return;
 	}
 	/* Now we have a valid weapon...check to see if we have the powder. */
-	for (auto* pobj : ch->carrying)
+	for (auto* po : ch->carrying)
 	{
-		if (pobj->pIndexData->vnum == OBJ_VNUM_BLACK_POWDER)
+		if (po->pIndexData->vnum == OBJ_VNUM_BLACK_POWDER)
+		{
+			pobj = po;
 			break;
+		}
 	}
 	if (!pobj)
 	{
@@ -2766,11 +2771,14 @@ DEF_DO_FUN( poison_weapon )
 		return;
 	}
 	/* Okay, we have the powder...do we have water? */
-	for (auto* wobj : ch->carrying)
+	for (auto* wo : ch->carrying)
 	{
-		if (wobj->item_type == ITEM_DRINK_CON && wobj->value[1] > 0
-				&& wobj->value[2] == 0)
+		if (wo->item_type == ITEM_DRINK_CON && wo->value[1] > 0
+				&& wo->value[2] == 0)
+		{
+			wobj = wo;
 			break;
+		}
 	}
 	if (!wobj)
 	{

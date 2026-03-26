@@ -2353,25 +2353,25 @@ void update_informs()
 {
 	DESCRIPTOR_DATA *d = 0;
 	CHAR_DATA *killer = 0;
-	INFORM_DATA *inf;
+	INFORM_DATA *inf = nullptr;
 	char buf[MSL];
 	bool found = false;
 
-	for (auto* inf : inform_list)
+	for (auto* i : inform_list)
 	{
-		if (!inf->reported)
+		if (!i->reported)
 		{
 			struct tm *start;
 
 			/* Tutaj sprawdzenie przeterminowania */
-			start = localtime(&inf->time);
+			start = localtime(&i->time);
 			start->tm_hour += 24;
 			start = update_time(start);
 
 			if (mktime(start) < current_time)
 			{
-				inform_list.remove(inf);
-				free_inform(inf);
+				inform_list.remove(i);
+				free_inform(i);
 				save_informs();
 				return;
 			}
@@ -2386,9 +2386,10 @@ void update_informs()
 				if (!CH(d) || IS_NPC(CH( d )))
 					continue;
 
-				if (!str_cmp( CH( d )->name, inf->attacker))
+				if (!str_cmp( CH( d )->name, i->attacker))
 				{
 					killer = CH(d);
+					inf = i;
 					found = true;
 					break;
 				}
@@ -3082,7 +3083,7 @@ void exec_command_in_loop(CHAR_DATA *owner, ROOM_INDEX_DATA *room, char *pSource
 
 void update_for()
 {
-	CHAR_DATA *owner;
+	CHAR_DATA *owner = nullptr;
 	CHAR_DATA *victim;
 	bool found = false;
 	ROOM_INDEX_DATA *room;
@@ -3094,6 +3095,7 @@ void update_for()
 	for (auto* ch : char_list)
 		if (ch == for_loop.fOwner)
 		{
+			owner = ch;
 			found = true;
 			break;
 		}

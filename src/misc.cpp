@@ -1792,7 +1792,7 @@ DEF_DO_FUN( fill )
 DEF_DO_FUN( drink )
 {
 	char arg[MAX_INPUT_LENGTH];
-	OBJ_DATA *obj;
+	OBJ_DATA *obj = nullptr;
 	int amount;
 	int liquid;
 
@@ -1803,9 +1803,12 @@ DEF_DO_FUN( drink )
 
 	if (arg[0] == '\0')
 	{
-		for (auto* obj : ch->in_room->contents)
-			if ((obj->item_type == ITEM_FOUNTAIN))
+		for (auto* o : ch->in_room->contents)
+			if (o->item_type == ITEM_FOUNTAIN)
+			{
+				obj = o;
 				break;
+			}
 
 		if (!obj)
 		{
@@ -2967,7 +2970,7 @@ bool check_cost( CHAR_DATA *ch, CHAR_DATA *mob, int money, int cost, int atr )
 DEF_DO_FUN( train )
 {
 	char arg[MAX_INPUT_LENGTH];
-	CHAR_DATA *mob;
+	CHAR_DATA *mob = nullptr;
 	bool tfound = false;
 	bool successful = false;
 #if defined( ARMAGEDDON )
@@ -3028,9 +3031,10 @@ DEF_DO_FUN( train )
 			return;
 		}
 
-		for (auto* mob : ch->in_room->people)
-			if ( IS_NPC(mob) && IS_SET(mob->act, ACT_TRAIN) && can_see(ch, mob))
+		for (auto* m : ch->in_room->people)
+			if ( IS_NPC(m) && IS_SET(m->act, ACT_TRAIN) && can_see(ch, m))
 			{
+				mob = m;
 				tfound = true;
 				break;
 			}

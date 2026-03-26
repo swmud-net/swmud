@@ -1261,7 +1261,7 @@ void quest_stop( CHAR_DATA * owner, int type )
 DEF_DO_FUN( quest )
 {
 	QUEST_DATA *	quest;
-	QUEST_INDEX_DATA *	pQuest;
+	QUEST_INDEX_DATA *	pQuest = nullptr;
 	char		arg [MAX_INPUT_LENGTH];
 
 	if( IS_NPC( ch ) )
@@ -1386,23 +1386,23 @@ DEF_DO_FUN( quest )
 				   "                              Spis Quest�w:" NL FB_WHITE
 						   " Nazwa                            Autor             Poziomy" EOL );
 
-		for( auto* pQuest : quest_index_list )
+		for( auto* pQ : quest_index_list )
 		{
 
-			if( IS_SET( pQuest->flags, QUEST_HIDDEN )
+			if( IS_SET( pQ->flags, QUEST_HIDDEN )
 						 &&  get_trust( ch ) < LEVEL_QUESTSEE )
 				continue;
 
 			ch_printf( ch, " %-32s" PLAIN " %-15s" PLAIN "   %3d-%-3d",
-					   pQuest->name,
-					   pQuest->author,
-					   pQuest->min_lev,
-					   pQuest->max_lev  );
+					   pQ->name,
+					   pQ->author,
+					   pQ->min_lev,
+					   pQ->max_lev  );
 
 			if(	IS_IMMORTAL( ch ) )
 				ch_printf( ch,
 						   "    " FB_WHITE "{" PLAIN " %5d" FB_WHITE "}" EOL,
-						   pQuest->quest_id );
+						   pQ->quest_id );
 			else
 				ch_printf( ch, EOL );
 		}
@@ -1422,24 +1422,24 @@ DEF_DO_FUN( quest )
 			return;
 		}
 
-		for( auto* pQuest : quest_index_list )
+		for( auto* pQ : quest_index_list )
 		{
 			if( get_trust(ch) < LEVEL_QUESTSEE )
-				if((IS_SET( pQuest->flags, QUEST_NF_COMBAT		)
+				if((IS_SET( pQ->flags, QUEST_NF_COMBAT		)
 								&& ch->main_ability == COMBAT_ABILITY		)
-								|| (IS_SET( pQuest->flags, QUEST_NF_PILOT   	)
+								|| (IS_SET( pQ->flags, QUEST_NF_PILOT   	)
 								&& ch->main_ability == PILOTING_ABILITY		)
-								|| (IS_SET( pQuest->flags, QUEST_NF_ENGINEER	)
+								|| (IS_SET( pQ->flags, QUEST_NF_ENGINEER	)
 								&& ch->main_ability == ENGINEERING_ABILITY	)
-								|| (IS_SET( pQuest->flags, QUEST_NF_BOUNTY   	)
+								|| (IS_SET( pQ->flags, QUEST_NF_BOUNTY   	)
 								&& ch->main_ability == HUNTING_ABILITY 		)
-								|| (IS_SET( pQuest->flags, QUEST_NF_SMUGGLER 	)
+								|| (IS_SET( pQ->flags, QUEST_NF_SMUGGLER 	)
 								&& ch->main_ability == SMUGGLING_ABILITY 	)
-								|| (IS_SET( pQuest->flags, QUEST_NF_DIPLOMAT 	)
+								|| (IS_SET( pQ->flags, QUEST_NF_DIPLOMAT 	)
 								&& ch->main_ability == DIPLOMACY_ABILITY 	)
-								|| (IS_SET( pQuest->flags, QUEST_NF_LEADER   	)
+								|| (IS_SET( pQ->flags, QUEST_NF_LEADER   	)
 								&& ch->main_ability == LEADERSHIP_ABILITY 	)
-								|| (IS_SET( pQuest->flags, QUEST_NF_FORCEUSER	)
+								|| (IS_SET( pQ->flags, QUEST_NF_FORCEUSER	)
 								&& ch->main_ability == FORCE_ABILITY 		) )
 					continue;
 
@@ -1447,24 +1447,26 @@ DEF_DO_FUN( quest )
 			{
 
 				if ( IS_NPC( q )
-								 && pQuest->questor == q->pIndexData->vnum )
+								 && pQ->questor == q->pIndexData->vnum )
 				{
-					if( !str_cmp(pQuest->author, ch->name) )
+					if( !str_cmp(pQ->author, ch->name) )
 					{
-						if( IS_SET( pQuest->flags, QUEST_PROTOTYPE )
-											  || !done_that_quest( ch, pQuest->quest_id ) )
+						if( IS_SET( pQ->flags, QUEST_PROTOTYPE )
+											  || !done_that_quest( ch, pQ->quest_id ) )
 						{
+							pQuest = pQ;
 							questor = q;
 							found = true;
 							break;
 						}
 					}
 					else
-						if( !done_that_quest( ch, pQuest->quest_id )
-											   && ( !IS_SET( pQuest->flags, QUEST_PROTOTYPE )
+						if( !done_that_quest( ch, pQ->quest_id )
+											   && ( !IS_SET( pQ->flags, QUEST_PROTOTYPE )
 													   || ( get_trust( ch ) >= LEVEL_QUESTSEE
 															   && IS_SET( ch->act, PLR_HOLYLIGHT ) ) ) )
 					{
+						pQuest = pQ;
 						questor = q;
 						found = true;
 						break;

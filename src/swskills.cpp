@@ -5759,7 +5759,7 @@ DEF_DO_FUN( makehackdev )
 DEF_DO_FUN( hackshiplock )
 {
 	SHIP_DATA *ship;
-	OBJ_DATA *obj;
+	OBJ_DATA *obj = nullptr;
 	bool found = false;
 
 	if (!*argument)
@@ -5800,9 +5800,10 @@ DEF_DO_FUN( hackshiplock )
 			return;
 		}
 
-		for (auto* obj : std::ranges::reverse_view(ch->carrying))
-			if (obj->item_type == ITEM_SHIPHCKDEV && obj->wear_loc == WEAR_HOLD)
+		for (auto* carried : std::ranges::reverse_view(ch->carrying))
+			if (carried->item_type == ITEM_SHIPHCKDEV && carried->wear_loc == WEAR_HOLD)
 			{
+				obj = carried;
 				found = true;
 				break;
 			}

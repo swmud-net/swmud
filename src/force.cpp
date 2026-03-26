@@ -4236,8 +4236,9 @@ ch_ret spell_black_lightning(int sn, int level, CHAR_DATA *ch, void *vo)
 
 /*! Trog: sprawdzamy czy nastapilo zdarzenie u gracza
  * i jesli to bylo ostatnie, dajemu graczowi moc */
-void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
+void fevent_trigger(CHAR_DATA *ch, int trigger_arg, ...)
 {
+	fe_trigger trigger = static_cast<fe_trigger>(trigger_arg);
 	bool found = false;
 	va_list args;
 
@@ -4252,7 +4253,7 @@ void fevent_trigger(CHAR_DATA *ch, fe_trigger trigger, ...)
 		if (fevent->trigger != trigger)
 			continue;
 
-		va_start(args, trigger);
+		va_start(args, trigger_arg);
 
 		switch (fevent->trigger)
 		{

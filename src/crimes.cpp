@@ -58,7 +58,7 @@ DEF_DO_FUN( corrupt )
 	CHAR_DATA		* victim;
 	int				price;
 	char			buf[MSL];
-	static const SPEC_FUN* spec_name = spec_lookup("spec_police_fine");
+	static SPEC_FUN* const spec_name = spec_lookup("spec_police_fine");
 
 	if (!spec_name)
 	{
@@ -133,7 +133,7 @@ DEF_DO_FUN( bail )
 		return;
 	}
 
-	if( ( ( victim = get_char_world(ch, arg1) ) == NULL ))
+	if( ( victim = get_char_world(ch, arg1) ) == NULL )
 	{
 		send_to_char("Nie ma nikogo takiego w grze." NL, ch);
 		return;
@@ -403,7 +403,7 @@ DEF_DO_FUN( wanted )
 			capitalize(argument) );
 			return;
 		}
-		else if( ( ( victim = get_char_world(ch, argument) ) == NULL ))
+		else if( ( victim = get_char_world(ch, argument) ) == NULL )
 		{
 			send_to_char("Nie ma nikogo takiego w grze." NL, ch);
 			return;

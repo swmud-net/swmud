@@ -3170,7 +3170,7 @@ DEF_DO_FUN( compare )
 	char arg1[MAX_INPUT_LENGTH];
 	char arg2[MAX_INPUT_LENGTH];
 	OBJ_DATA *obj1;
-	OBJ_DATA *obj2;
+	OBJ_DATA *obj2 = nullptr;
 	int value1;
 	int value2;
 	const char *msg;
@@ -3191,11 +3191,14 @@ DEF_DO_FUN( compare )
 
 	if (arg2[0] == '\0')
 	{
-		for (auto* obj2 : ch->carrying)
+		for (auto* o : ch->carrying)
 		{
-			if (obj2->wear_loc != WEAR_NONE && can_see_obj(ch, obj2) && obj1->item_type == obj2->item_type
-					&& (obj1->wear_flags & obj2->wear_flags & ~ITEM_TAKE) != 0)
+			if (o->wear_loc != WEAR_NONE && can_see_obj(ch, o) && obj1->item_type == o->item_type
+					&& (obj1->wear_flags & o->wear_flags & ~ITEM_TAKE) != 0)
+			{
+				obj2 = o;
 				break;
+			}
 		}
 
 		if (!obj2)
@@ -3476,7 +3479,7 @@ DEF_DO_FUN( practice )
 	}
 	else
 	{
-		CHAR_DATA *mob;
+		CHAR_DATA *mob = nullptr;
 		int adept;
 		bool can_prac = true;
 
@@ -3486,9 +3489,12 @@ DEF_DO_FUN( practice )
 			return;
 		}
 
-		for (auto* mob : ch->in_room->people)
-			if (IS_NPC(mob) && IS_SET(mob->act, ACT_PRACTICE))
+		for (auto* m : ch->in_room->people)
+			if (IS_NPC(m) && IS_SET(m->act, ACT_PRACTICE))
+			{
+				mob = m;
 				break;
+			}
 
 		if (!mob)
 		{
@@ -3939,7 +3945,7 @@ DEF_DO_FUN( channels )
 		else if (!str_cmp(arg + 1, "pray"))
 			bit = CHANNEL_PRAY;
 		else if (!str_cmp(arg + 1, "olctalk"))
-			bit = CHANNEL_OLCTALK;
+			bit = (int) CHANNEL_OLCTALK;
 		else if (!str_cmp(arg + 1, "codertalk"))
 			bit = CHANNEL_CODERTALK; //Trog
 		else if (!str_cmp(arg + 1, "monitor"))
@@ -4446,7 +4452,7 @@ DEF_DO_FUN( whois )
 	strcat(buf, "0.");
 	strcat(buf, argument);
 
-	if (((victim = get_char_world(ch, buf)) == NULL))
+	if ((victim = get_char_world(ch, buf)) == NULL)
 	{
 		send_to_char("Nie ma takiego gracza w grze." NL, ch);
 		return;

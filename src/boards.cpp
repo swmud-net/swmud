@@ -640,14 +640,17 @@ NOTE_DATA *get_note( CHAR_DATA *ch, BOARD_DATA *board, int anum )
 	if( !ch || !board || anum < 1 )
 		return NULL;
 
-	for ( auto* pnote : board->notes )
+	for ( auto* p : board->notes )
 	{
-		if( is_note_to( ch, pnote )
-		||  is_note_sender( ch, pnote ) )
+		if( is_note_to( ch, p )
+		||  is_note_sender( ch, p ) )
 			vnum++;
 
 		if( vnum == anum )
+		{
+			pnote = p;
 			break;
+		}
 	}
 
 	return pnote;
@@ -657,7 +660,7 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 {
 	char 				buf		[MAX_STRING_LENGTH];
 	char 				arg		[MAX_INPUT_LENGTH];
-	NOTE_DATA *			pnote;
+	NOTE_DATA *			pnote = nullptr;
 	BOARD_DATA *		board;
 	int 				vnum;
 	int 				anum;
@@ -826,19 +829,21 @@ void do_note( CHAR_DATA *ch, char *arg_passed, bool IS_MAIL )
 		if ( arg_passed[0] == '\0' || !str_cmp( arg_passed, "next" ) )
 		{
 			vnum    = 0;
-			for ( auto* pnote : board->notes )
+			pnote   = nullptr;
+			for ( auto* p : board->notes )
 			{
-				if ( is_note_to( ch, pnote )
-								 && !is_note_sender( ch, pnote )
-								 && ch->pcdata->last_note < pnote->stamp )
+				if ( is_note_to( ch, p )
+								 && !is_note_sender( ch, p )
+								 && ch->pcdata->last_note < p->stamp )
 				{
+					pnote = p;
 					vnum++;
 					break;
 				}
 				else
 				{
-					if( is_note_to( ch, pnote )
-									   || is_note_sender( ch, pnote ))
+					if( is_note_to( ch, p )
+									   || is_note_sender( ch, p ))
 						vnum++;
 				}
 			}
@@ -1710,7 +1715,7 @@ DEF_DO_FUN( makeboard )
 
 DEF_DO_FUN( bset )
 {
-	BOARD_DATA *board;
+	BOARD_DATA *board = nullptr;
 	bool found;
 	char arg1[MAX_INPUT_LENGTH];
 	char arg2[MAX_INPUT_LENGTH];
@@ -1731,9 +1736,10 @@ DEF_DO_FUN( bset )
 
 	value = atoi( argument );
 	found = false;
-	for ( auto* board : board_list )
-		if ( !str_cmp( arg1, board->note_file ) )
+	for ( auto* b : board_list )
+		if ( !str_cmp( arg1, b->note_file ) )
 	{
+		board = b;
 		found = true;
 		break;
 	}
@@ -1906,7 +1912,7 @@ DEF_DO_FUN( bset )
 
 DEF_DO_FUN( bstat )
 {
-	BOARD_DATA *board;
+	BOARD_DATA *board = nullptr;
 	bool found;
 	char arg[MAX_INPUT_LENGTH];
 
@@ -1919,9 +1925,10 @@ DEF_DO_FUN( bstat )
 	}
 
 	found = false;
-	for ( auto* board : board_list )
-		if ( !str_cmp( arg, board->note_file ) )
+	for ( auto* b : board_list )
+		if ( !str_cmp( arg, b->note_file ) )
 	{
+		board = b;
 		found = true;
 		break;
 	}

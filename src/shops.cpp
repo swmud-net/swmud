@@ -1141,7 +1141,6 @@ DEF_DO_FUN( list )
 	char       	arg2 	[ MAX_INPUT_LENGTH ];
 	CHAR_DATA *	keeper;
 	int 		cost;
-	int 		oref = 0;
 	bool 		found;
 
 	argument = one_argument( argument, arg );
@@ -1156,7 +1155,6 @@ DEF_DO_FUN( list )
 	    if ( obj->wear_loc == WEAR_NONE
 	    &&   can_see_obj( ch, obj ) )
 	    {
-	       oref++;
 	       if ( ( cost = get_cost( ch, keeper, obj, true ) ) > 0
 	       && ( ( arg[0] == '\0' || nifty_is_name( arg, obj->name ) )
 	    			     || !str_cmp( arg, "all" ) ) )

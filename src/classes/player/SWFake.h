@@ -64,7 +64,7 @@ public:
 
 	void setDesc(const SWString &Desc)
 	{
-		this->desc = desc;
+		this->desc = Desc;
 	}
 
 	void setInflect(const vector<SWString> &inflect)

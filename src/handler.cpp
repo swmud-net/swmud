@@ -242,7 +242,7 @@ void room_explode_1(OBJ_DATA *obj, CHAR_DATA *xch, ROOM_INDEX_DATA *room, int bl
 			break;
 		case GRANADE_POISON:
 		{
-			bool first;
+			bool first = true;
 
 			act( FB_WHITE, "Fala uderzeniowa olbrzymiej eksplozji truj�cego gazu"
 					" przechodzi przez twoje cia�o!", rch, obj, NULL,

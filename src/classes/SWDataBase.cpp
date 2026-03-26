@@ -149,7 +149,7 @@ SWQueryResult *SWDataBase::getResult(const list<SWString> &columns)
 		{
 			try
 			{
-				queryResult.column_number(*it);
+				(void)queryResult.column_number(*it);
 			} catch (const exception &e)
 			{
 				bug( "exception thrown during getResult, column name: %s, message: %s", it->c_str(), e.what() );

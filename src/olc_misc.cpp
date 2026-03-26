@@ -875,25 +875,24 @@ DEF_DO_FUN( mindex )
 
 AREA_DATA* find_area(char *name)
 {
-	AREA_DATA *tarea;
-	bool found = false;
+	AREA_DATA *tarea = nullptr;
 
-	for (auto* tarea : area_list)
-		if (!str_cmp(tarea->filename, name))
+	for (auto* a : area_list)
+		if (!str_cmp(a->filename, name))
 		{
-			found = true;
+			tarea = a;
 			break;
 		}
 
-	if (!found)
-		for (auto* tarea : build_list)
-			if (!str_cmp(tarea->filename, name))
+	if (!tarea)
+		for (auto* a : build_list)
+			if (!str_cmp(a->filename, name))
 			{
-				found = true;
+				tarea = a;
 				break;
 			}
 
-	if (!found)
+	if (!tarea)
 		return NULL;
 
 	return tarea;
@@ -2393,10 +2392,14 @@ void oedit(DESCRIPTOR_DATA *d, char *argument)
 				return;
 			}
 
-			for (auto* ed : pObj->extradesc)
+			ed = nullptr;
+			for (auto* e : pObj->extradesc)
 			{
-				if (is_name(arg2, ed->keyword))
+				if (is_name(arg2, e->keyword))
+				{
+					ed = e;
 					break;
+				}
 			}
 
 			if (!ed)
@@ -2644,10 +2647,14 @@ void redit(DESCRIPTOR_DATA *d, char *argument)
 				return;
 			}
 
-			for (auto* ed : pRoom->extradesc)
+			ed = nullptr;
+			for (auto* e : pRoom->extradesc)
 			{
-				if (is_name(arg2, ed->keyword))
+				if (is_name(arg2, e->keyword))
+				{
+					ed = e;
 					break;
+				}
 			}
 
 			if (!ed)

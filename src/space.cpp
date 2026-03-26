@@ -3275,17 +3275,17 @@ SHIP_DATA* get_ship_here(char *name, SPACE_DATA *starsystem)
  -- Thanos */
 SHIP_DATA* ship_from_pilot(char *name)
 {
-	SHIP_DATA *ship;
-
 	for (auto* ship : ship_list)
+	{
 		if (!str_cmp(name, ship->pilot))
 			return ship;
-	if (!str_cmp(name, ship->copilot))
-		return ship;
-	if (!str_cmp(name, ship->owner))
-		return ship;
-	if (!str_cmp(name, ship->engineer))
-		return ship;
+		if (!str_cmp(name, ship->copilot))
+			return ship;
+		if (!str_cmp(name, ship->owner))
+			return ship;
+		if (!str_cmp(name, ship->engineer))
+			return ship;
+	}
 	return NULL;
 }
 

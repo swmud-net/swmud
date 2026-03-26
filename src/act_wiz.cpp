@@ -84,7 +84,7 @@ DEF_DO_FUN( wizinfo )
 
 	one_argument(argument, arg);
 
-	if ((arg[0] == '\0'))
+	if (arg[0] == '\0')
 		victim = ch;
 	else if (!(victim = get_char_world(ch, arg)))
 	{
@@ -443,8 +443,7 @@ DEF_DO_FUN( disconnect )
  */
 DEF_DO_FUN( fquit )
 {
-	DESCRIPTOR_DATA *d;
-	bool found;
+	DESCRIPTOR_DATA *d = nullptr;
 
 	if (argument[0] == '\0')
 	{
@@ -452,16 +451,15 @@ DEF_DO_FUN( fquit )
 		return;
 	}
 
-	found = false;
-	for (auto* d : descriptor_list)
-		if (d->character && !str_cmp(d->character->name, argument)
-				&& d->character->top_level == 1)
+	for (auto* desc : descriptor_list)
+		if (desc->character && !str_cmp(desc->character->name, argument)
+				&& desc->character->top_level == 1)
 		{
-			found = true;
+			d = desc;
 			break;
 		}
 
-	if (!found)
+	if (!d)
 	{
 		send_to_char("There is no player like that (at level 1)." NL, ch);
 		return;
@@ -4475,7 +4473,7 @@ void close_area(AREA_DATA *pArea)
 
 DEF_DO_FUN( destroy )
 {
-	CHAR_DATA *victim;
+	CHAR_DATA *victim = nullptr;
 	char buf[MAX_STRING_LENGTH];
 	char arg[MIL];
 
@@ -4486,18 +4484,24 @@ DEF_DO_FUN( destroy )
 		return;
 	}
 
-	for (auto* victim : char_list)
-		if (!IS_NPC(victim) && !str_cmp(victim->name, arg))
+	for (auto* vch : char_list)
+		if (!IS_NPC(vch) && !str_cmp(vch->name, arg))
+		{
+			victim = vch;
 			break;
+		}
 	if (!victim)
 	{
-		DESCRIPTOR_DATA *d;
+		DESCRIPTOR_DATA *d = nullptr;
 
 		/* Make sure they aren't halfway logged in. */
-		for (auto* d : descriptor_list)
-			if ((victim = d->character) && !IS_NPC(victim)
+		for (auto* desc : descriptor_list)
+			if ((victim = desc->character) && !IS_NPC(victim)
 					&& !str_cmp(victim->name, arg))
+			{
+				d = desc;
 				break;
+			}
 		if (d)
 			close_socket(d, true);
 	}

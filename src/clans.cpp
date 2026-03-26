@@ -1724,7 +1724,7 @@ DEF_DO_FUN( setclan )
 //polityka i glosowanie.
 DEF_DO_FUN( relations )
 {
-	POLITICS_DATA *politics;
+	POLITICS_DATA *politics = nullptr;
 	CLAN_DATA *clan = CLAN(ch);
 	CLAN_DATA *tclan;
 	CLAN_DATA *vclan;
@@ -1942,9 +1942,10 @@ DEF_DO_FUN( relations )
 			}
 
 			match = false;
-			for( auto* politics : clan->politics )
-				if (politics->clan == vclan)
+			for( auto* pol : clan->politics )
+				if (pol->clan == vclan)
 				{
+					politics = pol;
 					match = true;
 					break;
 				}
@@ -2905,7 +2906,6 @@ DEF_DO_FUN( capture )
 	CLAN_DATA *clan = CLAN(ch);
 	PLANET_DATA *planet;
 	float support = 0.0;
-	int pCount = 0;
 	char buf[MSL];
 
 	if (!clan || !ch->in_room || !ch->in_room->area)
@@ -2965,7 +2965,6 @@ DEF_DO_FUN( capture )
 	for( auto* cPlanet : planet_list )
 		if (clan == cPlanet->governed_by)
 		{
-			pCount++;
 			support += cPlanet->pop_support;
 		}
 

@@ -1163,7 +1163,7 @@ void save_char_data(CHAR_DATA *ch, FILE *fp)
 		if (_friend->is_remembered > 0)
 			fprintf(fp, "Friend	%s %d %d 0 0 0 0 0 0 0 0 \n", _friend->name,/*_friend->race*/
 					0, _friend->sex);
-#warning Powyzsze do poprawy
+/* TODO: Powyzsze do poprawy */
 
 	fprintf(fp, "FEvents       %d\n", ch->pcdata->fevents);
 	for (auto* fevent : ch->pcdata->fevents_list)
@@ -2247,7 +2247,7 @@ void fread_char(CHAR_DATA *ch, FILE *fp)
 
 				CREATE(_friend, KNOWN_CHAR_DATA, 1);
 				STRDUP(_friend->name, fread_word(fp));
-#warning ponizsza linijka do poprawy
+/* TODO: ponizsza linijka do poprawy */
 				_friend->race = 0/*fread_number( fp )*/;
 				_friend->is_remembered = 1;
 				_friend->sex = fread_number(fp);
