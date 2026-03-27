@@ -1,0 +1,33 @@
+# Compiled objects
+obj/
+
+# Binary output
+*.o
+*.so
+*.a
+
+# Editor / IDE files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.kate-swp
+tags
+TAGS
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# MUD runtime files
+*.pid
+core
+core.*
+
+# Doxygen output
+src/html/
+src/latex/
+
+# Claude Code
+.claude/
