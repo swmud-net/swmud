@@ -260,7 +260,11 @@ void update_traffic()
 		if ((turbocar = ship_from_cockpit(get_room_index(tc->vnum))))
 		{
 			if (!tc->current_station)
-				tc->current_station = tc->stations.empty() ? nullptr : tc->stations.front();
+			{
+				if (tc->stations.empty())
+					continue;
+				tc->current_station = tc->stations.front();
+			}
 			sprintf(buf,
 			FB_YELLOW
 			"Drzwi %s zamykaj� si� i odje�d�a w po�piechu ze stacji.",
@@ -308,6 +312,12 @@ void change_bus_planet(SHIP_DATA *bus)
 
 	if (!bus->curr_stop)
 	{
+		if (bus->stops.empty())
+		{
+			bug("Ship has no curr_stop and no stops! Disabling.");
+			bus->ship_public = false;
+			return;
+		}
 		bug("Ship has no curr_stop! Resetting course.");
 		bus->curr_stop = bus->stops.front();
 	}
@@ -1934,7 +1944,7 @@ void save_starsystem(SPACE_DATA *starsystem)
 		return;
 	}
 
-	sprintf(filename, "%s%s", STARS_DIR, starsystem->filename);
+	snprintf(filename, sizeof(filename), "%s%s", STARS_DIR, starsystem->filename);
 
 	RESERVE_CLOSE;
 	if ((fp = fopen(filename, "w")) == NULL)
@@ -2185,7 +2195,7 @@ bool load_starsystem(const char *starsystemfile)
 	starsystem->age = 1;
 
 	found = false;
-	sprintf(filename, "%s%s", STARS_DIR, starsystemfile);
+	snprintf(filename, sizeof(filename), "%s%s", STARS_DIR, starsystemfile);
 	if ((fp = fopen(filename, "r")) != NULL)
 	{
 
@@ -2784,7 +2794,7 @@ DEF_DO_FUN( makestarsystem )
 
 	argument = one_argument(argument, arg);
 
-	sprintf(filename, "%s.system", strlower(arg));
+	snprintf(filename, sizeof(filename), "%s.system", strlower(arg));
 	STRDUP(starsystem->filename, filename);
 	STRDUP(starsystem->description, "");
 	STRDUP(starsystem->description2, "");
@@ -3095,7 +3105,7 @@ void remove_ship_from_list(const char *shipfile)
 	FILE *fpout;
 	char filename[256];
 
-	sprintf(filename, "%s", shipfile);
+	snprintf(filename, sizeof(filename), "%s", shipfile);
 	fpout = fopen(SHIP_LIST, "w");
 	if (!fpout)
 	{
@@ -3462,7 +3472,7 @@ void save_ship(SHIP_DATA *ship)
 		return;
 	}
 
-	sprintf(filename, "%s%s", SHIP_DIR, ship->filename);
+	snprintf(filename, sizeof(filename), "%s%s", SHIP_DIR, ship->filename);
 
 	RESERVE_CLOSE;
 	if ((fp = fopen(filename, "w")) == NULL)
@@ -3987,6 +3997,7 @@ bool load_course(SHIP_DATA *ship)
 	if (crsnum)
 	{
 		nr = number_range(1, crsnum);
+		if (!ship->stops.empty())
 		{
 			auto stop_it = ship->stops.begin();
 			std::advance(stop_it, nr < (int)ship->stops.size() ? nr : 0);
@@ -4635,7 +4646,7 @@ bool load_ship_file(const char *shipfile)
 	ship->timer = -1;
 
 	found = false;
-	sprintf(filename, "%s%s", SHIP_DIR, shipfile);
+	snprintf(filename, sizeof(filename), "%s%s", SHIP_DIR, shipfile);
 
 	if ((fp = fopen(filename, "r")) != NULL)
 	{
@@ -5238,7 +5249,7 @@ DEF_DO_FUN( setship )
 		}
 
 		purge_ship(ship, NULL);
-		sprintf(filename, "%s%s", SHIP_DIR, ship->filename);
+		snprintf(filename, sizeof(filename), "%s%s", SHIP_DIR, ship->filename);
 		unlink(filename);
 		remove_ship_from_list(ship->filename);
 		free_ship(ship);
@@ -5272,7 +5283,7 @@ DEF_DO_FUN( setship )
 			char filename[MAX_STRING_LENGTH];
 			char bkpfile[MAX_STRING_LENGTH];
 
-			sprintf(filename, "%s%s.course", SPACE_DIR, ship->filename);
+			snprintf(filename, sizeof(filename), "%s%s.course", SPACE_DIR, ship->filename);
 			sprintf(bkpfile, "%s%s.course.bkp", SPACE_DIR, ship->filename);
 			if (!rename(filename, bkpfile))
 				ch_printf(ch, "File backed up as %s" NL, bkpfile);
@@ -5953,7 +5964,7 @@ DEF_DO_FUN( setship )
 		}
 		if (ship->filename)
 		{
-			sprintf(filename, "%s%s", SHIP_DIR, ship->filename);
+			snprintf(filename, sizeof(filename), "%s%s", SHIP_DIR, ship->filename);
 			unlink(filename);
 			send_to_char(FB_RED "Old file deleted." NL "New created.", ch);
 		}
@@ -6766,7 +6777,7 @@ DEF_DO_FUN( add_ship_title )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(argument, ch->dest_buf);
+		snprintf(argument, sizeof(argument), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -10638,7 +10649,7 @@ DEF_DO_FUN( target )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -12141,7 +12152,7 @@ DEF_DO_FUN( repairship )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -12707,7 +12718,7 @@ DEF_DO_FUN( pluogus )
 
 			course = ship->curr_stop;
 
-			for (itt = 0; itt < 3; itt++)
+			for (itt = 0; itt < 3 && !ship->stops.empty(); itt++)
 			{
 				auto c_it = std::find(ship->stops.begin(), ship->stops.end(), course);
 				if (c_it != ship->stops.end())
@@ -13275,7 +13286,7 @@ bool autofly(SHIP_DATA *ship)
  case 1:
  if ( !*ch->dest_buf )
  return;
- strcpy(arg, ch->dest_buf);
+ snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
  DISPOSE( ch->dest_buf);
  break;
 

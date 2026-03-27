@@ -23,6 +23,7 @@
 ****************************************************************************/
 
 #include <time.h>
+#include <unistd.h>
 #include "mud.h"
 
 SHIP_INDEX_DATA * get_ship_index	args( ( char * ship_index ) );
@@ -100,6 +101,16 @@ void save_ship_state( SHIP_DATA *ship )
 	    fprintf( fp, "Room: %d\n", ROOM_LIMBO_SHIPYARD		);
 
 	fprintf( fp, "#END\n"						);
+
+	if (ferror(fp))
+	{
+	    bug( "save_ship_state: write error for %s", ship->transponder );
+	    fclose( fp );
+	    RESERVE_OPEN;
+	    return;
+	}
+	fflush( fp );
+	fsync( fileno( fp ) );
     }
 
     fclose( fp );

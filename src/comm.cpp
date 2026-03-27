@@ -187,15 +187,13 @@ void deal_with_crash()
 		/* sprawdzamy jaka komenda byla ostatnio uzywana */
 		if ((fp = fopen( LASTCMD_FILE, "r")) != NULL)
 		{
-			while (!feof(fp))
-			{
-				while ((buf[num] = fgetc(fp)) != EOF)
-					num++;
-			}
+			int ch;
+			while ((ch = fgetc(fp)) != EOF && num < MSL - 1)
+				buf[num++] = ch;
+			fclose(fp);
 		}
-		fclose(fp);
 		buf[num] = '\0';
-		strcat(bbuf, buf);
+		strncat(bbuf, buf, MSL - strlen(bbuf) - 1);
 		strcat(bbuf, "Ustawiam 'cset lastcmd' na OFF." NL);
 
 		sysdata.lastcmd_log = false; /* zalogowane 	*/

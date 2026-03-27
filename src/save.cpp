@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 #include <ctype.h>
+#include <errno.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -596,10 +597,15 @@ void save_pdata(CHAR_DATA *ch)
 	/*
 	 * Auto-backup pfile (can cause lag with high disk access situtations
 	 */
+	bckupname[0] = '\0';
 	if (IS_SET(sysdata.save_flags, SV_BACKUP))
 	{
 		sprintf(bckupname, "%s%s", PDATA_BCK_DIR, capitalize(ch->name));
-		rename(filename, bckupname);
+		if (rename(filename, bckupname) != 0 && errno != ENOENT)
+		{
+			bug("save_pdata: rename to backup failed for %s", ch->name);
+			perror(bckupname);
+		}
 	}
 
 	if ((fp = fopen(filename, "w")) == NULL)
@@ -716,6 +722,16 @@ void save_pdata(CHAR_DATA *ch)
 	fprintf(fp, "Description  %d  %d\n", ch->attribute1, ch->attribute2); //Tanglor
 
 	fprintf(fp, "End\n");
+	if (ferror(fp))
+	{
+		bug("save_pdata: write error for %s", ch->name);
+		fclose(fp);
+		if (bckupname[0] != '\0')
+			rename(bckupname, filename);
+		return;
+	}
+	fflush(fp);
+	fsync(fileno(fp));
 	fclose(fp);
 	return;
 }
@@ -2970,7 +2986,8 @@ void fread_obj(CHAR_DATA *ch, FILE *fp, int os_type)
 				{
 					for (indexp = 0;
 							short_descr[indexd] != '@'
-									&& short_descr[indexd] != '\0';)
+									&& short_descr[indexd] != '\0'
+									&& indexp < MAX_INPUT_LENGTH - 1;)
 						bufor[indexp++] = short_descr[indexd++];
 
 					if (short_descr[indexd++] == '@')

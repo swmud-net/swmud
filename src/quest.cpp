@@ -284,7 +284,7 @@ bool process_action(  QUEST_DATA *quest, CHAPTER_DATA *chapter )
 
 				action->done = true;
 				for( auto* qm : quest->mobs )
-					if( qm->mob->pIndexData->vnum == action->arg1 )
+					if( qm->mob && qm->mob->pIndexData->vnum == action->arg1 )
 				{
 					qMob = qm;
 					found = true;

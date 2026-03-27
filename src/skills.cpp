@@ -896,7 +896,7 @@ DEF_DO_FUN( detrap )
 			bug("do_detrap: ch->dest_buf NULL!", 0);
 			return;
 		}
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		ch->substate = SUB_NONE;
 		break;
@@ -1025,7 +1025,7 @@ DEF_DO_FUN( dig )
 			bug("do_dig: dest_buf NULL", 0);
 			return;
 		}
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -1158,7 +1158,7 @@ DEF_DO_FUN( search )
 			bug("do_search: dest_buf NULL", 0);
 			return;
 		}
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 	case SUB_TIMER_DO_ABORT:

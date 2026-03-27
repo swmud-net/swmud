@@ -279,7 +279,7 @@ DEF_DO_FUN( makeblade )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -561,7 +561,7 @@ DEF_DO_FUN( makeblaster )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -895,7 +895,7 @@ DEF_DO_FUN( makelightsaber )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -1158,7 +1158,7 @@ DEF_DO_FUN( makespice )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -1330,7 +1330,7 @@ DEF_DO_FUN( makegrenade )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -1567,7 +1567,7 @@ DEF_DO_FUN( makelandmine )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -1798,7 +1798,7 @@ DEF_DO_FUN( makelight )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -2049,12 +2049,12 @@ DEF_DO_FUN( makejewelry )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 
 		if (!*ch->dest_buf_2)
 			return;
-		strcpy(arg2, ch->dest_buf_2);
+		snprintf(arg2, sizeof(arg2), "%s", ch->dest_buf_2);
 		STRDUP(ch->dest_buf_2, "");
 		break;
 
@@ -2279,12 +2279,12 @@ DEF_DO_FUN( makearmor )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 
 		if (!*ch->dest_buf_2)
 			return;
-		strcpy(arg2, ch->dest_buf_2);
+		snprintf(arg2, sizeof(arg2), "%s", ch->dest_buf_2);
 		STRDUP(ch->dest_buf_2, "");
 		break;
 
@@ -2477,7 +2477,7 @@ DEF_DO_FUN( makecomlink )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -2698,7 +2698,7 @@ DEF_DO_FUN( makeshield )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -2951,12 +2951,12 @@ DEF_DO_FUN( makecontainer )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 
 		if (!*ch->dest_buf_2)
 			return;
-		strcpy(arg2, ch->dest_buf_2);
+		snprintf(arg2, sizeof(arg2), "%s", ch->dest_buf_2);
 		STRDUP(ch->dest_buf_2, "");
 		break;
 
@@ -3129,7 +3129,7 @@ DEF_DO_FUN( reinforcements )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -3211,7 +3211,7 @@ DEF_DO_FUN( postguard )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 
@@ -3504,7 +3504,7 @@ DEF_DO_FUN( disguise )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 	}
@@ -4802,7 +4802,7 @@ DEF_DO_FUN( smalltalk )
 			send_to_char("Ups. Co� jest nie tak!" NL, ch);
 			return;
 		}
-		strcpy(arg1, ch->dest_buf);
+		snprintf(arg1, sizeof(arg1), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		ch->substate = SUB_NONE;
 		break;
@@ -5568,7 +5568,7 @@ DEF_DO_FUN( makehackdev )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		strcpy(arg, ch->dest_buf);
+		snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 
 		skill = get_skilltype(gsn_makehackdev);

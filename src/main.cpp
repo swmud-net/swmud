@@ -211,11 +211,9 @@ int main(int argc, char **argv)
 #if !defined( WIN32 )
 	signal(SIGPIPE, SIG_IGN);
 
-	signal(SIGKILL, swmud_killed);
 	signal(SIGTERM, swmud_killed);
 	signal(SIGHUP, swmud_killed);
 	signal(SIGQUIT, swmud_killed);
-	signal(SIGSTOP, swmud_killed);
 	signal(SIGINT, swmud_killed);
 #endif
 

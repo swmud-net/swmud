@@ -613,7 +613,8 @@ int dice_parse(CHAR_DATA *ch, int level, char *exp)
 {
 	char buf[MAX_INPUT_LENGTH];
 
-	strcpy(buf, exp);
+	strncpy(buf, exp, MAX_INPUT_LENGTH - 1);
+	buf[MAX_INPUT_LENGTH - 1] = '\0';
 	return rd_parse(ch, level, buf);
 }
 
@@ -1216,7 +1217,7 @@ DEF_DO_FUN( cast )
 			return;
 		}
 		mana = IS_NPC(ch) ? 0 : skill->min_mana;
-		strcpy(staticbuf, ch->dest_buf);
+		snprintf(staticbuf, sizeof(staticbuf), "%s", ch->dest_buf);
 		target_name = one_argument(staticbuf, arg2);
 		STRDUP(ch->dest_buf, "");
 		ch->substate = SUB_NONE;

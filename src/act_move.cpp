@@ -233,8 +233,10 @@ char* wordwrap(char *txt, int wrap)
 {
 	static char buf[MSL];
 	char *bufp;
+	size_t buflen;
 
 	buf[0] = '\0';
+	buflen = 0;
 	bufp = buf;
 	if (txt != NULL)
 	{
@@ -242,6 +244,7 @@ char* wordwrap(char *txt, int wrap)
 		char temp[MSL];
 		char *ptr, *p;
 		int ln, x;
+		size_t linelen;
 
 		++bufp;
 		line[0] = '\0';
@@ -263,19 +266,33 @@ char* wordwrap(char *txt, int wrap)
 					p = strchr(line, '\r');
 				if (p)
 				{
-					strcat(buf, line);
+					linelen = strlen(line);
+					if (buflen + linelen < MSL - 1)
+					{
+						strcat(buf, line);
+						buflen += linelen;
+					}
 					line[0] = '\0';
 				}
 			}
 			else
 			{
 				strcat(line, "\r\n");
-				strcat(buf, line);
+				linelen = strlen(line);
+				if (buflen + linelen < MSL - 1)
+				{
+					strcat(buf, line);
+					buflen += linelen;
+				}
 				strcpy(line, temp);
 			}
 		}
 		if (line[0] != '\0')
-			strcat(buf, line);
+		{
+			linelen = strlen(line);
+			if (buflen + linelen < MSL - 1)
+				strcat(buf, line);
+		}
 	}
 	return bufp;
 }

@@ -2229,9 +2229,10 @@ void extract_obj(OBJ_DATA *obj)
 				obj_to_char(obj_content, carry);
 			else if (inobj)
 				obj_to_obj(obj_content, inobj);
-			else
-				/* na wszelki... */
+			else if (Quest_Master && Quest_Master->in_room)
 				obj_to_room(obj_content, Quest_Master->in_room);
+			else
+				obj_to_room(obj_content, get_room_index(ROOM_VNUM_LIMBO));
 		}
 		else
 			extract_obj(obj_content);

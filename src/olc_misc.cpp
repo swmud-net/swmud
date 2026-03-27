@@ -25,6 +25,9 @@
 #include "olc.h"
 #include "classes/SWPazaakCard.h"
 
+#define VALID_SN(sn) ((sn) >= 0 && (sn) < top_sn)
+#define SKILL_NAME(sn) (VALID_SN(sn) ? skill_table[(sn)]->name : "none")
+
 extern int top_helps_file;
 
 std::list<RACE_DATA*> race_list;
@@ -88,8 +91,8 @@ void show_obj_values(CHAR_DATA *ch, OBJ_INDEX_DATA *obj)
 		"[v3] " FG_YELLOW "delay:         " PLAIN "%d" NL
 		"[v4] " FG_YELLOW "spell1:        " PLAIN "%s" NL
 		"[v5] " FG_YELLOW "spell2:        " PLAIN "%s" NL, obj->value[0], obj->value[1], obj->value[2], obj->value[3],
-				obj->value[4] != -1 ? skill_table[obj->value[4]]->name : "none",
-				obj->value[5] != -1 ? skill_table[obj->value[5]]->name : "none");
+				SKILL_NAME(obj->value[4]),
+				SKILL_NAME(obj->value[5]));
 		break;
 
 	case ITEM_POTION:
@@ -97,9 +100,9 @@ void show_obj_values(CHAR_DATA *ch, OBJ_INDEX_DATA *obj)
 		sprintf(buf, "[v0] " FG_YELLOW "slevel:        " PLAIN "%d" NL
 		"[v1] " FG_YELLOW "spell1:        " PLAIN "%s" NL
 		"[v2] " FG_YELLOW "spell2:        " PLAIN "%s" NL
-		"[v3] " FG_YELLOW "spell3:        " PLAIN "%s" NL, obj->value[0], obj->value[1] != -1 ? skill_table[obj->value[1]]->name : "none",
-				obj->value[2] != -1 ? skill_table[obj->value[2]]->name : "none",
-				obj->value[3] != -1 ? skill_table[obj->value[3]]->name : "none");
+		"[v3] " FG_YELLOW "spell3:        " PLAIN "%s" NL, obj->value[0], SKILL_NAME(obj->value[1]),
+				SKILL_NAME(obj->value[2]),
+				SKILL_NAME(obj->value[3]));
 		break;
 
 	case ITEM_DEVICE:
@@ -107,7 +110,7 @@ void show_obj_values(CHAR_DATA *ch, OBJ_INDEX_DATA *obj)
 		"[v1] " FG_YELLOW "maxcharges:    " PLAIN "%d" NL
 		"[v2] " FG_YELLOW "charges:       " PLAIN "%d" NL
 		"[v3] " FG_YELLOW "spell:         " PLAIN "%s" NL, obj->value[0], obj->value[1], obj->value[2],
-				obj->value[3] != -1 ? skill_table[obj->value[3]]->name : "none");
+				SKILL_NAME(obj->value[3]));
 		break;
 
 	case ITEM_CONTAINER:

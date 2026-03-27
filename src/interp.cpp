@@ -152,12 +152,17 @@ char* substitute_alias(DESCRIPTOR_DATA *d, char *argument)
 				rest = buf;
 				while (*pntr != '\0')
 				{
+					if (rest - buf >= MAX_STRING_LENGTH - 1)
+						break;
 					if (*pntr == '$')
 					{
 						pntr++;
+						size_t plen = strlen(point);
+						if (rest - buf + (int)plen >= MAX_STRING_LENGTH)
+							break;
 						*rest = '\0';
 						strcat(buf, point);
-						rest += strlen(point);
+						rest += plen;
 					}
 					/*
 					 * Thanos: dzi�ki multikomendom nie musimy ju� interpretowa�
@@ -798,7 +803,7 @@ char* one_argument(char *argument, char *arg_first)
 	if (*argument == '\'' || *argument == '"')
 		cEnd = *argument++;
 
-	while (*argument != '\0' || ++count >= 255)
+	while (*argument != '\0' && ++count < 255)
 	{
 		if (*argument == cEnd)
 		{
@@ -835,7 +840,7 @@ char* one_argument2(char *argument, char *arg_first)
 	if (*argument == '\'' || *argument == '"')
 		cEnd = *argument++;
 
-	while (*argument != '\0' || ++count >= 255)
+	while (*argument != '\0' && ++count < 255)
 	{
 		if (*argument == cEnd || *argument == '-')
 		{

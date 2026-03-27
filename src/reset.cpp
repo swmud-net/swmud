@@ -1465,7 +1465,7 @@ DEF_DO_FUN( reset )
 			return;
 		}
 
-		sprintf(buf, "%s %s %s %s", arg3, arg4, arg5, argument);
+		snprintf(buf, MAX_STRING_LENGTH, "%s %s %s %s", arg3, arg4, arg5, argument);
 
 		if ((pReset = parse_reset(pRoom, buf, ch)) == NULL)
 		{

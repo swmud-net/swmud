@@ -1817,7 +1817,7 @@ DEF_DO_FUN( bset )
 		if ( !str_cmp( argument, "none" ) )
 			buf[0] = '\0';
 		else
-			sprintf( buf, "%s %s", board->extra_removers, argument );
+			snprintf( buf, MAX_STRING_LENGTH, "%s %s", board->extra_removers, argument );
 		STRDUP( board->extra_removers, buf );
 		write_boards_txt( );
 		send_to_char( "Done.\n\r", ch );
@@ -1834,7 +1834,7 @@ DEF_DO_FUN( bset )
 		if ( !str_cmp( argument, "none" ) )
 			buf[0] = '\0';
 		else
-			sprintf( buf, "%s %s", board->extra_readers, argument );
+			snprintf( buf, MAX_STRING_LENGTH, "%s %s", board->extra_readers, argument );
 		STRDUP( board->extra_readers, buf );
 		write_boards_txt( );
 		send_to_char( "Done.\n\r", ch );

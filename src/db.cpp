@@ -840,7 +840,7 @@ void boot_db(bool fCopyOver)
 		 i=1;
 		 for ( ; ; )
 		 {
-		 strcpy( strArea, fread_word( fpList ) );
+		 snprintf( strArea, sizeof(strArea), "%s", fread_word( fpList ) );
 
 		 if ( strArea[0] == '$' )
 		 break;
@@ -1077,7 +1077,7 @@ void load_helps_files()
 
 	for (;;)
 	{
-		strcpy(strHelp, fread_word(fpList));
+		snprintf(strHelp, sizeof(strHelp), "%s", fread_word(fpList));
 		if (strHelp[0] == '$')
 			break;
 		load_helps_section(strHelp);
@@ -6149,7 +6149,7 @@ void load_races()
 
 	for (;;)
 	{
-		strcpy(strRace, fread_word(fpList));
+		snprintf(strRace, sizeof(strRace), "%s", fread_word(fpList));
 		if (strRace[0] == '$')
 			break;
 		load_race_section(strRace);
@@ -6501,7 +6501,7 @@ void load_turbocars()
 
 	for (;;)
 	{
-		strcpy(strTurbocar, fread_word(fpList));
+		snprintf(strTurbocar, sizeof(strTurbocar), "%s", fread_word(fpList));
 		if (strTurbocar[0] == '$')
 			break;
 		load_turbocar_section(strTurbocar);

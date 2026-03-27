@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include "mud.h"
 
-#define STR_HASH_SIZE	 1024 /* maxymalna d³ugo¶æ hashowanych stringoff */
+#define STR_HASH_SIZE	 1024 /* maxymalna dï¿½ugoï¿½ï¿½ hashowanych stringoff */
 
 struct hashstr_data
 {
@@ -74,6 +74,11 @@ char* str_alloc(const char *str)
 		}
 //   ptr = (struct hashstr_data *) calloc(1, len+psize+1);
 	ptr = (struct hashstr_data*) malloc(len + psize + 1);
+	if (!ptr)
+	{
+		fprintf(stderr, "str_alloc: out of memory (size %d)\n", len);
+		abort();
+	}
 	ptr->links = 1;
 	ptr->length = len;
 	if (len)

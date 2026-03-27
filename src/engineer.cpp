@@ -226,7 +226,7 @@ DEF_DO_FUN( hack )
 		case 1:
 			if ( !*ch->dest_buf )
 				return;
-			strcpy(arg, ch->dest_buf);
+			snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 			STRDUP( ch->dest_buf, "" );
 			break;
 
@@ -529,7 +529,7 @@ DEF_DO_FUN( detonate )
 		case 1:
 			if ( !*ch->dest_buf )
 				return;
-			strcpy( arg, ch->dest_buf);
+			snprintf(arg, sizeof(arg), "%s", ch->dest_buf);
 			STRDUP( ch->dest_buf, "" );
 			break;
 	}

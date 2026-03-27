@@ -270,7 +270,7 @@ char* my_one_argument(char *argument, char *arg_first)
 	if (*argument == '\'' || *argument == '"')
 		cEnd = *argument++;
 
-	while (*argument != '\0' || ++count >= 255)
+	while (*argument != '\0' && ++count < 255)
 	{
 		if (*argument == cEnd)
 		{

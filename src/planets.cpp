@@ -105,7 +105,7 @@ void save_planet( PLANET_DATA *planet )
 	return;
     }
 
-    sprintf( filename, "%s%s", PLANET_DIR, planet->filename );
+    snprintf( filename, sizeof(filename), "%s%s", PLANET_DIR, planet->filename );
 
     RESERVE_CLOSE;
     if ( ( fp = fopen( filename, "w" ) ) == NULL )
@@ -502,7 +502,7 @@ bool load_planet_file( const char *planetfile )
 	CREATE( planet->pWarehouse, WAREHOUSE_DATA, 1);
 
     found = false;
-    sprintf( filename, "%s%s", PLANET_DIR, planetfile );
+    snprintf( filename, sizeof(filename), "%s%s", PLANET_DIR, planetfile );
 
     if ( ( fp = fopen( filename, "r" ) ) != NULL )
     {
@@ -998,7 +998,7 @@ DEF_DO_FUN( makeplanet )
 	return;
     }
 
-    sprintf( filename, "%s%s", PLANET_DIR, strlower(argument) );
+    snprintf( filename, sizeof(filename), "%s%s", PLANET_DIR, strlower(argument) );
 
     CREATE( planet, PLANET_DATA, 1 );
     STRDUP( planet->name, argument );
