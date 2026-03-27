@@ -1,5 +1,6 @@
 # Compiled objects
 obj/
+.mudrc
 
 # Binary output
 *.o
