@@ -6777,7 +6777,7 @@ DEF_DO_FUN( add_ship_title )
 	case 1:
 		if (!*ch->dest_buf)
 			return;
-		snprintf(argument, sizeof(argument), "%s", ch->dest_buf);
+		snprintf(argument, MIL, "%s", ch->dest_buf);
 		STRDUP(ch->dest_buf, "");
 		break;
 

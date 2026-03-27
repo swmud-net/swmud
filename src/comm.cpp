@@ -193,7 +193,7 @@ void deal_with_crash()
 			fclose(fp);
 		}
 		buf[num] = '\0';
-		strncat(bbuf, buf, MSL - strlen(bbuf) - 1);
+		snprintf(bbuf + strlen(bbuf), MSL - strlen(bbuf), "%s", buf);
 		strcat(bbuf, "Ustawiam 'cset lastcmd' na OFF." NL);
 
 		sysdata.lastcmd_log = false; /* zalogowane 	*/
